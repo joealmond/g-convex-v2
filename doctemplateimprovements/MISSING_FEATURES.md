@@ -2,9 +2,11 @@
 
 Features that should be added to the `convex-tanstack-cloudfare` template to make it more production-ready.
 
+> **Update (January 2026):** The template has been updated! Many of these features are now included. Items marked with ✅ are now in the template.
+
 ---
 
-## 1. UI Component Library (shadcn/ui)
+## ✅ 1. UI Component Library (shadcn/ui) - STILL MISSING
 
 ### Issue
 The template provides no pre-built UI components. Everything must be built from scratch.
@@ -25,48 +27,39 @@ npx shadcn@latest add button card dialog input toast form
 **Files to add:**
 - `components.json` - shadcn configuration
 - `src/components/ui/` - UI component directory
-- `src/lib/shadcn-utils.ts` - cn() helper (separate from main utils)
+- `src/lib/cn.ts` - cn() helper ✅ (now in template)
 
 ---
 
-## 2. Testing Infrastructure
+## ✅ 2. Testing Infrastructure - NOW INCLUDED
 
-### Issue
-No tests, no test scripts, no testing libraries configured.
+### Status: ✅ FIXED IN TEMPLATE
 
-### Why It Matters
-- CI/CD workflow references tests but they don't exist
-- Production apps require testing for reliability
-- Makes it hard to refactor with confidence
+The template now includes:
+- `vitest.config.ts` - Vitest configuration with happy-dom
+- `npm run test` and `npm run test:watch` scripts
+- `@testing-library/react` and `@testing-library/dom`
+- `happy-dom` for fast DOM testing
 
-### Suggested Solution
-Add Vitest + React Testing Library + Playwright:
-
-**package.json additions:**
+### What Was Added
 ```json
 {
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests"
   },
   "devDependencies": {
     "vitest": "^3.x.x",
     "@testing-library/react": "^16.x.x",
-    "@playwright/test": "^1.x.x"
+    "@testing-library/dom": "^10.x.x",
+    "happy-dom": "^20.x.x"
   }
 }
 ```
 
-**Files to add:**
-- `vitest.config.ts`
-- `playwright.config.ts`
-- `src/__tests__/` directory
-- `e2e/` directory
-
 ---
 
-## 3. Form Handling
+## 3. Form Handling - STILL SUGGESTED
 
 ### Issue
 No form library integration for complex forms.
@@ -110,7 +103,7 @@ export function LoginForm() {
 
 ---
 
-## 4. Toast Notifications
+## 4. Toast Notifications - STILL SUGGESTED
 
 ### Issue
 Template mentions Sonner in docs but doesn't include it.
@@ -148,78 +141,103 @@ export function RootLayout() {
 
 ---
 
-## 5. Protected Routes Pattern
+## ✅ 5. Protected Routes Pattern - NOW INCLUDED
 
-### Issue
-Only 2 routes exist, no example of auth-protected routes.
+### Status: ✅ FIXED IN TEMPLATE
 
-### Why It Matters
-- Most apps have protected areas (dashboard, profile, admin)
-- TanStack Router has specific patterns for this
-- New developers need examples
+The template now includes:
+- `src/routes/_authenticated.tsx` - Layout route with auth guard
+- `src/routes/_authenticated/dashboard.tsx` - Example protected route
+- Cookie-based auth check in `beforeLoad`
 
-### Suggested Solution
-Add a protected route example:
+### What Was Added
 
 **src/routes/_authenticated.tsx:**
 ```tsx
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_authenticated')({
-  beforeLoad: async ({ context }) => {
-    if (!context.session) {
+  beforeLoad: async () => {
+    const isAuthenticated = typeof window !== 'undefined'
+      && document.cookie.includes('better-auth')
+
+    if (!isAuthenticated) {
       throw redirect({ to: '/login' })
     }
   },
-  component: () => <Outlet />
+  component: AuthenticatedLayout,
 })
+
+function AuthenticatedLayout() {
+  return <Outlet />
+}
 ```
 
 **src/routes/_authenticated/dashboard.tsx:**
 ```tsx
 export const Route = createFileRoute('/_authenticated/dashboard')({
-  component: Dashboard
+  component: Dashboard,
 })
 
 function Dashboard() {
-  return <div>Protected content</div>
+  return <div>Protected content - only authenticated users see this</div>
 }
 ```
 
 ---
 
-## 6. Error and 404 Routes
+## ✅ 6. Error and 404 Routes - NOW INCLUDED
 
-### Issue
-No error handling routes or 404 page.
+### Status: ✅ FIXED IN TEMPLATE
 
-### Why It Matters
-- Users hitting invalid URLs see broken page
-- Errors need graceful handling
-- Standard web app requirement
+The template now includes:
+- `src/components/NotFound.tsx` - Styled 404 component
+- `defaultNotFoundComponent` configured in router
+- Home and Back navigation buttons
 
-### Suggested Solution
-Add error routes:
+### What Was Added
 
-**src/routes/_404.tsx or similar:**
+**src/components/NotFound.tsx:**
 ```tsx
-export const Route = createFileRoute('/_404')({
-  component: NotFound
-})
+import { Link } from '@tanstack/react-router'
+import { Home, ArrowLeft } from 'lucide-react'
 
-function NotFound() {
+export function NotFound() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-4xl font-bold">404</h1>
-      <p>Page not found</p>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center space-y-6 p-8 max-w-md">
+        <h1 className="text-8xl font-bold text-primary/20">404</h1>
+        <h2 className="text-2xl font-semibold">Page Not Found</h2>
+        <p className="text-muted-foreground">
+          The page you're looking for doesn't exist.
+        </p>
+        <div className="flex gap-3 justify-center">
+          <Link to="/" className="...">
+            <Home className="w-4 h-4" /> Go Home
+          </Link>
+          <button onClick={() => window.history.back()}>
+            <ArrowLeft className="w-4 h-4" /> Go Back
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
 ```
 
+**In router.tsx:**
+```tsx
+import { NotFound } from './components/NotFound'
+
+const router = createRouter({
+  // ...
+  defaultNotFoundComponent: NotFound,
+})
+```
+
 ---
 
-## 7. Charts/Visualization Library
+## 7. Charts/Visualization Library - STILL SUGGESTED
 
 ### Issue
 No charting library for data visualization.
@@ -339,17 +357,22 @@ Document usage in convex/README.md.
 
 ---
 
-## Priority Matrix
+## Priority Matrix (Updated January 2026)
 
-| Feature | Effort | Impact | Priority |
-|---------|--------|--------|----------|
-| shadcn/ui | Medium | High | 🔴 Critical |
-| Testing | High | High | 🔴 Critical |
-| Toast Notifications | Low | Medium | 🟡 High |
-| Protected Routes | Low | High | 🟡 High |
-| Form Handling | Medium | High | 🟡 High |
-| 404/Error Routes | Low | Medium | 🟢 Medium |
-| i18n | Medium | Medium | 🟢 Medium |
-| Seed Script | Low | Medium | 🟢 Medium |
-| Rate Limiting | Low | Medium | 🟢 Medium |
-| Charts | Low | Low | ⚪ Optional |
+| Feature | Status | Notes |
+|---------|--------|-------|
+| shadcn/ui | ⚠️ Still Missing | Template has cn() but no components |
+| Testing | ✅ **Fixed** | Vitest + happy-dom + testing-library |
+| Toast Notifications | ⚠️ Suggested | Sonner easy to add |
+| Protected Routes | ✅ **Fixed** | _authenticated layout pattern |
+| Form Handling | ⚠️ Suggested | react-hook-form + zod |
+| 404/Error Routes | ✅ **Fixed** | NotFound component |
+| i18n | ⚠️ Suggested | Document pattern |
+| Seed Script | ⚠️ Suggested | Useful for development |
+| Rate Limiting | ⚠️ Suggested | @convex-dev/rate-limiter |
+| Charts | ⚠️ Optional | Recharts |
+
+---
+
+*Last updated: January 2026*
+*Based on template updates from our feedback*
