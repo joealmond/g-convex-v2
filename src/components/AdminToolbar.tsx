@@ -1,12 +1,22 @@
 import { Eye, EyeOff, Shield } from 'lucide-react'
+import { ClientOnly } from '@tanstack/react-router'
 import { useAdmin } from '@/hooks/use-admin'
 import { useImpersonate } from '@/hooks/use-impersonate'
 
 /**
  * Admin toolbar - shows at the bottom of the screen for admins.
  * Allows toggling "view as user" mode to see what regular users see.
+ * Wrapped in ClientOnly to prevent hydration mismatches with auth state.
  */
 export function AdminToolbar() {
+  return (
+    <ClientOnly fallback={null}>
+      <AdminToolbarContent />
+    </ClientOnly>
+  )
+}
+
+function AdminToolbarContent() {
   const { isRealAdmin } = useAdmin()
   const { isViewingAsUser, toggleViewAsUser, stopViewingAsUser } = useImpersonate()
 

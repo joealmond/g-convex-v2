@@ -17,9 +17,11 @@ if [ ! -f .env.local ]; then
   echo ""
 fi
 
-# Load environment variables
+# Load environment variables (skip comments and empty lines)
 if [ -f .env.local ]; then
-  export $(grep -v '^#' .env.local | xargs)
+  set -a
+  source <(grep -v '^#' .env.local | grep -v '^$' | grep '=')
+  set +a
 fi
 
 # Install dependencies if node_modules doesn't exist

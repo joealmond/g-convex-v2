@@ -2,6 +2,8 @@
 
 Best practices for working with AI coding assistants (GitHub Copilot, Claude, Cursor, etc.) on this codebase.
 
+> **📖 See Also:** [TEMPLATE_IMPROVEMENTS.md](../doctemplateimprovements/TEMPLATE_IMPROVEMENTS.md) for common pitfalls and lessons learned from real debugging sessions.
+
 ## 🎯 Quick Reference: Copy-Paste Prompts
 
 Use these prompts when asking AI to generate code for this project:
@@ -14,7 +16,8 @@ Create a new feature for [FEATURE_NAME]. Requirements:
 - Reuse existing components from src/components/
 - Follow the existing patterns in this codebase
 - Keep each file under 200 lines
-- Use TypeScript with proper types
+- Use TypeScript with proper types (NO any!)
+- Use unknown for catch blocks with instanceof Error checks
 ```
 
 ### When Creating UI Components
@@ -26,6 +29,7 @@ Create a [COMPONENT_NAME] component. Requirements:
 - Make it reusable with proper props interface
 - Follow mobile-first responsive design
 - Handle loading and error states
+- Import ReactNode type for children props
 ```
 
 ### When Adding Convex Functions
@@ -33,9 +37,11 @@ Create a [COMPONENT_NAME] component. Requirements:
 ```
 Add a Convex [query/mutation] for [FEATURE]. Requirements:
 - Use convex/values validators (v.string(), etc.) - NOT Zod
+- Use v.string() for Better Auth user IDs (NOT v.id('users'))
 - Add proper TypeScript types
 - Use requireAuth/requireAdmin from lib/authHelpers if auth needed
 - Keep mutations focused (single responsibility)
+- Don't perform side effects (inserts) in queries - use mutations
 - Add JSDoc comments
 ```
 
@@ -167,6 +173,108 @@ export const myMutation = mutation({
 ❌ Not allowed: my-function.ts (hyphens break Convex)
 ```
 
+### Better Auth User IDs
+
+When using Better Auth, user IDs are strings, not Convex document IDs:
+
+```typescript
+// ✅ CORRECT - Better Auth user IDs are strings
+votes: defineTable({
+  userId: v.optional(v.string()),  // String!
+  productId: v.id('products'),     // Convex ID
+})
+
+// ❌ WRONG - v.id('users') doesn't work with Better Auth
+votes: defineTable({
+  userId: v.optional(v.id('users')),  // Type error!
+})
+```
+
+### Queries vs Mutations
+
+Don't perform writes (side effects) in queries:
+
+```typescript
+// ✅ CORRECT - Query for reading, Mutation for writing
+export const getCurrent = query({
+  handler: async (ctx) => {
+    // Only READ operations
+    return await ctx.db.query('profiles')...
+  },
+})
+
+export const ensureProfile = mutation({
+  handler: async (ctx) => {
+    // CAN write to database
+    await ctx.db.insert('profiles', {...})
+  },
+})
+
+// ❌ WRONG - Writing in a query
+export const getCurrent = query({
+  handler: async (ctx) => {
+    if (!profile) {
+      await ctx.db.insert('profiles', {...})  // Not allowed in queries!
+    }
+  },
+})
+```
+
+---
+
+## 🛣️ TanStack Start Patterns
+
+### Client Entry (src/start.tsx)
+
+```tsx
+// ✅ CORRECT - v1.154+ pattern
+import { StartClient } from '@tanstack/react-start/client'
+import { StrictMode, startTransition } from 'react'
+import { hydrateRoot } from 'react-dom/client'
+
+startTransition(() => {
+  hydrateRoot(
+    document,
+    <StrictMode>
+      <StartClient />
+    </StrictMode>,
+  )
+})
+
+// ❌ WRONG - Old API
+import { StartClient } from '@tanstack/react-start'  // Wrong path!
+hydrateRoot(document, <StartClient router={getRouter()} />)  // No router prop!
+```
+
+### Server Entry (src/server.ts)
+
+```typescript
+// ✅ CORRECT - v1.154+ pattern
+import handler from '@tanstack/react-start/server-entry'
+
+export default {
+  fetch(request: Request) {
+    return handler.fetch(request)
+  },
+}
+
+// ❌ WRONG - Old API
+import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/server'
+export default createStartHandler({ getRouter })(defaultStreamHandler)
+```
+
+### Route Tree Generation
+
+The `routeTree.gen.ts` is auto-generated. If you see TypeScript errors about missing routes:
+
+```bash
+# Generate the route tree
+npx @tanstack/router-cli generate
+
+# Or start dev server (generates automatically)
+npm run dev
+```
+
 ---
 
 ## 🚫 Over-Engineering Prevention
@@ -288,12 +396,15 @@ Before accepting AI-generated code:
 
 1. **File size**: No file over 300 lines?
 2. **Imports**: All imports from existing project structure?
-3. **Types**: Full TypeScript types, no `any`?
+3. **Types**: Full TypeScript types, no `any`? (use `unknown` for catch blocks)
 4. **Reusability**: Common patterns extracted?
 5. **Mobile**: Responsive and touch-friendly?
 6. **Auth**: Protected routes use auth helpers?
 7. **Convex**: Using `v` validators, not Zod?
-8. **Naming**: No hyphens in Convex file names?
+8. **Convex IDs**: Using `v.string()` for Better Auth user IDs?
+9. **Naming**: No hyphens in Convex file names?
+10. **Route tree**: Run `npx @tanstack/router-cli generate` if routes changed?
+11. **Schema match**: Field names match between schema and frontend code?
 
 ---
 
@@ -310,6 +421,8 @@ Before accepting AI-generated code:
 5. **Iterate in small steps**: Don't ask for entire features at once
 
 6. **Review diffs**: Always check what changed before accepting
+
+7. **Check hook return types**: Hooks should return objects, not bare values
 
 7. **Test immediately**: Run the app after each AI change
 

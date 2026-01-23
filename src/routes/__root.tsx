@@ -1,9 +1,10 @@
 import { QueryClient } from '@tanstack/react-query'
-import { createRootRouteWithContext } from '@tanstack/react-router'
+import { createRootRouteWithContext, ClientOnly } from '@tanstack/react-router'
 import { Outlet, HeadContent, Scripts } from '@tanstack/react-router'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ImpersonateProvider } from '@/hooks/use-impersonate'
 import { AdminToolbar } from '@/components/AdminToolbar'
+import { VoteMigrationHandler } from '@/components/VoteMigrationHandler'
 
 import '../styles/globals.css'
 
@@ -17,8 +18,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'Convex + TanStack + Cloudflare' },
-      { name: 'description', content: 'Production-ready full-stack template' },
+      { title: 'G-Matrix - Gluten-Free Product Ratings' },
+      { name: 'description', content: 'Community-driven ratings for gluten-free products' },
     ],
     links: [{ rel: 'icon', href: '/favicon.ico' }],
   }),
@@ -37,6 +38,10 @@ function RootComponent() {
             <Outlet />
           </ErrorBoundary>
           <AdminToolbar />
+          {/* Vote migration runs client-side only */}
+          <ClientOnly fallback={null}>
+            <VoteMigrationHandler />
+          </ClientOnly>
         </ImpersonateProvider>
         <Scripts />
       </body>

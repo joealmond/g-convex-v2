@@ -26,10 +26,23 @@
  * Option 2: Use Better Auth's admin plugin (requires additional setup)
  */
 
-import { query } from './_generated/server'
+import { query, type QueryCtx } from './_generated/server'
 import { authComponent } from './auth'
 import { ADMIN_EMAILS, ROLES } from './lib/config'
 import type { AuthUser } from './lib/authHelpers'
+
+/**
+ * Safely get the authenticated user, returning null if unauthenticated.
+ * This prevents throwing during SSR when no session exists.
+ */
+async function getAuthUserSafe(ctx: QueryCtx): Promise<AuthUser | null> {
+  try {
+    return (await authComponent.getAuthUser(ctx)) as AuthUser | null
+  } catch {
+    // Unauthenticated - return null instead of throwing
+    return null
+  }
+}
 
 /**
  * Get the current authenticated user.
@@ -39,7 +52,7 @@ import type { AuthUser } from './lib/authHelpers'
 export const current = query({
   args: {},
   handler: async (ctx) => {
-    return await authComponent.getAuthUser(ctx)
+    return await getAuthUserSafe(ctx)
   },
 })
 
@@ -55,7 +68,7 @@ export const current = query({
 export const isAdmin = query({
   args: {},
   handler: async (ctx) => {
-    const user = (await authComponent.getAuthUser(ctx)) as AuthUser | null
+    const user = await getAuthUserSafe(ctx)
     if (!user) {
       return false
     }

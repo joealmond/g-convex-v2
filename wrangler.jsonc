@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "convex-tanstack-cloudflare",
   "compatibility_date": "2025-01-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat_v2"],
   "main": "@tanstack/react-start/server-entry",
   "assets": {
     "directory": "./dist/client"

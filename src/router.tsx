@@ -1,9 +1,22 @@
 import { createRouter } from '@tanstack/react-router'
-import { QueryClient, MutationCache } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react-query'
 import { ConvexQueryClient } from '@convex-dev/react-query'
 import { ConvexProvider, ConvexReactClient } from 'convex/react'
 import { routeTree } from './routeTree.gen'
 import { env } from './lib/env'
+import { Suspense, type ReactNode } from 'react'
+
+// Fallback component for lazy-loaded routes
+function RouteLoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center space-y-4">
+        <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  )
+}
 
 export function getRouter() {
   const convexClient = new ConvexReactClient(env.VITE_CONVEX_URL)
@@ -32,10 +45,23 @@ export function getRouter() {
     defaultPreload: 'intent',
     context: { queryClient },
     scrollRestoration: true,
-    Wrap: ({ children }) => (
-      <ConvexProvider client={convexClient}>
-        {children}
-      </ConvexProvider>
+    defaultPendingComponent: RouteLoadingFallback,
+    defaultNotFoundComponent: () => (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold">404</h1>
+          <p className="text-muted-foreground">Page not found</p>
+        </div>
+      </div>
+    ),
+    Wrap: ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>
+        <ConvexProvider client={convexClient}>
+          <Suspense fallback={<RouteLoadingFallback />}>
+            {children}
+          </Suspense>
+        </ConvexProvider>
+      </QueryClientProvider>
     ),
   })
 

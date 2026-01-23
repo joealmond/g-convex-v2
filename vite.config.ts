@@ -5,7 +5,7 @@ import tsConfigPaths from 'vite-tsconfig-paths'
 import { cloudflare } from '@cloudflare/vite-plugin'
 import tailwindcss from '@tailwindcss/vite'
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode: _mode }) => {
   const cloudflareEnv = process.env.CLOUDFLARE_ENV || 'preview'
   const isProduction = cloudflareEnv === 'production'
 
@@ -18,7 +18,6 @@ export default defineConfig(({ mode }) => {
       cloudflare({
         viteEnvironment: { name: 'ssr' },
         configPath: './wrangler.jsonc',
-        environment: cloudflareEnv,
       }),
       tsConfigPaths({
         projects: ['./tsconfig.json'],

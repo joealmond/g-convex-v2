@@ -1,0 +1,71 @@
+{
+  "nav": {
+    "home": "Főoldal",
+    "profile": "Profil",
+    "admin": "Admin",
+    "login": "Bejelentkezés",
+    "logout": "Kijelentkezés"
+  },
+  "voting": {
+    "safe": "Tiszta",
+    "sketchy": "Gyanús",
+    "unsafe": "Veszélyes",
+    "yummy": "Finom!",
+    "meh": "Elmegy",
+    "gross": "Rossz",
+    "safety": "Biztonság",
+    "taste": "Íz",
+    "price": "Ár"
+  },
+  "quadrants": {
+    "holyGrail": "Szent Grál",
+    "survivorFood": "Túlélő Étel",
+    "russianRoulette": "Orosz Rulett",
+    "theBin": "Szemetes",
+    "holyGrailDesc": "Biztonságos és finom - a legjobb!",
+    "survivorFoodDesc": "Biztonságos, de nem túl finom",
+    "russianRouletteDesc": "Finom, de kockázatos a biztonság",
+    "theBinDesc": "Nem biztonságos és nem finom - kerüld!"
+  },
+  "gamification": {
+    "points": "Pontok",
+    "badges": "Jelvények",
+    "streak": "Sorozat",
+    "totalVotes": "Összes Szavazat",
+    "firstScout": "Első Felderító",
+    "trailblazer": "Úttörő",
+    "centuryScout": "Száz Felderítő",
+    "locationPro": "Helymeghatározó",
+    "storeHunter": "Boltvadász",
+    "streakMaster": "Sorozat Mester",
+    "productPioneer": "Termék Úttörő"
+  },
+  "common": {
+    "loading": "Betöltés...",
+    "error": "Hiba",
+    "save": "Mentés",
+    "cancel": "Mégse",
+    "delete": "Törlés",
+    "edit": "Szerkesztés",
+    "search": "Keresés",
+    "filter": "Szűrés",
+    "close": "Bezárás",
+    "submit": "Küldés",
+    "vote": "Szavazás",
+    "addProduct": "Termék Hozzáadása"
+  },
+  "products": {
+    "name": "Termék Neve",
+    "noProducts": "Nincs termék",
+    "addNew": "Új Termék",
+    "ingredients": "Összetevők",
+    "votes": "szavazat",
+    "nearMe": "Közelemben"
+  },
+  "errors": {
+    "generic": "Valami hiba történt",
+    "notFound": "Nem található",
+    "unauthorized": "Be kell jelentkezned",
+    "rateLimited": "Túl sok kérés. Kérlek, lassíts."
+  }
+}

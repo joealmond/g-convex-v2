@@ -1,0 +1,71 @@
+{
+  "nav": {
+    "home": "Home",
+    "profile": "Profile",
+    "admin": "Admin",
+    "login": "Sign In",
+    "logout": "Sign Out"
+  },
+  "voting": {
+    "safe": "Clean",
+    "sketchy": "Sketchy",
+    "unsafe": "Wrecked",
+    "yummy": "Yass!",
+    "meh": "Meh",
+    "gross": "Pass",
+    "safety": "Safety",
+    "taste": "Taste",
+    "price": "Price"
+  },
+  "quadrants": {
+    "holyGrail": "Holy Grail",
+    "survivorFood": "Survivor Food",
+    "russianRoulette": "Russian Roulette",
+    "theBin": "The Bin",
+    "holyGrailDesc": "Safe and tasty - the best!",
+    "survivorFoodDesc": "Safe but not very tasty",
+    "russianRouletteDesc": "Tasty but risky for safety",
+    "theBinDesc": "Not safe and not tasty - avoid!"
+  },
+  "gamification": {
+    "points": "Points",
+    "badges": "Badges",
+    "streak": "Streak",
+    "totalVotes": "Total Votes",
+    "firstScout": "First Scout",
+    "trailblazer": "Trailblazer",
+    "centuryScout": "Century Scout",
+    "locationPro": "Location Pro",
+    "storeHunter": "Store Hunter",
+    "streakMaster": "Streak Master",
+    "productPioneer": "Product Pioneer"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "close": "Close",
+    "submit": "Submit",
+    "vote": "Vote",
+    "addProduct": "Add Product"
+  },
+  "products": {
+    "name": "Product Name",
+    "noProducts": "No products found",
+    "addNew": "Add New Product",
+    "ingredients": "Ingredients",
+    "votes": "votes",
+    "nearMe": "Near Me"
+  },
+  "errors": {
+    "generic": "Something went wrong",
+    "notFound": "Not found",
+    "unauthorized": "You must be logged in",
+    "rateLimited": "Too many requests. Please slow down."
+  }
+}

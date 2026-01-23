@@ -1,0 +1,389 @@
+import { v } from 'convex/values'
+import { query, mutation, internalMutation } from './_generated/server'
+import { internal, components } from './_generated/api'
+import { RateLimiter } from '@convex-dev/rate-limiter'
+import type { Id } from './_generated/dataModel'
+
+const rateLimiter = new RateLimiter(components.rateLimiter, {
+  vote: { kind: 'token bucket', rate: 10, period: 60000, capacity: 15 },
+  newProduct: { kind: 'token bucket', rate: 5, period: 3600000, capacity: 10 },
+})
+
+/**
+ * Get all votes for a product
+ */
+export const getByProduct = query({
+  args: { productId: v.id('products') },
+  handler: async (ctx, { productId }) => {
+    return await ctx.db
+      .query('votes')
+      .withIndex('by_product', (q) => q.eq('productId', productId))
+      .collect()
+  },
+})
+
+/**
+ * Get all votes by a user
+ * Note: userId is a string because Better Auth uses string UUIDs, not Convex IDs
+ */
+export const getByUser = query({
+  args: { userId: v.string() },
+  handler: async (ctx, { userId }) => {
+    return await ctx.db
+      .query('votes')
+      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .collect()
+  },
+})
+
+/**
+ * Get votes by anonymous ID
+ */
+export const getByAnonymous = query({
+  args: { anonymousId: v.string() },
+  handler: async (ctx, { anonymousId }) => {
+    return await ctx.db
+      .query('votes')
+      .withIndex('by_anonymous', (q) => q.eq('anonymousId', anonymousId))
+      .collect()
+  },
+})
+
+/**
+ * Cast a vote for a product
+ */
+export const cast = mutation({
+  args: {
+    productId: v.id('products'),
+    anonymousId: v.optional(v.string()),
+    safety: v.number(),
+    taste: v.number(),
+    price: v.optional(v.number()),
+    storeName: v.optional(v.string()),
+    latitude: v.optional(v.number()),
+    longitude: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    const userId = identity?.subject ?? undefined
+    const isAnonymous = !userId
+
+    // Rate limiting
+    const rateLimitKey = userId ?? args.anonymousId ?? 'unknown'
+    const { ok, retryAfter } = await rateLimiter.limit(ctx, 'vote', {
+      key: rateLimitKey,
+    })
+
+    if (!ok) {
+      throw new Error(
+        `Rate limit exceeded. Please try again in ${Math.ceil(retryAfter / 1000)} seconds.`
+      )
+    }
+
+    // Validate vote values
+    if (args.safety < 0 || args.safety > 100) {
+      throw new Error('Safety must be between 0 and 100')
+    }
+    if (args.taste < 0 || args.taste > 100) {
+      throw new Error('Taste must be between 0 and 100')
+    }
+    if (args.price !== undefined && (args.price < 1 || args.price > 5)) {
+      throw new Error('Price must be between 1 and 5')
+    }
+
+    // Check if user already voted for this product
+    let existingVote
+    if (userId) {
+      existingVote = await ctx.db
+        .query('votes')
+        .withIndex('by_product', (q) => q.eq('productId', args.productId))
+        .filter((q) => q.eq(q.field('userId'), userId))
+        .first()
+    } else if (args.anonymousId) {
+      existingVote = await ctx.db
+        .query('votes')
+        .withIndex('by_product', (q) => q.eq('productId', args.productId))
+        .filter((q) => q.eq(q.field('anonymousId'), args.anonymousId))
+        .first()
+    }
+
+    let voteId
+    if (existingVote) {
+      // Update existing vote
+      await ctx.db.patch(existingVote._id, {
+        safety: args.safety,
+        taste: args.taste,
+        price: args.price,
+        storeName: args.storeName,
+        latitude: args.latitude,
+        longitude: args.longitude,
+      })
+      voteId = existingVote._id
+    } else {
+      // Create new vote
+      voteId = await ctx.db.insert('votes', {
+        productId: args.productId,
+        userId: userId,
+        anonymousId: args.anonymousId,
+        isAnonymous,
+        safety: args.safety,
+        taste: args.taste,
+        price: args.price,
+        storeName: args.storeName,
+        latitude: args.latitude,
+        longitude: args.longitude,
+        createdAt: Date.now(),
+      })
+    }
+
+    // Recalculate product averages
+    await ctx.scheduler.runAfter(0, internal.votes.recalculateProduct, {
+      productId: args.productId,
+    })
+
+    // Award points if registered user
+    if (userId && !existingVote) {
+      await ctx.scheduler.runAfter(0, internal.votes.awardPoints, {
+        userId: userId,
+        hasPrice: args.price !== undefined,
+        hasStore: args.storeName !== undefined,
+        hasGPS: args.latitude !== undefined && args.longitude !== undefined,
+      })
+    }
+
+    return voteId
+  },
+})
+
+/**
+ * Internal mutation to recalculate product averages
+ */
+export const recalculateProduct = internalMutation({
+  args: { productId: v.id('products') },
+  handler: async (ctx, { productId }) => {
+    const votes = await ctx.db
+      .query('votes')
+      .withIndex('by_product', (q) => q.eq('productId', productId))
+      .collect()
+
+    if (votes.length === 0) {
+      await ctx.db.patch(productId, {
+        averageSafety: 50,
+        averageTaste: 50,
+        avgPrice: undefined,
+        voteCount: 0,
+        registeredVotes: 0,
+        anonymousVotes: 0,
+        lastUpdated: Date.now(),
+      })
+      return
+    }
+
+    let totalWeightSafety = 0
+    let totalWeightTaste = 0
+    let totalWeightPrice = 0
+    let weightedSafetySum = 0
+    let weightedTasteSum = 0
+    let weightedPriceSum = 0
+    let registeredCount = 0
+    let anonymousCount = 0
+
+    const REGISTERED_WEIGHT = 2
+    const ANONYMOUS_WEIGHT = 1
+
+    for (const vote of votes) {
+      const weight = vote.isAnonymous ? ANONYMOUS_WEIGHT : REGISTERED_WEIGHT
+
+      weightedSafetySum += vote.safety * weight
+      totalWeightSafety += weight
+
+      weightedTasteSum += vote.taste * weight
+      totalWeightTaste += weight
+
+      if (vote.price !== undefined) {
+        weightedPriceSum += vote.price * weight
+        totalWeightPrice += weight
+      }
+
+      if (vote.isAnonymous) {
+        anonymousCount++
+      } else {
+        registeredCount++
+      }
+    }
+
+    await ctx.db.patch(productId, {
+      averageSafety: weightedSafetySum / totalWeightSafety,
+      averageTaste: weightedTasteSum / totalWeightTaste,
+      avgPrice: totalWeightPrice > 0 ? weightedPriceSum / totalWeightPrice : undefined,
+      voteCount: votes.length,
+      registeredVotes: registeredCount,
+      anonymousVotes: anonymousCount,
+      lastUpdated: Date.now(),
+    })
+  },
+})
+
+/**
+ * Internal mutation to award points for voting
+ */
+export const awardPoints = internalMutation({
+  args: {
+    userId: v.string(),
+    hasPrice: v.boolean(),
+    hasStore: v.boolean(),
+    hasGPS: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    let profile = await ctx.db
+      .query('profiles')
+      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .first()
+
+    if (!profile) {
+      // Create profile if it doesn't exist
+      const profileId = await ctx.db.insert('profiles', {
+        userId: args.userId,
+        points: 0,
+        badges: [],
+        streak: 0,
+        totalVotes: 0,
+      })
+      profile = await ctx.db.get(profileId)
+    }
+
+    if (!profile) return
+
+    // Calculate points
+    let points = 10 // Base vote points
+    if (args.hasPrice) points += 5
+    if (args.hasStore) points += 10
+    if (args.hasGPS) points += 5
+
+    // Check streak
+    const todayParts = new Date().toISOString().split('T')
+    const today = todayParts[0] ?? ''
+    const lastVoteDate = profile.lastVoteDate
+    let newStreak = profile.streak
+
+    if (lastVoteDate) {
+      const lastDate = new Date(lastVoteDate)
+      const todayDate = new Date(today)
+      const diffDays = Math.floor(
+        (todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
+      )
+
+      if (diffDays === 1) {
+        newStreak = profile.streak + 1
+      } else if (diffDays > 1) {
+        newStreak = 1
+      }
+      // If same day, keep current streak
+    } else {
+      newStreak = 1
+    }
+
+    if (newStreak >= 3) {
+      points += 15 // Streak bonus
+    }
+
+    // Update profile
+    await ctx.db.patch(profile._id, {
+      points: profile.points + points,
+      totalVotes: profile.totalVotes + 1,
+      streak: newStreak,
+      lastVoteDate: today,
+    })
+
+    // Check for new badges
+    // This will be implemented in profiles.ts
+  },
+})
+
+/**
+ * Migrate anonymous votes to registered user
+ * Called when user signs in
+ */
+export const migrateAnonymous = mutation({
+  args: { anonymousId: v.string() },
+  handler: async (ctx, { anonymousId }) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) {
+      throw new Error('Must be logged in to migrate votes')
+    }
+
+    const userId = identity.subject
+
+    // Find all anonymous votes
+    const anonVotes = await ctx.db
+      .query('votes')
+      .withIndex('by_anonymous', (q) => q.eq('anonymousId', anonymousId))
+      .collect()
+
+    const affectedProducts = new Set<Id<'products'>>()
+
+    for (const vote of anonVotes) {
+      // Check if user already has a vote for this product
+      const existingVote = await ctx.db
+        .query('votes')
+        .withIndex('by_product', (q) => q.eq('productId', vote.productId))
+        .filter((q) => q.eq(q.field('userId'), userId))
+        .first()
+
+      if (existingVote) {
+        // User already voted, delete anonymous vote
+        await ctx.db.delete(vote._id)
+      } else {
+        // Migrate vote to user
+        await ctx.db.patch(vote._id, {
+          userId: userId,
+          anonymousId: undefined,
+          isAnonymous: false,
+        })
+      }
+
+      affectedProducts.add(vote.productId)
+    }
+
+    // Recalculate averages for affected products
+    for (const productId of affectedProducts) {
+      await ctx.scheduler.runAfter(0, internal.votes.recalculateProduct, {
+        productId: productId,
+      })
+    }
+
+    return { migratedCount: anonVotes.length }
+  },
+})
+
+/**
+ * Delete a vote (user's own or admin)
+ */
+export const deleteVote = mutation({
+  args: { voteId: v.id('votes') },
+  handler: async (ctx, { voteId }) => {
+    const identity = await ctx.auth.getUserIdentity()
+    const vote = await ctx.db.get(voteId)
+
+    if (!vote) {
+      throw new Error('Vote not found')
+    }
+
+    // Check if user owns the vote or is admin
+    const userId = identity?.subject ?? null
+    const isOwner = vote.userId === userId
+    // TODO: Add admin check
+
+    if (!isOwner) {
+      throw new Error('Not authorized to delete this vote')
+    }
+
+    const productId = vote.productId
+    await ctx.db.delete(voteId)
+
+    // Recalculate product averages
+    await ctx.scheduler.runAfter(0, internal.votes.recalculateProduct, {
+      productId,
+    })
+  },
+})
