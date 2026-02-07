@@ -2,15 +2,12 @@ import { query, mutation } from './_generated/server'
 import { v } from 'convex/values'
 
 // Generate an upload URL for file uploads
+// Allows both authenticated and anonymous users (for product image uploads)
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    // Require authentication for uploads
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) {
-      throw new Error('Must be authenticated to upload files')
-    }
-
+    // Allow both authenticated and anonymous users to upload product images
+    // The product creation mutation will handle attribution
     return await ctx.storage.generateUploadUrl()
   },
 })

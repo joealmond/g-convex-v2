@@ -24,6 +24,7 @@ export default defineSchema({
   products: defineTable({
     name: v.string(),
     imageUrl: v.optional(v.string()),
+    backImageUrl: v.optional(v.string()), // Back of package image
     ingredients: v.optional(v.array(v.string())),
     averageSafety: v.number(), // 0-100
     averageTaste: v.number(), // 0-100
@@ -34,6 +35,15 @@ export default defineSchema({
     lastUpdated: v.number(),
     createdBy: v.optional(v.string()), // Better Auth user._id is a string
     createdAt: v.number(),
+    // Extended fields from g-convex
+    currency: v.optional(v.string()), // e.g., "HUF", "EUR"
+    purchaseLocation: v.optional(v.string()),
+    stores: v.optional(v.array(v.object({
+      name: v.string(),
+      lastSeenAt: v.number(),
+      price: v.optional(v.number()),
+      geoPoint: v.optional(v.object({ lat: v.number(), lng: v.number() })),
+    }))),
   })
     .index('by_name', ['name'])
     .index('by_created', ['createdAt']),
@@ -64,5 +74,12 @@ export default defineSchema({
     streak: v.number(),
     lastVoteDate: v.optional(v.string()), // YYYY-MM-DD format
     totalVotes: v.number(),
+    // Extended gamification fields from g-convex
+    gpsVotes: v.optional(v.number()), // Votes with GPS location
+    newProductVotes: v.optional(v.number()), // First votes on new products
+    storesTagged: v.optional(v.array(v.string())), // Unique stores tagged
+    longestStreak: v.optional(v.number()), // Best streak ever
+    votesToday: v.optional(v.number()), // Daily vote counter
+    role: v.optional(v.string()), // "admin" | "user"
   }).index('by_user', ['userId']),
 })

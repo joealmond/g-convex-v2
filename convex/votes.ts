@@ -156,6 +156,129 @@ export const cast = mutation({
 })
 
 /**
+ * Create a new product and cast the initial vote atomically
+ * Awards bonus points for discovering a new product
+ */
+export const createProductAndVote = mutation({
+  args: {
+    name: v.string(),
+    imageUrl: v.optional(v.string()),
+    backImageUrl: v.optional(v.string()),
+    ingredients: v.optional(v.array(v.string())),
+    anonymousId: v.optional(v.string()),
+    safety: v.number(),
+    taste: v.number(),
+    price: v.optional(v.number()),
+    storeName: v.optional(v.string()),
+    latitude: v.optional(v.number()),
+    longitude: v.optional(v.number()),
+    currency: v.optional(v.string()),
+    purchaseLocation: v.optional(v.string()),
+    // AI analysis data (optional)
+    aiAnalysis: v.optional(v.object({
+      productName: v.string(),
+      reasoning: v.string(),
+      safety: v.number(),
+      taste: v.number(),
+      tags: v.array(v.string()),
+      containsGluten: v.boolean(),
+      warnings: v.array(v.string()),
+    })),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    const userId = identity?.subject ?? undefined
+    const isAnonymous = !userId
+
+    // Rate limiting for new products
+    const rateLimitKey = userId ?? args.anonymousId ?? 'unknown'
+    const { ok, retryAfter } = await rateLimiter.limit(ctx, 'newProduct', {
+      key: rateLimitKey,
+    })
+
+    if (!ok) {
+      throw new Error(
+        `Rate limit exceeded. Please try again in ${Math.ceil(retryAfter / 1000)} seconds.`
+      )
+    }
+
+    // Check if product with same name exists
+    const existingProduct = await ctx.db
+      .query('products')
+      .withIndex('by_name', (q) => q.eq('name', args.name))
+      .first()
+
+    if (existingProduct) {
+      throw new Error('A product with this name already exists')
+    }
+
+    // Validate vote values
+    if (args.safety < 0 || args.safety > 100) {
+      throw new Error('Safety must be between 0 and 100')
+    }
+    if (args.taste < 0 || args.taste > 100) {
+      throw new Error('Taste must be between 0 and 100')
+    }
+
+    const now = Date.now()
+
+    // Create the product
+    const productId = await ctx.db.insert('products', {
+      name: args.name,
+      imageUrl: args.imageUrl,
+      backImageUrl: args.backImageUrl,
+      ingredients: args.ingredients ?? args.aiAnalysis?.tags,
+      averageSafety: args.safety,
+      averageTaste: args.taste,
+      avgPrice: args.price,
+      voteCount: 1,
+      registeredVotes: isAnonymous ? 0 : 1,
+      anonymousVotes: isAnonymous ? 1 : 0,
+      lastUpdated: now,
+      createdBy: userId,
+      createdAt: now,
+      currency: args.currency,
+      purchaseLocation: args.purchaseLocation,
+      stores: args.storeName ? [{
+        name: args.storeName,
+        lastSeenAt: now,
+        price: args.price,
+        geoPoint: args.latitude && args.longitude 
+          ? { lat: args.latitude, lng: args.longitude }
+          : undefined,
+      }] : undefined,
+    })
+
+    // Create the initial vote
+    const voteId = await ctx.db.insert('votes', {
+      productId,
+      userId,
+      anonymousId: args.anonymousId,
+      isAnonymous,
+      safety: args.safety,
+      taste: args.taste,
+      price: args.price,
+      storeName: args.storeName,
+      latitude: args.latitude,
+      longitude: args.longitude,
+      createdAt: now,
+    })
+
+    // Award bonus points for discovering a new product
+    if (userId) {
+      await ctx.scheduler.runAfter(0, internal.votes.awardNewProductPoints, {
+        userId,
+        hasPrice: args.price !== undefined,
+        hasStore: args.storeName !== undefined,
+        hasGPS: args.latitude !== undefined && args.longitude !== undefined,
+      })
+    }
+
+    return { productId, voteId }
+  },
+})
+
+/**
  * Internal mutation to recalculate product averages
  */
 export const recalculateProduct = internalMutation({
@@ -220,6 +343,55 @@ export const recalculateProduct = internalMutation({
       registeredVotes: registeredCount,
       anonymousVotes: anonymousCount,
       lastUpdated: Date.now(),
+    })
+  },
+})
+
+/**
+ * Internal mutation to award bonus points for discovering a new product
+ */
+export const awardNewProductPoints = internalMutation({
+  args: {
+    userId: v.string(),
+    hasPrice: v.boolean(),
+    hasStore: v.boolean(),
+    hasGPS: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    let profile = await ctx.db
+      .query('profiles')
+      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .first()
+
+    if (!profile) {
+      // Create profile if it doesn't exist
+      const profileId = await ctx.db.insert('profiles', {
+        userId: args.userId,
+        points: 0,
+        badges: [],
+        streak: 0,
+        totalVotes: 0,
+      })
+      profile = await ctx.db.get(profileId)
+    }
+
+    if (!profile) return
+
+    // Calculate points - bonus for new product discovery
+    let points = 25 // Base new product points (more than regular vote)
+    if (args.hasPrice) points += 5
+    if (args.hasStore) points += 10
+    if (args.hasGPS) points += 10 // Extra bonus for GPS on new products
+
+    // Update profile with extended fields
+    const newProductVotes = (profile.newProductVotes ?? 0) + 1
+    const gpsVotes = args.hasGPS ? (profile.gpsVotes ?? 0) + 1 : (profile.gpsVotes ?? 0)
+
+    await ctx.db.patch(profile._id, {
+      points: profile.points + points,
+      totalVotes: profile.totalVotes + 1,
+      newProductVotes,
+      gpsVotes,
     })
   },
 })
