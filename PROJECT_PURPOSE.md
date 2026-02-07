@@ -24,7 +24,7 @@ All functionality from the original g-convex must be implemented with **100% fea
 ### 2. Document Template Improvements
 
 While building the app, we document **insights, gaps, and improvements** for the original template:
-- **Original Template**: `/Users/mandulaj/dev/source/convex-tanstack-cloudfare`
+- **Original Template**: `/Users/mandulaj/dev/source/convex-tanstack-cloudflare`
 - **Documentation Location**: `./doctemplateimprovements/`
 
 Every issue, missing feature, or improvement opportunity discovered during development should be documented for upstream contribution.

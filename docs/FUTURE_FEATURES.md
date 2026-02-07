@@ -79,11 +79,6 @@ For vibe-coding a mobile app with Convex:
 
 ## 🗂️ Template Improvements (Deferred)
 
-### Repository Rename
-- Current: `convex-tanstack-cloudfare` (typo)
-- Target: `convex-tanstack-cloudflare`
-- **Blocker**: Update all external references
-
 ### Architecture Decision Records (ADRs)
 Document these decisions:
 - Why Better Auth over Clerk (self-hosted, data ownership)

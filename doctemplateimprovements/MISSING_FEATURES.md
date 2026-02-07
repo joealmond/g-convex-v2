@@ -1,6 +1,6 @@
 # Missing Features
 
-Features that should be added to the `convex-tanstack-cloudfare` template to make it more production-ready.
+Features that should be added to the `convex-tanstack-cloudflare` template to make it more production-ready.
 
 > **Update (January 2026):** The template has been updated! Many of these features are now included. Items marked with ✅ are now in the template.
 

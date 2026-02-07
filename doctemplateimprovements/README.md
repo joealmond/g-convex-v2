@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This directory contains documentation of **issues, gaps, and improvement opportunities** discovered while building the G-Matrix application using the `convex-tanstack-cloudfare` template.
+This directory contains documentation of **issues, gaps, and improvement opportunities** discovered while building the G-Matrix application using the `convex-tanstack-cloudflare` template.
 
 These findings are intended to be contributed back to the original template to improve it for future users.
 
@@ -10,7 +10,7 @@ These findings are intended to be contributed back to the original template to i
 
 ## Original Template
 
-**Repository**: `/Users/mandulaj/dev/source/convex-tanstack-cloudfare`
+**Repository**: `/Users/mandulaj/dev/source/convex-tanstack-cloudflare`
 
 **Description**: A production-ready template combining:
 - TanStack Start (React SSR with file-based routing)
