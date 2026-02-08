@@ -5,60 +5,64 @@
 
 /* Base styles */
 :root {
-  /* Kimi Design System - Sage Green + Cream Palette */
+  /* Kimi Design System - Safe/exact HEX values */
+  --background: #FAF8F5;        /* Cream */
+  --foreground: #2D3436;        /* Charcoal */
+  
+  --card: #FFFFFF;              /* Warm White */
+  --card-foreground: #2D3436;   
+  
+  --popover: #FFFFFF;
+  --popover-foreground: #2D3436;
+  
+  --primary: #7CB342;           /* Sage Green */
+  --primary-foreground: #FFFFFF;
+  
+  --secondary: #AED581;         /* Light Sage (as secondary background) or White/Sage mix */
+  --secondary-foreground: #2D3436;
+  
+  --muted: #F1F2F6;             /* Very light gray for muted backgrounds */
+  --muted-foreground: #636E72;  /* Gray */
+  
+  --accent: #AED581;            /* Light Sage */
+  --accent-foreground: #2D3436;
+  
+  --destructive: #E74C3C;       /* Danger Red */
+  --destructive-foreground: #FFFFFF;
+  
+  --border: #B2BEC3;            /* Light Gray */
+  --input: #B2BEC3;
+  --ring: #7CB342;              /* Sage Green */
+  
+  --radius: 0.625rem;
+  
+  /* Chart Colors (aligned with Safety/Design system) */
+  --chart-1: #7CB342; /* Sage */
+  --chart-2: #F39C12; /* Amber */
+  --chart-3: #E74C3C; /* Red */
+  --chart-4: #27AE60; /* Safety Green */
+  --chart-5: #F1C40F; /* Gold */
+  
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #2D3436;
+  --sidebar-primary: #7CB342;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #FAF8F5;
+  --sidebar-accent-foreground: #7CB342;
+  --sidebar-border: #B2BEC3;
+  --sidebar-ring: #7CB342;
+
+  /* Legacy variable support (for components using old names) */
   --color-primary: #7CB342;
-  --color-primary-dark: #558B2F;
-  --color-primary-light: #AED581;
   --color-bg: #FAF8F5;
   --color-surface: #FFFFFF;
   --color-text: #2D3436;
-  --color-text-secondary: #636E72;
-  --color-border: #B2BEC3;
-  --color-safety-high: #27AE60;
-  --color-safety-mid: #F39C12;
-  --color-safety-low: #E74C3C;
-  --color-gold: #F1C40F;
-
-  /* Shadcn UI Theme - Light Mode (mapped to Kimi palette) */
-  --background: oklch(0.99 0.005 89);        /* Cream background */
-  --foreground: oklch(0.25 0.01 260);        /* Charcoal text */
-  --card: oklch(1 0 0);                      /* White cards */
-  --card-foreground: oklch(0.25 0.01 260);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.25 0.01 260);
-  --primary: oklch(0.62 0.15 135);           /* Sage green #7CB342 */
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.01 89);          /* Light cream */
-  --secondary-foreground: oklch(0.25 0.01 260);
-  --muted: oklch(0.96 0.01 89);
-  --muted-foreground: oklch(0.50 0.01 260);  /* Gray text */
-  --accent: oklch(0.62 0.15 135);            /* Accent = primary */
-  --accent-foreground: oklch(0.99 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.85 0.01 260);            /* Light gray border */
-  --input: oklch(0.85 0.01 260);
-  --ring: oklch(0.62 0.15 135);              /* Ring = primary */
-  --radius: 0.625rem;
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
 
   /* G-Matrix Quadrant Colors */
-  --holy-grail: 142 76% 36%;      /* Green - top right (safe + tasty) */
-  --survivor-food: 48 96% 53%;    /* Yellow - top left (safe but not tasty) */
-  --russian-roulette: 25 95% 53%; /* Orange - bottom right (unsafe but tasty) */
-  --the-bin: 0 84% 60%;           /* Red - bottom left (unsafe + not tasty) */
+  --holy-grail: 142 76% 36%;      /* Green */
+  --survivor-food: 48 96% 53%;    /* Yellow */
+  --russian-roulette: 25 95% 53%; /* Orange */
+  --the-bin: 0 84% 60%;           /* Red */
 }
 
 * {
@@ -119,43 +123,53 @@ body {
 }
 
 .dark {
-  /* Kimi Dark Mode Palette */
+  /* Kimi Dark Mode Palette - Safe HEX values */
+  --background: #0F172A;        /* Deep Navy */
+  --foreground: #F1F5F9;        /* Light Text */
+  
+  --card: #1E293B;              /* Slate */
+  --card-foreground: #F1F5F9;
+  
+  --popover: #1E293B;
+  --popover-foreground: #F1F5F9;
+  
+  --primary: #FBBF24;           /* Soft Amber */
+  --primary-foreground: #0F172A; /* Dark text on amber */
+  
+  --secondary: #334155;         /* Dark Slate */
+  --secondary-foreground: #F1F5F9;
+  
+  --muted: #334155;
+  --muted-foreground: #94A3B8;  /* Muted Text */
+  
+  --accent: #FBBF24;            /* Amber */
+  --accent-foreground: #0F172A;
+  
+  --destructive: #F87171;       /* Brighter Red */
+  --destructive-foreground: #FFFFFF;
+  
+  --border: #334155;
+  --input: #334155;
+  --ring: #FBBF24;
+  
+  --chart-1: #FBBF24;
+  --chart-2: #34D399;
+  --chart-3: #60A5FA;
+  --chart-4: #A78BFA;
+  --chart-5: #F472B6;
+  
+  --sidebar: #1E293B;
+  --sidebar-foreground: #F1F5F9;
+  --sidebar-primary: #FBBF24;
+  --sidebar-primary-foreground: #0F172A;
+  --sidebar-accent: #334155;
+  --sidebar-accent-foreground: #FBBF24;
+  --sidebar-border: #334155;
+  --sidebar-ring: #FBBF24;
+
+  /* Legacy variable support */
   --color-bg-dark: #0F172A;
   --color-surface-dark: #1E293B;
-
-  /* Shadcn UI Theme - Dark Mode */
-  --background: oklch(0.15 0.01 250);        /* Dark blue background */
-  --foreground: oklch(0.98 0 0);             /* White text */
-  --card: oklch(0.20 0.01 250);              /* Slightly lighter surface */
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.20 0.01 250);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.62 0.15 135);           /* Keep sage green for consistency */
-  --primary-foreground: oklch(0.15 0.01 250);
-  --secondary: oklch(0.25 0.01 250);
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.25 0.01 250);
-  --muted-foreground: oklch(0.70 0.01 260);
-  --accent: oklch(0.62 0.15 135);
-  --accent-foreground: oklch(0.15 0.01 250);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.62 0.15 135);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 
   /* G-Matrix Quadrant Colors (dark mode) */
   --holy-grail: 142 76% 36%;

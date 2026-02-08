@@ -73,28 +73,28 @@ export const appConfig = {
       id: "holyGrail",
       label: "Holy Grail",
       emoji: "🏆",
-      color: "#27AE60", // Green
+      color: "#27AE60", // Green (Safety High)
       description: "Safe and delicious — the ideal",
     },
     topLeft: {
       id: "survivor",
-      label: "Survivor",
+      label: "Survivor Food",
       emoji: "🛡️",
-      color: "#3498DB", // Blue
+      color: "#F1C40F", // Gold/Yellow (Safety Mid)
       description: "Safe but mediocre taste",
     },
     bottomLeft: {
       id: "bin",
-      label: "Bin",
+      label: "The Bin",
       emoji: "🗑️",
-      color: "#95A5A6", // Gray
+      color: "#E74C3C", // Red (Safety Low)
       description: "Unsafe and bad taste — avoid",
     },
     bottomRight: {
-      id: "risky",
-      label: "Risky",
+      id: "roulette",
+      label: "Russian Roulette",
       emoji: "⚠️",
-      color: "#E67E22", // Orange
+      color: "#E67E22", // Orange (Risky)
       description: "Tasty but safety concerns",
     },
   },
