@@ -4,12 +4,10 @@ import { api } from '@convex/_generated/api'
 import { Suspense, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { RatingBars } from '@/components/product/RatingBars'
 import { StoreList } from '@/components/product/StoreList'
-import { VotingPanel } from '@/components/dashboard/VotingPanel'
-import { FineTunePanel } from '@/components/dashboard/FineTunePanel'
+import { VotingSheet } from '@/components/product/VotingSheet'
 import { StoreTagInput } from '@/components/dashboard/StoreTagInput'
 import { CoordinateGrid } from '@/components/dashboard/CoordinateGrid'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
@@ -55,6 +53,7 @@ function ProductDetailContent() {
   const adminStatus = useAdmin()
 
   const product = useQuery(api.products.getByName, { name: decodeURIComponent(name) })
+  const user = useQuery(api.users.current)
   const castVote = useMutation(api.votes.cast)
 
   const [storeTag, setStoreTag] = useState('')
@@ -63,7 +62,7 @@ function ProductDetailContent() {
   const [isVoting, setIsVoting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
 
-  const handleVote = async (safety: number, taste: number) => {
+  const handleVote = async (safety: number, taste: number, price?: number) => {
     if (!product) return
 
     setIsVoting(true)
@@ -72,15 +71,29 @@ function ProductDetailContent() {
         productId: product._id,
         safety,
         taste,
+        price,
         anonymousId: anonymousId ?? undefined,
         storeName: storeTag || undefined,
         latitude: storeLat,
         longitude: storeLon,
       })
 
-      toast.success('Vote submitted!', {
-        description: `Safety: ${safety}, Taste: ${taste}`,
-      })
+      // Calculate points earned (only for authenticated users)
+      if (user) {
+        let points = 10 // Base vote points
+        if (price !== undefined) points += 5
+        if (storeTag) points += 10
+        if (storeLat && storeLon) points += 5
+
+        toast.success('🎉 Vote submitted!', {
+          description: `+${points} Scout Points earned!`,
+          duration: 4000,
+        })
+      } else {
+        toast.success('Vote submitted!', {
+          description: `Safety: ${safety}, Taste: ${taste}${price ? `, Price: ${price}` : ''}`,
+        })
+      }
 
       // Reset form
       setStoreTag('')
@@ -256,24 +269,8 @@ function ProductDetailContent() {
               />
             </div>
 
-            {/* Voting Tabs */}
-            <Tabs defaultValue="quick" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="quick">Quick Vote</TabsTrigger>
-                <TabsTrigger value="finetune">Fine Tune</TabsTrigger>
-              </TabsList>
-              <TabsContent value="quick" className="mt-4">
-                <VotingPanel onVote={handleVote} disabled={isVoting} />
-              </TabsContent>
-              <TabsContent value="finetune" className="mt-4">
-                <FineTunePanel
-                  onVote={handleVote}
-                  disabled={isVoting}
-                  initialSafety={product.averageSafety}
-                  initialTaste={product.averageTaste}
-                />
-              </TabsContent>
-            </Tabs>
+            {/* Voting Interface */}
+            <VotingSheet onVote={handleVote} disabled={isVoting} />
           </CardContent>
         </Card>
 

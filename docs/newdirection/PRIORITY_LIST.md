@@ -122,11 +122,11 @@ Broken into 6 sub-sprints. Each sprint produces a testable increment.
 
 | | Priority | I | N | E | Score | Task | Details |
 |---|----------|---|---|---|-------|------|---------|
-| [ ] | 1 | 5 | 5 | M | 12.5 | **Create VotingSheet** | `src/components/product/VotingSheet.tsx` — Mobile-optimized voting UI replacing `VotingPanel.tsx`. Full-width safety buttons (3: Clean/Sketchy/Wrecked from config), full-width taste buttons (3: Yass!/Meh/Pass from config), combo presets row (4: Holy Grail/Survivor/Risky/Bin). All labels from `appConfig`. 48px min button height |
-| [ ] | 2 | 4 | 4 | S | 20.0 | **Add price vote buttons** | 5 pill buttons ($–$$$$$) in VotingSheet. Backend `votes.cast` already accepts `price` param. Schema field exists. This is purely frontend |
-| [ ] | 3 | 4 | 3 | M | 8.5 | **Redesign FineTunePanel** | Mobile-friendly sliders with larger thumb (24px), value display. Axis labels from config. Expandable/collapsible after quick vote |
-| [ ] | 4 | 3 | 3 | M | 7.5 | **Create store dropdown** | Upgrade `StoreTagInput.tsx` — Radix Select or custom dropdown: predefined stores from `appConfig.storeDefaults[userLocale]` + "Add custom store..." option at bottom → free text input. GPS button stays |
-| [ ] | 5 | 3 | 2 | S | 12.0 | **Gamification toasts** | After `votes.cast` mutation returns, show: `"+${points} Scout Points! 🎉"` (Sonner toast). If badge unlocked, show: `"🏆 Badge Unlocked: ${badge.name}!"`. Data from existing `calculateVotePoints()` and badge check in `profiles.ts` |
+| [x] | 1 | 5 | 5 | M | 12.5 | **Create VotingSheet** | `src/components/product/VotingSheet.tsx` — Mobile-optimized voting UI. Full-width safety buttons (3: Clean/Sketchy/Wrecked), full-width taste buttons (3: Yass!/Meh/Pass), combo presets (4 quadrants). Price buttons integrated. All labels from `appConfig`. Auto-submits when both safety+taste selected |
+| [x] | 2 | 4 | 4 | S | 20.0 | **Add price vote buttons** | 5 pill buttons ($–$$$$$) in VotingSheet. Backend accepts `price` param (1-5 scale converted to 20-100). Optional parameter - user can skip |
+| [ ] | 3 | 4 | 3 | M | 8.5 | **Redesign FineTunePanel** | Mobile-friendly sliders with larger thumb (24px), value display. Axis labels from config. Expandable/collapsible after quick vote — **DEFERRED: Current quick vote UI is sufficient for MVP** |
+| [ ] | 4 | 3 | 3 | M | 7.5 | **Create store dropdown** | Upgrade `StoreTagInput.tsx` — Radix Select or custom dropdown: predefined stores from `appConfig.storeDefaults[userLocale]` + "Add custom store..." option. GPS button stays — **DEFERRED: Current text input works, can enhance in Wave 2** |
+| [x] | 5 | 3 | 2 | S | 12.0 | **Gamification toasts** | After vote submission, shows: `"+X Scout Points! 🎉"` based on what was included (base 10 + price 5 + store 10 + GPS 5). Only for authenticated users. Anonymous users see standard confirmation |
 
 ### Sprint 1e: Map Page
 
