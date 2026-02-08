@@ -67,14 +67,14 @@ Creates `src/lib/app-config.ts` and removes all hardcoded niche strings from com
 
 | | Step | Task | Verification |
 |---|------|------|-------------|
-| [ ] | 1 | `npm install @capacitor/core @capacitor/cli` | Packages in `package.json` |
-| [ ] | 2 | `npx cap init "G-Matrix" "com.gmatrix.app" --web-dir dist/client` → creates `capacitor.config.ts` | Config file created |
-| [ ] | 3 | `npx cap add ios && npx cap add android` | `ios/` and `android/` folders created |
-| [ ] | 4 | Add to `package.json` scripts: `"cap:sync": "npx cap sync"`, `"cap:ios": "npx cap open ios"`, `"cap:android": "npx cap open android"` | Scripts work |
-| [ ] | 5 | `npm install @capacitor/geolocation @capacitor/camera @capacitor/share` | Packages installed |
-| [ ] | 6 | Create `src/lib/platform.ts` — export `isNative()`, `isIOS()`, `isAndroid()`, `isWeb()` using Capacitor's `Capacitor.isNativePlatform()` and `Capacitor.getPlatform()` | Can detect platform at runtime |
-| [ ] | 7 | Add `ios/` and `android/` to `.gitignore` (native build artifacts; regenerated from config) | Clean git status |
-| [ ] | 8 | Verify: `npm run build && npx cap sync && npx cap open ios` opens app in Xcode simulator | App renders in simulator |
+| [x] | 1 | `npm install @capacitor/core @capacitor/cli` | Packages in `package.json` |
+| [x] | 2 | `npx cap init "G-Matrix" "com.gmatrix.app" --web-dir dist/client` → creates `capacitor.config.ts` | Config file created |
+| [x] | 3 | `npx cap add ios && npx cap add android` | `ios/` and `android/` folders created |
+| [x] | 4 | Add to `package.json` scripts: `"cap:sync": "npx cap sync"`, `"cap:ios": "npx cap open ios"`, `"cap:android": "npx cap open android"` | Scripts work |
+| [x] | 5 | `npm install @capacitor/geolocation @capacitor/camera @capacitor/share` | Packages installed |
+| [x] | 6 | Create `src/lib/platform.ts` — export `isNative()`, `isIOS()`, `isAndroid()`, `isWeb()` using Capacitor's `Capacitor.isNativePlatform()` and `Capacitor.getPlatform()` | Can detect platform at runtime |
+| [x] | 7 | Add `ios/` and `android/` to `.gitignore` (native build artifacts; regenerated from config) | Clean git status |
+| [x] | 8 | Verify: `npm run build && npx cap sync && npx cap open ios` opens app in Xcode simulator | App renders in simulator |
 
 ### Sprint 0d: Agent Guidelines
 

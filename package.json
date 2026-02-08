@@ -25,9 +25,19 @@
     "convex:deploy": "npx convex deploy --yes",
     "deploy:preview": "npm run convex:push && npm run build:preview && wrangler deploy --env preview",
     "deploy:prod": "npm run convex:deploy && npm run build:prod && wrangler deploy --env production",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "cap:sync": "npx cap sync",
+    "cap:ios": "npx cap open ios",
+    "cap:android": "npx cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/camera": "^8.0.0",
+    "@capacitor/cli": "^8.0.2",
+    "@capacitor/core": "^8.0.2",
+    "@capacitor/geolocation": "^8.0.0",
+    "@capacitor/ios": "^8.0.2",
+    "@capacitor/share": "^8.0.0",
     "@cloudflare/vite-plugin": "^1.13.10",
     "@convex-dev/better-auth": "^0.10.10",
     "@convex-dev/rate-limiter": "^0.3.2",
