@@ -25,9 +25,9 @@ interface ProductCardProps {
 export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) {
   // Determine safety score color
   const getSafetyColor = (score: number) => {
-    if (score >= 60) return 'bg-color-safety-high' // Green
-    if (score >= 40) return 'bg-color-safety-mid' // Yellow/Amber
-    return 'bg-color-safety-low' // Red
+    if (score >= 60) return 'bg-safety-high' // Green
+    if (score >= 40) return 'bg-safety-mid' // Yellow/Amber
+    return 'bg-safety-low' // Red
   }
 
   // Get price score from avgPrice (1-5 scale → 0-100)
@@ -54,7 +54,7 @@ export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) 
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       >
         {/* Product Image */}
-        <div className="relative aspect-square bg-color-bg overflow-hidden">
+        <div className="relative aspect-square bg-background overflow-hidden">
           {product.imageUrl ? (
             <img
               src={product.imageUrl}
@@ -62,7 +62,7 @@ export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) 
               className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-color-text-secondary text-sm">
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
               No image
             </div>
           )}
@@ -89,10 +89,11 @@ export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) 
             >
               <DeleteProductButton 
                 product={product} 
+                variant="ghost"
                 size="icon" 
-                className="h-7 w-7 bg-white/90 hover:bg-white shadow-sm rounded-full"
+                className="h-6 w-6 bg-card/90 hover:bg-destructive hover:text-white dark:bg-card/80 dark:hover:bg-destructive shadow-sm rounded-full p-0"
               >
-                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                <Trash2 className="h-3 w-3 text-destructive group-hover:text-white" />
                 <span className="sr-only">Delete</span>
               </DeleteProductButton>
             </div>
@@ -112,13 +113,13 @@ export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) 
         {/* Info Section */}
         <div className="p-3 flex-1 flex flex-col justify-between">
           {/* Product Name */}
-          <h3 className="font-semibold text-sm text-color-text truncate group-hover:text-color-primary transition-colors">
+          <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
             {product.name}
           </h3>
 
           {/* Distance (if available) */}
           {distanceKm !== undefined && (
-            <p className="text-xs text-color-text-secondary mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {distanceKm < 0.1
                 ? 'Very close'
                 : distanceKm < 1
@@ -149,7 +150,7 @@ export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) 
           </div>
 
           {/* Vote Count */}
-          <p className="text-xs text-color-text-secondary mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             {product.voteCount} {product.voteCount === 1 ? 'vote' : 'votes'}
           </p>
         </div>

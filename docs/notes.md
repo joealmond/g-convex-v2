@@ -6,9 +6,4 @@
 - EU hosting
 - imaagehosting
 - cloudflare cdn
-- style guideline for sys prompt
-- does not ad geolocation when capturing
-- does not populates store when capturing
-- in admin mode i have to be able to delet from product list
-- a képek méretezése kevelése és elhelyezés e a komponensben javítása
 - add logging

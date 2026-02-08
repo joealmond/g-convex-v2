@@ -50,8 +50,17 @@ function HomePageContent() {
   const user = useQuery(api.users.current)
   const profile = useQuery(api.profiles.getCurrent)
   const products = useQuery(api.products.list)
-  const { latitude, longitude, isLoading: geoLoading } = useGeolocation()
+  const { coords, requestLocation } = useGeolocation()
   const { isAdmin } = useAdmin()
+
+  // Extract lat/lon from coords for convenience
+  const latitude = coords?.latitude
+  const longitude = coords?.longitude
+
+  // Request location on mount (needed for "Nearby" filter)
+  useEffect(() => {
+    requestLocation()
+  }, [requestLocation])
 
   const [filterType, setFilterType] = useState<FilterType>('all')
   const [viewMode, setViewMode] = useState<'feed' | 'chart'>('feed')

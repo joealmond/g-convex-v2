@@ -86,7 +86,7 @@ export function StoreTagInput({
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Label htmlFor="store-input" className="text-sm font-medium flex items-center gap-1.5">
-          <Store className="h-4 w-4 text-color-primary" />
+          <Store className="h-4 w-4 text-primary" />
           Store Name (Optional)
         </Label>
         {hasLocation && (
@@ -141,7 +141,7 @@ export function StoreTagInput({
                   {store}
                 </SelectItem>
               ))}
-              <SelectItem value={CUSTOM_STORE_VALUE} className="font-semibold text-color-primary">
+              <SelectItem value={CUSTOM_STORE_VALUE} className="font-semibold text-primary">
                 + Add custom store...
               </SelectItem>
             </SelectContent>

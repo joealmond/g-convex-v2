@@ -141,6 +141,48 @@ export const cast = mutation({
       productId: args.productId,
     })
 
+    // Update product stores array if store or GPS info was provided
+    if (args.storeName || (args.latitude !== undefined && args.longitude !== undefined)) {
+      const product = await ctx.db.get(args.productId)
+      if (product) {
+        const existingStores = product.stores || []
+        const storeName = args.storeName || 'Unknown Location'
+        const newGeoPoint = (args.latitude !== undefined && args.longitude !== undefined)
+          ? { lat: args.latitude, lng: args.longitude }
+          : undefined
+
+        // Check if this store already exists (by name)
+        const existingStoreIndex = existingStores.findIndex(
+          (s) => s.name.toLowerCase() === storeName.toLowerCase()
+        )
+
+        if (existingStoreIndex >= 0) {
+          // Update existing store entry with latest data
+          const updatedStores = [...existingStores]
+          const existingStore = updatedStores[existingStoreIndex]!
+          updatedStores[existingStoreIndex] = {
+            ...existingStore,
+            lastSeenAt: Date.now(),
+            price: args.price ?? existingStore.price,
+            // Update geoPoint if new GPS is provided
+            geoPoint: newGeoPoint ?? existingStore.geoPoint,
+          }
+          await ctx.db.patch(args.productId, { stores: updatedStores })
+        } else {
+          // Add new store entry
+          const newStore = {
+            name: storeName,
+            lastSeenAt: Date.now(),
+            price: args.price,
+            geoPoint: newGeoPoint,
+          }
+          await ctx.db.patch(args.productId, {
+            stores: [...existingStores, newStore],
+          })
+        }
+      }
+    }
+
     // Award points if registered user
     if (userId && !existingVote) {
       await ctx.scheduler.runAfter(0, internal.votes.awardPoints, {

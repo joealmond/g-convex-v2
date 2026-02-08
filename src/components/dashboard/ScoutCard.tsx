@@ -21,9 +21,9 @@ export function ScoutCard() {
     return (
       <div className="w-64 p-4 space-y-3">
         <div className="animate-pulse space-y-3">
-          <div className="h-4 bg-color-bg rounded" />
-          <div className="h-4 bg-color-bg rounded" />
-          <div className="h-4 bg-color-bg rounded" />
+          <div className="h-4 bg-background rounded" />
+          <div className="h-4 bg-background rounded" />
+          <div className="h-4 bg-background rounded" />
         </div>
       </div>
     )
@@ -42,7 +42,7 @@ export function ScoutCard() {
     <div className="w-72 p-4 space-y-4">
       {/* Level Badge */}
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-sm text-color-text">Scout Status</h3>
+        <h3 className="font-bold text-sm text-foreground">Scout Status</h3>
         <Badge style={{ backgroundColor: currentLevel.color, color: '#fff' }}>
           {currentLevel.title}
         </Badge>
@@ -51,38 +51,38 @@ export function ScoutCard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
         {/* Points */}
-        <div className="flex items-center gap-2 p-2 bg-color-bg rounded-xl">
-          <Trophy className="h-5 w-5 text-color-gold flex-shrink-0" />
+        <div className="flex items-center gap-2 p-2 bg-background rounded-xl">
+          <Trophy className="h-5 w-5 text-gold flex-shrink-0" />
           <div className="min-w-0">
-            <div className="text-lg font-bold text-color-text">{points}</div>
-            <div className="text-xs text-color-text-secondary">Points</div>
+            <div className="text-lg font-bold text-foreground">{points}</div>
+            <div className="text-xs text-muted-foreground">Points</div>
           </div>
         </div>
 
         {/* Streak */}
-        <div className="flex items-center gap-2 p-2 bg-color-bg rounded-xl">
+        <div className="flex items-center gap-2 p-2 bg-background rounded-xl">
           <Flame className="h-5 w-5 text-orange-500 flex-shrink-0" />
           <div className="min-w-0">
-            <div className="text-lg font-bold text-color-text">{currentStreak}</div>
-            <div className="text-xs text-color-text-secondary">Day Streak</div>
+            <div className="text-lg font-bold text-foreground">{currentStreak}</div>
+            <div className="text-xs text-muted-foreground">Day Streak</div>
           </div>
         </div>
 
         {/* Badges */}
-        <div className="flex items-center gap-2 p-2 bg-color-bg rounded-xl">
-          <Star className="h-5 w-5 text-color-primary flex-shrink-0" />
+        <div className="flex items-center gap-2 p-2 bg-background rounded-xl">
+          <Star className="h-5 w-5 text-primary flex-shrink-0" />
           <div className="min-w-0">
-            <div className="text-lg font-bold text-color-text">{earnedBadges.length}</div>
-            <div className="text-xs text-color-text-secondary">Badges</div>
+            <div className="text-lg font-bold text-foreground">{earnedBadges.length}</div>
+            <div className="text-xs text-muted-foreground">Badges</div>
           </div>
         </div>
 
         {/* Votes */}
-        <div className="flex items-center gap-2 p-2 bg-color-bg rounded-xl">
-          <TrendingUp className="h-5 w-5 text-color-primary flex-shrink-0" />
+        <div className="flex items-center gap-2 p-2 bg-background rounded-xl">
+          <TrendingUp className="h-5 w-5 text-primary flex-shrink-0" />
           <div className="min-w-0">
-            <div className="text-lg font-bold text-color-text">{profile.totalVotes || 0}</div>
-            <div className="text-xs text-color-text-secondary">Votes</div>
+            <div className="text-lg font-bold text-foreground">{profile.totalVotes || 0}</div>
+            <div className="text-xs text-muted-foreground">Votes</div>
           </div>
         </div>
       </div>
@@ -91,7 +91,7 @@ export function ScoutCard() {
       {/* View Profile Link */}
       <Link
         to="/profile"
-        className="block text-center text-sm text-color-primary hover:underline font-semibold"
+        className="block text-center text-sm text-primary hover:underline font-semibold"
       >
         View Full Profile →
       </Link>

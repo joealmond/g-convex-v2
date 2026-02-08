@@ -93,8 +93,8 @@ function StoreProfileContent() {
               </Link>
             </Button>
             <div className="flex items-center gap-3 mb-2">
-              <Store className="h-8 w-8 text-color-primary" />
-              <h1 className="text-3xl font-bold text-color-text">
+              <Store className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl font-bold text-foreground">
                 {decodedStoreName}
               </h1>
             </div>
@@ -135,10 +135,10 @@ function StoreProfileContent() {
           <Card>
             <CardContent className="py-12 text-center">
               <Store className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-lg font-medium text-color-text mb-2">
+              <p className="text-lg font-medium text-foreground mb-2">
                 No products found
               </p>
-              <p className="text-sm text-color-text-secondary">
+              <p className="text-sm text-muted-foreground">
                 No one has tagged products from "{decodedStoreName}" yet
               </p>
             </CardContent>

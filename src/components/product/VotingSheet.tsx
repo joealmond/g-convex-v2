@@ -408,7 +408,7 @@ export function VotingSheet({
 
       {/* Help Text */}
       {(selectedSafety !== null || selectedTaste !== null) && (
-        <p className="text-xs text-center text-color-text-secondary">
+        <p className="text-xs text-center text-muted-foreground">
           {selectedSafety !== null && selectedTaste === null && 'Now select taste to submit vote'}
           {selectedTaste !== null && selectedSafety === null && 'Now select safety to submit vote'}
         </p>

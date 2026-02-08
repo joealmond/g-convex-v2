@@ -153,7 +153,7 @@ function ProductDetailContent() {
       <div className="flex-1 px-4 py-8">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
-          <p className="text-color-text-secondary mb-6">
+          <p className="text-muted-foreground mb-6">
             The product "{decodeURIComponent(name)}" doesn't exist.
           </p>
           <Button asChild>
@@ -193,7 +193,7 @@ function ProductDetailContent() {
               variant="ghost"
               size="sm"
               onClick={() => setIsReporting(true)}
-              className="text-color-text-secondary hover:text-destructive"
+              className="text-muted-foreground hover:text-destructive"
             >
               <Flag className="mr-2 h-4 w-4" />
               Report
@@ -218,7 +218,7 @@ function ProductDetailContent() {
 
         {/* Hero Image */}
         {product.imageUrl && !product.imageUrl.startsWith('blob:') && (
-          <div className="w-full h-80 overflow-hidden rounded-2xl bg-color-bg flex items-center justify-center p-4">
+          <div className="w-full h-80 overflow-hidden rounded-2xl bg-background flex items-center justify-center p-4">
             <img
               src={product.imageUrl}
               alt={product.name}
@@ -230,8 +230,8 @@ function ProductDetailContent() {
         {/* Product Name + Quadrant Badge */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-color-text mb-2">{product.name}</h1>
-            <p className="text-sm text-color-text-secondary">
+            <h1 className="text-3xl font-bold text-foreground mb-2">{product.name}</h1>
+            <p className="text-sm text-muted-foreground">
               {product.voteCount} {product.voteCount === 1 ? 'vote' : 'votes'}
             </p>
           </div>
@@ -350,7 +350,7 @@ function ProductDetailContent() {
                     disabled={isVoting}
                   />
                 </div>
-                <p className="text-sm text-color-text-secondary text-center mt-4">
+                <p className="text-sm text-muted-foreground text-center mt-4">
                   Community average position
                 </p>
               </TabsContent>
@@ -369,7 +369,7 @@ function ProductDetailContent() {
                         disabled={isVoting}
                       />
                     </div>
-                    <p className="text-sm text-color-text-secondary text-center mt-4">
+                    <p className="text-sm text-muted-foreground text-center mt-4">
                       Your vote: Safety {myVote.safety} · Taste {myVote.taste}
                       {myVote.price && ` · Price ${myVote.price}/5`}
                     </p>
@@ -400,7 +400,7 @@ function ProductDetailContent() {
                     highlightVoteId={myVote?._id}
                   />
                 </div>
-                <p className="text-sm text-color-text-secondary text-center mt-4">
+                <p className="text-sm text-muted-foreground text-center mt-4">
                   {allVotes?.length || 0} individual{' '}
                   {allVotes?.length === 1 ? 'vote' : 'votes'}
                 </p>

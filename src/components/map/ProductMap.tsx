@@ -123,7 +123,7 @@ function ProductMarker({
             <img
               src={product.imageUrl}
               alt={product.name}
-              className="w-full h-24 object-cover rounded mb-2"
+              className="w-full h-24 object-contain rounded mb-2 bg-muted p-1"
             />
           )}
 
@@ -131,7 +131,7 @@ function ProductMarker({
           <h3 className="font-semibold text-sm mb-2">{product.name}</h3>
 
           {/* Store Name */}
-          <p className="text-xs text-color-text-secondary mb-2">
+          <p className="text-xs text-muted-foreground mb-2">
             📍 {storeName}
           </p>
 
@@ -140,20 +140,20 @@ function ProductMarker({
             <div
               className={`w-2 h-2 rounded-full ${
                 product.averageSafety >= 60
-                  ? 'bg-color-safety-high'
+                  ? 'bg-safety-high'
                   : product.averageSafety >= 40
-                    ? 'bg-color-safety-mid'
-                    : 'bg-color-safety-low'
+                    ? 'bg-safety-mid'
+                    : 'bg-safety-low'
               }`}
               title={`Safety: ${product.averageSafety.toFixed(0)}`}
             />
             <div
               className={`w-2 h-2 rounded-full ${
                 product.averageTaste >= 60
-                  ? 'bg-color-safety-high'
+                  ? 'bg-safety-high'
                   : product.averageTaste >= 40
-                    ? 'bg-color-safety-mid'
-                    : 'bg-color-safety-low'
+                    ? 'bg-safety-mid'
+                    : 'bg-safety-low'
               }`}
               title={`Taste: ${product.averageTaste.toFixed(0)}`}
             />
@@ -163,7 +163,7 @@ function ProductMarker({
           <Link
             to="/product/$name"
             params={{ name: product.name }}
-            className="text-xs text-color-primary hover:underline font-semibold"
+            className="text-xs text-primary hover:underline font-semibold"
           >
             View Product →
           </Link>

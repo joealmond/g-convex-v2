@@ -97,7 +97,7 @@ function ReportsContent() {
       <div className="flex-1 px-4 py-8">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-color-text-secondary mb-6">
+          <p className="text-muted-foreground mb-6">
             You need admin privileges to view reports.
           </p>
           <Button asChild>
@@ -121,10 +121,10 @@ function ReportsContent() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-color-text mb-2">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
               Product Reports
             </h1>
-            <p className="text-sm text-color-text-secondary">
+            <p className="text-sm text-muted-foreground">
               {reports.length} {statusFilter === 'all' ? 'total' : statusFilter}{' '}
               {reports.length === 1 ? 'report' : 'reports'}
             </p>
@@ -164,10 +164,10 @@ function ReportsContent() {
           <Card className="border-0 shadow-sm">
             <CardContent className="py-12 text-center">
               <Flag className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-lg font-medium text-color-text mb-2">
+              <p className="text-lg font-medium text-foreground mb-2">
                 No reports found
               </p>
-              <p className="text-sm text-color-text-secondary">
+              <p className="text-sm text-muted-foreground">
                 {statusFilter === 'all'
                   ? 'No reports have been submitted yet'
                   : `No ${statusFilter} reports`}
@@ -202,13 +202,13 @@ function ReportsContent() {
                         <Badge variant="outline">{report.reason}</Badge>
                       </div>
 
-                      <p className="text-sm text-color-text-secondary">
+                      <p className="text-sm text-muted-foreground">
                         Reported by:{' '}
                         {report.isAnonymous
                           ? 'Anonymous'
                           : report.reporter?.name || 'Unknown'}
                       </p>
-                      <p className="text-xs text-color-text-secondary">
+                      <p className="text-xs text-muted-foreground">
                         {new Date(report.createdAt).toLocaleString()}
                       </p>
                     </div>
@@ -245,7 +245,7 @@ function ReportsContent() {
                   <CardContent>
                     <div className="bg-muted p-4 rounded-lg">
                       <p className="text-sm font-medium mb-1">Details:</p>
-                      <p className="text-sm text-color-text-secondary">
+                      <p className="text-sm text-muted-foreground">
                         {report.details}
                       </p>
                     </div>
@@ -267,7 +267,7 @@ function ReportsContent() {
                     )}
 
                     {report.reviewedBy && report.reviewer && (
-                      <p className="text-xs text-color-text-secondary mt-2">
+                      <p className="text-xs text-muted-foreground mt-2">
                         Reviewed by {report.reviewer.name} on{' '}
                         {report.reviewedAt &&
                           new Date(report.reviewedAt).toLocaleString()}

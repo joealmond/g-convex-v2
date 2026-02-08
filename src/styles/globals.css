@@ -65,6 +65,12 @@
   --sidebar-border: #B2BEC3;
   --sidebar-ring: #7CB342;
 
+  /* Semantic Safety Colors */
+  --safety-high: #27AE60;
+  --safety-mid: #F39C12;
+  --safety-low: #E74C3C;
+  --gold: #F1C40F;
+
   /* G-Matrix Quadrant Colors */
   --holy-grail: 142 76% 36%;      /* Green */
   --survivor-food: 48 96% 53%;    /* Yellow */
@@ -128,6 +134,12 @@ body {
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  /* G-Matrix Semantic Colors */
+  --color-safety-high: var(--safety-high);
+  --color-safety-mid: var(--safety-mid);
+  --color-safety-low: var(--safety-low);
+  --color-gold: var(--gold);
+
   /* G-Matrix Quadrant Colors */
   --color-holy-grail: var(--holy-grail);
   --color-survivor-food: var(--survivor-food);
@@ -184,6 +196,12 @@ body {
   --safety-high-dark: #27AE60;
   --safety-mid-dark: #F39C12;
   --safety-low-dark: #E74C3C;
+
+  /* Dark mode semantic safety colors */
+  --safety-high: #4ADE80;
+  --safety-mid: #FBBF24;
+  --safety-low: #F87171;
+  --gold: #FBBF24;
 
   /* G-Matrix Quadrant Colors (dark mode) */
   --holy-grail: 142 76% 36%;

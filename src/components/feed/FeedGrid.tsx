@@ -16,8 +16,8 @@ export function FeedGrid({ children, isEmpty }: FeedGridProps) {
     <div>
       {isEmpty ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-color-text-secondary text-sm mb-2">No products found</p>
-          <p className="text-xs text-color-text-secondary">Try adjusting your filters</p>
+          <p className="text-muted-foreground text-sm mb-2">No products found</p>
+          <p className="text-xs text-muted-foreground">Try adjusting your filters</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">

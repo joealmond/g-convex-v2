@@ -100,7 +100,7 @@ function RootComponent() {
         <head>
           <HeadContent />
         </head>
-        <body className="min-h-screen bg-color-bg antialiased">
+        <body className="min-h-screen bg-background antialiased">
           <ImpersonateProvider>
             <TopBar />
             <ErrorBoundary>

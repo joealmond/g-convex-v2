@@ -25,7 +25,7 @@ export function StoreList({ product }: StoreListProps) {
 
   if (!product.stores || product.stores.length === 0) {
     return (
-      <div className="text-center py-8 text-color-text-secondary">
+      <div className="text-center py-8 text-muted-foreground">
         <p className="text-sm">No stores recorded yet</p>
         <p className="text-xs">Be the first to add a location!</p>
       </div>
@@ -118,21 +118,21 @@ export function StoreList({ product }: StoreListProps) {
             <Link
               to="/store/$name"
               params={{ name: store.name }}
-              className="font-semibold text-sm text-color-text hover:text-color-primary hover:underline"
+              className="font-semibold text-sm text-foreground hover:text-primary hover:underline"
             >
               {store.name}
             </Link>
 
             {/* Near Me Badge */}
             {isNearby(store) && (
-              <Badge className="bg-color-safety-high text-white text-xs">
+              <Badge className="bg-safety-high text-white text-xs">
                 📍 Nearby
               </Badge>
             )}
           </div>
 
           {/* Details Row */}
-          <div className="flex items-center gap-4 text-xs text-color-text-secondary">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
             {/* Last Seen */}
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
@@ -141,7 +141,7 @@ export function StoreList({ product }: StoreListProps) {
 
             {/* Price */}
             {store.price && (
-              <div className="text-xs font-semibold text-color-text">
+              <div className="text-xs font-semibold text-foreground">
                 {renderPrice(store.price)}
               </div>
             )}
@@ -150,7 +150,7 @@ export function StoreList({ product }: StoreListProps) {
             {store.geoPoint && (
               <button
                 onClick={() => handleOpenMap(store)}
-                className="flex items-center gap-1 hover:text-color-primary transition-colors"
+                className="flex items-center gap-1 hover:text-primary transition-colors"
               >
                 <MapPin className="h-3 w-3" />
                 <span>Open in maps</span>

@@ -371,7 +371,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
             <div
               className={`flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${
                 isDragging
-                  ? 'border-color-primary bg-color-primary/10'
+                  ? 'border-primary bg-primary/10'
                   : 'border-muted-foreground/25 hover:border-muted-foreground/50'
               }`}
               onClick={() => fileInputRef.current?.click()}

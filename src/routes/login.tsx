@@ -61,19 +61,19 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-color-bg">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md rounded-2xl shadow-sm">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-3xl font-bold text-color-text">Welcome to {appConfig.appName}</CardTitle>
-          <CardDescription className="text-base text-color-text-secondary">
+          <CardTitle className="text-3xl font-bold text-foreground">Welcome to {appConfig.appName}</CardTitle>
+          <CardDescription className="text-base text-muted-foreground">
             {appConfig.tagline}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Benefits Section */}
-          <div className="space-y-3 p-4 bg-color-bg rounded-xl">
-            <h3 className="font-semibold text-sm text-color-text">Why sign in?</h3>
-            <ul className="space-y-2 text-sm text-color-text-secondary">
+          <div className="space-y-3 p-4 bg-background rounded-xl">
+            <h3 className="font-semibold text-sm text-foreground">Why sign in?</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
                 <span className="text-primary">✓</span>
                 <span>Your votes count 2x more than anonymous votes</span>

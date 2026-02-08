@@ -37,10 +37,10 @@ export function RatingBars({ safety, taste, price = 0 }: RatingBarsProps) {
    * Get color for a score
    */
   const getScoreColor = (score: number): string => {
-    if (score >= 80) return 'bg-color-safety-high' // Green
-    if (score >= 60) return 'bg-color-primary' // Sage green
-    if (score >= 40) return 'bg-color-safety-mid' // Yellow
-    return 'bg-color-safety-low' // Red
+    if (score >= 80) return 'bg-safety-high' // Green
+    if (score >= 60) return 'bg-primary' // Sage green
+    if (score >= 40) return 'bg-safety-mid' // Yellow
+    return 'bg-safety-low' // Red
   }
 
   const scores = [
@@ -55,14 +55,14 @@ export function RatingBars({ safety, taste, price = 0 }: RatingBarsProps) {
         <div key={index} className="space-y-2">
           {/* Label + Value */}
           <div className="flex items-baseline justify-between">
-            <h4 className="text-sm font-semibold text-color-text">{item.label}</h4>
-            <span className="text-xs font-bold text-color-text-secondary">
+            <h4 className="text-sm font-semibold text-foreground">{item.label}</h4>
+            <span className="text-xs font-bold text-muted-foreground">
               {item.value.toFixed(0)}/100
             </span>
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full h-2 bg-color-bg rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-background rounded-full overflow-hidden">
             <motion.div
               className={cn('h-full rounded-full', getScoreColor(item.value))}
               initial={{ width: 0 }}
@@ -72,7 +72,7 @@ export function RatingBars({ safety, taste, price = 0 }: RatingBarsProps) {
           </div>
 
           {/* Rating Label */}
-          <p className="text-xs text-color-text-secondary">{getRatingLabel(item.value)}</p>
+          <p className="text-xs text-muted-foreground">{getRatingLabel(item.value)}</p>
         </div>
       ))}
     </div>

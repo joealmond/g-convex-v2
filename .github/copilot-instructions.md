@@ -71,12 +71,27 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 - Read quadrant names from `appConfig.quadrants.topRight.label` (not inline "Holy Grail")
 - Niche-specific strings belong in `app-config.ts` or `locales/*.json`, never in components
 
-### Styling
-- Tailwind utility classes for layout and spacing
-- CSS custom properties from `globals.css` for theme colors (`var(--color-primary)`, etc.)
-- Use `cn()` helper from `src/lib/utils.ts` to merge conditional classes
-- Cards: `rounded-2xl shadow-sm bg-white`
+### Styling (Tailwind CSS v4 Architecture)
+- **Tailwind v4** uses `@theme inline { ... }` in `globals.css` to register CSS variables as utility classes. The `--color-` prefix is stripped to make class names: `--color-primary` → `bg-primary`, `text-primary`.
+- **NEVER use** `bg-color-X` or `text-color-X` classes — these are double-prefixed and won't work. Use `bg-X`, `text-X` instead (e.g., `bg-primary`, `text-foreground`, `bg-safety-high`).
+- **Color format**: All CSS variable values MUST be plain HEX (`#7CB342`), never `oklch()`, `hsl()`, or other functional formats. oklch() causes rendering inconsistencies across browsers.
+- **Dark mode**: Class-based only (`.dark` selector on `<html>`). NEVER use `@media (prefers-color-scheme: dark)` — it conflicts with the app's theme toggle.
+- Use `cn()` helper from `src/lib/utils.ts` to merge conditional Tailwind classes
+- Cards: `bg-card text-card-foreground rounded-2xl shadow-sm border border-border`
 - Buttons: `rounded-xl` with minimum 44×44px touch target on mobile
+- **Product images**: Always use `object-contain` (not `object-cover`) to avoid cropping. Add `bg-muted p-2` for visual padding. Exception: user avatars use `object-cover` for circular crop.
+
+#### Available Custom Utility Classes
+These are registered in `@theme inline` and generate Tailwind utility classes:
+
+| CSS Variable | Utility Class | Usage |
+|-------------|---------------|-------|
+| `--color-safety-high` | `bg-safety-high`, `text-safety-high` | Scores ≥ 60 (green) |
+| `--color-safety-mid` | `bg-safety-mid`, `text-safety-mid` | Scores 40-59 (amber) |
+| `--color-safety-low` | `bg-safety-low`, `text-safety-low` | Scores < 40 (red) |
+| `--color-gold` | `bg-gold`, `text-gold` | Points, badges, streaks |
+
+Standard shadcn/ui tokens (`bg-background`, `bg-card`, `bg-primary`, `text-foreground`, `text-muted-foreground`, `border-border`, etc.) are also in `@theme` and work as expected.
 
 ### State Management
 - **Server data**: Convex queries via `useQuery(api.products.list)` — real-time, no manual refresh
@@ -143,15 +158,22 @@ The app uses a sage green / cream design system defined in `globals.css`:
 
 ### Dark Mode Palette & Semantic Usage
 - Background: `#0F172A` (Deep Navy)
-- Surface: `#1E293B` (Slate)
-- Primary/Accent: `#FFB74D` (Soft Amber)
+- Surface/Card: `#1E293B` (Slate)
+- Primary: `#7CB342` (Sage Green — consistent with light mode)
+- Accent: `#FBBF24` (Amber — used for highlights)
+- Destructive: `#F87171` (Soft Red)
 - Text: `#F1F5F9`, Secondary text: `#94A3B8`
+- Safety High: `#4ADE80`, Safety Mid: `#FBBF24`, Safety Low: `#F87171`
 
 ## Styling Best Practices
 1. **Semantic Tokens**: ALWAYS use semantic classes (`bg-background`, `text-foreground`, `border-border`) instead of hardcoded colors (`bg-white`, `text-gray-900`) or raw hex codes. This ensures Dark Mode works "for free".
 2. **FOUC Prevention**: To prevent theme flashing, use a blocking inline script in `root.tsx` (head) that reads `localStorage` and sets the `dark` class before React hydrates.
 3. **Mobile First**: Default styles are mobile. Use `md:` and `lg:` for desktop overrides.
 4. **Touch Targets**: All interactive elements must be at least 44x44px (height/width 11 or p-3).
+5. **HEX Only**: All color values in `globals.css` `:root` and `.dark` must be plain HEX codes. Never use `oklch()`, `rgb()`, or `hsl()` — they cause cross-browser inconsistencies.
+6. **No `@media (prefers-color-scheme)`**: Dark mode is toggled via `.dark` class on `<html>`. System-preference media queries conflict with the manual toggle and MUST NOT be used.
+7. **Custom color classes**: Use `bg-safety-high`, `text-safety-low`, `text-gold` etc. — NOT `bg-color-safety-high` (double prefix doesn't exist in @theme).
+8. **Product images**: Use `object-contain` everywhere for product images (prevents cropping). Use `object-cover` only for user avatars.
 
 Cards: `bg-card text-card-foreground rounded-2xl shadow-sm border border-border`
 
