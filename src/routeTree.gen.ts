@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as MapRouteImport } from './routes/map'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as FilesRouteImport } from './routes/files'
@@ -23,6 +24,11 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapRoute = MapRouteImport.update({
+  id: '/map',
+  path: '/map',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/files': typeof FilesRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/map': typeof MapRoute
   '/profile': typeof ProfileRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/product/$name': typeof ProductNameRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/files': typeof FilesRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/map': typeof MapRoute
   '/profile': typeof ProfileRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/product/$name': typeof ProductNameRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/files': typeof FilesRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/map': typeof MapRoute
   '/profile': typeof ProfileRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/product/$name': typeof ProductNameRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/files'
     | '/leaderboard'
     | '/login'
+    | '/map'
     | '/profile'
     | '/dashboard'
     | '/product/$name'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/files'
     | '/leaderboard'
     | '/login'
+    | '/map'
     | '/profile'
     | '/dashboard'
     | '/product/$name'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/files'
     | '/leaderboard'
     | '/login'
+    | '/map'
     | '/profile'
     | '/_authenticated/dashboard'
     | '/product/$name'
@@ -149,6 +161,7 @@ export interface RootRouteChildren {
   FilesRoute: typeof FilesRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
+  MapRoute: typeof MapRoute
   ProfileRoute: typeof ProfileRoute
   ProductNameRoute: typeof ProductNameRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -161,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/map': {
+      id: '/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof MapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -248,6 +268,7 @@ const rootRouteChildren: RootRouteChildren = {
   FilesRoute: FilesRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
+  MapRoute: MapRoute,
   ProfileRoute: ProfileRoute,
   ProductNameRoute: ProductNameRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

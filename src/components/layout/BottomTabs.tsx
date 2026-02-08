@@ -1,12 +1,12 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import { Grid3X3, BarChart3, Plus, User } from 'lucide-react'
+import { Grid3X3, BarChart3, Plus, User, Map } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AddProductDialog } from '@/components/dashboard/AddProductDialog'
 import { useConvexAuth } from '@convex-dev/react-query'
 
 /**
  * Bottom tab navigation bar (mobile-optimized)
- * 4 tabs: Home, Leaderboard, Add, Profile
+ * 5 tabs: Home, Leaderboard, Add (center), Map, Profile
  * Fixed at bottom with iOS safe area
  */
 export function BottomTabs() {
@@ -73,6 +73,16 @@ export function BottomTabs() {
           </Button>
         )}
 
+        {/* Map Tab */}
+        <Link
+          to="/map"
+          className={tabClass(isActive('/map'))}
+          activeProps={{ className: tabClass(true) }}
+        >
+          <Map className="h-6 w-6" />
+          <span>Map</span>
+        </Link>
+
         {/* Profile Tab */}
         <Link
           to="/profile"
@@ -82,9 +92,6 @@ export function BottomTabs() {
           <User className="h-6 w-6" />
           <span>Profile</span>
         </Link>
-
-        {/* Empty placeholder for balance */}
-        <div className="flex-1" />
       </nav>
 
       {/* AddProductDialog is rendered outside to maintain dialog state */}

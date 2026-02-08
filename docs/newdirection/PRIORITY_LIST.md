@@ -132,10 +132,10 @@ Broken into 6 sub-sprints. Each sprint produces a testable increment.
 
 | | Priority | I | N | E | Score | Task | Details |
 |---|----------|---|---|---|-------|------|---------|
-| [ ] | 1 | 4 | 4 | L | 6.7 | **Create map route** | `src/routes/map.tsx` — Install `leaflet` + `react-leaflet`. Full-height map (minus TopBar and BottomTabs). OpenStreetMap tiles. Initial center: user GPS position or Budapest fallback `[47.497, 19.040]` |
-| [ ] | 2 | 4 | 4 | M | 10.0 | **Create ProductMap** | `src/components/map/ProductMap.tsx` — Reusable Leaflet `MapContainer`. Accepts `products` array. Renders markers at each `product.stores[].geoPoint`. Marker color = quadrant color. Clusters for dense areas (optional, use `react-leaflet-cluster`) |
-| [ ] | 3 | 3 | 3 | M | 7.5 | **Create ProductPin** | `src/components/map/ProductPin.tsx` — Marker popup: product image thumbnail (48px), name, safety dots, vote count, "View →" link to `/product/$name` |
-| [ ] | 4 | 2 | 2 | S | 10.0 | **Map filter chips** | Reuse `FilterChips` component on map page: Nearby (distance sort), High Safety, Low Price, Recently Added |
+| [x] | 1 | 4 | 4 | L | 6.7 | **Create map route** | `src/routes/map.tsx` — Install `leaflet` + `react-leaflet`. Full-height map (minus TopBar and BottomTabs). OpenStreetMap tiles. Initial center: user GPS position or Budapest fallback `[47.497, 19.040]` |
+| [x] | 2 | 4 | 4 | M | 10.0 | **Create ProductMap** | `src/components/map/ProductMap.tsx` — Reusable Leaflet `MapContainer`. Accepts `products` array. Renders markers at each `product.stores[].geoPoint`. Marker color = quadrant color. Clusters for dense areas (optional, use `react-leaflet-cluster`) |
+| [x] | 3 | 3 | 3 | M | 7.5 | **Create ProductPin** | `src/components/map/ProductPin.tsx` — Marker popup: product image thumbnail (48px), name, safety dots, vote count, "View →" link to `/product/$name` — **COMPLETED: Implemented as ProductMarker component inside ProductMap.tsx** |
+| [x] | 4 | 2 | 2 | S | 10.0 | **Map filter chips** | Reuse `FilterChips` component on map page: Nearby (distance sort), High Safety, Low Price, Recently Added |
 
 ### Sprint 1f: Profile + Global Polish
 
