@@ -218,11 +218,11 @@ function ProductDetailContent() {
 
         {/* Hero Image */}
         {product.imageUrl && !product.imageUrl.startsWith('blob:') && (
-          <div className="w-full max-h-64 overflow-hidden rounded-2xl bg-color-bg">
+          <div className="w-full h-80 overflow-hidden rounded-2xl bg-color-bg flex items-center justify-center p-4">
             <img
               src={product.imageUrl}
               alt={product.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
         )}
@@ -426,12 +426,11 @@ function ProductDetailContent() {
       </div>
 
       {/* Edit Dialog */}
-      {isEditing && (
-        <EditProductDialog
-          product={product as Product}
-          onComplete={() => setIsEditing(false)}
-        />
-      )}
+      <EditProductDialog
+        product={product as Product}
+        open={isEditing}
+        onOpenChange={setIsEditing}
+      />
 
       {/* Report Dialog */}
       <ReportProductDialog

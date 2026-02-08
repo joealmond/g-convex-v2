@@ -257,8 +257,8 @@ export const createProductAndVote = mutation({
       createdAt: now,
       currency: args.currency,
       purchaseLocation: args.purchaseLocation,
-      stores: args.storeName ? [{
-        name: args.storeName,
+      stores: (args.storeName || (args.latitude && args.longitude)) ? [{
+        name: args.storeName || "Unknown Location",
         lastSeenAt: now,
         price: args.price,
         geoPoint: args.latitude && args.longitude 

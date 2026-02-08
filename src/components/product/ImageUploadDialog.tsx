@@ -515,9 +515,9 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
               <Button
                 className="flex-1"
                 onClick={handleSubmit}
-                disabled={!productName.trim()}
+                disabled={!productName.trim() || geoLoading}
               >
-                {t('imageUpload.submitProduct')}
+                {geoLoading ? 'Locating...' : t('imageUpload.submitProduct')}
               </Button>
             </div>
           </div>

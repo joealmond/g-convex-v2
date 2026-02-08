@@ -43,18 +43,25 @@ import type { ReactNode } from 'react'
 interface ImpersonateContextType {
   /** If true, admin is viewing as a regular user */
   isViewingAsUser: boolean
+  /** The ID of the user being impersonated, if any */
+  impersonatedUserId: string | null
   /** Start viewing as a regular user (hides admin features) */
   startViewingAsUser: () => void
   /** Stop impersonation and return to admin view */
   stopViewingAsUser: () => void
   /** Toggle between admin and user view */
   toggleViewAsUser: () => void
+  /** Start impersonating a specific user */
+  startImpersonation: (userId: string) => void
+  /** Stop impersonating a specific user */
+  stopImpersonation: () => void
 }
 
 const ImpersonateContext = createContext<ImpersonateContextType | null>(null)
 
 export function ImpersonateProvider({ children }: { children: ReactNode }) {
   const [isViewingAsUser, setIsViewingAsUser] = useState(false)
+  const [impersonatedUserId, setImpersonatedUserId] = useState<string | null>(null)
 
   const startViewingAsUser = useCallback(() => {
     setIsViewingAsUser(true)
@@ -62,19 +69,39 @@ export function ImpersonateProvider({ children }: { children: ReactNode }) {
 
   const stopViewingAsUser = useCallback(() => {
     setIsViewingAsUser(false)
+    setImpersonatedUserId(null)
   }, [])
 
   const toggleViewAsUser = useCallback(() => {
-    setIsViewingAsUser((prev) => !prev)
+    setIsViewingAsUser((prev) => {
+      const next = !prev
+      if (!next) {
+        setImpersonatedUserId(null)
+      }
+      return next
+    })
+  }, [])
+
+  const startImpersonation = useCallback((userId: string) => {
+    setImpersonatedUserId(userId)
+    setIsViewingAsUser(true)
+  }, [])
+
+  const stopImpersonation = useCallback(() => {
+    setImpersonatedUserId(null)
+    setIsViewingAsUser(false)
   }, [])
 
   return (
     <ImpersonateContext.Provider
       value={{
         isViewingAsUser,
+        impersonatedUserId,
         startViewingAsUser,
         stopViewingAsUser,
         toggleViewAsUser,
+        startImpersonation,
+        stopImpersonation,
       }}
     >
       {children}
@@ -88,9 +115,12 @@ export function useImpersonate(): ImpersonateContextType {
     // Return a default state if used outside provider
     return {
       isViewingAsUser: false,
+      impersonatedUserId: null,
       startViewingAsUser: () => {},
       stopViewingAsUser: () => {},
       toggleViewAsUser: () => {},
+      startImpersonation: () => {},
+      stopImpersonation: () => {},
     }
   }
   return context

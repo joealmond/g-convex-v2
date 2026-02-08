@@ -121,6 +121,7 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 - **Icons**: Pass icons as JSX elements (e.g., `icon={<Trophy className="..." />}`) rather than component references (`icon={Trophy}`). This ensures proper styling control.
 - **Side Effects**: NEVER call `navigate` or `setState` directly in the component body. Always wrap side effects in `useEffect` or event handlers.
 - **Z-Index**: Be careful with stacking contexts. Toast/Dialogs > Dropdowns > Sticky Headers > Content.
+- **Button Content**: When overriding button children (e.g. for icon-only buttons), You MUST provide the visible Icon element. Passing only `sr-only` text will result in a blank button. Always verify the button renders with visible content.
 
 ## Design Tokens
 

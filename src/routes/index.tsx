@@ -9,6 +9,7 @@ import { MatrixChart } from '@/components/dashboard/MatrixChart'
 import { Leaderboard } from '@/components/dashboard/Leaderboard'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { useGeolocation } from '@/hooks/use-geolocation'
+import { useAdmin } from '@/hooks/use-admin'
 import { Loader2, Trophy, Flame, TrendingUp, BarChart3, Grid3X3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/types'
@@ -50,6 +51,7 @@ function HomePageContent() {
   const profile = useQuery(api.profiles.getCurrent)
   const products = useQuery(api.products.list)
   const { latitude, longitude, isLoading: geoLoading } = useGeolocation()
+  const { isAdmin } = useAdmin()
 
   const [filterType, setFilterType] = useState<FilterType>('all')
   const [viewMode, setViewMode] = useState<'feed' | 'chart'>('feed')
@@ -217,6 +219,7 @@ function HomePageContent() {
                   <ProductCard
                     product={product}
                     distanceKm={getProductDistance(product)}
+                    isAdmin={isAdmin}
                   />
                 </div>
               ))}

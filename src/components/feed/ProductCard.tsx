@@ -4,10 +4,13 @@ import { Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { type Product, getQuadrant, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
+import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
+import { MapPin, Trash2 } from 'lucide-react'
 
 interface ProductCardProps {
   product: Product
   distanceKm?: number
+  isAdmin?: boolean
 }
 
 /**
@@ -19,7 +22,7 @@ interface ProductCardProps {
  * - Quadrant badge
  * - Tappable to product detail
  */
-export function ProductCard({ product, distanceKm }: ProductCardProps) {
+export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) {
   // Determine safety score color
   const getSafetyColor = (score: number) => {
     if (score >= 60) return 'bg-color-safety-high' // Green
@@ -33,6 +36,9 @@ export function ProductCard({ product, distanceKm }: ProductCardProps) {
   // Get quadrant info
   const quadrant = getQuadrant(product.averageSafety, product.averageTaste)
   const quadrantInfo = QUADRANTS[quadrant]
+
+  // Check if product has location data
+  const hasLocation = product.stores?.some(s => s.geoPoint)
 
   return (
     <Link
@@ -53,7 +59,7 @@ export function ProductCard({ product, distanceKm }: ProductCardProps) {
             <img
               src={product.imageUrl}
               alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+              className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-color-text-secondary text-sm">
@@ -69,6 +75,36 @@ export function ProductCard({ product, distanceKm }: ProductCardProps) {
               title={quadrantInfo.name}
             >
               {appConfig.quadrants[quadrant]?.emoji || '●'}
+            </div>
+          )}
+
+          {/* Admin Delete Button (top-left) */}
+          {isAdmin && (
+            <div 
+              className="absolute top-2 left-2 z-10"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+            >
+              <DeleteProductButton 
+                product={product} 
+                size="icon" 
+                className="h-7 w-7 bg-white/90 hover:bg-white shadow-sm rounded-full"
+              >
+                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                <span className="sr-only">Delete</span>
+              </DeleteProductButton>
+            </div>
+          )}
+
+          {/* Geolocation Icon (bottom-left) */}
+          {hasLocation && (
+            <div 
+              className="absolute bottom-2 left-2 z-10 bg-blue-500 text-white p-1 rounded-full shadow-sm"
+              title="Has location data"
+            >
+              <MapPin className="h-3 w-3" />
             </div>
           )}
         </div>

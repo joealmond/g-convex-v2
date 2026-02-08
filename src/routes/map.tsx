@@ -84,7 +84,7 @@ function MapPageContent() {
         result.sort((a, b) => b.createdAt - a.createdAt)
         break
       case 'nearby':
-        if (coords?.latitude !== null && coords?.longitude !== null) {
+        if (coords?.latitude && coords?.longitude) {
           result = result.filter((p) => {
             const distance = getProductDistance(p)
             return distance !== undefined && distance <= 10 // 10km radius
@@ -93,6 +93,9 @@ function MapPageContent() {
             (a, b) =>
               (getProductDistance(a) || Infinity) - (getProductDistance(b) || Infinity)
           )
+        } else {
+          // If nearby selected but no location, fall back to showing all locations but keep sort order
+           result.sort((a, b) => b.lastUpdated - a.lastUpdated)
         }
         break
       case 'trending':
@@ -136,9 +139,10 @@ function MapPageContent() {
             {filteredProducts.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center px-4 bg-card/90 rounded-xl p-4 shadow-lg">
-                  <p className="text-foreground mb-2">No products found</p>
+                  <p className="text-foreground mb-2">No products found with location</p>
                   <p className="text-xs text-muted-foreground">
-                    Try adjusting your filters or add products with store locations
+                    Try adjusting your filters or add products wih store locations.
+                    Make sure to allow location access to add pinned products.
                   </p>
                 </div>
               </div>
