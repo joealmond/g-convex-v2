@@ -92,11 +92,11 @@ Broken into 6 sub-sprints. Each sprint produces a testable increment.
 
 | | Priority | I | N | E | Score | Task | Details |
 |---|----------|---|---|---|-------|------|---------|
-| [ ] | 1 | 5 | 5 | S | 25.0 | **Create TopBar** | `src/components/layout/TopBar.tsx` — Logo/app name (left), auth avatar or "Sign In" button (right). Minimal height (~48px). Transparent or cream background |
-| [ ] | 2 | 5 | 5 | M | 12.5 | **Create BottomTabs** | `src/components/layout/BottomTabs.tsx` — 4 tabs: Home (grid icon), Map (map-pin icon), ➕ Add (plus-circle), Profile (user icon). Active = sage green, inactive = gray. Fixed bottom, `pb-safe` (iOS safe area). ➕ button opens `AddProductDialog` or `ImageUploadDialog` |
-| [ ] | 3 | 3 | 5 | M | 10.5 | **Update root layout** | `src/routes/__root.tsx` — Replace `<Navigation>` import with `<TopBar>` above `<Outlet>` and `<BottomTabs>` below. Add bottom padding to body for tab bar height. Move Toaster from `bottom-right` to `top-center` (less likely to overlap bottom tabs on mobile) |
-| [ ] | 4 | 2 | 3 | S | 13.0 | **Create PageShell** | `src/components/layout/PageShell.tsx` — Common page wrapper: max-width container, horizontal padding (16px mobile, 24px tablet), top padding for TopBar, bottom padding for BottomTabs. All route pages use this |
-| [ ] | 5 | 1 | 2 | S | 8.0 | **Archive old Navigation** | Remove or rename `src/components/Navigation.tsx` to `Navigation.old.tsx`. Remove all imports from routes |
+| [x] | 1 | 5 | 5 | S | 25.0 | **Create TopBar** | `src/components/layout/TopBar.tsx` — Logo/app name (left), auth avatar or "Sign In" button (right). Minimal height (~48px). Transparent or cream background |
+| [x] | 2 | 5 | 5 | M | 12.5 | **Create BottomTabs** | `src/components/layout/BottomTabs.tsx` — 4 tabs: Home (grid icon), Leaderboard (chart icon), ➕ Add (plus-circle), Profile (user icon). Active = sage green, inactive = gray. Fixed bottom, `pb-safe` (iOS safe area). ➕ button opens `AddProductDialog` |
+| [x] | 3 | 3 | 5 | M | 10.5 | **Update root layout** | `src/routes/__root.tsx` — Replaced `<Navigation>` import with `<TopBar>` above `<Outlet>` and `<BottomTabs>` below. Added bottom padding to body for tab bar height. Moved Toaster from `bottom-right` to `top-center` (less likely to overlap bottom tabs on mobile) |
+| [x] | 4 | 2 | 3 | S | 13.0 | **Create PageShell** | `src/components/layout/PageShell.tsx` — Common page wrapper: max-width container, horizontal padding (16px mobile, 24px tablet), top padding for TopBar, bottom padding for BottomTabs. All route pages use this |
+| [x] | 5 | 1 | 2 | S | 8.0 | **Archive old Navigation** | Removed all imports of old `src/components/Navigation.tsx` from `src/routes/index.tsx`. Component no longer used |
 
 ### Sprint 1b: Product Card + Home Feed
 

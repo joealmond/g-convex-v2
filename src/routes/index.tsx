@@ -8,7 +8,7 @@ import { Leaderboard } from '@/components/dashboard/Leaderboard'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { AddProductDialog } from '@/components/dashboard/AddProductDialog'
 import { ImageUploadDialog } from '@/components/product/ImageUploadDialog'
-import { Navigation } from '@/components/Navigation'
+
 import { Loader2, Trophy, Flame, TrendingUp, Camera, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/types'
@@ -21,7 +21,6 @@ export const Route = createFileRoute('/')({
 function HomePageSkeleton() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navigation />
       <main className="flex-1 container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
@@ -75,8 +74,6 @@ function HomePageContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navigation />
-
       {/* Main Content */}
       <main className="flex-1 container mx-auto px-4 py-6">
         {/* Gamification Widgets for Logged-in Users */}

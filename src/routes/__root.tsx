@@ -7,6 +7,9 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ImpersonateProvider } from '@/hooks/use-impersonate'
 import { AdminToolbar } from '@/components/AdminToolbar'
 import { VoteMigrationHandler } from '@/components/VoteMigrationHandler'
+import { TopBar } from '@/components/layout/TopBar'
+import { BottomTabs } from '@/components/layout/BottomTabs'
+import { PageShell } from '@/components/layout/PageShell'
 import { authClient } from '@/lib/auth-client'
 import { getToken } from '@/lib/auth-server'
 import { appConfig } from '@/lib/app-config'
@@ -77,18 +80,22 @@ function RootComponent() {
         <head>
           <HeadContent />
         </head>
-        <body className="min-h-screen bg-background antialiased">
+        <body className="min-h-screen bg-color-bg antialiased">
           <ImpersonateProvider>
+            <TopBar />
             <ErrorBoundary>
-              <Outlet />
+              <PageShell>
+                <Outlet />
+              </PageShell>
             </ErrorBoundary>
+            <BottomTabs />
             <AdminToolbar />
             {/* Vote migration runs client-side only */}
             <ClientOnly fallback={null}>
               <VoteMigrationHandler />
             </ClientOnly>
           </ImpersonateProvider>
-          <Toaster richColors position="bottom-right" />
+          <Toaster richColors position="top-center" />
           <Scripts />
         </body>
       </html>
