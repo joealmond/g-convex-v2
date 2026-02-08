@@ -124,7 +124,7 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
               if (!payload || payload.length === 0) return null
               const vote = payload[0].payload
               return (
-                <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
+                <div className="bg-card p-3 rounded-lg shadow-lg border border-border">
                   <p className="font-semibold mb-1">
                     {vote.isRegistered ? 'Registered User' : 'Anonymous'}
                   </p>

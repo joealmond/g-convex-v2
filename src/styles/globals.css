@@ -36,6 +36,19 @@
   
   --radius: 0.625rem;
   
+  /* Opacity Design Tokens (G-Matrix Design System) */
+  --opacity-quadrant: 0.15;     /* Quadrant background fills */
+  --opacity-overlay: 0.85;      /* Modal/sheet overlays */
+  --opacity-disabled: 0.5;      /* Disabled states */
+  --opacity-hover: 0.08;        /* Hover state overlays */
+  --opacity-border: 0.3;        /* Semi-transparent borders */
+  
+  /* Shadow Design Tokens (G-Matrix Design System) */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.1);
+  
   /* Chart Colors (aligned with Safety/Design system) */
   --chart-1: #7CB342; /* Sage */
   --chart-2: #F39C12; /* Amber */
@@ -66,12 +79,12 @@
 }
 
 * {
-  border-color: hsl(var(--border));
+  border-color: var(--border);
 }
 
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  background-color: var(--background);
+  color: var(--foreground);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -133,8 +146,8 @@ body {
   --popover: #1E293B;
   --popover-foreground: #F1F5F9;
   
-  --primary: #FBBF24;           /* Soft Amber */
-  --primary-foreground: #0F172A; /* Dark text on amber */
+  --primary: #7CB342;           /* Sage Green - consistent with light mode */
+  --primary-foreground: #FFFFFF;
   
   --secondary: #334155;         /* Dark Slate */
   --secondary-foreground: #F1F5F9;
@@ -142,7 +155,7 @@ body {
   --muted: #334155;
   --muted-foreground: #94A3B8;  /* Muted Text */
   
-  --accent: #FBBF24;            /* Amber */
+  --accent: #FBBF24;            /* Soft Amber - per design spec */
   --accent-foreground: #0F172A;
   
   --destructive: #F87171;       /* Brighter Red */
@@ -150,9 +163,9 @@ body {
   
   --border: #334155;
   --input: #334155;
-  --ring: #FBBF24;
+  --ring: #FBBF24;              /* Soft Amber */
   
-  --chart-1: #FBBF24;
+  --chart-1: #7CB342;
   --chart-2: #34D399;
   --chart-3: #60A5FA;
   --chart-4: #A78BFA;
@@ -160,16 +173,23 @@ body {
   
   --sidebar: #1E293B;
   --sidebar-foreground: #F1F5F9;
-  --sidebar-primary: #FBBF24;
-  --sidebar-primary-foreground: #0F172A;
+  --sidebar-primary: #7CB342;
+  --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #334155;
-  --sidebar-accent-foreground: #FBBF24;
+  --sidebar-accent-foreground: #AED581;
   --sidebar-border: #334155;
-  --sidebar-ring: #FBBF24;
+  --sidebar-ring: #7CB342;
+  
+  /* Dark mode semantic colors */
+  --safety-high-dark: #27AE60;
+  --safety-mid-dark: #F39C12;
+  --safety-low-dark: #E74C3C;
 
-  /* Legacy variable support */
-  --color-bg-dark: #0F172A;
-  --color-surface-dark: #1E293B;
+  /* Legacy variable support (dark mode) */
+  --color-bg: #0F172A;
+  --color-surface: #1E293B;
+  --color-primary: #FBBF24;     /* Amber in dark mode */
+  --color-text: #F1F5F9;
 
   /* G-Matrix Quadrant Colors (dark mode) */
   --holy-grail: 142 76% 36%;
@@ -179,16 +199,9 @@ body {
 }
 
 @layer utilities {
-  .glass {
-    @apply bg-background/60 backdrop-blur-lg border-white/10 dark:border-white/5 shadow-xl;
-  }
-  
-  .glass-card {
-    @apply bg-card/40 backdrop-blur-md border-white/10 dark:border-white/5 shadow-lg hover:bg-card/50 transition-colors;
-  }
-
-  .glass-panel {
-    @apply bg-background/80 backdrop-blur-xl border-border/50 shadow-2xl;
+  /* Custom shadow utilities for G-Matrix Design System */
+  .shadow-card {
+    box-shadow: var(--shadow-card);
   }
 }
 

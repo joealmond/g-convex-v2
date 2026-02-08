@@ -54,7 +54,7 @@ export function BottomTabs() {
           <AddProductDialog
             trigger={
               <Button
-                className="rounded-full w-12 h-12 p-0 bg-color-primary hover:bg-color-primary-dark text-white shadow-lg -mt-6 flex items-center justify-center"
+                className="rounded-full w-12 h-12 p-0 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg -mt-6 flex items-center justify-center"
                 title="Add product"
               >
                 <Plus className="h-6 w-6" />
@@ -66,7 +66,7 @@ export function BottomTabs() {
             onClick={() => {
               window.location.href = '/login'
             }}
-            className="rounded-full w-12 h-12 p-0 bg-color-primary hover:bg-color-primary-dark text-white shadow-lg -mt-6 flex items-center justify-center"
+            className="rounded-full w-12 h-12 p-0 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg -mt-6 flex items-center justify-center"
             title="Sign in to add product"
           >
             <Plus className="h-6 w-6" />

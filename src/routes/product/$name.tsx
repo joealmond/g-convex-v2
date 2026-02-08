@@ -246,7 +246,7 @@ function ProductDetailContent() {
         </div>
 
         {/* Rating Bars */}
-        <Card className="border-0 shadow-sm">
+        <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="text-lg">Ratings</CardTitle>
           </CardHeader>
@@ -261,7 +261,7 @@ function ProductDetailContent() {
 
         {/* Stores */}
         {product.stores && product.stores.length > 0 && (
-          <Card className="border-0 shadow-sm">
+          <Card className="shadow-card">
             <CardHeader>
               <CardTitle className="text-lg">Where to Buy</CardTitle>
             </CardHeader>
@@ -273,7 +273,7 @@ function ProductDetailContent() {
 
         {/* Ingredients */}
         {product.ingredients && product.ingredients.length > 0 && (
-          <Card className="border-0 shadow-sm">
+          <Card className="shadow-card">
             <CardHeader>
               <CardTitle className="text-lg">Ingredients</CardTitle>
             </CardHeader>
@@ -294,7 +294,7 @@ function ProductDetailContent() {
         )}
 
         {/* Voting Section */}
-        <Card className="border-0 shadow-sm" data-voting-section>
+        <Card className="shadow-card" data-voting-section>
           <CardHeader>
             <CardTitle className="text-lg">Rate This Product</CardTitle>
           </CardHeader>
@@ -321,7 +321,7 @@ function ProductDetailContent() {
         </Card>
 
         {/* Chart View with Tabs */}
-        <Card className="border-0 shadow-sm">
+        <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="text-lg">Position on G-Matrix</CardTitle>
           </CardHeader>

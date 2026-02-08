@@ -101,7 +101,7 @@ export function CoordinateGrid({
           width={gridSize / 2}
           height={gridSize / 2}
           fill={QUADRANTS.topLeft?.color || '#cccccc'}
-          fillOpacity={0.1}
+          fillOpacity={0.7}
         />
         <rect
           x={gridSize / 2}
@@ -109,7 +109,7 @@ export function CoordinateGrid({
           width={gridSize / 2}
           height={gridSize / 2}
           fill={QUADRANTS.topRight?.color || '#cccccc'}
-          fillOpacity={0.1}
+          fillOpacity={0.7}
         />
         <rect
           x={0}
@@ -117,7 +117,7 @@ export function CoordinateGrid({
           width={gridSize / 2}
           height={gridSize / 2}
           fill={QUADRANTS.bottomLeft?.color || '#cccccc'}
-          fillOpacity={0.1}
+          fillOpacity={0.7}
         />
         <rect
           x={gridSize / 2}
@@ -125,7 +125,7 @@ export function CoordinateGrid({
           width={gridSize / 2}
           height={gridSize / 2}
           fill={QUADRANTS.bottomRight?.color || '#cccccc'}
-          fillOpacity={0.1}
+          fillOpacity={0.7}
         />
 
         {/* Grid lines */}
@@ -134,7 +134,7 @@ export function CoordinateGrid({
           y1={0}
           x2={gridSize / 2}
           y2={gridSize}
-          stroke="hsl(var(--border))"
+          stroke="var(--border)"
           strokeWidth={2}
         />
         <line
@@ -142,7 +142,7 @@ export function CoordinateGrid({
           y1={gridSize / 2}
           x2={gridSize}
           y2={gridSize / 2}
-          stroke="hsl(var(--border))"
+          stroke="var(--border)"
           strokeWidth={2}
         />
 
@@ -154,9 +154,9 @@ export function CoordinateGrid({
               y1={0}
               x2={(percent / 100) * gridSize}
               y2={gridSize}
-              stroke="hsl(var(--border))"
+              stroke="var(--border)"
               strokeWidth={1}
-              strokeOpacity={0.3}
+              opacity={0.3}
               strokeDasharray="4 4"
             />
             <line
@@ -164,9 +164,9 @@ export function CoordinateGrid({
               y1={(percent / 100) * gridSize}
               x2={gridSize}
               y2={(percent / 100) * gridSize}
-              stroke="hsl(var(--border))"
+              stroke="var(--border)"
               strokeWidth={1}
-              strokeOpacity={0.3}
+              opacity={0.3}
               strokeDasharray="4 4"
             />
           </g>
@@ -178,7 +178,7 @@ export function CoordinateGrid({
           cy={coords.y}
           r={dotRadius}
           fill={dotColor}
-          stroke="hsl(var(--foreground))"
+          stroke="var(--foreground)"
           strokeWidth={2}
           initial={{ scale: 1, opacity: disabled ? 0.5 : 1 }}
           animate={{
@@ -186,8 +186,7 @@ export function CoordinateGrid({
             opacity: disabled ? 0.5 : 1,
           }}
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          className="cursor-grab active:cursor-grabbing"
-          style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
+          className="cursor-grab active:cursor-grabbing drop-shadow-md"
         />
 
         {/* Crosshair lines */}
@@ -198,9 +197,9 @@ export function CoordinateGrid({
               y1={0}
               x2={coords.x}
               y2={gridSize}
-              stroke="hsl(var(--foreground))"
+              stroke="var(--foreground)"
               strokeWidth={1}
-              strokeOpacity={0.3}
+              opacity={0.3}
               strokeDasharray="2 2"
             />
             <line
@@ -208,9 +207,9 @@ export function CoordinateGrid({
               y1={coords.y}
               x2={gridSize}
               y2={coords.y}
-              stroke="hsl(var(--foreground))"
+              stroke="var(--foreground)"
               strokeWidth={1}
-              strokeOpacity={0.3}
+              opacity={0.3}
               strokeDasharray="2 2"
             />
           </>
@@ -222,7 +221,7 @@ export function CoordinateGrid({
           y={gridSize - 5}
           textAnchor="middle"
           fontSize={12}
-          fill="hsl(var(--muted-foreground))"
+          fill="var(--muted-foreground)"
         >
           Taste →
         </text>
@@ -231,7 +230,7 @@ export function CoordinateGrid({
           y={gridSize / 2}
           textAnchor="start"
           fontSize={12}
-          fill="hsl(var(--muted-foreground))"
+          fill="var(--muted-foreground)"
           transform={`rotate(-90, 10, ${gridSize / 2})`}
         >
           ↑ Safety

@@ -109,7 +109,7 @@ export function StoreList({ product }: StoreListProps) {
         <div
           key={index}
           className={cn(
-            'w-full p-4 bg-white rounded-xl border border-color-border hover:shadow-md transition-shadow',
+            'w-full p-4 bg-card rounded-xl border border-border hover:shadow-md transition-shadow',
             getFreshnessColor(store.lastSeenAt)
           )}
         >

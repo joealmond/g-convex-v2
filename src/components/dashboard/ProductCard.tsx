@@ -89,7 +89,7 @@ export function ProductCard({ product, onClick, isSelected = false }: ProductCar
             <img
               src={product.imageUrl}
               alt={product.name}
-              className="w-full h-32 object-contain rounded bg-black/20 p-2"
+              className="w-full h-32 object-contain rounded bg-muted p-2"
             />
           </div>
         )}

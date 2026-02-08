@@ -111,7 +111,7 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
         <ScatterChart
           margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis
             type="number"
             dataKey="x"
@@ -119,7 +119,7 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
             unit=""
             domain={[0, 100]}
             label={{ value: `${xAxisLabel} →`, position: 'bottom', offset: 0 }}
-            stroke="hsl(var(--foreground))"
+            stroke="var(--foreground)"
           />
           <YAxis
             type="number"
@@ -128,7 +128,7 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
             unit=""
             domain={[0, 100]}
             label={{ value: `↑ ${yAxisLabel}`, angle: -90, position: 'left' }}
-            stroke="hsl(var(--foreground))"
+            stroke="var(--foreground)"
           />
           <ZAxis type="number" dataKey="z" range={[50, 400]} />
           <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
@@ -150,7 +150,7 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
                   key={`cell-${index}`}
                   fill={productColor}
                   fillOpacity={isSelected ? 1 : 0.7}
-                  stroke={isSelected ? 'hsl(var(--foreground))' : 'none'}
+                  stroke={isSelected ? 'var(--foreground)' : 'none'}
                   strokeWidth={isSelected ? 3 : 0}
                   className="cursor-pointer transition-all hover:opacity-100"
                 />

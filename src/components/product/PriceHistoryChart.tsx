@@ -140,21 +140,21 @@ export function PriceHistoryChart({ productId }: PriceHistoryChartProps) {
             <XAxis 
               dataKey="date" 
               className="text-sm"
-              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fill: 'var(--muted-foreground)' }}
             />
             <YAxis 
               domain={[1, 5]}
               ticks={[1, 2, 3, 4, 5]}
               className="text-sm"
-              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fill: 'var(--muted-foreground)' }}
             />
             <Tooltip content={<CustomTooltip />} />
             <Line 
               type="monotone" 
               dataKey="price" 
-              stroke="hsl(var(--primary))"
+              stroke="var(--primary)"
               strokeWidth={2}
-              dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+              dot={{ fill: 'var(--primary)', r: 4 }}
               activeDot={{ r: 6 }}
             />
           </LineChart>
