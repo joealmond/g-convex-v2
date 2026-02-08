@@ -3,6 +3,16 @@
 > Every planned feature across all waves, scored and ordered by launch priority.
 > Cross-referenced with `docs/FEATURE_GAP_ANALYSIS.md` and Kimi design specs.
 
+## Progress Tracking
+
+**How to use this list:**
+- Each task has a checkbox: `[ ]` = not started, `[x]` = done.
+- Before starting a sprint, review all unchecked items in order.
+- After completing a task, immediately check it off (`[x]`).
+- If a task **cannot be completed as described**, do NOT skip it silently — update this document with a note explaining why, and either revise the task or move it to a later wave.
+- Wave N+1 should not begin until all items in Wave N are checked (or explicitly replanned).
+- This file is the **single source of truth** for what's done and what's next.
+
 ## Scoring System
 
 Each item is scored on three axes (1–5 scale):
@@ -27,50 +37,50 @@ All items are prerequisites — everything in Wave 1+ depends on them. No scorin
 
 Creates `src/lib/app-config.ts` and removes all hardcoded niche strings from components.
 
-| Step | Task | Files Affected | Verification |
-|------|------|----------------|-------------|
-| 1 | Create `src/lib/app-config.ts` with full structure: `appName`, `categoryTerm`, `tagline`, `dimensions` (axis1/axis2/axis3 with keys, labels, presets), `quadrants` (4 entries with id/label/emoji/color), `valueLens` (optional 2nd chart mode), `ratingLabels` (thresholds), `riskConcept`, `certificationName`, `storeDefaults` (per country), `colors` | New file | File exists and TypeScript compiles |
-| 2 | Refactor `src/lib/types.ts` — `QUADRANTS` record reads labels/descriptions from `appConfig.quadrants`. `SAFETY_PRESETS`, `TASTE_PRESETS` read from `appConfig.dimensions.axis1.presets` / `axis2.presets`. `PRICE_LABELS` reads from config. `getQuadrant()` logic stays (it's generic threshold math) | `types.ts` | Types still export correctly, no inline niche strings |
-| 3 | Refactor `VotingPanel.tsx` — Replace line 30 `"How safe is it for celiacs?"` with i18n key referencing `appConfig.dimensions.axis1.label`. Preset labels from config | `VotingPanel.tsx` | No grep hits for "celiac" |
-| 4 | Refactor `FineTunePanel.tsx` — Replace line 49 `"Safety for Celiacs"` with config dimension label | `FineTunePanel.tsx` | No grep hits for "Celiac" |
-| 5 | Refactor `MatrixChart.tsx` — Axis labels and quadrant corner labels read from config | `MatrixChart.tsx` | No hardcoded "Safety"/"Taste"/"Holy Grail" (verify chart still renders) |
-| 6 | Refactor `ProductCard.tsx` — "Safety: X • Taste: X" uses config dimension labels | `ProductCard.tsx` | No inline "Safety"/"Taste" strings |
-| 7 | Refactor `AddProductDialog.tsx` — Line 95 description + line 107 placeholder use config `categoryTerm` and generic example | `AddProductDialog.tsx` | No "gluten" in file |
-| 8 | Refactor `EditProductDialog.tsx` — Line 110 placeholder uses generic example | `EditProductDialog.tsx` | No "Gluten-Free" in file |
-| 9 | Refactor `ImageUploadDialog.tsx` — Line 42 `containsGluten` → `containsRiskIngredient` (or config-keyed field). Lines 304-306 warning reads from config `riskConcept` | `ImageUploadDialog.tsx` | No "gluten" in file (except locale key reference) |
-| 10 | Refactor `__root.tsx` — Lines 33-34 meta title/description from `appConfig.appName` + `appConfig.tagline` | `__root.tsx` | Meta tags reference config |
-| 11 | Refactor `login.tsx` — Line 68 tagline from config | `login.tsx` | No "gluten" or "celiac" |
-| 12 | **Verification gate**: `grep -ri "gluten\|celiac\|Holy Grail" src/ --include="*.tsx" --include="*.ts"` returns hits ONLY in `app-config.ts` and `locales/*.json` | — | Clean grep |
+| | Step | Task | Files Affected | Verification |
+|---|------|------|----------------|-------------|
+| [ ] | 1 | Create `src/lib/app-config.ts` with full structure: `appName`, `categoryTerm`, `tagline`, `dimensions` (axis1/axis2/axis3 with keys, labels, presets), `quadrants` (4 entries with id/label/emoji/color), `valueLens` (optional 2nd chart mode), `ratingLabels` (thresholds), `riskConcept`, `certificationName`, `storeDefaults` (per country), `colors` | New file | File exists and TypeScript compiles |
+| [ ] | 2 | Refactor `src/lib/types.ts` — `QUADRANTS` record reads labels/descriptions from `appConfig.quadrants`. `SAFETY_PRESETS`, `TASTE_PRESETS` read from `appConfig.dimensions.axis1.presets` / `axis2.presets`. `PRICE_LABELS` reads from config. `getQuadrant()` logic stays (it's generic threshold math) | `types.ts` | Types still export correctly, no inline niche strings |
+| [ ] | 3 | Refactor `VotingPanel.tsx` — Replace line 30 `"How safe is it for celiacs?"` with i18n key referencing `appConfig.dimensions.axis1.label`. Preset labels from config | `VotingPanel.tsx` | No grep hits for "celiac" |
+| [ ] | 4 | Refactor `FineTunePanel.tsx` — Replace line 49 `"Safety for Celiacs"` with config dimension label | `FineTunePanel.tsx` | No grep hits for "Celiac" |
+| [ ] | 5 | Refactor `MatrixChart.tsx` — Axis labels and quadrant corner labels read from config | `MatrixChart.tsx` | No hardcoded "Safety"/"Taste"/"Holy Grail" (verify chart still renders) |
+| [ ] | 6 | Refactor `ProductCard.tsx` — "Safety: X • Taste: X" uses config dimension labels | `ProductCard.tsx` | No inline "Safety"/"Taste" strings |
+| [ ] | 7 | Refactor `AddProductDialog.tsx` — Line 95 description + line 107 placeholder use config `categoryTerm` and generic example | `AddProductDialog.tsx` | No "gluten" in file |
+| [ ] | 8 | Refactor `EditProductDialog.tsx` — Line 110 placeholder uses generic example | `EditProductDialog.tsx` | No "Gluten-Free" in file |
+| [ ] | 9 | Refactor `ImageUploadDialog.tsx` — Line 42 `containsGluten` → `containsRiskIngredient` (or config-keyed field). Lines 304-306 warning reads from config `riskConcept` | `ImageUploadDialog.tsx` | No "gluten" in file (except locale key reference) |
+| [ ] | 10 | Refactor `__root.tsx` — Lines 33-34 meta title/description from `appConfig.appName` + `appConfig.tagline` | `__root.tsx` | Meta tags reference config |
+| [ ] | 11 | Refactor `login.tsx` — Line 68 tagline from config | `login.tsx` | No "gluten" or "celiac" |
+| [ ] | 12 | **Verification gate**: `grep -ri "gluten\|celiac\|Holy Grail" src/ --include="*.tsx" --include="*.ts"` returns hits ONLY in `app-config.ts` and `locales/*.json` | — | Clean grep |
 
 ### Sprint 0b: Design Tokens + PWA
 
-| Step | Task | Verification |
-|------|------|-------------|
-| 1 | Add Kimi color palette as CSS custom properties in `globals.css`: `--color-primary: #7CB342`, `--color-primary-dark: #558B2F`, `--color-primary-light: #AED581`, `--color-bg: #FAF8F5`, `--color-text: #2D3436`, `--color-text-secondary: #636E72`, `--color-border: #B2BEC3`, `--color-safety-high: #27AE60`, `--color-safety-mid: #F39C12`, `--color-safety-low: #E74C3C`, `--color-gold: #F1C40F`. Dark mode: `--color-bg-dark: #0F172A`, `--color-surface-dark: #1E293B` | CSS loads, colors visible |
-| 2 | Update shadcn theme to map `--primary`, `--background`, `--foreground`, `--muted`, etc. to new Kimi tokens | shadcn components use new palette |
-| 3 | Add Inter font: `<link>` to Google Fonts in `__root.tsx` head, set `font-family: 'Inter', system-ui, -apple-system, sans-serif` as body default | Font loads on page |
-| 4 | Create `public/manifest.json` — `name: "G-Matrix"`, `short_name: "G-Matrix"`, `start_url: "/"`, `display: "standalone"`, `theme_color: "#7CB342"`, `background_color: "#FAF8F5"`, `icons: [...]` | Manifest loads in DevTools > Application |
-| 5 | Create app icons: `public/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (can be placeholder squares initially) | Icons referenced in manifest |
-| 6 | Add PWA meta tags to `__root.tsx` head: `<meta name="apple-mobile-web-app-capable" content="yes">`, `<meta name="theme-color" content="#7CB342">`, `<link rel="manifest" href="/manifest.json">`, updated viewport: `width=device-width, initial-scale=1, viewport-fit=cover` | "Add to Home Screen" prompt available on mobile |
+| | Step | Task | Verification |
+|---|------|------|-------------|
+| [ ] | 1 | Add Kimi color palette as CSS custom properties in `globals.css`: `--color-primary: #7CB342`, `--color-primary-dark: #558B2F`, `--color-primary-light: #AED581`, `--color-bg: #FAF8F5`, `--color-text: #2D3436`, `--color-text-secondary: #636E72`, `--color-border: #B2BEC3`, `--color-safety-high: #27AE60`, `--color-safety-mid: #F39C12`, `--color-safety-low: #E74C3C`, `--color-gold: #F1C40F`. Dark mode: `--color-bg-dark: #0F172A`, `--color-surface-dark: #1E293B` | CSS loads, colors visible |
+| [ ] | 2 | Update shadcn theme to map `--primary`, `--background`, `--foreground`, `--muted`, etc. to new Kimi tokens | shadcn components use new palette |
+| [ ] | 3 | Add Inter font: `<link>` to Google Fonts in `__root.tsx` head, set `font-family: 'Inter', system-ui, -apple-system, sans-serif` as body default | Font loads on page |
+| [ ] | 4 | Create `public/manifest.json` — `name: "G-Matrix"`, `short_name: "G-Matrix"`, `start_url: "/"`, `display: "standalone"`, `theme_color: "#7CB342"`, `background_color: "#FAF8F5"`, `icons: [...]` | Manifest loads in DevTools > Application |
+| [ ] | 5 | Create app icons: `public/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (can be placeholder squares initially) | Icons referenced in manifest |
+| [ ] | 6 | Add PWA meta tags to `__root.tsx` head: `<meta name="apple-mobile-web-app-capable" content="yes">`, `<meta name="theme-color" content="#7CB342">`, `<link rel="manifest" href="/manifest.json">`, updated viewport: `width=device-width, initial-scale=1, viewport-fit=cover` | "Add to Home Screen" prompt available on mobile |
 
 ### Sprint 0c: Capacitor Shell
 
-| Step | Task | Verification |
-|------|------|-------------|
-| 1 | `npm install @capacitor/core @capacitor/cli` | Packages in `package.json` |
-| 2 | `npx cap init "G-Matrix" "com.gmatrix.app" --web-dir dist/client` → creates `capacitor.config.ts` | Config file created |
-| 3 | `npx cap add ios && npx cap add android` | `ios/` and `android/` folders created |
-| 4 | Add to `package.json` scripts: `"cap:sync": "npx cap sync"`, `"cap:ios": "npx cap open ios"`, `"cap:android": "npx cap open android"` | Scripts work |
-| 5 | `npm install @capacitor/geolocation @capacitor/camera @capacitor/share` | Packages installed |
-| 6 | Create `src/lib/platform.ts` — export `isNative()`, `isIOS()`, `isAndroid()`, `isWeb()` using Capacitor's `Capacitor.isNativePlatform()` and `Capacitor.getPlatform()` | Can detect platform at runtime |
-| 7 | Add `ios/` and `android/` to `.gitignore` (native build artifacts; regenerated from config) | Clean git status |
-| 8 | Verify: `npm run build && npx cap sync && npx cap open ios` opens app in Xcode simulator | App renders in simulator |
+| | Step | Task | Verification |
+|---|------|------|-------------|
+| [ ] | 1 | `npm install @capacitor/core @capacitor/cli` | Packages in `package.json` |
+| [ ] | 2 | `npx cap init "G-Matrix" "com.gmatrix.app" --web-dir dist/client` → creates `capacitor.config.ts` | Config file created |
+| [ ] | 3 | `npx cap add ios && npx cap add android` | `ios/` and `android/` folders created |
+| [ ] | 4 | Add to `package.json` scripts: `"cap:sync": "npx cap sync"`, `"cap:ios": "npx cap open ios"`, `"cap:android": "npx cap open android"` | Scripts work |
+| [ ] | 5 | `npm install @capacitor/geolocation @capacitor/camera @capacitor/share` | Packages installed |
+| [ ] | 6 | Create `src/lib/platform.ts` — export `isNative()`, `isIOS()`, `isAndroid()`, `isWeb()` using Capacitor's `Capacitor.isNativePlatform()` and `Capacitor.getPlatform()` | Can detect platform at runtime |
+| [ ] | 7 | Add `ios/` and `android/` to `.gitignore` (native build artifacts; regenerated from config) | Clean git status |
+| [ ] | 8 | Verify: `npm run build && npx cap sync && npx cap open ios` opens app in Xcode simulator | App renders in simulator |
 
 ### Sprint 0d: Agent Guidelines
 
-| Step | Task |
-|------|------|
-| 1 | Create `.github/copilot-instructions.md` (see separate file) |
+| | Step | Task |
+|---|------|------|
+| [x] | 1 | Create `.github/copilot-instructions.md` (see separate file) |
 
 ---
 
@@ -80,61 +90,61 @@ Broken into 6 sub-sprints. Each sprint produces a testable increment.
 
 ### Sprint 1a: Navigation
 
-| Priority | I | N | E | Score | Task | Details |
-|----------|---|---|---|-------|------|---------|
-| 1 | 5 | 5 | S | 25.0 | **Create TopBar** | `src/components/layout/TopBar.tsx` — Logo/app name (left), auth avatar or "Sign In" button (right). Minimal height (~48px). Transparent or cream background |
-| 2 | 5 | 5 | M | 12.5 | **Create BottomTabs** | `src/components/layout/BottomTabs.tsx` — 4 tabs: Home (grid icon), Map (map-pin icon), ➕ Add (plus-circle), Profile (user icon). Active = sage green, inactive = gray. Fixed bottom, `pb-safe` (iOS safe area). ➕ button opens `AddProductDialog` or `ImageUploadDialog` |
-| 3 | 3 | 5 | M | 10.5 | **Update root layout** | `src/routes/__root.tsx` — Replace `<Navigation>` import with `<TopBar>` above `<Outlet>` and `<BottomTabs>` below. Add bottom padding to body for tab bar height. Move Toaster from `bottom-right` to `top-center` (less likely to overlap bottom tabs on mobile) |
-| 4 | 2 | 3 | S | 13.0 | **Create PageShell** | `src/components/layout/PageShell.tsx` — Common page wrapper: max-width container, horizontal padding (16px mobile, 24px tablet), top padding for TopBar, bottom padding for BottomTabs. All route pages use this |
-| 5 | 1 | 2 | S | 8.0 | **Archive old Navigation** | Remove or rename `src/components/Navigation.tsx` to `Navigation.old.tsx`. Remove all imports from routes |
+| | Priority | I | N | E | Score | Task | Details |
+|---|----------|---|---|---|-------|------|---------|
+| [ ] | 1 | 5 | 5 | S | 25.0 | **Create TopBar** | `src/components/layout/TopBar.tsx` — Logo/app name (left), auth avatar or "Sign In" button (right). Minimal height (~48px). Transparent or cream background |
+| [ ] | 2 | 5 | 5 | M | 12.5 | **Create BottomTabs** | `src/components/layout/BottomTabs.tsx` — 4 tabs: Home (grid icon), Map (map-pin icon), ➕ Add (plus-circle), Profile (user icon). Active = sage green, inactive = gray. Fixed bottom, `pb-safe` (iOS safe area). ➕ button opens `AddProductDialog` or `ImageUploadDialog` |
+| [ ] | 3 | 3 | 5 | M | 10.5 | **Update root layout** | `src/routes/__root.tsx` — Replace `<Navigation>` import with `<TopBar>` above `<Outlet>` and `<BottomTabs>` below. Add bottom padding to body for tab bar height. Move Toaster from `bottom-right` to `top-center` (less likely to overlap bottom tabs on mobile) |
+| [ ] | 4 | 2 | 3 | S | 13.0 | **Create PageShell** | `src/components/layout/PageShell.tsx` — Common page wrapper: max-width container, horizontal padding (16px mobile, 24px tablet), top padding for TopBar, bottom padding for BottomTabs. All route pages use this |
+| [ ] | 5 | 1 | 2 | S | 8.0 | **Archive old Navigation** | Remove or rename `src/components/Navigation.tsx` to `Navigation.old.tsx`. Remove all imports from routes |
 
 ### Sprint 1b: Product Card + Home Feed
 
-| Priority | I | N | E | Score | Task | Details |
-|----------|---|---|---|-------|------|---------|
-| 1 | 5 | 5 | M | 12.5 | **Create new ProductCard** | `src/components/feed/ProductCard.tsx` — Safety dots row (3 × 8px circles: axis1/axis2/axis3 scores → green/yellow/red/gray). Square product image (rounded 12px). Product name (H3, 1-line truncate). Distance from user if GPS available. Quadrant badge pill. White card, 16px radius, shadow. Taps → `/product/$name` |
-| 2 | 5 | 5 | L | 8.3 | **Rewrite home page** | `src/routes/index.tsx` — Search bar (top), FilterChips row below, FeedGrid of ProductCards. Top-right corner: Feed/Chart toggle icon button. When "Chart" active, show existing `MatrixChart` + `Leaderboard` sidebar (desktop) or full-width (mobile). Default = feed view |
-| 3 | 4 | 4 | S | 20.0 | **Create FilterChips** | `src/components/feed/FilterChips.tsx` — Horizontal scroll container: All \| Recently Added \| Nearby \| Trending. Pill shape, 24px radius. Active = sage green bg/white text. Single-select (one active at a time) |
-| 4 | 3 | 3 | S | 15.0 | **Create FeedGrid** | `src/components/feed/FeedGrid.tsx` — `grid grid-cols-2 gap-3` on mobile, `grid-cols-3` on tablet, `grid-cols-4` on desktop. Accepts children. Handles empty state ("No products found") |
-| 5 | 3 | 3 | S | 15.0 | **Implement filter logic** | In home page: `All` = default sort by `lastUpdated` desc. `Recently Added` = sort by `_creationTime` desc. `Trending` = sort by `totalVotes` desc. `Nearby` = filter to products with stores ≤5km (depends on GPS — graceful degradation if denied) |
+| | Priority | I | N | E | Score | Task | Details |
+|---|----------|---|---|---|-------|------|---------|
+| [ ] | 1 | 5 | 5 | M | 12.5 | **Create new ProductCard** | `src/components/feed/ProductCard.tsx` — Safety dots row (3 × 8px circles: axis1/axis2/axis3 scores → green/yellow/red/gray). Square product image (rounded 12px). Product name (H3, 1-line truncate). Distance from user if GPS available. Quadrant badge pill. White card, 16px radius, shadow. Taps → `/product/$name` |
+| [ ] | 2 | 5 | 5 | L | 8.3 | **Rewrite home page** | `src/routes/index.tsx` — Search bar (top), FilterChips row below, FeedGrid of ProductCards. Top-right corner: Feed/Chart toggle icon button. When "Chart" active, show existing `MatrixChart` + `Leaderboard` sidebar (desktop) or full-width (mobile). Default = feed view |
+| [ ] | 3 | 4 | 4 | S | 20.0 | **Create FilterChips** | `src/components/feed/FilterChips.tsx` — Horizontal scroll container: All \| Recently Added \| Nearby \| Trending. Pill shape, 24px radius. Active = sage green bg/white text. Single-select (one active at a time) |
+| [ ] | 4 | 3 | 3 | S | 15.0 | **Create FeedGrid** | `src/components/feed/FeedGrid.tsx` — `grid grid-cols-2 gap-3` on mobile, `grid-cols-3` on tablet, `grid-cols-4` on desktop. Accepts children. Handles empty state ("No products found") |
+| [ ] | 5 | 3 | 3 | S | 15.0 | **Implement filter logic** | In home page: `All` = default sort by `lastUpdated` desc. `Recently Added` = sort by `_creationTime` desc. `Trending` = sort by `totalVotes` desc. `Nearby` = filter to products with stores ≤5km (depends on GPS — graceful degradation if denied) |
 
 ### Sprint 1c: Product Detail Page
 
-| Priority | I | N | E | Score | Task | Details |
-|----------|---|---|---|-------|------|---------|
-| 1 | 5 | 5 | L | 8.3 | **Rewrite product detail** | `src/routes/product/$name.tsx` — Hero image (full-width, 300px max height). Product name + quadrant badge. Rating bars section. Stores section. Voting section (VotingSheet). Ingredients section. Back button (top-left arrow). All sections in vertical scroll |
-| 2 | 4 | 4 | M | 10.0 | **Create RatingBars** | `src/components/product/RatingBars.tsx` — 3 horizontal bars: axis1 (safety), axis2 (taste), axis3 (price). Each bar: label (from config) + score value + colored progress bar (green ≥60, yellow 40-59, red <40) + rating label text ("Excellent"/"Good"/"Fair"/"Poor" from config thresholds). 8px bar height, rounded, animated width on mount |
-| 3 | 4 | 4 | M | 10.0 | **Create StoreList** | `src/components/product/StoreList.tsx` — Card listing stores from `product.stores[]`: store name, price ($ icons), last seen (relative time via `formatRelativeTime()`), user distance if GPS available, freshness border (green <7d, yellow <30d, faded >30d). Tap store → open maps (platform-aware URL) |
-| 4 | 3 | 3 | S | 15.0 | **Add price display** | Average price shown as $ icon row or "Budget"/"Moderate"/"Expensive" label. `avgPrice` field exists in schema. Price labels from config |
-| 5 | 3 | 2 | S | 12.0 | **Show ingredients to all** | Currently ingredients show admin-only. Make visible to all users on product detail (read-only tag list) |
+| | Priority | I | N | E | Score | Task | Details |
+|---|----------|---|---|---|-------|------|---------|
+| [ ] | 1 | 5 | 5 | L | 8.3 | **Rewrite product detail** | `src/routes/product/$name.tsx` — Hero image (full-width, 300px max height). Product name + quadrant badge. Rating bars section. Stores section. Voting section (VotingSheet). Ingredients section. Back button (top-left arrow). All sections in vertical scroll |
+| [ ] | 2 | 4 | 4 | M | 10.0 | **Create RatingBars** | `src/components/product/RatingBars.tsx` — 3 horizontal bars: axis1 (safety), axis2 (taste), axis3 (price). Each bar: label (from config) + score value + colored progress bar (green ≥60, yellow 40-59, red <40) + rating label text ("Excellent"/"Good"/"Fair"/"Poor" from config thresholds). 8px bar height, rounded, animated width on mount |
+| [ ] | 3 | 4 | 4 | M | 10.0 | **Create StoreList** | `src/components/product/StoreList.tsx` — Card listing stores from `product.stores[]`: store name, price ($ icons), last seen (relative time via `formatRelativeTime()`), user distance if GPS available, freshness border (green <7d, yellow <30d, faded >30d). Tap store → open maps (platform-aware URL) |
+| [ ] | 4 | 3 | 3 | S | 15.0 | **Add price display** | Average price shown as $ icon row or "Budget"/"Moderate"/"Expensive" label. `avgPrice` field exists in schema. Price labels from config |
+| [ ] | 5 | 3 | 2 | S | 12.0 | **Show ingredients to all** | Currently ingredients show admin-only. Make visible to all users on product detail (read-only tag list) |
 
 ### Sprint 1d: Voting UX
 
-| Priority | I | N | E | Score | Task | Details |
-|----------|---|---|---|-------|------|---------|
-| 1 | 5 | 5 | M | 12.5 | **Create VotingSheet** | `src/components/product/VotingSheet.tsx` — Mobile-optimized voting UI replacing `VotingPanel.tsx`. Full-width safety buttons (3: Clean/Sketchy/Wrecked from config), full-width taste buttons (3: Yass!/Meh/Pass from config), combo presets row (4: Holy Grail/Survivor/Risky/Bin). All labels from `appConfig`. 48px min button height |
-| 2 | 4 | 4 | S | 20.0 | **Add price vote buttons** | 5 pill buttons ($–$$$$$) in VotingSheet. Backend `votes.cast` already accepts `price` param. Schema field exists. This is purely frontend |
-| 3 | 4 | 3 | M | 8.5 | **Redesign FineTunePanel** | Mobile-friendly sliders with larger thumb (24px), value display. Axis labels from config. Expandable/collapsible after quick vote |
-| 4 | 3 | 3 | M | 7.5 | **Create store dropdown** | Upgrade `StoreTagInput.tsx` — Radix Select or custom dropdown: predefined stores from `appConfig.storeDefaults[userLocale]` + "Add custom store..." option at bottom → free text input. GPS button stays |
-| 5 | 3 | 2 | S | 12.0 | **Gamification toasts** | After `votes.cast` mutation returns, show: `"+${points} Scout Points! 🎉"` (Sonner toast). If badge unlocked, show: `"🏆 Badge Unlocked: ${badge.name}!"`. Data from existing `calculateVotePoints()` and badge check in `profiles.ts` |
+| | Priority | I | N | E | Score | Task | Details |
+|---|----------|---|---|---|-------|------|---------|
+| [ ] | 1 | 5 | 5 | M | 12.5 | **Create VotingSheet** | `src/components/product/VotingSheet.tsx` — Mobile-optimized voting UI replacing `VotingPanel.tsx`. Full-width safety buttons (3: Clean/Sketchy/Wrecked from config), full-width taste buttons (3: Yass!/Meh/Pass from config), combo presets row (4: Holy Grail/Survivor/Risky/Bin). All labels from `appConfig`. 48px min button height |
+| [ ] | 2 | 4 | 4 | S | 20.0 | **Add price vote buttons** | 5 pill buttons ($–$$$$$) in VotingSheet. Backend `votes.cast` already accepts `price` param. Schema field exists. This is purely frontend |
+| [ ] | 3 | 4 | 3 | M | 8.5 | **Redesign FineTunePanel** | Mobile-friendly sliders with larger thumb (24px), value display. Axis labels from config. Expandable/collapsible after quick vote |
+| [ ] | 4 | 3 | 3 | M | 7.5 | **Create store dropdown** | Upgrade `StoreTagInput.tsx` — Radix Select or custom dropdown: predefined stores from `appConfig.storeDefaults[userLocale]` + "Add custom store..." option at bottom → free text input. GPS button stays |
+| [ ] | 5 | 3 | 2 | S | 12.0 | **Gamification toasts** | After `votes.cast` mutation returns, show: `"+${points} Scout Points! 🎉"` (Sonner toast). If badge unlocked, show: `"🏆 Badge Unlocked: ${badge.name}!"`. Data from existing `calculateVotePoints()` and badge check in `profiles.ts` |
 
 ### Sprint 1e: Map Page
 
-| Priority | I | N | E | Score | Task | Details |
-|----------|---|---|---|-------|------|---------|
-| 1 | 4 | 4 | L | 6.7 | **Create map route** | `src/routes/map.tsx` — Install `leaflet` + `react-leaflet`. Full-height map (minus TopBar and BottomTabs). OpenStreetMap tiles. Initial center: user GPS position or Budapest fallback `[47.497, 19.040]` |
-| 2 | 4 | 4 | M | 10.0 | **Create ProductMap** | `src/components/map/ProductMap.tsx` — Reusable Leaflet `MapContainer`. Accepts `products` array. Renders markers at each `product.stores[].geoPoint`. Marker color = quadrant color. Clusters for dense areas (optional, use `react-leaflet-cluster`) |
-| 3 | 3 | 3 | M | 7.5 | **Create ProductPin** | `src/components/map/ProductPin.tsx` — Marker popup: product image thumbnail (48px), name, safety dots, vote count, "View →" link to `/product/$name` |
-| 4 | 2 | 2 | S | 10.0 | **Map filter chips** | Reuse `FilterChips` component on map page: Nearby (distance sort), High Safety, Low Price, Recently Added |
+| | Priority | I | N | E | Score | Task | Details |
+|---|----------|---|---|---|-------|------|---------|
+| [ ] | 1 | 4 | 4 | L | 6.7 | **Create map route** | `src/routes/map.tsx` — Install `leaflet` + `react-leaflet`. Full-height map (minus TopBar and BottomTabs). OpenStreetMap tiles. Initial center: user GPS position or Budapest fallback `[47.497, 19.040]` |
+| [ ] | 2 | 4 | 4 | M | 10.0 | **Create ProductMap** | `src/components/map/ProductMap.tsx` — Reusable Leaflet `MapContainer`. Accepts `products` array. Renders markers at each `product.stores[].geoPoint`. Marker color = quadrant color. Clusters for dense areas (optional, use `react-leaflet-cluster`) |
+| [ ] | 3 | 3 | 3 | M | 7.5 | **Create ProductPin** | `src/components/map/ProductPin.tsx` — Marker popup: product image thumbnail (48px), name, safety dots, vote count, "View →" link to `/product/$name` |
+| [ ] | 4 | 2 | 2 | S | 10.0 | **Map filter chips** | Reuse `FilterChips` component on map page: Nearby (distance sort), High Safety, Low Price, Recently Added |
 
 ### Sprint 1f: Profile + Global Polish
 
-| Priority | I | N | E | Score | Task | Details |
-|----------|---|---|---|-------|------|---------|
-| 1 | 4 | 3 | M | 8.5 | **Redesign profile page** | `src/routes/profile.tsx` — User header: avatar (64px), name, level title (from config: "Bronze Scout" / "Silver Scout" / "Gold Scout" / "Elite Scout"), progress bar (XP toward next level). Stats row: points \| day streak \| products added (reuse `StatsCard`). Badges grid (reuse `BadgeDisplay`). Contributions feed: chronological list of recent actions with points earned |
-| 2 | 3 | 2 | S | 12.0 | **Level progress bar** | Config-driven level thresholds: Bronze 0-249, Silver 250-499, Gold 500-999, Elite 1000+. Progress bar shows % within current level. Add to `app-config.ts` levels |
-| 3 | 2 | 2 | S | 10.0 | **Adapt remaining pages** | `admin.tsx`, `leaderboard.tsx`, `login.tsx` — Apply new design tokens (sage green, cream bg, Inter font, card styles). No layout rewrite needed, just visual consistency |
-| 4 | 3 | 3 | M | 7.5 | **Mobile responsiveness pass** | Test all pages at 375px, 390px, 428px widths. Fix overflow, truncation, touch-target violations. Verify BottomTabs doesn't overlap content. Test iOS Safari safe areas |
+| | Priority | I | N | E | Score | Task | Details |
+|---|----------|---|---|---|-------|------|---------|
+| [ ] | 1 | 4 | 3 | M | 8.5 | **Redesign profile page** | `src/routes/profile.tsx` — User header: avatar (64px), name, level title (from config: "Bronze Scout" / "Silver Scout" / "Gold Scout" / "Elite Scout"), progress bar (XP toward next level). Stats row: points \| day streak \| products added (reuse `StatsCard`). Badges grid (reuse `BadgeDisplay`). Contributions feed: chronological list of recent actions with points earned |
+| [ ] | 2 | 3 | 2 | S | 12.0 | **Level progress bar** | Config-driven level thresholds: Bronze 0-249, Silver 250-499, Gold 500-999, Elite 1000+. Progress bar shows % within current level. Add to `app-config.ts` levels |
+| [ ] | 3 | 2 | 2 | S | 10.0 | **Adapt remaining pages** | `admin.tsx`, `leaderboard.tsx`, `login.tsx` — Apply new design tokens (sage green, cream bg, Inter font, card styles). No layout rewrite needed, just visual consistency |
+| [ ] | 4 | 3 | 3 | M | 7.5 | **Mobile responsiveness pass** | Test all pages at 375px, 390px, 428px widths. Fix overflow, truncation, touch-target violations. Verify BottomTabs doesn't overlap content. Test iOS Safari safe areas |
 
 ---
 
@@ -175,28 +185,28 @@ Makes the first impression "attractive" beyond functional.
 
 Iterate based on real user feedback. Not required for public launch. Ordered by estimated user value.
 
-| Rank | Feature | Effort | Category | Gap Ref | Notes |
-|------|---------|--------|----------|---------|-------|
-| 1 | **View tabs** on product detail (Average / My Vote / All Votes) | M | Voting UX | 2.16 | Shows different chart perspectives — requires querying individual votes |
-| 2 | **All Votes visualization** (individual vote dots on chart) | M | Visualization | 1.13, 1.14, 1.15 | Color-coded: green=registered, gray=anonymous, gold=impersonated |
-| 3 | **Time-decay cron** + recalculation system | M | Data Quality | 9.1, 9.2 | Convex cron: 0.5%/day decay on averages. Keeps ratings fresh, downweights stale votes |
-| 4 | **Social sharing** (native share sheet) | S | Growth | Kimi | Capacitor Share plugin on native, Web Share API on browser. Share product link + name + rating |
-| 5 | **Full map bottom-sheet** UX | L | Map UX | Kimi | Swipeable bottom sheet over map with product cards. Horizontal scroll. Spring animations |
-| 6 | **Camera/barcode scan** | L | Product Creation | Kimi | Capacitor Camera plugin → capture → AI analysis. Barcode → Open Food Facts API lookup. Full scan flow |
-| 7 | **Admin voter list** with delete/impersonate per vote | M | Admin | 4.12, 4.13, 4.14, 6.8, 6.9 | Scrollable voter list on product detail (admin only). Eye icon = impersonate, trash = delete vote |
-| 8 | **Community store verification** → promoted to defaults | M | Stores | New | Stores added by 5+ users get flagged as verified. Admin can promote to `storeDefaults` |
-| 9 | **Push notifications** | M | Engagement | Kimi | Capacitor Push plugin. Streak reminders, price drops, nearby new products. Requires push server |
-| 10 | **Drag-and-drop image upload** | S | Upload UX | 5.10 | Drop zone in ImageUploadDialog. `onDragOver`/`onDrop` handlers |
-| 11 | **Report Product button** | S | Moderation | 2.18 | Flag icon on product detail. Creates report entry. Admin sees reports in dashboard |
-| 12 | **Store profiles page** | M | Discovery | Kimi | `/store/$name` route — all products at a given store. Store safety rating. User-submitted store photos |
-| 13 | **Price tracking history** | M | Price UX | Kimi | Line chart of price over time per product. Requires storing historical price data (new schema field) |
-| 14 | **Dietary profiles** | M | Personalization | Kimi | User sets: Celiac / Gluten-sensitive / Preference. Safety ratings weighted by profile. UI toggle on profile page |
-| 15 | **Community challenges** | M | Gamification | Kimi | Weekly goals ("Add 5 products → Explorer Badge"). Admin-configured challenge definitions. Leaderboard integration |
-| 16 | **Follow power users** | S | Social | Kimi | Follow button on profiles. Feed filter "From People I Follow" |
-| 17 | **Offline mode** | L | Resilience | Kimi | Service worker caches product data for user's area. Queue votes offline → sync on reconnect. Critical for traveling |
-| 18 | **Smart notifications** | M | Engagement | Kimi | "Product you rated available closer!", "New bakery near you", "Streak about to break!" |
-| 19 | **Ad slot placeholder** | S | Business | 10.10 | Component placeholder for future sponsored content / affiliate links |
-| 20 | **Full template CLI** | L | Platform | Kimi | `npx create-matrix-app` — scaffolds new niche app from config. Full extraction of template pattern |
+| | Rank | Feature | Effort | Category | Gap Ref | Notes |
+|---|------|---------|--------|----------|---------|-------|
+| [ ] | 1 | **View tabs** on product detail (Average / My Vote / All Votes) | M | Voting UX | 2.16 | Shows different chart perspectives — requires querying individual votes |
+| [ ] | 2 | **All Votes visualization** (individual vote dots on chart) | M | Visualization | 1.13, 1.14, 1.15 | Color-coded: green=registered, gray=anonymous, gold=impersonated |
+| [ ] | 3 | **Time-decay cron** + recalculation system | M | Data Quality | 9.1, 9.2 | Convex cron: 0.5%/day decay on averages. Keeps ratings fresh, downweights stale votes |
+| [ ] | 4 | **Social sharing** (native share sheet) | S | Growth | Kimi | Capacitor Share plugin on native, Web Share API on browser. Share product link + name + rating |
+| [ ] | 5 | **Full map bottom-sheet** UX | L | Map UX | Kimi | Swipeable bottom sheet over map with product cards. Horizontal scroll. Spring animations |
+| [ ] | 6 | **Camera/barcode scan** | L | Product Creation | Kimi | Capacitor Camera plugin → capture → AI analysis. Barcode → Open Food Facts API lookup. Full scan flow |
+| [ ] | 7 | **Admin voter list** with delete/impersonate per vote | M | Admin | 4.12, 4.13, 4.14, 6.8, 6.9 | Scrollable voter list on product detail (admin only). Eye icon = impersonate, trash = delete vote |
+| [ ] | 8 | **Community store verification** → promoted to defaults | M | Stores | New | Stores added by 5+ users get flagged as verified. Admin can promote to `storeDefaults` |
+| [ ] | 9 | **Push notifications** | M | Engagement | Kimi | Capacitor Push plugin. Streak reminders, price drops, nearby new products. Requires push server |
+| [ ] | 10 | **Drag-and-drop image upload** | S | Upload UX | 5.10 | Drop zone in ImageUploadDialog. `onDragOver`/`onDrop` handlers |
+| [ ] | 11 | **Report Product button** | S | Moderation | 2.18 | Flag icon on product detail. Creates report entry. Admin sees reports in dashboard |
+| [ ] | 12 | **Store profiles page** | M | Discovery | Kimi | `/store/$name` route — all products at a given store. Store safety rating. User-submitted store photos |
+| [ ] | 13 | **Price tracking history** | M | Price UX | Kimi | Line chart of price over time per product. Requires storing historical price data (new schema field) |
+| [ ] | 14 | **Dietary profiles** | M | Personalization | Kimi | User sets: Celiac / Gluten-sensitive / Preference. Safety ratings weighted by profile. UI toggle on profile page |
+| [ ] | 15 | **Community challenges** | M | Gamification | Kimi | Weekly goals ("Add 5 products → Explorer Badge"). Admin-configured challenge definitions. Leaderboard integration |
+| [ ] | 16 | **Follow power users** | S | Social | Kimi | Follow button on profiles. Feed filter "From People I Follow" |
+| [ ] | 17 | **Offline mode** | L | Resilience | Kimi | Service worker caches product data for user's area. Queue votes offline → sync on reconnect. Critical for traveling |
+| [ ] | 18 | **Smart notifications** | M | Engagement | Kimi | "Product you rated available closer!", "New bakery near you", "Streak about to break!" |
+| [ ] | 19 | **Ad slot placeholder** | S | Business | 10.10 | Component placeholder for future sponsored content / affiliate links |
+| [ ] | 20 | **Full template CLI** | L | Platform | Kimi | `npx create-matrix-app` — scaffolds new niche app from config. Full extraction of template pattern |
 
 ---
 

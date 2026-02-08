@@ -143,6 +143,54 @@ Cards: `bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]`
 | File | Purpose |
 |------|---------|
 | `docs/newdirection/REDESIGN_PLAN.md` | Full redesign direction, architecture, decisions |
-| `docs/newdirection/PRIORITY_LIST.md` | Complete weighted priority list with all features and sprints |
+| `docs/newdirection/PRIORITY_LIST.md` | **Single source of truth** — complete priority list with checkboxes for progress |
 | `docs/FEATURE_GAP_ANALYSIS.md` | Feature comparison vs. previous app versions (g-matrix, g-convex) |
+| `docs/newdirection/MOBILE_APPROACH_DECISION.md` | Decision record: Capacitor chosen over Replit+Expo |
 | `docs/newdirection/Kimi_Agent_Gluten-Free App UI Plan/` | Kimi design reference (mockup images + design system spec) |
+
+### Progress Tracking Rules
+
+The `PRIORITY_LIST.md` file has a checkbox (`[ ]` / `[x]`) on every task. Follow these rules:
+
+1. **Before starting work**, check `PRIORITY_LIST.md` for the next unchecked `[ ]` item in the current wave.
+2. **After completing a task**, immediately mark it `[x]` in the file.
+3. **If a task cannot be completed as described**, do NOT skip it — update the document with a note explaining why, and revise or defer the task.
+4. **Wave N+1 should not begin** until all items in Wave N are checked or explicitly replanned.
+5. When asked "what's next?", always consult `PRIORITY_LIST.md` for the first unchecked item.
+
+## Working with New Technology
+
+This project uses bleeding-edge tools (TanStack Start v1.159.0, Convex v1.31.6, Capacitor v8, React 19). **Best practice: check official documentation online when working with unfamiliar APIs or patterns.** Don't rely solely on training data — fetch up-to-date docs.
+
+### When to Check Documentation
+
+- Implementing a feature from a library you haven't used recently
+- API signature or behavior is uncertain (e.g., "Does `npx cap sync` auto-run after `cap add`?")
+- Error messages reference configuration options or CLI flags
+- Choosing between multiple approaches (e.g., Capacitor plugins vs. web APIs)
+
+### Ask, Don't Assume
+
+**If unsure about user intent, requirements, or technical decisions — ASK.** Examples:
+- "Should this be a client component or can it stay server-side?"
+- "Do you want this feature in Wave 1 or can it wait for Wave 2?"
+- "The API has changed — should I use the new pattern or maintain backward compatibility?"
+
+Don't silently make assumptions that could derail the plan. The user prefers clarifying questions over incorrect implementations.
+
+### Useful Documentation Links
+
+| Technology | Docs |
+|-----------|------|
+| TanStack Start | https://tanstack.com/start/latest/docs/framework/react/overview |
+| TanStack Router | https://tanstack.com/router/latest/docs/framework/react/overview |
+| Convex | https://docs.convex.dev/home |
+| Convex with TanStack Start | https://docs.convex.dev/quickstart/tanstack-start |
+| Capacitor | https://capacitorjs.com/docs |
+| Capacitor iOS | https://capacitorjs.com/docs/ios |
+| Capacitor Android | https://capacitorjs.com/docs/android |
+| Leaflet | https://leafletjs.com/reference.html |
+| react-leaflet | https://react-leaflet.js.org/docs/start-introduction/ |
+| shadcn/ui | https://ui.shadcn.com/docs |
+| Tailwind CSS v4 | https://tailwindcss.com/docs |
+| Framer Motion | https://www.framer.com/motion/introduction/ |
