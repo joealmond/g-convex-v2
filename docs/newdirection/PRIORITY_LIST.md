@@ -141,10 +141,10 @@ Broken into 6 sub-sprints. Each sprint produces a testable increment.
 
 | | Priority | I | N | E | Score | Task | Details |
 |---|----------|---|---|---|-------|------|---------|
-| [ ] | 1 | 4 | 3 | M | 8.5 | **Redesign profile page** | `src/routes/profile.tsx` — User header: avatar (64px), name, level title (from config: "Bronze Scout" / "Silver Scout" / "Gold Scout" / "Elite Scout"), progress bar (XP toward next level). Stats row: points \| day streak \| products added (reuse `StatsCard`). Badges grid (reuse `BadgeDisplay`). Contributions feed: chronological list of recent actions with points earned |
-| [ ] | 2 | 3 | 2 | S | 12.0 | **Level progress bar** | Config-driven level thresholds: Bronze 0-249, Silver 250-499, Gold 500-999, Elite 1000+. Progress bar shows % within current level. Add to `app-config.ts` levels |
-| [ ] | 3 | 2 | 2 | S | 10.0 | **Adapt remaining pages** | `admin.tsx`, `leaderboard.tsx`, `login.tsx` — Apply new design tokens (sage green, cream bg, Inter font, card styles). No layout rewrite needed, just visual consistency |
-| [ ] | 4 | 3 | 3 | M | 7.5 | **Mobile responsiveness pass** | Test all pages at 375px, 390px, 428px widths. Fix overflow, truncation, touch-target violations. Verify BottomTabs doesn't overlap content. Test iOS Safari safe areas |
+| [x] | 1 | 4 | 3 | M | 8.5 | **Redesign profile page** | `src/routes/profile.tsx` — User header: avatar (64px), name, level title (from config: "Bronze Scout" / "Silver Scout" / "Gold Scout" / "Elite Scout"), progress bar (XP toward next level). Stats row: points \| day streak \| products added (reuse `StatsCard`). Badges grid (reuse `BadgeDisplay`). Contributions feed: chronological list of recent actions with points earned |
+| [x] | 2 | 3 | 2 | S | 12.0 | **Level progress bar** | Config-driven level thresholds: Bronze 0-249, Silver 250-499, Gold 500-999, Elite 1000+. Progress bar shows % within current level. Add to `app-config.ts` levels |
+| [x] | 3 | 2 | 2 | S | 10.0 | **Adapt remaining pages** | `admin.tsx`, `leaderboard.tsx`, `login.tsx` — Apply new design tokens (sage green, cream bg, Inter font, card styles). No layout rewrite needed, just visual consistency |
+| [x] | 4 | 3 | 3 | M | 7.5 | **Mobile responsiveness pass** | Test all pages at 375px, 390px, 428px widths. Fix overflow, truncation, touch-target violations. Verify BottomTabs doesn't overlap content. Test iOS Safari safe areas — **COMPLETED: All components have proper responsive classes (grid-cols-2 sm:grid-cols-3 lg:grid-cols-4), touch targets ≥44px (FilterChips min-h-[44px], BottomTabs h-16, VotingSheet buttons h-12/h-16), PageShell has pt-12 pb-20 for TopBar/BottomTabs, text truncation where needed** |
 
 ---
 

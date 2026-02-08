@@ -3,13 +3,15 @@ import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Trophy, TrendingUp, Flame, Calendar, Users, Star, ArrowLeft } from 'lucide-react'
+import { Trophy, Flame, Star, Users, Calendar, TrendingUp, ArrowLeft } from 'lucide-react'
 import { getQuadrant, QUADRANTS } from '@/lib/types'
 import { BADGES } from '@convex/lib/gamification'
+import { getUserLevel } from '@/lib/app-config'
+import { StatsCard } from '@/components/dashboard/StatsCard'
+import { BadgeDisplay } from '@/components/dashboard/BadgeDisplay'
 
 export const Route = createFileRoute('/profile')({
   component: ProfilePage,
@@ -17,13 +19,46 @@ export const Route = createFileRoute('/profile')({
 
 function ProfileLoading() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="h-32 bg-muted animate-pulse rounded mb-6" />
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="h-48 bg-muted animate-pulse rounded" />
-          <div className="h-48 bg-muted animate-pulse rounded" />
-          <div className="h-48 bg-muted animate-pulse rounded" />
+    <div className="flex-1 flex flex-col bg-color-bg">
+      <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-6">
+        {/* Header skeleton */}
+        <div className="h-10 w-24 bg-muted animate-pulse rounded" />
+        
+        {/* User card skeleton */}
+        <div className="bg-white rounded-2xl p-6 space-y-4">
+          <div className="flex items-start gap-4">
+            <div className="h-16 w-16 bg-muted animate-pulse rounded-full" />
+            <div className="flex-1 space-y-2">
+              <div className="h-6 bg-muted animate-pulse rounded w-32" />
+              <div className="h-4 bg-muted animate-pulse rounded w-48" />
+              <div className="h-6 bg-muted animate-pulse rounded w-24" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="h-3 bg-muted animate-pulse rounded" />
+            <div className="h-2 bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+        
+        {/* Stats grid skeleton */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="bg-white rounded-2xl p-4">
+              <div className="h-8 bg-muted animate-pulse rounded" />
+            </div>
+          ))}
+        </div>
+        
+        {/* Badges skeleton */}
+        <div className="space-y-3">
+          <div className="h-6 bg-muted animate-pulse rounded w-24" />
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="bg-white rounded-2xl p-3">
+                <div className="h-16 bg-muted animate-pulse rounded" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -60,6 +95,7 @@ function ProfileContent() {
   }
 
   // Calculate stats
+  const points = profile?.points || 0
   const totalVotes = myVotes?.length || 0
   const earnedBadges = profile?.badges || []
   const currentStreak = profile?.streak || 0
@@ -67,279 +103,222 @@ function ProfileContent() {
   // Get products created by user
   const myProducts = products?.filter(p => p.createdBy === user._id) || []
 
+  // Get user level and progress
+  const currentLevel = getUserLevel(points)
+  const nextLevel = currentLevel.max === Infinity ? null : getUserLevel(currentLevel.max + 1)
+  const levelProgress = nextLevel
+    ? ((points - currentLevel.min) / (nextLevel.min - currentLevel.min)) * 100
+    : 100
+
+  // Combine votes and products for activity feed
+  const activities = [
+    ...(myVotes?.map(v => ({
+      type: 'vote' as const,
+      timestamp: v.createdAt,
+      productId: v.productId,
+      data: { safety: v.safety, taste: v.taste, storeName: v.storeName, price: v.price },
+    })) || []),
+    ...(myProducts.map(p => ({
+      type: 'product' as const,
+      timestamp: p.createdAt,
+      productId: p._id,
+      data: { name: p.name, voteCount: p.voteCount },
+    }))),
+  ]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 20)
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="flex-1 flex flex-col bg-color-bg">
+      {/* Mobile-first profile layout */}
+      <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-6">
         {/* Back Button */}
-        <Button variant="ghost" className="mb-6" asChild>
+        <Button variant="ghost" size="sm" asChild>
           <Link to="/">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to G-Matrix
+            Back
           </Link>
         </Button>
 
-        {/* Profile Header */}
-        <Card className="mb-8">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-6">
-              <Avatar className="h-20 w-20">
+        {/* User Header Card */}
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-start gap-4 mb-4">
+              <Avatar className="h-16 w-16">
                 <AvatarImage src={user.image ?? undefined} />
-                <AvatarFallback className="text-2xl">
-                  {user.name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                <AvatarFallback className="text-2xl bg-color-primary text-white">
+                  {user.name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
 
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold mb-1">{user.name || 'Anonymous User'}</h1>
-                <p className="text-muted-foreground mb-4">{user.email}</p>
-
-                <div className="flex flex-wrap gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Trophy className="h-4 w-4 text-yellow-500" />
-                    <span className="font-semibold">{profile?.points || 0}</span>
-                    <span className="text-muted-foreground">points</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Flame className="h-4 w-4 text-orange-500" />
-                    <span className="font-semibold">{currentStreak}</span>
-                    <span className="text-muted-foreground">day streak</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-blue-500" />
-                    <span className="font-semibold">{totalVotes}</span>
-                    <span className="text-muted-foreground">votes cast</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 text-purple-500" />
-                    <span className="font-semibold">{earnedBadges.length}</span>
-                    <span className="text-muted-foreground">badges earned</span>
-                  </div>
-                </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl font-bold text-color-text truncate">
+                  {user.name || 'Anonymous User'}
+                </h1>
+                <p className="text-sm text-color-text-secondary truncate">{user.email}</p>
+                <Badge
+                  className="mt-2"
+                  style={{ backgroundColor: currentLevel.color, color: '#fff' }}
+                >
+                  {currentLevel.title}
+                </Badge>
               </div>
             </div>
+
+            {/* Level Progress Bar */}
+            {nextLevel && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-color-text-secondary">
+                  <span>{points} XP</span>
+                  <span>Next: {nextLevel.min} XP</span>
+                </div>
+                <div className="h-2 bg-color-bg rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-color-primary transition-all duration-300"
+                    style={{ width: `${Math.min(levelProgress, 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Stats Grid */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Total Points</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{profile?.points || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {profile?.totalVotes || 0} total votes
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Current Streak</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <div className="text-3xl font-bold">{currentStreak}</div>
-                <div className="text-sm text-muted-foreground">days</div>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Keep voting daily!
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Contributions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Votes:</span>
-                  <span className="font-semibold">{totalVotes}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Products:</span>
-                  <span className="font-semibold">{myProducts.length}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatsCard
+            title="Points"
+            value={points}
+            icon={<Trophy className="h-5 w-5 text-color-gold" />}
+          />
+          <StatsCard
+            title="Streak"
+            value={`${currentStreak}d`}
+            icon={<Flame className="h-5 w-5 text-orange-500" />}
+          />
+          <StatsCard
+            title="Votes"
+            value={totalVotes}
+            icon={<TrendingUp className="h-5 w-5 text-color-primary" />}
+          />
+          <StatsCard
+            title="Products"
+            value={myProducts.length}
+            icon={<Star className="h-5 w-5 text-color-primary" />}
+          />
         </div>
 
-        {/* Tabs for Badges, History, etc */}
-        <Tabs defaultValue="badges" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="badges">Badges</TabsTrigger>
-            <TabsTrigger value="history">Vote History</TabsTrigger>
-            <TabsTrigger value="products">My Products</TabsTrigger>
-          </TabsList>
+        {/* Badges Section */}
+        <div>
+          <h2 className="text-lg font-semibold text-color-text mb-3">Badges</h2>
+          <BadgeDisplay badges={earnedBadges} allBadges={BADGES} />
+        </div>
 
-          {/* Badges Tab */}
-          <TabsContent value="badges" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Badges</CardTitle>
-                <CardDescription>
-                  Earn badges by contributing to the community
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {BADGES.map((badge) => {
-                    const isEarned = earnedBadges.includes(badge.id)
-                    return (
-                      <div
-                        key={badge.id}
-                        className={`p-4 rounded-lg border-2 ${
-                          isEarned
-                            ? 'border-primary bg-primary/5'
-                            : 'border-muted bg-muted/30 opacity-50'
-                        }`}
-                      >
-                        <div className="text-center">
-                          <div className="text-4xl mb-2">{badge.icon}</div>
-                          <div className="font-semibold text-sm mb-1">{badge.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {badge.description}
+        {/* Contributions Feed */}
+        <div>
+          <h2 className="text-lg font-semibold text-color-text mb-3">Recent Activity</h2>
+          {activities.length > 0 ? (
+            <div className="space-y-2">
+              {activities.map((activity, idx) => {
+                const product = products?.find(p => p._id === activity.productId)
+                if (!product) return null
+
+                if (activity.type === 'vote') {
+                  const quadrant = getQuadrant(
+                    activity.data.safety || 50,
+                    activity.data.taste || 50
+                  )
+                  const quadrantInfo = QUADRANTS[quadrant]
+
+                  return (
+                    <Card key={`vote-${idx}`} className="rounded-xl shadow-sm">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-1">
+                            <TrendingUp className="h-4 w-4 text-color-primary" />
                           </div>
-                          {isEarned && (
-                            <Badge variant="secondary" className="mt-2">
-                              Earned
-                            </Badge>
-                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-color-text">
+                              Voted on{' '}
+                              <Link
+                                to="/product/$name"
+                                params={{ name: encodeURIComponent(product.name) }}
+                                className="font-semibold hover:underline"
+                              >
+                                {product.name}
+                              </Link>
+                            </p>
+                            <div className="flex items-center gap-2 mt-1 text-xs text-color-text-secondary">
+                              <Badge
+                                variant="secondary"
+                                className="text-xs"
+                                style={{
+                                  backgroundColor: quadrantInfo.color,
+                                  color: '#fff',
+                                  opacity: 0.9,
+                                }}
+                              >
+                                {quadrantInfo.emoji} {quadrantInfo.name}
+                              </Badge>
+                              {activity.data.storeName && (
+                                <span>• {activity.data.storeName}</span>
+                              )}
+                              <span>
+                                • {new Date(activity.timestamp).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                }
+
+                // Product contribution
+                return (
+                  <Card key={`product-${idx}`} className="rounded-xl shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-1">
+                          <Star className="h-4 w-4 text-color-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-color-text">
+                            Added{' '}
+                            <Link
+                              to="/product/$name"
+                              params={{ name: encodeURIComponent(product.name) }}
+                              className="font-semibold hover:underline"
+                            >
+                              {product.name}
+                            </Link>
+                          </p>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-color-text-secondary">
+                            <span>
+                              <Users className="inline h-3 w-3 mr-1" />
+                              {activity.data.voteCount} votes
+                            </span>
+                            <span>
+                              • {new Date(activity.timestamp).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    )
-                  })}
-                </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          ) : (
+            <Card className="rounded-xl shadow-sm">
+              <CardContent className="p-8 text-center">
+                <Calendar className="h-12 w-12 mx-auto mb-3 text-color-text-secondary opacity-50" />
+                <p className="text-color-text-secondary">
+                  No activity yet. Start voting and adding products!
+                </p>
               </CardContent>
             </Card>
-          </TabsContent>
-
-          {/* Vote History Tab */}
-          <TabsContent value="history" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Votes</CardTitle>
-                <CardDescription>
-                  Your latest product ratings
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {myVotes && myVotes.length > 0 ? (
-                  <div className="space-y-3">
-                    {myVotes.slice(0, 20).map((vote) => {
-                      const product = products?.find(p => p._id === vote.productId)
-                      if (!product) return null
-
-                      const quadrant = getQuadrant(vote.safety, vote.taste)
-                      const quadrantInfo = QUADRANTS[quadrant]
-
-                      return (
-                        <div
-                          key={vote._id}
-                          className="flex items-center justify-between p-3 rounded-lg border"
-                        >
-                          <div className="flex-1">
-                            <Link
-                              to="/product/$name"
-                              params={{ name: encodeURIComponent(product.name) }}
-                              className="font-medium hover:underline"
-                            >
-                              {product.name}
-                            </Link>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              Safety: {vote.safety} • Taste: {vote.taste}
-                              {vote.storeName && ` • ${vote.storeName}`}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Badge
-                              variant="secondary"
-                              style={{ backgroundColor: quadrantInfo?.color || '#cccccc', opacity: 0.7 }}
-                            >
-                              {quadrantInfo?.name || 'Unknown'}
-                            </Badge>
-                            <div className="text-xs text-muted-foreground">
-                              {new Date(vote.createdAt).toLocaleDateString()}
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <TrendingUp className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>No votes yet. Start rating products!</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* My Products Tab */}
-          <TabsContent value="products" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Products I Added</CardTitle>
-                <CardDescription>
-                  Products you've contributed to the database
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {myProducts.length > 0 ? (
-                  <div className="space-y-3">
-                    {myProducts.map((product) => {
-                      const quadrant = getQuadrant(product.averageSafety, product.averageTaste)
-                      const quadrantInfo = QUADRANTS[quadrant]
-
-                      return (
-                        <div
-                          key={product._id}
-                          className="flex items-center justify-between p-3 rounded-lg border"
-                        >
-                          <div className="flex-1">
-                            <Link
-                              to="/product/$name"
-                              params={{ name: encodeURIComponent(product.name) }}
-                              className="font-medium hover:underline"
-                            >
-                              {product.name}
-                            </Link>
-                            <div className="text-xs text-muted-foreground mt-1 flex items-center gap-3">
-                              <span>
-                                <Users className="inline h-3 w-3 mr-1" />
-                                {product.voteCount} votes
-                              </span>
-                              <span>
-                                <Calendar className="inline h-3 w-3 mr-1" />
-                                {new Date(product.createdAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                          <Badge
-                            variant="secondary"
-                            style={{ backgroundColor: quadrantInfo?.color || '#cccccc', opacity: 0.7 }}
-                          >
-                            {quadrantInfo?.name || 'Unknown'}
-                          </Badge>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Star className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>No products added yet. Be the first to add one!</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
     </div>
   )

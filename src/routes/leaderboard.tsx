@@ -9,16 +9,16 @@ export const Route = createFileRoute('/leaderboard')({
 
 function LeaderboardPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="flex-1 flex flex-col bg-color-bg">
+      <div className="max-w-4xl mx-auto w-full px-4 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <Trophy className="h-8 w-8 text-yellow-500" />
-              <h1 className="text-3xl font-bold">Leaderboard</h1>
+              <Trophy className="h-8 w-8 text-color-gold" />
+              <h1 className="text-3xl font-bold text-color-text">Leaderboard</h1>
             </div>
-            <p className="text-muted-foreground">
+            <p className="text-color-text-secondary">
               Top contributors to the G-Matrix community
             </p>
           </div>
@@ -34,8 +34,8 @@ function LeaderboardPage() {
         <Leaderboard limit={50} showFullRanks={true} />
 
         {/* Info Card */}
-        <div className="mt-6 p-4 rounded-lg bg-muted/50 text-sm text-muted-foreground">
-          <p className="font-semibold mb-2">How Rankings Work:</p>
+        <div className="mt-6 p-4 rounded-xl bg-white shadow-sm text-sm text-color-text-secondary">
+          <p className="font-semibold mb-2 text-color-text">How Rankings Work:</p>
           <ul className="space-y-1 list-disc list-inside">
             <li>Earn points by voting on products (+10 points)</li>
             <li>Add new products to earn bonus points (+25 points)</li>

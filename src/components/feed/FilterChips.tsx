@@ -33,7 +33,7 @@ export function FilterChips({ value, onChange }: FilterChipsProps) {
           key={filter.value}
           onClick={() => onChange(filter.value)}
           className={cn(
-            'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0',
+            'px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 min-h-[44px]',
             value === filter.value
               ? 'bg-color-primary text-white'
               : 'bg-color-bg text-color-text-secondary border border-color-border hover:bg-white'
