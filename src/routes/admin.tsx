@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { AddProductDialog } from '@/components/dashboard/AddProductDialog'
 import { EditProductDialog } from '@/components/dashboard/EditProductDialog'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
-import { Shield, ArrowLeft, Search, Users, TrendingUp, Package, Edit } from 'lucide-react'
+import { Shield, ArrowLeft, Search, Users, TrendingUp, Package, Edit, Flag } from 'lucide-react'
 import { getQuadrant, QUADRANTS } from '@/lib/types'
 import type { Product } from '@/lib/types'
 
@@ -82,12 +82,20 @@ function AdminPageContent() {
               Manage products and monitor community activity
             </p>
           </div>
-          <Button variant="ghost" asChild>
-            <Link to="/">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/reports">
+                <Flag className="mr-2 h-4 w-4" />
+                Reports
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Stats Grid */}

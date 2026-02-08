@@ -163,6 +163,21 @@ Cards: `bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]`
 | `docs/newdirection/MOBILE_APPROACH_DECISION.md` | Decision record: Capacitor chosen over Replit+Expo |
 | `docs/newdirection/Kimi_Agent_Gluten-Free App UI Plan/` | Kimi design reference (mockup images + design system spec) |
 
+## Legacy Codebases (Local Reference)
+
+This app evolved from two previous versions. When implementing features, **check how they were solved before**:
+
+| Path | Description |
+|------|-------------|
+| `/Users/mandulaj/dev/source/g-matrix/` | Original Vue.js app with chart visualizations, voting UX patterns, admin features |
+| `/Users/mandulaj/dev/source/g-convex/` | Previous Convex-based app with backend patterns, schema design, gamification logic |
+
+**When to reference legacy code:**
+- Implementing complex features (view tabs, all votes viz, admin voter lists)
+- Understanding backend patterns (time-decay, vote aggregation)
+- Checking UX flows (voting, store selection, image upload)
+- Verifying edge cases (anonymous votes, impersonation, rate limiting)
+
 ### Progress Tracking Rules
 
 The `PRIORITY_LIST.md` file has a checkbox (`[ ]` / `[x]`) on every task. Follow these rules:

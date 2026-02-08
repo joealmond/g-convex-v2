@@ -546,9 +546,18 @@ export const deleteVote = mutation({
     // Check if user owns the vote or is admin
     const userId = identity?.subject ?? null
     const isOwner = vote.userId === userId
-    // TODO: Add admin check
+    
+    // Check admin status
+    let isAdmin = false
+    if (userId) {
+      const profile = await ctx.db
+        .query('profiles')
+        .withIndex('by_user', (q) => q.eq('userId', userId))
+        .first()
+      isAdmin = profile?.role === 'admin'
+    }
 
-    if (!isOwner) {
+    if (!isOwner && !isAdmin) {
       throw new Error('Not authorized to delete this vote')
     }
 

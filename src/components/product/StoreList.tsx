@@ -5,6 +5,7 @@ import { MapPin, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { Badge } from '@/components/ui/badge'
+import { Link } from '@tanstack/react-router'
 
 interface StoreListProps {
   product: Product
@@ -105,18 +106,23 @@ export function StoreList({ product }: StoreListProps) {
   return (
     <div className="space-y-3">
       {product.stores.map((store, index) => (
-        <button
+        <div
           key={index}
-          onClick={() => handleOpenMap(store)}
           className={cn(
-            'w-full text-left p-4 bg-white rounded-xl border border-color-border hover:shadow-md transition-shadow',
+            'w-full p-4 bg-white rounded-xl border border-color-border hover:shadow-md transition-shadow',
             getFreshnessColor(store.lastSeenAt)
           )}
         >
           {/* Store Name */}
           <div className="flex items-center justify-between mb-2">
-            <h4 className="font-semibold text-sm text-color-text">{store.name}</h4>
-            
+            <Link
+              to="/store/$name"
+              params={{ name: store.name }}
+              className="font-semibold text-sm text-color-text hover:text-color-primary hover:underline"
+            >
+              {store.name}
+            </Link>
+
             {/* Near Me Badge */}
             {isNearby(store) && (
               <Badge className="bg-color-safety-high text-white text-xs">
@@ -140,15 +146,18 @@ export function StoreList({ product }: StoreListProps) {
               </div>
             )}
 
-            {/* Distance */}
+            {/* Map Link */}
             {store.geoPoint && (
-              <div className="flex items-center gap-1">
+              <button
+                onClick={() => handleOpenMap(store)}
+                className="flex items-center gap-1 hover:text-color-primary transition-colors"
+              >
                 <MapPin className="h-3 w-3" />
                 <span>Open in maps</span>
-              </div>
+              </button>
             )}
           </div>
-        </button>
+        </div>
       ))}
     </div>
   )

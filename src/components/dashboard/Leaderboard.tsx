@@ -3,6 +3,7 @@ import { api } from '@convex/_generated/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { FollowButton } from '@/components/profile/FollowButton'
 import { Trophy, Medal, Award, TrendingUp } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
@@ -17,6 +18,7 @@ interface LeaderboardProps {
  */
 export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardProps) {
   const leaderboard = useQuery(api.profiles.leaderboard, { limit })
+  const currentUser = useQuery(api.users.current)
 
   if (!leaderboard || leaderboard.length === 0) {
     return (
@@ -120,6 +122,16 @@ export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardPr
                     <div className="text-sm font-semibold">{entry.streak}</div>
                     <div className="text-xs text-muted-foreground">day streak</div>
                   </div>
+                )}
+
+                {/* Follow Button (if logged in and not self) */}
+                {currentUser && currentUser._id !== entry.userId && (
+                  <FollowButton
+                    userId={entry.userId}
+                    variant="outline"
+                    size="sm"
+                    showIcon={false}
+                  />
                 )}
               </div>
             )

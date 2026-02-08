@@ -83,6 +83,10 @@ function ProfileContent() {
   const profile = useQuery(api.profiles.getCurrent)
   const myVotes = useQuery(api.votes.getByUser, user ? { userId: user._id } : 'skip')
   const products = useQuery(api.products.list)
+  const followCounts = useQuery(
+    api.follows.getCounts,
+    user ? { userId: user._id } : 'skip'
+  )
 
   // Redirect to login if not authenticated
   if (user === null) {
@@ -184,7 +188,7 @@ function ProfileContent() {
         </Card>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <StatsCard
             title="Points"
             value={points}
@@ -204,6 +208,16 @@ function ProfileContent() {
             title="Products"
             value={myProducts.length}
             icon={<Star className="h-5 w-5 text-color-primary" />}
+          />
+          <StatsCard
+            title="Followers"
+            value={followCounts?.followers ?? 0}
+            icon={<Users className="h-5 w-5 text-color-primary" />}
+          />
+          <StatsCard
+            title="Following"
+            value={followCounts?.following ?? 0}
+            icon={<Users className="h-5 w-5 text-color-primary" />}
           />
         </div>
 

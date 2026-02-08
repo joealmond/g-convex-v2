@@ -83,4 +83,30 @@ export default defineSchema({
     votesToday: v.optional(v.number()), // Daily vote counter
     role: v.optional(v.string()), // "admin" | "user"
   }).index('by_user', ['userId']),
+
+  // Reports - flag products for review
+  reports: defineTable({
+    productId: v.id('products'),
+    reportedBy: v.optional(v.string()), // userId or anonymousId
+    isAnonymous: v.boolean(),
+    reason: v.string(), // "inappropriate" | "duplicate" | "wrong-info" | "spam" | "other"
+    details: v.optional(v.string()),
+    status: v.string(), // "pending" | "reviewed" | "resolved" | "dismissed"
+    reviewedBy: v.optional(v.string()), // Admin userId
+    reviewedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index('by_product', ['productId'])
+    .index('by_status', ['status'])
+    .index('by_reporter', ['reportedBy']),
+
+  // Follows - user following relationships
+  follows: defineTable({
+    followerId: v.string(), // Better Auth user._id is a string
+    followingId: v.string(), // Better Auth user._id is a string
+    createdAt: v.number(),
+  })
+    .index('by_follower', ['followerId'])
+    .index('by_following', ['followingId'])
+    .index('by_relationship', ['followerId', 'followingId']),
 })

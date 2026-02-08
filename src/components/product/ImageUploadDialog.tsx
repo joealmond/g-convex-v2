@@ -32,6 +32,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
   const [storageId, setStorageId] = useState<string | null>(null)
   const [realImageUrl, setRealImageUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
   // AI Analysis results
   const [analysis, setAnalysis] = useState<{
@@ -151,6 +152,50 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       // Resize and convert to WebP
       const resizedFile = await resizeAndConvertImage(file)
       
+      setImageFile(resizedFile)
+      setImagePreview(URL.createObjectURL(resizedFile))
+      setError(null)
+    } catch (err) {
+      console.error('Image processing error:', err)
+      setError('Failed to process image. Please try another file.')
+    }
+  }, [resizeAndConvertImage])
+
+  /**
+   * Drag-and-drop handlers
+   */
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }, [])
+
+  const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const files = e.dataTransfer.files
+    if (files.length === 0) return
+
+    const file = files[0]
+    if (!file) return
+
+    // Same validation as file input
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file')
+      return
+    }
+
+    // Process the dropped file (same as handleFileSelect)
+    try {
+      const resizedFile = await resizeAndConvertImage(file)
       setImageFile(resizedFile)
       setImagePreview(URL.createObjectURL(resizedFile))
       setError(null)
@@ -313,8 +358,15 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
         {step === 'upload' && (
           <div className="space-y-4">
             <div
-              className="flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 transition-colors hover:border-muted-foreground/50"
+              className={`flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${
+                isDragging
+                  ? 'border-color-primary bg-color-primary/10'
+                  : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+              }`}
               onClick={() => fileInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             >
               {imagePreview ? (
                 <img
@@ -326,8 +378,13 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
                 <>
                   <div className="text-4xl">📷</div>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {t('imageUpload.clickToUpload')}
+                    {isDragging ? 'Drop image here' : t('imageUpload.clickToUpload')}
                   </p>
+                  {!isDragging && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      or drag and drop
+                    </p>
+                  )}
                 </>
               )}
             </div>

@@ -17,7 +17,9 @@ import { Route as FilesRouteImport } from './routes/files'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StoreNameRouteImport } from './routes/store/$name'
 import { Route as ProductNameRouteImport } from './routes/product/$name'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -60,10 +62,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoreNameRoute = StoreNameRouteImport.update({
+  id: '/store/$name',
+  path: '/store/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductNameRoute = ProductNameRouteImport.update({
   id: '/product/$name',
   path: '/product/$name',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -85,7 +97,9 @@ export interface FileRoutesByFullPath {
   '/map': typeof MapRoute
   '/profile': typeof ProfileRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/product/$name': typeof ProductNameRoute
+  '/store/$name': typeof StoreNameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
@@ -97,7 +111,9 @@ export interface FileRoutesByTo {
   '/map': typeof MapRoute
   '/profile': typeof ProfileRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/product/$name': typeof ProductNameRoute
+  '/store/$name': typeof StoreNameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
@@ -111,7 +127,9 @@ export interface FileRoutesById {
   '/map': typeof MapRoute
   '/profile': typeof ProfileRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/product/$name': typeof ProductNameRoute
+  '/store/$name': typeof StoreNameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
@@ -125,7 +143,9 @@ export interface FileRouteTypes {
     | '/map'
     | '/profile'
     | '/dashboard'
+    | '/reports'
     | '/product/$name'
+    | '/store/$name'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -137,7 +157,9 @@ export interface FileRouteTypes {
     | '/map'
     | '/profile'
     | '/dashboard'
+    | '/reports'
     | '/product/$name'
+    | '/store/$name'
     | '/api/auth/$'
   id:
     | '__root__'
@@ -150,7 +172,9 @@ export interface FileRouteTypes {
     | '/map'
     | '/profile'
     | '/_authenticated/dashboard'
+    | '/_authenticated/reports'
     | '/product/$name'
+    | '/store/$name'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
@@ -164,6 +188,7 @@ export interface RootRouteChildren {
   MapRoute: typeof MapRoute
   ProfileRoute: typeof ProfileRoute
   ProductNameRoute: typeof ProductNameRoute
+  StoreNameRoute: typeof StoreNameRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -225,12 +250,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/store/$name': {
+      id: '/store/$name'
+      path: '/store/$name'
+      fullPath: '/store/$name'
+      preLoaderRoute: typeof StoreNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product/$name': {
       id: '/product/$name'
       path: '/product/$name'
       fullPath: '/product/$name'
       preLoaderRoute: typeof ProductNameRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -251,10 +290,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -271,18 +312,9 @@ const rootRouteChildren: RootRouteChildren = {
   MapRoute: MapRoute,
   ProfileRoute: ProfileRoute,
   ProductNameRoute: ProductNameRoute,
+  StoreNameRoute: StoreNameRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.tsx'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

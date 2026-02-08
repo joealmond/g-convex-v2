@@ -183,28 +183,49 @@ Makes the first impression "attractive" beyond functional.
 
 ## Wave 4: Post-Launch
 
-Iterate based on real user feedback. Not required for public launch. Ordered by estimated user value.
+Iterate based on real user feedback. Ordered by user value, web compatibility, and implementation complexity.
+
+### Tier 1: Quick Wins (1-2 days) ✅ COMPLETE
+High value, low complexity, web-perfect
 
 | | Rank | Feature | Effort | Category | Gap Ref | Notes |
 |---|------|---------|--------|----------|---------|-------|
-| [ ] | 1 | **View tabs** on product detail (Average / My Vote / All Votes) | M | Voting UX | 2.16 | Shows different chart perspectives — requires querying individual votes |
-| [ ] | 2 | **All Votes visualization** (individual vote dots on chart) | M | Visualization | 1.13, 1.14, 1.15 | Color-coded: green=registered, gray=anonymous, gold=impersonated |
-| [ ] | 3 | **Time-decay cron** + recalculation system | M | Data Quality | 9.1, 9.2 | Convex cron: 0.5%/day decay on averages. Keeps ratings fresh, downweights stale votes |
-| [ ] | 4 | **Social sharing** (native share sheet) | S | Growth | Kimi | Capacitor Share plugin on native, Web Share API on browser. Share product link + name + rating |
-| [ ] | 5 | **Full map bottom-sheet** UX | L | Map UX | Kimi | Swipeable bottom sheet over map with product cards. Horizontal scroll. Spring animations |
-| [ ] | 6 | **Camera/barcode scan** | L | Product Creation | Kimi | Capacitor Camera plugin → capture → AI analysis. Barcode → Open Food Facts API lookup. Full scan flow |
-| [ ] | 7 | **Admin voter list** with delete/impersonate per vote | M | Admin | 4.12, 4.13, 4.14, 6.8, 6.9 | Scrollable voter list on product detail (admin only). Eye icon = impersonate, trash = delete vote |
-| [ ] | 8 | **Community store verification** → promoted to defaults | M | Stores | New | Stores added by 5+ users get flagged as verified. Admin can promote to `storeDefaults` |
-| [ ] | 9 | **Push notifications** | M | Engagement | Kimi | Capacitor Push plugin. Streak reminders, price drops, nearby new products. Requires push server |
-| [ ] | 10 | **Drag-and-drop image upload** | S | Upload UX | 5.10 | Drop zone in ImageUploadDialog. `onDragOver`/`onDrop` handlers |
-| [ ] | 11 | **Report Product button** | S | Moderation | 2.18 | Flag icon on product detail. Creates report entry. Admin sees reports in dashboard |
-| [ ] | 12 | **Store profiles page** | M | Discovery | Kimi | `/store/$name` route — all products at a given store. Store safety rating. User-submitted store photos |
+| [x] | 1 | **Drag-and-drop image upload** | S | Upload UX | 5.10 | Drop zone in ImageUploadDialog. `onDragOver`/`onDrop` handlers. Desktop UX improvement  |
+| [x] | 2 | **Report Product button** | S | Moderation | 2.18 | Flag icon on product detail. Creates report entry. Admin sees reports in dashboard |
+| [x] | 3 | **Social sharing** (native share sheet) | S | Growth | Kimi | Web Share API on mobile browsers, Capacitor Share plugin on native. Share product link + name + rating |
+| [x] | 4 | **Follow power users** | S | Social | Kimi | Follow button on profiles. Feed filter "From People I Follow". Many-to-many relationship in Convex |
+
+### Tier 2: Core UX Improvements (3-5 days) ✅ COMPLETE
+Medium effort, high user value, web-friendly
+
+| | Rank | Feature | Effort | Category | Gap Ref | Notes |
+|---|------|---------|--------|----------|---------|-------|
+| [x] | 5 | **View tabs** on product detail (Average / My Vote / All Votes) | M | Voting UX | 2.16 | 3 tabs show different chart perspectives. "All Votes" tab shows individual vote dots on chart |
+| [x] | 6 | **All Votes visualization** (individual vote dots on chart) | M | Visualization | 1.13, 1.14, 1.15 | Scatter plot with individual dots. Color-coded: green=registered, gray=anonymous, gold=impersonated. Works with View tabs |
+| [x] | 7 | **Admin voter list** with delete/impersonate per vote | M | Admin | 4.12, 4.13, 4.14, 6.8, 6.9 | Scrollable voter list on product detail (admin only). Eye icon = impersonate, trash = delete vote |
+| [x] | 8 | **Store profiles page** | M | Discovery | Kimi | `/store/$name` route — all products at a given store. Store safety rating. Clickable store names |
+| [ ] | 9 | **Community store verification** → promoted to defaults | M | Stores | New | Stores added by 5+ users get flagged as verified. Admin can promote to `storeDefaults` (deferred) |
+
+### Tier 3: Data Quality & Gamification (2-4 days)
+Background features, less user-visible but important
+
+| | Rank | Feature | Effort | Category | Gap Ref | Notes |
+|---|------|---------|--------|----------|---------|-------|
+| [ ] | 10 | **Time-decay cron** + recalculation system | M | Data Quality | 9.1, 9.2, 6.6, 6.7 | Convex cron: 0.5%/day decay on averages. Keeps ratings fresh, downweights stale votes |
+| [ ] | 11 | **Community challenges** | M | Gamification | Kimi | Weekly goals ("Add 5 products → Explorer Badge"). Admin-configured challenge definitions. Leaderboard integration |
+| [ ] | 12 | **Dietary profiles** | M | Personalization | Kimi | User sets: Celiac / Gluten-sensitive / Preference. Safety ratings weighted by profile. UI toggle on profile page |
 | [ ] | 13 | **Price tracking history** | M | Price UX | Kimi | Line chart of price over time per product. Requires storing historical price data (new schema field) |
-| [ ] | 14 | **Dietary profiles** | M | Personalization | Kimi | User sets: Celiac / Gluten-sensitive / Preference. Safety ratings weighted by profile. UI toggle on profile page |
-| [ ] | 15 | **Community challenges** | M | Gamification | Kimi | Weekly goals ("Add 5 products → Explorer Badge"). Admin-configured challenge definitions. Leaderboard integration |
-| [ ] | 16 | **Follow power users** | S | Social | Kimi | Follow button on profiles. Feed filter "From People I Follow" |
-| [ ] | 17 | **Offline mode** | L | Resilience | Kimi | Service worker caches product data for user's area. Queue votes offline → sync on reconnect. Critical for traveling |
-| [ ] | 18 | **Smart notifications** | M | Engagement | Kimi | "Product you rated available closer!", "New bakery near you", "Streak about to break!" |
+
+### Tier 4: Native-First or Complex (defer until mobile app)
+These work better in native apps or are very complex
+
+| | Rank | Feature | Effort | Category | Gap Ref | Notes |
+|---|------|---------|--------|----------|---------|-------|
+| [ ] | 14 | **Camera/barcode scan** | L | Product Creation | Kimi | Capacitor Camera plugin → capture → AI analysis. Barcode → Open Food Facts API lookup. Full scan flow. Web works via `getUserMedia()` but native UX is 10× better |
+| [ ] | 15 | **Full map bottom-sheet** UX | L | Map UX | Kimi | Swipeable bottom sheet over map with product cards. Horizontal scroll. Spring animations. Better with native gestures |
+| [ ] | 16 | **Push notifications** | M | Engagement | Kimi | Capacitor Push plugin. Streak reminders, price drops, nearby new products. Requires push server |
+| [ ] | 17 | **Smart notifications** | M | Engagement | Kimi | "Product you rated available closer!", "New bakery near you", "Streak about to break!" Depends on push infrastructure |
+| [ ] | 18 | **Offline mode** | L | Resilience | Kimi | Service worker caches product data for user's area. Queue votes offline → sync on reconnect. Critical for traveling. Complex sync logic |
 | [ ] | 19 | **Ad slot placeholder** | S | Business | 10.10 | Component placeholder for future sponsored content / affiliate links |
 | [ ] | 20 | **Full template CLI** | L | Platform | Kimi | `npx create-matrix-app` — scaffolds new niche app from config. Full extraction of template pattern |
 

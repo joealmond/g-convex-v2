@@ -5,17 +5,23 @@ import { Suspense, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { RatingBars } from '@/components/product/RatingBars'
 import { StoreList } from '@/components/product/StoreList'
 import { VotingSheet } from '@/components/product/VotingSheet'
+import { ReportProductDialog } from '@/components/product/ReportProductDialog'
+import { ShareButton } from '@/components/product/ShareButton'
+import { AllVotesChart } from '@/components/product/AllVotesChart'
 import { StoreTagInput } from '@/components/dashboard/StoreTagInput'
 import { CoordinateGrid } from '@/components/dashboard/CoordinateGrid'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
 import { EditProductDialog } from '@/components/dashboard/EditProductDialog'
+import { VoterList } from '@/components/admin/VoterList'
 import { getQuadrant, QUADRANTS, type Product } from '@/lib/types'
 import { useAnonymousId } from '@/hooks/use-anonymous-id'
 import { useAdmin } from '@/hooks/use-admin'
-import { ArrowLeft, Users, Edit } from 'lucide-react'
+import { useImpersonate } from '@/hooks/use-impersonate'
+import { ArrowLeft, Users, Edit, Flag } from 'lucide-react'
 import { toast } from 'sonner'
 
 export const Route = createFileRoute('/product/$name')({
@@ -51,16 +57,31 @@ function ProductDetailContent() {
   const navigate = useNavigate()
   const { anonId: anonymousId } = useAnonymousId()
   const adminStatus = useAdmin()
+  const { startImpersonation } = useImpersonate()
 
   const product = useQuery(api.products.getByName, { name: decodeURIComponent(name) })
   const user = useQuery(api.users.current)
   const castVote = useMutation(api.votes.cast)
+  
+  // Get all votes for this product (for All Votes tab)
+  const allVotes = useQuery(
+    api.votes.getByProduct,
+    product ? { productId: product._id } : 'skip'
+  )
+  
+  // Find user's vote if they have one
+  const myVote = allVotes?.find(
+    (v) =>
+      (user && v.userId === user._id) ||
+      (anonymousId && v.anonymousId === anonymousId)
+  )
 
   const [storeTag, setStoreTag] = useState('')
   const [storeLat, setStoreLat] = useState<number | undefined>()
   const [storeLon, setStoreLon] = useState<number | undefined>()
   const [isVoting, setIsVoting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [isReporting, setIsReporting] = useState(false)
 
   const handleVote = async (safety: number, taste: number, price?: number) => {
     if (!product) return
@@ -152,13 +173,32 @@ function ProductDetailContent() {
   return (
     <main className="flex-1 px-4 py-6">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Back Button */}
-        <Button variant="ghost" size="sm" asChild className="mb-2">
-          <Link to="/">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Link>
-        </Button>
+        {/* Back Button + Action Buttons */}
+        <div className="flex items-center justify-between gap-4">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Link>
+          </Button>
+          
+          <div className="flex gap-2">
+            <ShareButton
+              productName={product.name}
+              variant="ghost"
+              size="sm"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsReporting(true)}
+              className="text-color-text-secondary hover:text-destructive"
+            >
+              <Flag className="mr-2 h-4 w-4" />
+              Report
+            </Button>
+          </div>
+        </div>
 
         {/* Admin Controls */}
         {adminStatus?.isAdmin && (
@@ -253,7 +293,7 @@ function ProductDetailContent() {
         )}
 
         {/* Voting Section */}
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-sm" data-voting-section>
           <CardHeader>
             <CardTitle className="text-lg">Rate This Product</CardTitle>
           </CardHeader>
@@ -279,22 +319,99 @@ function ProductDetailContent() {
           </CardContent>
         </Card>
 
-        {/* Coordinate Grid (Optional detailed view) */}
+        {/* Chart View with Tabs */}
         <Card className="border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg">Position on G-Matrix</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="aspect-square max-w-sm mx-auto">
-              <CoordinateGrid
-                initialSafety={product.averageSafety}
-                initialTaste={product.averageTaste}
-                onVote={(safety: number, taste: number) => handleVote(safety, taste)}
-                disabled={isVoting}
-              />
-            </div>
+            <Tabs defaultValue="average" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsTrigger value="average">Average</TabsTrigger>
+                <TabsTrigger value="my-vote" disabled={!myVote}>
+                  My Vote
+                </TabsTrigger>
+                <TabsTrigger value="all-votes">All Votes</TabsTrigger>
+              </TabsList>
+
+              {/* Average View */}
+              <TabsContent value="average">
+                <div className="aspect-square max-w-sm mx-auto">
+                  <CoordinateGrid
+                    initialSafety={product.averageSafety}
+                    initialTaste={product.averageTaste}
+                    onVote={(safety: number, taste: number) =>
+                      handleVote(safety, taste)
+                    }
+                    disabled={isVoting}
+                  />
+                </div>
+                <p className="text-sm text-color-text-secondary text-center mt-4">
+                  Community average position
+                </p>
+              </TabsContent>
+
+              {/* My Vote View */}
+              <TabsContent value="my-vote">
+                {myVote ? (
+                  <>
+                    <div className="aspect-square max-w-sm mx-auto">
+                      <CoordinateGrid
+                        initialSafety={myVote.safety}
+                        initialTaste={myVote.taste}
+                        onVote={(safety: number, taste: number) =>
+                          handleVote(safety, taste)
+                        }
+                        disabled={isVoting}
+                      />
+                    </div>
+                    <p className="text-sm text-color-text-secondary text-center mt-4">
+                      Your vote: Safety {myVote.safety} · Taste {myVote.taste}
+                      {myVote.price && ` · Price ${myVote.price}/5`}
+                    </p>
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground mb-4">
+                      You haven't voted on this product yet
+                    </p>
+                    <Button
+                      onClick={() =>
+                        document
+                          .querySelector('[data-voting-section]')
+                          ?.scrollIntoView({ behavior: 'smooth' })
+                      }
+                    >
+                      Cast Your Vote
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* All Votes View */}
+              <TabsContent value="all-votes">
+                <div className="max-w-sm mx-auto">
+                  <AllVotesChart
+                    productId={product._id}
+                    highlightVoteId={myVote?._id}
+                  />
+                </div>
+                <p className="text-sm text-color-text-secondary text-center mt-4">
+                  {allVotes?.length || 0} individual{' '}
+                  {allVotes?.length === 1 ? 'vote' : 'votes'}
+                </p>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
+
+        {/* Admin Voter List */}
+        {adminStatus?.isAdmin && allVotes && (
+          <VoterList
+            votes={allVotes}
+            onImpersonate={(userId) => startImpersonation(userId)}
+          />
+        )}
       </div>
 
       {/* Edit Dialog */}
@@ -304,6 +421,14 @@ function ProductDetailContent() {
           onComplete={() => setIsEditing(false)}
         />
       )}
+
+      {/* Report Dialog */}
+      <ReportProductDialog
+        productId={product._id}
+        productName={product.name}
+        open={isReporting}
+        onOpenChange={setIsReporting}
+      />
     </main>
   )
 }
