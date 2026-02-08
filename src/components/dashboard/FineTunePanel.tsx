@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
 import { getQuadrant, QUADRANTS } from '@/lib/types'
+import { appConfig } from '@/lib/app-config'
 import { useState } from 'react'
 
 interface FineTunePanelProps {
@@ -46,7 +47,7 @@ export function FineTunePanel({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label htmlFor="safety-slider" className="text-sm font-medium">
-              Safety for Celiacs
+              {appConfig.dimensions.axis1.label}
             </Label>
             <span className="text-sm font-semibold tabular-nums">{safety}</span>
           </div>
@@ -70,7 +71,7 @@ export function FineTunePanel({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label htmlFor="taste-slider" className="text-sm font-medium">
-              Taste Rating
+              {appConfig.dimensions.axis2.label}
             </Label>
             <span className="text-sm font-semibold tabular-nums">{taste}</span>
           </div>
@@ -91,14 +92,14 @@ export function FineTunePanel({
         </div>
 
         {/* Current Quadrant Preview */}
-        <div className="p-4 rounded-lg border" style={{ backgroundColor: quadrantInfo.color, opacity: 0.2 }}>
+        <div className="p-4 rounded-lg border" style={{ backgroundColor: quadrantInfo?.color || appConfig.colors.primary, opacity: 0.2 }}>
           <div className="text-center">
             <div className="text-sm font-medium mb-1">
               This will place it in:
             </div>
-            <div className="text-lg font-bold">{quadrantInfo.name}</div>
+            <div className="text-lg font-bold">{quadrantInfo?.name || 'Unknown'}</div>
             <div className="text-xs text-muted-foreground mt-1">
-              {quadrantInfo.description}
+              {quadrantInfo?.description || ''}
             </div>
           </div>
         </div>

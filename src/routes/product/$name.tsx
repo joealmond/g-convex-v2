@@ -186,9 +186,9 @@ function ProductDetailContent() {
             <Badge
               variant="outline"
               className="text-lg px-4 py-2"
-              style={{ backgroundColor: quadrantInfo.color, opacity: 0.8 }}
+              style={{ backgroundColor: quadrantInfo?.color || '#cccccc', opacity: 0.8 }}
             >
-              {quadrantInfo.name}
+              {quadrantInfo?.name || 'Unknown'}
             </Badge>
           </div>
 
@@ -307,9 +307,9 @@ function ProductDetailContent() {
                           <Badge
                             variant="secondary"
                             className="text-xs"
-                            style={{ backgroundColor: voteQuadrantInfo.color, opacity: 0.6 }}
+                            style={{ backgroundColor: voteQuadrantInfo?.color || '#cccccc', opacity: 0.6 }}
                           >
-                            {voteQuadrantInfo.name}
+                            {voteQuadrantInfo?.name || 'Unknown'}
                           </Badge>
                         </div>
                         <div className="text-xs text-muted-foreground">

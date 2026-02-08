@@ -107,7 +107,7 @@ export function EditProductDialog({ product, open, onOpenChange }: EditProductDi
             </Label>
             <Input
               id="edit-name"
-              placeholder="e.g., Schär Gluten-Free Bread"
+              placeholder="e.g., Awesome Bread Brand"
               {...register('name')}
               disabled={isSubmitting}
             />

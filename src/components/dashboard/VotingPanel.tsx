@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { motion } from 'framer-motion'
 import { SAFETY_PRESETS, TASTE_PRESETS } from '@/lib/types'
+import { appConfig } from '@/lib/app-config'
 
 interface VotingPanelProps {
   onVote: (safety: number, taste: number) => void
@@ -27,7 +28,7 @@ export function VotingPanel({ onVote, disabled = false }: VotingPanelProps) {
         {/* Safety Presets */}
         <div>
           <h3 className="text-sm font-medium mb-3 text-muted-foreground">
-            How safe is it for celiacs?
+            {appConfig.dimensions.axis1.question}
           </h3>
           <div className="grid grid-cols-3 gap-2">
             {SAFETY_PRESETS.map((preset) => (
@@ -58,7 +59,7 @@ export function VotingPanel({ onVote, disabled = false }: VotingPanelProps) {
         {/* Taste Presets */}
         <div>
           <h3 className="text-sm font-medium mb-3 text-muted-foreground">
-            How does it taste?
+            {appConfig.dimensions.axis2.question}
           </h3>
           <div className="grid grid-cols-3 gap-2">
             {TASTE_PRESETS.map((preset) => (
@@ -103,7 +104,7 @@ export function VotingPanel({ onVote, disabled = false }: VotingPanelProps) {
                 disabled={disabled}
               >
                 <div className="text-center">
-                  <div className="font-semibold">Holy Grail</div>
+                  <div className="font-semibold">{appConfig.quadrants.topRight.label}</div>
                   <div className="text-xs opacity-80">Safe & Tasty</div>
                 </div>
               </Button>
@@ -120,7 +121,7 @@ export function VotingPanel({ onVote, disabled = false }: VotingPanelProps) {
                 disabled={disabled}
               >
                 <div className="text-center">
-                  <div className="font-semibold">Survivor Food</div>
+                  <div className="font-semibold">{appConfig.quadrants.topLeft.label}</div>
                   <div className="text-xs opacity-80">Safe but Meh</div>
                 </div>
               </Button>
@@ -154,7 +155,7 @@ export function VotingPanel({ onVote, disabled = false }: VotingPanelProps) {
                 disabled={disabled}
               >
                 <div className="text-center">
-                  <div className="font-semibold">The Bin</div>
+                  <div className="font-semibold">{appConfig.quadrants.bottomLeft.label}</div>
                   <div className="text-xs opacity-80">Avoid!</div>
                 </div>
               </Button>

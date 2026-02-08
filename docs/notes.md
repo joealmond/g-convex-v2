@@ -1,0 +1,2 @@
+- html templates should not contain text what displayed, only references, so no haardcoded text
+- 

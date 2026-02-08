@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useMutation, useAction } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
+import { appConfig } from '@/lib/app-config'
 import { Button } from '../ui/button'
 import {
   Dialog,
@@ -303,7 +304,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
 
             {analysis?.containsGluten && (
               <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                ⚠️ {t('imageUpload.glutenWarning')}
+                ⚠️ Warning: This product may contain {appConfig.riskConcept}!
               </div>
             )}
 

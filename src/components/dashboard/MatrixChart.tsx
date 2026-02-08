@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 import type { Product } from '@/lib/types'
 import { getQuadrant, getQuadrantColor, QUADRANTS } from '@/lib/types'
+import { appConfig } from '@/lib/app-config'
 
 interface MatrixChartProps {
   products: Product[]
@@ -50,11 +51,11 @@ export function MatrixChart({ products, onProductClick, selectedProduct }: Matri
         >
           <p className="font-semibold text-sm">{product.name}</p>
           <div className="text-xs text-muted-foreground mt-1 space-y-1">
-            <p>Safety: {product.averageSafety.toFixed(0)}</p>
-            <p>Taste: {product.averageTaste.toFixed(0)}</p>
+            <p>{appConfig.dimensions.axis1.label}: {product.averageSafety.toFixed(0)}</p>
+            <p>{appConfig.dimensions.axis2.label}: {product.averageTaste.toFixed(0)}</p>
             <p>Votes: {product.voteCount}</p>
             <p className="text-xs font-medium" style={{ color: getQuadrantColor(quadrant) }}>
-              {QUADRANTS[quadrant].name}
+              {QUADRANTS[quadrant]?.name || 'Unknown'}
             </p>
           </div>
         </motion.div>
@@ -83,19 +84,19 @@ export function MatrixChart({ products, onProductClick, selectedProduct }: Matri
           <XAxis
             type="number"
             dataKey="x"
-            name="Taste"
+            name={appConfig.dimensions.axis2.label}
             unit=""
             domain={[0, 100]}
-            label={{ value: 'Taste →', position: 'bottom', offset: 0 }}
+            label={{ value: `${appConfig.dimensions.axis2.label} →`, position: 'bottom', offset: 0 }}
             stroke="hsl(var(--foreground))"
           />
           <YAxis
             type="number"
             dataKey="y"
-            name="Safety"
+            name={appConfig.dimensions.axis1.label}
             unit=""
             domain={[0, 100]}
-            label={{ value: '↑ Safety', angle: -90, position: 'left' }}
+            label={{ value: `↑ ${appConfig.dimensions.axis1.label}`, angle: -90, position: 'left' }}
             stroke="hsl(var(--foreground))"
           />
           <ZAxis type="number" dataKey="z" range={[50, 400]} />
@@ -131,16 +132,16 @@ export function MatrixChart({ products, onProductClick, selectedProduct }: Matri
 
       {/* Quadrant labels */}
       <div className="absolute top-4 left-4 text-xs font-medium opacity-50 pointer-events-none">
-        Survivor Food
+        {appConfig.quadrants.topLeft.label}
       </div>
       <div className="absolute top-4 right-4 text-xs font-medium opacity-50 pointer-events-none">
-        Holy Grail
+        {appConfig.quadrants.topRight.label}
       </div>
       <div className="absolute bottom-4 left-4 text-xs font-medium opacity-50 pointer-events-none">
-        The Bin
+        {appConfig.quadrants.bottomLeft.label}
       </div>
       <div className="absolute bottom-4 right-4 text-xs font-medium opacity-50 pointer-events-none">
-        Russian Roulette
+        {appConfig.quadrants.bottomRight.label}
       </div>
     </div>
   )

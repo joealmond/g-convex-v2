@@ -3,6 +3,7 @@
  */
 
 import type { Id, Doc } from '@convex/_generated/dataModel'
+import { appConfig } from './app-config'
 
 // Re-export Convex types
 export type { Id, Doc }
@@ -22,57 +23,44 @@ export interface User {
 }
 
 // Quadrant types for G-Matrix visualization
-export type Quadrant = 'holyGrail' | 'survivorFood' | 'russianRoulette' | 'theBin'
+export type Quadrant = keyof typeof appConfig.quadrants
 
 export interface QuadrantInfo {
-  id: Quadrant
+  id: string
   name: string
   color: string
   description: string
 }
 
-export const QUADRANTS: Record<Quadrant, QuadrantInfo> = {
-  holyGrail: {
-    id: 'holyGrail',
-    name: 'Holy Grail',
-    color: 'hsl(var(--holy-grail))',
-    description: 'Safe and tasty - the best!',
-  },
-  survivorFood: {
-    id: 'survivorFood',
-    name: 'Survivor Food',
-    color: 'hsl(var(--survivor-food))',
-    description: 'Safe but not very tasty',
-  },
-  russianRoulette: {
-    id: 'russianRoulette',
-    name: 'Russian Roulette',
-    color: 'hsl(var(--russian-roulette))',
-    description: 'Tasty but risky for safety',
-  },
-  theBin: {
-    id: 'theBin',
-    name: 'The Bin',
-    color: 'hsl(var(--the-bin))',
-    description: 'Not safe and not tasty - avoid!',
-  },
-}
+// Build QUADRANTS from config
+export const QUADRANTS: Record<string, QuadrantInfo> = Object.fromEntries(
+  Object.entries(appConfig.quadrants).map(([key, value]) => [
+    key,
+    {
+      id: value.id,
+      name: value.label,
+      color: value.color,
+      description: value.description,
+    },
+  ])
+)
 
 /**
  * Get quadrant based on safety and taste scores
+ * This logic is generic (threshold-based) and doesn't depend on niche-specific labels
  */
 export function getQuadrant(safety: number, taste: number): Quadrant {
-  if (safety >= 50 && taste >= 50) return 'holyGrail'
-  if (safety >= 50 && taste < 50) return 'survivorFood'
-  if (safety < 50 && taste >= 50) return 'russianRoulette'
-  return 'theBin'
+  if (safety >= 50 && taste >= 50) return 'topRight' as Quadrant
+  if (safety >= 50 && taste < 50) return 'topLeft' as Quadrant
+  if (safety < 50 && taste >= 50) return 'bottomRight' as Quadrant
+  return 'bottomLeft' as Quadrant
 }
 
 /**
  * Get color for a quadrant
  */
 export function getQuadrantColor(quadrant: Quadrant): string {
-  return QUADRANTS[quadrant].color
+  return QUADRANTS[quadrant]?.color || appConfig.colors.primary
 }
 
 /**
@@ -84,25 +72,27 @@ export interface VotePreset {
   label: string
 }
 
-export const SAFETY_PRESETS: VotePreset[] = [
-  { safety: 90, taste: 0, label: 'Clean' },
-  { safety: 50, taste: 0, label: 'Sketchy' },
-  { safety: 10, taste: 0, label: 'Wrecked' },
-]
+// Build presets from config
+export const SAFETY_PRESETS: VotePreset[] = appConfig.dimensions.axis1.presets.map((preset) => ({
+  safety: preset.value,
+  taste: 0,
+  label: preset.label,
+}))
 
-export const TASTE_PRESETS: VotePreset[] = [
-  { safety: 0, taste: 90, label: 'Yass!' },
-  { safety: 0, taste: 50, label: 'Meh' },
-  { safety: 0, taste: 10, label: 'Pass' },
-]
+export const TASTE_PRESETS: VotePreset[] = appConfig.dimensions.axis2.presets.map((preset) => ({
+  safety: 0,
+  taste: preset.value,
+  label: preset.label,
+}))
 
 /**
  * Price scale
  */
-export const PRICE_LABELS = ['$', '$$', '$$$', '$$$$', '$$$$$']
+export const PRICE_LABELS = appConfig.dimensions.axis3.presets.map((preset) => preset.label)
 
 export function getPriceLabel(price: number): string {
-  return PRICE_LABELS[Math.round(price) - 1] || '$'
+  const index = Math.round(price / 20) - 1 // Map 20-100 to 0-4
+  return PRICE_LABELS[index] || PRICE_LABELS[0] || '$'
 }
 
 /**

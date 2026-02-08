@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { appConfig } from '@/lib/app-config'
 
 const productSchema = z.object({
   name: z.string().min(1, 'Product name is required').max(100, 'Name too long'),
@@ -92,7 +93,7 @@ export function AddProductDialog({ trigger }: AddProductDialogProps) {
         <DialogHeader>
           <DialogTitle>Add New Product</DialogTitle>
           <DialogDescription>
-            Add a new gluten-free product to the G-Matrix. Others can then rate it.
+            Add a new {appConfig.categoryTerm} to {appConfig.appName}. Others can then rate it.
           </DialogDescription>
         </DialogHeader>
 
@@ -104,7 +105,7 @@ export function AddProductDialog({ trigger }: AddProductDialogProps) {
             </Label>
             <Input
               id="name"
-              placeholder="e.g., Schär Gluten-Free Bread"
+              placeholder="e.g., Awesome Bread Brand"
               {...register('name')}
               disabled={isSubmitting}
             />

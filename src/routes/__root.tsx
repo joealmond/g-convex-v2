@@ -9,6 +9,7 @@ import { AdminToolbar } from '@/components/AdminToolbar'
 import { VoteMigrationHandler } from '@/components/VoteMigrationHandler'
 import { authClient } from '@/lib/auth-client'
 import { getToken } from '@/lib/auth-server'
+import { appConfig } from '@/lib/app-config'
 import type { ConvexQueryClient } from '@convex-dev/react-query'
 import { Toaster } from 'sonner'
 
@@ -30,8 +31,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'G-Matrix - Gluten-Free Product Ratings' },
-      { name: 'description', content: 'Community-driven ratings for gluten-free products' },
+      { title: `${appConfig.appName} - ${appConfig.tagline}` },
+      { name: 'description', content: `Community-driven ratings for ${appConfig.categoryTerm}` },
     ],
     links: [{ rel: 'icon', href: '/favicon.ico' }],
   }),

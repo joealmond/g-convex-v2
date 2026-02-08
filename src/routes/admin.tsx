@@ -173,9 +173,9 @@ function AdminPageContent() {
                           <h3 className="font-semibold truncate">{product.name}</h3>
                           <Badge
                             variant="secondary"
-                            style={{ backgroundColor: quadrantInfo.color, opacity: 0.7 }}
+                            style={{ backgroundColor: quadrantInfo?.color || '#cccccc', opacity: 0.7 }}
                           >
-                            {quadrantInfo.name}
+                            {quadrantInfo?.name || 'Unknown'}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">

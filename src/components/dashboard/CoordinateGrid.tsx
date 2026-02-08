@@ -100,7 +100,7 @@ export function CoordinateGrid({
           y={0}
           width={gridSize / 2}
           height={gridSize / 2}
-          fill={QUADRANTS.survivorFood.color}
+          fill={QUADRANTS.topLeft?.color || '#cccccc'}
           fillOpacity={0.1}
         />
         <rect
@@ -108,7 +108,7 @@ export function CoordinateGrid({
           y={0}
           width={gridSize / 2}
           height={gridSize / 2}
-          fill={QUADRANTS.holyGrail.color}
+          fill={QUADRANTS.topRight?.color || '#cccccc'}
           fillOpacity={0.1}
         />
         <rect
@@ -116,7 +116,7 @@ export function CoordinateGrid({
           y={gridSize / 2}
           width={gridSize / 2}
           height={gridSize / 2}
-          fill={QUADRANTS.theBin.color}
+          fill={QUADRANTS.bottomLeft?.color || '#cccccc'}
           fillOpacity={0.1}
         />
         <rect
@@ -124,7 +124,7 @@ export function CoordinateGrid({
           y={gridSize / 2}
           width={gridSize / 2}
           height={gridSize / 2}
-          fill={QUADRANTS.russianRoulette.color}
+          fill={QUADRANTS.bottomRight?.color || '#cccccc'}
           fillOpacity={0.1}
         />
 
@@ -252,7 +252,7 @@ export function CoordinateGrid({
           className="px-2 py-1 rounded text-xs font-medium"
           style={{ backgroundColor: dotColor, color: 'white' }}
         >
-          {QUADRANTS[quadrant].name}
+          {QUADRANTS[quadrant]?.name || 'Unknown'}
         </div>
       </div>
     </div>

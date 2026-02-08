@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Link } from '@tanstack/react-router'
 import type { Product } from '@/lib/types'
 import { getQuadrant, getQuadrantColor, QUADRANTS } from '@/lib/types'
+import { appConfig } from '@/lib/app-config'
 import { DeleteProductButton } from './DeleteProductButton'
 import { useAdmin } from '@/hooks/use-admin'
 import { Trash2 } from 'lucide-react'
@@ -49,9 +50,9 @@ export function ProductCard({ product, onClick, isSelected = false }: ProductCar
             </div>
             
             <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-              <span>Safety: {product.averageSafety.toFixed(0)}</span>
+              <span>{appConfig.dimensions.axis1.label}: {product.averageSafety.toFixed(0)}</span>
               <span>•</span>
-              <span>Taste: {product.averageTaste.toFixed(0)}</span>
+              <span>{appConfig.dimensions.axis2.label}: {product.averageTaste.toFixed(0)}</span>
             </div>
 
             <div className="flex items-center gap-2 mt-2">
@@ -60,7 +61,7 @@ export function ProductCard({ product, onClick, isSelected = false }: ProductCar
                 className="text-xs"
                 style={{ borderColor: color, color }}
               >
-                {QUADRANTS[quadrant].name}
+                {QUADRANTS[quadrant]?.name || 'Unknown'}
               </Badge>
               
               <span className="text-xs text-muted-foreground">
@@ -79,7 +80,7 @@ export function ProductCard({ product, onClick, isSelected = false }: ProductCar
           <div
             className="w-6 h-6 rounded-full shrink-0"
             style={{ backgroundColor: color }}
-            title={QUADRANTS[quadrant].description}
+            title={QUADRANTS[quadrant]?.description || ''}
           />
         </div>
 

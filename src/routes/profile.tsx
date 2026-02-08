@@ -258,9 +258,9 @@ function ProfileContent() {
                           <div className="flex items-center gap-3">
                             <Badge
                               variant="secondary"
-                              style={{ backgroundColor: quadrantInfo.color, opacity: 0.7 }}
+                              style={{ backgroundColor: quadrantInfo?.color || '#cccccc', opacity: 0.7 }}
                             >
-                              {quadrantInfo.name}
+                              {quadrantInfo?.name || 'Unknown'}
                             </Badge>
                             <div className="text-xs text-muted-foreground">
                               {new Date(vote.createdAt).toLocaleDateString()}
@@ -322,9 +322,9 @@ function ProfileContent() {
                           </div>
                           <Badge
                             variant="secondary"
-                            style={{ backgroundColor: quadrantInfo.color, opacity: 0.7 }}
+                            style={{ backgroundColor: quadrantInfo?.color || '#cccccc', opacity: 0.7 }}
                           >
-                            {quadrantInfo.name}
+                            {quadrantInfo?.name || 'Unknown'}
                           </Badge>
                         </div>
                       )

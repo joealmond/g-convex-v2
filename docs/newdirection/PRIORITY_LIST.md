@@ -39,18 +39,18 @@ Creates `src/lib/app-config.ts` and removes all hardcoded niche strings from com
 
 | | Step | Task | Files Affected | Verification |
 |---|------|------|----------------|-------------|
-| [ ] | 1 | Create `src/lib/app-config.ts` with full structure: `appName`, `categoryTerm`, `tagline`, `dimensions` (axis1/axis2/axis3 with keys, labels, presets), `quadrants` (4 entries with id/label/emoji/color), `valueLens` (optional 2nd chart mode), `ratingLabels` (thresholds), `riskConcept`, `certificationName`, `storeDefaults` (per country), `colors` | New file | File exists and TypeScript compiles |
-| [ ] | 2 | Refactor `src/lib/types.ts` — `QUADRANTS` record reads labels/descriptions from `appConfig.quadrants`. `SAFETY_PRESETS`, `TASTE_PRESETS` read from `appConfig.dimensions.axis1.presets` / `axis2.presets`. `PRICE_LABELS` reads from config. `getQuadrant()` logic stays (it's generic threshold math) | `types.ts` | Types still export correctly, no inline niche strings |
-| [ ] | 3 | Refactor `VotingPanel.tsx` — Replace line 30 `"How safe is it for celiacs?"` with i18n key referencing `appConfig.dimensions.axis1.label`. Preset labels from config | `VotingPanel.tsx` | No grep hits for "celiac" |
-| [ ] | 4 | Refactor `FineTunePanel.tsx` — Replace line 49 `"Safety for Celiacs"` with config dimension label | `FineTunePanel.tsx` | No grep hits for "Celiac" |
-| [ ] | 5 | Refactor `MatrixChart.tsx` — Axis labels and quadrant corner labels read from config | `MatrixChart.tsx` | No hardcoded "Safety"/"Taste"/"Holy Grail" (verify chart still renders) |
-| [ ] | 6 | Refactor `ProductCard.tsx` — "Safety: X • Taste: X" uses config dimension labels | `ProductCard.tsx` | No inline "Safety"/"Taste" strings |
-| [ ] | 7 | Refactor `AddProductDialog.tsx` — Line 95 description + line 107 placeholder use config `categoryTerm` and generic example | `AddProductDialog.tsx` | No "gluten" in file |
-| [ ] | 8 | Refactor `EditProductDialog.tsx` — Line 110 placeholder uses generic example | `EditProductDialog.tsx` | No "Gluten-Free" in file |
-| [ ] | 9 | Refactor `ImageUploadDialog.tsx` — Line 42 `containsGluten` → `containsRiskIngredient` (or config-keyed field). Lines 304-306 warning reads from config `riskConcept` | `ImageUploadDialog.tsx` | No "gluten" in file (except locale key reference) |
-| [ ] | 10 | Refactor `__root.tsx` — Lines 33-34 meta title/description from `appConfig.appName` + `appConfig.tagline` | `__root.tsx` | Meta tags reference config |
-| [ ] | 11 | Refactor `login.tsx` — Line 68 tagline from config | `login.tsx` | No "gluten" or "celiac" |
-| [ ] | 12 | **Verification gate**: `grep -ri "gluten\|celiac\|Holy Grail" src/ --include="*.tsx" --include="*.ts"` returns hits ONLY in `app-config.ts` and `locales/*.json` | — | Clean grep |
+| [x] | 1 | Create `src/lib/app-config.ts` with full structure: `appName`, `categoryTerm`, `tagline`, `dimensions` (axis1/axis2/axis3 with keys, labels, presets), `quadrants` (4 entries with id/label/emoji/color), `valueLens` (optional 2nd chart mode), `ratingLabels` (thresholds), `riskConcept`, `certificationName`, `storeDefaults` (per country), `colors` | New file | File exists and TypeScript compiles |
+| [x] | 2 | Refactor `src/lib/types.ts` — `QUADRANTS` record reads labels/descriptions from `appConfig.quadrants`. `SAFETY_PRESETS`, `TASTE_PRESETS` read from `appConfig.dimensions.axis1.presets` / `axis2.presets`. `PRICE_LABELS` reads from config. `getQuadrant()` logic stays (it's generic threshold math) | `types.ts` | Types still export correctly, no inline niche strings |
+| [x] | 3 | Refactor `VotingPanel.tsx` — Replace line 30 `"How safe is it for celiacs?"` with i18n key referencing `appConfig.dimensions.axis1.label`. Preset labels from config | `VotingPanel.tsx` | No grep hits for "celiac" |
+| [x] | 4 | Refactor `FineTunePanel.tsx` — Replace line 49 `"Safety for Celiacs"` with `appConfig.dimensions.axis1.label` | `FineTunePanel.tsx` | No grep hits for "celiac" |
+| [x] | 5 | Refactor `MatrixChart.tsx` — Axis labels and quadrant corner labels read from config | `MatrixChart.tsx` | No hardcoded "Safety"/"Taste"/"Holy Grail" (verify chart still renders) |
+| [x] | 6 | Refactor `ProductCard.tsx` — "Safety: X • Taste: X" uses config dimension labels | `ProductCard.tsx` | No inline "Safety"/"Taste" strings |
+| [x] | 7 | Refactor `AddProductDialog.tsx` — Line 95 description + line 107 placeholder use config `categoryTerm` and generic example | `AddProductDialog.tsx` | No "gluten" in file |
+| [x] | 8 | Refactor `EditProductDialog.tsx` — Line 110 placeholder uses generic example | `EditProductDialog.tsx` | No "Gluten-Free" in file |
+| [x] | 9 | Refactor `ImageUploadDialog.tsx` — Line 42 `containsGluten` → `containsRiskIngredient` (or config-keyed field). Lines 304-306 warning reads from config `riskConcept` | `ImageUploadDialog.tsx` | No "gluten" in file (except locale key reference) |
+| [x] | 10 | Refactor `__root.tsx` — Lines 33-34 meta title/description from `appConfig.appName` + `appConfig.tagline` | `__root.tsx` | Meta tags reference config |
+| [x] | 11 | Refactor `login.tsx` — Line 68 tagline from config | `login.tsx` | No "gluten" or "celiac" |
+| [x] | 12 | **Verification gate**: `grep -ri "gluten\|celiac\|Holy Grail" src/ --include="*.tsx" --include="*.ts"` returns hits ONLY in `app-config.ts` and `locales/*.json` | — | Clean grep |
 
 ### Sprint 0b: Design Tokens + PWA
 

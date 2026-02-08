@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { authClient } from '@/lib/auth-client'
+import { appConfig } from '@/lib/app-config'
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 
@@ -63,9 +64,9 @@ function Login() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-3xl font-bold">Welcome to G-Matrix</CardTitle>
+          <CardTitle className="text-3xl font-bold">Welcome to {appConfig.appName}</CardTitle>
           <CardDescription className="text-base">
-            Rate gluten-free products and help the celiac community make better choices
+            {appConfig.tagline}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
