@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useMutation, useAction } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { appConfig } from '@/lib/app-config'
@@ -18,6 +18,7 @@ import { Label } from '../ui/label'
 import { Slider } from '../ui/slider'
 import { useAnonymousId } from '../../hooks/use-anonymous-id'
 import { useTranslation } from '../../hooks/use-translation'
+import { useGeolocation } from '../../hooks/use-geolocation'
 
 interface ImageUploadDialogProps {
   trigger?: React.ReactNode
@@ -55,6 +56,14 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { anonId } = useAnonymousId()
   const { t } = useTranslation()
+  const { coords, requestLocation, loading: geoLoading, error: geoError } = useGeolocation()
+
+  // Request location when dialog opens
+  useEffect(() => {
+    if (open) {
+      requestLocation()
+    }
+  }, [open, requestLocation])
 
   // Convex mutations
   const generateUploadUrl = useMutation(api.files.generateUploadUrl)
@@ -278,12 +287,14 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       const result = await createProductAndVote({
         name: productName.trim(),
         imageUrl,
-        imageStorageId: storageId ?? undefined,
+        imageStorageId: (storageId as any) ?? undefined,
         anonymousId: anonId ?? undefined,
         safety,
         taste,
         price,
         storeName: storeName || undefined,
+        latitude: coords?.latitude,
+        longitude: coords?.longitude,
         ingredients: analysis?.tags,
         aiAnalysis: analysis ?? undefined,
       })
@@ -333,7 +344,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       <DialogTrigger asChild>
         {trigger ?? <Button>{t('imageUpload.addProduct')}</Button>}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-background border border-border">
         <DialogHeader>
           <DialogTitle>
             {step === 'upload' && t('imageUpload.uploadProductImage')}
@@ -483,6 +494,12 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
                 onChange={(e) => setStoreName(e.target.value)}
                 placeholder={t('imageUpload.whereDidYouBuy')}
               />
+              {/* Location Status */}
+              <div className="text-xs flex items-center gap-1 mt-1">
+                {geoLoading && <span className="text-muted-foreground">📍 Acquiring location...</span>}
+                {coords && <span className="text-green-600">✅ Location acquired</span>}
+                {geoError && <span className="text-red-500">❌ Location unavailable type store manually</span>}
+              </div>
             </div>
 
             {analysis?.reasoning && (

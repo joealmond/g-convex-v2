@@ -2,16 +2,17 @@ import { Link, useLocation } from '@tanstack/react-router'
 import { Grid3X3, BarChart3, Plus, User, Map } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AddProductDialog } from '@/components/dashboard/AddProductDialog'
-import { useConvexAuth } from '@convex-dev/react-query'
 
 /**
  * Bottom tab navigation bar (mobile-optimized)
  * 5 tabs: Home, Leaderboard, Add (center), Map, Profile
  * Fixed at bottom with iOS safe area
+ * 
+ * Light mode: Sage Green (#7CB342) with white icons
+ * Dark mode: Slate (#1E293B) with light icons, amber active
  */
 export function BottomTabs() {
   const location = useLocation()
-  const { isAuthenticated } = useConvexAuth()
 
   const isActive = (path: string) => {
     // Simple path matching for active state
@@ -22,13 +23,16 @@ export function BottomTabs() {
   const tabClass = (active: boolean) =>
     `flex flex-col items-center justify-center gap-1 flex-1 h-16 text-xs font-medium transition-colors ${
       active
-        ? 'text-color-primary bg-white/50'
-        : 'text-color-text-secondary hover:text-color-text'
+        ? 'text-[var(--nav-active)] bg-white/20 dark:bg-white/10'
+        : 'text-[var(--nav-muted)] hover:text-[var(--nav-foreground)]'
     }`
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 h-16 bg-white border-t border-color-border flex items-center justify-around safe-area-inset-bottom">
+      <nav 
+        className="fixed bottom-0 left-0 right-0 z-50 h-16 flex items-center justify-around safe-area-inset-bottom border-t border-white/20 dark:border-border"
+        style={{ backgroundColor: 'var(--nav-bg)' }}
+      >
         {/* Home Tab */}
         <Link
           to="/"
@@ -49,29 +53,17 @@ export function BottomTabs() {
           <span>Leaderboard</span>
         </Link>
 
-        {/* Add Tab (Center, larger button) */}
-        {isAuthenticated ? (
-          <AddProductDialog
-            trigger={
-              <Button
-                className="rounded-full w-12 h-12 p-0 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg -mt-6 flex items-center justify-center"
-                title="Add product"
-              >
-                <Plus className="h-6 w-6" />
-              </Button>
-            }
-          />
-        ) : (
-          <Button
-            onClick={() => {
-              window.location.href = '/login'
-            }}
-            className="rounded-full w-12 h-12 p-0 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg -mt-6 flex items-center justify-center"
-            title="Sign in to add product"
-          >
-            <Plus className="h-6 w-6" />
-          </Button>
-        )}
+        {/* Add Tab (Center, larger button) - Available to everyone */}
+        <AddProductDialog
+          trigger={
+            <Button
+              className="rounded-full w-12 h-12 p-0 bg-white text-primary hover:bg-white/90 dark:bg-accent dark:text-accent-foreground shadow-lg -mt-6 flex items-center justify-center"
+              title="Add product"
+            >
+              <Plus className="h-6 w-6" />
+            </Button>
+          }
+        />
 
         {/* Map Tab */}
         <Link
@@ -93,8 +85,7 @@ export function BottomTabs() {
           <span>Profile</span>
         </Link>
       </nav>
-
-      {/* AddProductDialog is rendered outside to maintain dialog state */}
     </>
   )
 }
+

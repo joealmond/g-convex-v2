@@ -94,14 +94,14 @@ export function CoordinateGrid({
         onPointerLeave={handlePointerUp}
         style={{ userSelect: 'none' }}
       >
-        {/* Quadrant backgrounds */}
+        {/* Quadrant backgrounds - very light colors for distinction */}
         <rect
           x={0}
           y={0}
           width={gridSize / 2}
           height={gridSize / 2}
           fill={QUADRANTS.topLeft?.color || '#cccccc'}
-          fillOpacity={0.7}
+          fillOpacity={0.15}
         />
         <rect
           x={gridSize / 2}
@@ -109,7 +109,7 @@ export function CoordinateGrid({
           width={gridSize / 2}
           height={gridSize / 2}
           fill={QUADRANTS.topRight?.color || '#cccccc'}
-          fillOpacity={0.7}
+          fillOpacity={0.15}
         />
         <rect
           x={0}
@@ -117,7 +117,7 @@ export function CoordinateGrid({
           width={gridSize / 2}
           height={gridSize / 2}
           fill={QUADRANTS.bottomLeft?.color || '#cccccc'}
-          fillOpacity={0.7}
+          fillOpacity={0.15}
         />
         <rect
           x={gridSize / 2}
@@ -125,8 +125,58 @@ export function CoordinateGrid({
           width={gridSize / 2}
           height={gridSize / 2}
           fill={QUADRANTS.bottomRight?.color || '#cccccc'}
-          fillOpacity={0.7}
+          fillOpacity={0.15}
         />
+
+        {/* Quadrant labels in corners */}
+        <text
+          x={gridSize / 4}
+          y={gridSize / 4}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={11}
+          fill={QUADRANTS.topLeft?.color || '#888'}
+          fontWeight="600"
+          opacity={0.8}
+        >
+          {QUADRANTS.topLeft?.name || ''}
+        </text>
+        <text
+          x={(gridSize / 4) * 3}
+          y={gridSize / 4}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={11}
+          fill={QUADRANTS.topRight?.color || '#888'}
+          fontWeight="600"
+          opacity={0.8}
+        >
+          {QUADRANTS.topRight?.name || ''}
+        </text>
+        <text
+          x={gridSize / 4}
+          y={(gridSize / 4) * 3}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={11}
+          fill={QUADRANTS.bottomLeft?.color || '#888'}
+          fontWeight="600"
+          opacity={0.8}
+        >
+          {QUADRANTS.bottomLeft?.name || ''}
+        </text>
+        <text
+          x={(gridSize / 4) * 3}
+          y={(gridSize / 4) * 3}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={11}
+          fill={QUADRANTS.bottomRight?.color || '#888'}
+          fontWeight="600"
+          opacity={0.8}
+        >
+          {QUADRANTS.bottomRight?.name || ''}
+        </text>
 
         {/* Grid lines */}
         <line
@@ -215,23 +265,23 @@ export function CoordinateGrid({
           </>
         )}
 
-        {/* Axis labels */}
+        {/* Axis labels - positioned to avoid overlap */}
         <text
           x={gridSize / 2}
-          y={gridSize - 5}
+          y={gridSize - 8}
           textAnchor="middle"
-          fontSize={12}
+          fontSize={11}
           fill="var(--muted-foreground)"
         >
           Taste →
         </text>
         <text
-          x={10}
+          x={15}
           y={gridSize / 2}
           textAnchor="start"
-          fontSize={12}
+          fontSize={11}
           fill="var(--muted-foreground)"
-          transform={`rotate(-90, 10, ${gridSize / 2})`}
+          transform={`rotate(-90, 15, ${gridSize / 2})`}
         >
           ↑ Safety
         </text>

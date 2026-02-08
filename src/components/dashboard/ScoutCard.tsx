@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Trophy, Flame, Star, TrendingUp } from 'lucide-react'
 import { getUserLevel } from '@/lib/app-config'
+import { Link } from '@tanstack/react-router'
 import { Badge } from '@/components/ui/badge'
 
 /**
@@ -87,12 +88,13 @@ export function ScoutCard() {
       </div>
 
       {/* View Profile Link */}
-      <a
-        href="/profile"
+      {/* View Profile Link */}
+      <Link
+        to="/profile"
         className="block text-center text-sm text-color-primary hover:underline font-semibold"
       >
         View Full Profile →
-      </a>
+      </Link>
     </div>
   )
 }

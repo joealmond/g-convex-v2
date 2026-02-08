@@ -96,7 +96,7 @@ export function VotingSheet({
     <div className="space-y-6">
       {/* Safety Buttons */}
       <div>
-        <label className="text-sm font-semibold text-color-text mb-3 block">
+        <label className="text-sm font-semibold text-foreground mb-3 block">
           {appConfig.dimensions.axis1.question}
         </label>
         <div className="space-y-2">
@@ -109,7 +109,7 @@ export function VotingSheet({
                 variant={selectedSafety === preset.value ? 'default' : 'outline'}
                 className={cn(
                   'w-full h-12 justify-start text-left px-4',
-                  selectedSafety === preset.value && 'bg-color-primary hover:bg-color-primary-dark'
+                  selectedSafety === preset.value && 'bg-primary hover:bg-primary/90'
                 )}
                 onClick={() => handleSafetyClick(preset.value)}
                 disabled={disabled}
@@ -127,7 +127,7 @@ export function VotingSheet({
 
       {/* Taste Buttons */}
       <div>
-        <label className="text-sm font-semibold text-color-text mb-3 block">
+        <label className="text-sm font-semibold text-foreground mb-3 block">
           {appConfig.dimensions.axis2.question}
         </label>
         <div className="space-y-2">
@@ -140,7 +140,7 @@ export function VotingSheet({
                 variant={selectedTaste === preset.value ? 'default' : 'outline'}
                 className={cn(
                   'w-full h-12 justify-start text-left px-4',
-                  selectedTaste === preset.value && 'bg-color-primary hover:bg-color-primary-dark'
+                  selectedTaste === preset.value && 'bg-primary hover:bg-primary/90'
                 )}
                 onClick={() => handleTasteClick(preset.value)}
                 disabled={disabled}
@@ -158,8 +158,8 @@ export function VotingSheet({
 
       {/* Price Buttons (Optional) */}
       <div>
-        <label className="text-sm font-semibold text-color-text mb-3 block">
-          {appConfig.dimensions.axis3.question} <span className="text-xs font-normal text-color-text-secondary">(optional)</span>
+        <label className="text-sm font-semibold text-foreground mb-3 block">
+          {appConfig.dimensions.axis3.question} <span className="text-xs font-normal text-muted-foreground">(optional)</span>
         </label>
         <div className="flex gap-2">
           {pricePresets.map((preset, index) => (
@@ -172,7 +172,7 @@ export function VotingSheet({
                 variant={selectedPrice === (index + 1) * 20 ? 'default' : 'outline'}
                 className={cn(
                   'w-full h-10 text-xs',
-                  selectedPrice === (index + 1) * 20 && 'bg-color-primary hover:bg-color-primary-dark'
+                  selectedPrice === (index + 1) * 20 && 'bg-primary hover:bg-primary/90'
                 )}
                 onClick={() => handlePriceClick((index + 1) * 20)}
                 disabled={disabled}
@@ -183,7 +183,7 @@ export function VotingSheet({
             </motion.div>
           ))}
         </div>
-        <p className="text-xs text-color-text-secondary mt-2">
+        <p className="text-xs text-muted-foreground mt-2">
           Tap to select price level (tap again to deselect)
         </p>
       </div>
@@ -191,32 +191,20 @@ export function VotingSheet({
       {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-color-border"></div>
+          <div className="w-full border-t border-border"></div>
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-color-text-secondary">Or use combo</span>
+          <span className="bg-card px-2 text-muted-foreground">Or use combo</span>
         </div>
       </div>
 
-      {/* Combo Presets */}
+      {/* Combo Presets - matches coordinate grid layout */}
       <div className="grid grid-cols-2 gap-2">
+        {/* Row 1: Top-Left (Survivor) | Top-Right (Holy Grail) */}
         <motion.div whileTap={{ scale: disabled ? 1 : 0.98 }}>
           <Button
-            className="w-full h-16 bg-color-primary hover:bg-color-primary-dark text-white"
-            onClick={() => handleComboVote(90, 90)}
-            disabled={disabled}
-          >
-            <div className="text-center">
-              <div className="text-lg mb-1">{appConfig.quadrants.topRight.emoji}</div>
-              <div className="font-semibold text-sm">{appConfig.quadrants.topRight.label}</div>
-            </div>
-          </Button>
-        </motion.div>
-
-        <motion.div whileTap={{ scale: disabled ? 1 : 0.98 }}>
-          <Button
-            variant="outline"
-            className="w-full h-16"
+            className="w-full h-16 text-white hover:opacity-90"
+            style={{ backgroundColor: appConfig.quadrants.topLeft.color }}
             onClick={() => handleComboVote(90, 30)}
             disabled={disabled}
           >
@@ -229,22 +217,23 @@ export function VotingSheet({
 
         <motion.div whileTap={{ scale: disabled ? 1 : 0.98 }}>
           <Button
-            variant="outline"
-            className="w-full h-16"
-            onClick={() => handleComboVote(30, 90)}
+            className="w-full h-16 text-white hover:opacity-90"
+            style={{ backgroundColor: appConfig.quadrants.topRight.color }}
+            onClick={() => handleComboVote(90, 90)}
             disabled={disabled}
           >
             <div className="text-center">
-              <div className="text-lg mb-1">{appConfig.quadrants.bottomRight.emoji}</div>
-              <div className="font-semibold text-sm">{appConfig.quadrants.bottomRight.label}</div>
+              <div className="text-lg mb-1">{appConfig.quadrants.topRight.emoji}</div>
+              <div className="font-semibold text-sm">{appConfig.quadrants.topRight.label}</div>
             </div>
           </Button>
         </motion.div>
 
+        {/* Row 2: Bottom-Left (The Bin) | Bottom-Right (Russian Roulette) */}
         <motion.div whileTap={{ scale: disabled ? 1 : 0.98 }}>
           <Button
-            variant="destructive"
-            className="w-full h-16"
+            className="w-full h-16 text-white hover:opacity-90"
+            style={{ backgroundColor: appConfig.quadrants.bottomLeft.color }}
             onClick={() => handleComboVote(10, 10)}
             disabled={disabled}
           >
@@ -254,24 +243,38 @@ export function VotingSheet({
             </div>
           </Button>
         </motion.div>
+
+        <motion.div whileTap={{ scale: disabled ? 1 : 0.98 }}>
+          <Button
+            className="w-full h-16 text-white hover:opacity-90"
+            style={{ backgroundColor: appConfig.quadrants.bottomRight.color }}
+            onClick={() => handleComboVote(30, 90)}
+            disabled={disabled}
+          >
+            <div className="text-center">
+              <div className="text-lg mb-1">{appConfig.quadrants.bottomRight.emoji}</div>
+              <div className="font-semibold text-sm">{appConfig.quadrants.bottomRight.label}</div>
+            </div>
+          </Button>
+        </motion.div>
       </div>
 
       {/* Fine Tune Section (Collapsible) */}
-      <div className="border border-color-border rounded-xl overflow-hidden">
+      <div className="border border-border rounded-xl overflow-hidden">
         <motion.button
           type="button"
-          className="w-full flex items-center justify-between p-4 bg-color-bg hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center justify-between p-4 bg-muted hover:bg-muted/80 transition-colors"
           onClick={() => setFineTuneExpanded(!fineTuneExpanded)}
           disabled={disabled}
         >
           <div className="flex items-center gap-2">
-            <Sliders className="h-4 w-4 text-color-primary" />
-            <span className="font-semibold text-sm text-color-text">Fine Tune (Precise Control)</span>
+            <Sliders className="h-4 w-4 text-primary" />
+            <span className="font-semibold text-sm text-foreground">Fine Tune (Precise Control)</span>
           </div>
           {fineTuneExpanded ? (
-            <ChevronUp className="h-5 w-5 text-color-text-secondary" />
+            <ChevronUp className="h-5 w-5 text-muted-foreground" />
           ) : (
-            <ChevronDown className="h-5 w-5 text-color-text-secondary" />
+            <ChevronDown className="h-5 w-5 text-muted-foreground" />
           )}
         </motion.button>
 
@@ -284,14 +287,14 @@ export function VotingSheet({
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className="overflow-hidden"
             >
-              <div className="p-4 pt-2 space-y-5 bg-white border-t border-color-border">
+              <div className="p-4 pt-2 space-y-5 bg-card border-t border-border">
                 {/* Safety Slider */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="fine-safety-slider" className="text-sm font-semibold text-color-text">
+                    <Label htmlFor="fine-safety-slider" className="text-sm font-semibold text-foreground">
                       {appConfig.dimensions.axis1.label}
                     </Label>
-                    <span className="text-lg font-bold text-color-primary tabular-nums min-w-[3ch] text-right">
+                    <span className="text-lg font-bold text-primary tabular-nums min-w-[3ch] text-right">
                       {fineTuneSafety}
                     </span>
                   </div>
@@ -305,7 +308,7 @@ export function VotingSheet({
                     disabled={disabled}
                     className="w-full [&_[role=slider]]:h-6 [&_[role=slider]]:w-6"
                   />
-                  <div className="flex justify-between text-xs text-color-text-secondary">
+                  <div className="flex justify-between text-xs text-muted-foreground">
                     <span>0 (Dangerous)</span>
                     <span>100 (Very Safe)</span>
                   </div>
@@ -314,10 +317,10 @@ export function VotingSheet({
                 {/* Taste Slider */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="fine-taste-slider" className="text-sm font-semibold text-color-text">
+                    <Label htmlFor="fine-taste-slider" className="text-sm font-semibold text-foreground">
                       {appConfig.dimensions.axis2.label}
                     </Label>
-                    <span className="text-lg font-bold text-color-primary tabular-nums min-w-[3ch] text-right">
+                    <span className="text-lg font-bold text-primary tabular-nums min-w-[3ch] text-right">
                       {fineTuneTaste}
                     </span>
                   </div>
@@ -331,7 +334,7 @@ export function VotingSheet({
                     disabled={disabled}
                     className="w-full [&_[role=slider]]:h-6 [&_[role=slider]]:w-6"
                   />
-                  <div className="flex justify-between text-xs text-color-text-secondary">
+                  <div className="flex justify-between text-xs text-muted-foreground">
                     <span>0 (Terrible)</span>
                     <span>100 (Delicious)</span>
                   </div>
@@ -346,10 +349,10 @@ export function VotingSheet({
                   }}
                 >
                   <div className="text-center">
-                    <div className="text-xs font-medium text-color-text-secondary mb-1">
+                    <div className="text-xs font-medium text-muted-foreground mb-1">
                       This will place it in:
                     </div>
-                    <div className="text-base font-bold text-color-text flex items-center justify-center gap-2">
+                    <div className="text-base font-bold text-foreground flex items-center justify-center gap-2">
                       <span className="text-lg">{appConfig.quadrants[fineTuneQuadrant as keyof typeof appConfig.quadrants]?.emoji}</span>
                       {fineTuneQuadrantInfo?.name || 'Unknown'}
                     </div>
@@ -361,7 +364,7 @@ export function VotingSheet({
                   <Button
                     onClick={handleFineTuneSubmit}
                     disabled={disabled}
-                    className="w-full h-12 bg-color-primary hover:bg-color-primary-dark text-white font-semibold"
+                    className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
                   >
                     Submit Fine-Tuned Vote
                   </Button>
@@ -377,24 +380,24 @@ export function VotingSheet({
         <>
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-color-border"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-color-text-secondary">Quick vote</span>
+              <span className="bg-card px-2 text-muted-foreground">Quick vote</span>
             </div>
           </div>
 
           <motion.div whileTap={{ scale: disabled ? 1 : 0.98 }}>
             <Button
               variant="outline"
-              className="w-full h-14 flex items-center justify-center gap-2 border-2 border-color-primary hover:bg-color-primary hover:text-white"
+              className="w-full h-14 flex items-center justify-center gap-2 border-2 border-primary hover:bg-primary hover:text-primary-foreground"
               onClick={() => onVote(averageSafety, averageTaste, selectedPrice ?? undefined)}
               disabled={disabled}
             >
               <ThumbsUp className="h-5 w-5" />
               <div className="text-center">
                 <div className="font-semibold text-sm">Agree with Community</div>
-                <div className="text-xs text-color-text-secondary">
+                <div className="text-xs text-muted-foreground">
                   Safety: {Math.round(averageSafety)} • Taste: {Math.round(averageTaste)}
                 </div>
               </div>

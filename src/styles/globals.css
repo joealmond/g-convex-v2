@@ -65,17 +65,17 @@
   --sidebar-border: #B2BEC3;
   --sidebar-ring: #7CB342;
 
-  /* Legacy variable support (for components using old names) */
-  --color-primary: #7CB342;
-  --color-bg: #FAF8F5;
-  --color-surface: #FFFFFF;
-  --color-text: #2D3436;
-
   /* G-Matrix Quadrant Colors */
   --holy-grail: 142 76% 36%;      /* Green */
   --survivor-food: 48 96% 53%;    /* Yellow */
   --russian-roulette: 25 95% 53%; /* Orange */
   --the-bin: 0 84% 60%;           /* Red */
+  
+  /* Navigation specific */
+  --nav-bg: #7CB342;              /* Sage Green for bottom nav */
+  --nav-foreground: #FFFFFF;
+  --nav-active: #FFFFFF;
+  --nav-muted: rgba(255,255,255,0.7);
 }
 
 * {
@@ -185,17 +185,17 @@ body {
   --safety-mid-dark: #F39C12;
   --safety-low-dark: #E74C3C;
 
-  /* Legacy variable support (dark mode) */
-  --color-bg: #0F172A;
-  --color-surface: #1E293B;
-  --color-primary: #FBBF24;     /* Amber in dark mode */
-  --color-text: #F1F5F9;
-
   /* G-Matrix Quadrant Colors (dark mode) */
   --holy-grail: 142 76% 36%;
   --survivor-food: 48 96% 53%;
   --russian-roulette: 25 95% 53%;
   --the-bin: 0 84% 60%;
+  
+  /* Navigation specific (dark mode) */
+  --nav-bg: #1E293B;              /* Slate for bottom nav */
+  --nav-foreground: #F1F5F9;
+  --nav-active: #FBBF24;          /* Amber */
+  --nav-muted: rgba(241,245,249,0.6);
 }
 
 @layer utilities {

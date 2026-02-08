@@ -110,22 +110,22 @@ function StoreProfileContent() {
             <StatsCard
               title="Products"
               value={productCount}
-              icon={Package}
+              icon={<Package className="h-5 w-5 text-primary" />}
             />
             <StatsCard
               title="Total Votes"
               value={totalVotes}
-              icon={TrendingUp}
+              icon={<TrendingUp className="h-5 w-5 text-primary" />}
             />
             <StatsCard
               title="Avg Safety"
               value={avgSafety}
-              icon={Shield}
+              icon={<Shield className="h-5 w-5 text-primary" />}
             />
             <StatsCard
               title="Locations"
               value={uniqueLocations}
-              icon={MapPin}
+              icon={<MapPin className="h-5 w-5 text-primary" />}
             />
           </div>
         )}

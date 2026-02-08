@@ -147,22 +147,19 @@ function HomePageContent() {
             title="Your Points"
             value={profile.points}
             subtitle={`${profile.totalVotes} votes cast`}
-            icon={Trophy}
-            iconColor="text-yellow-500"
+            icon={<Trophy className="h-5 w-5 text-yellow-500" />}
           />
           <StatsCard
             title="Current Streak"
             value={`${profile.streak} days`}
             subtitle="Keep voting daily!"
-            icon={Flame}
-            iconColor="text-orange-500"
+            icon={<Flame className="h-5 w-5 text-orange-500" />}
           />
           <StatsCard
             title="Badges Earned"
             value={profile.badges?.length || 0}
             subtitle={`Keep contributing!`}
-            icon={TrendingUp}
-            iconColor="text-purple-500"
+            icon={<TrendingUp className="h-5 w-5 text-purple-500" />}
           />
         </div>
       )}
@@ -200,7 +197,7 @@ function HomePageContent() {
           {/* Products Grid */}
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-color-text-secondary" />
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
             <FeedGrid isEmpty={filteredProducts.length === 0}>
@@ -232,7 +229,7 @@ function HomePageContent() {
       {viewMode === 'chart' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Chart */}
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
+          <div className="lg:col-span-2 bg-card rounded-2xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">G-Matrix Visualization</h2>
               
@@ -261,7 +258,7 @@ function HomePageContent() {
 
             {isLoading ? (
               <div className="flex items-center justify-center h-[500px]">
-                <Loader2 className="w-8 h-8 animate-spin text-color-text-secondary" />
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
             ) : products && products.length > 0 ? (
               <div className="h-[500px]">
@@ -273,7 +270,7 @@ function HomePageContent() {
                 />
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-[500px] text-color-text-secondary">
+              <div className="flex flex-col items-center justify-center h-[500px] text-muted-foreground">
                 <p className="text-lg mb-2">No products yet</p>
                 <p className="text-sm">Add your first product to get started!</p>
               </div>

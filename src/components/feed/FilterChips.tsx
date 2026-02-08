@@ -36,8 +36,8 @@ export function FilterChips({ value, onChange }: FilterChipsProps) {
           className={cn(
             'px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 min-h-[44px]',
             value === filter.value
-              ? 'bg-color-primary text-white'
-              : 'bg-color-bg text-color-text-secondary border border-color-border hover:bg-white'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted text-muted-foreground border border-border hover:bg-card'
           )}
           whileTap={{ scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}

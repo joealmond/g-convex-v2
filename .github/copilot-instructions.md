@@ -114,6 +114,13 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 ### Voting UX
 - **Fine tune UI lives in `VotingSheet`** as a collapsible section with sliders and a quadrant preview. Avoid adding new fine-tune layouts elsewhere unless required.
 - **Store selection** should prefer `appConfig.storeDefaults[locale]` via the dropdown, with a custom store fallback.
+- **Geolocation**: Use `useGeolocation` hook for any feature requiring location. Always handle permission denied states gracefully with UI feedback.
+
+### Common Pitfalls (Learned from experience)
+- **Navigation**: ALWAYS use `<Link>` from `@tanstack/react-router` for internal navigation. NEVER use `<a>` tags (causes full app reload/auth flicker).
+- **Icons**: Pass icons as JSX elements (e.g., `icon={<Trophy className="..." />}`) rather than component references (`icon={Trophy}`). This ensures proper styling control.
+- **Side Effects**: NEVER call `navigate` or `setState` directly in the component body. Always wrap side effects in `useEffect` or event handlers.
+- **Z-Index**: Be careful with stacking contexts. Toast/Dialogs > Dropdowns > Sticky Headers > Content.
 
 ## Design Tokens
 
@@ -133,13 +140,19 @@ The app uses a sage green / cream design system defined in `globals.css`:
 | Achievement | `#F1C40F` (Gold) | Points, badges, streaks |
 | Font | Inter | All text, loaded from Google Fonts |
 
-### Dark Mode Palette
+### Dark Mode Palette & Semantic Usage
 - Background: `#0F172A` (Deep Navy)
 - Surface: `#1E293B` (Slate)
 - Primary/Accent: `#FFB74D` (Soft Amber)
 - Text: `#F1F5F9`, Secondary text: `#94A3B8`
 
-Cards: `bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]`
+## Styling Best Practices
+1. **Semantic Tokens**: ALWAYS use semantic classes (`bg-background`, `text-foreground`, `border-border`) instead of hardcoded colors (`bg-white`, `text-gray-900`) or raw hex codes. This ensures Dark Mode works "for free".
+2. **FOUC Prevention**: To prevent theme flashing, use a blocking inline script in `root.tsx` (head) that reads `localStorage` and sets the `dark` class before React hydrates.
+3. **Mobile First**: Default styles are mobile. Use `md:` and `lg:` for desktop overrides.
+4. **Touch Targets**: All interactive elements must be at least 44x44px (height/width 11 or p-3).
+
+Cards: `bg-card text-card-foreground rounded-2xl shadow-sm border border-border`
 
 ## What NOT To Do
 

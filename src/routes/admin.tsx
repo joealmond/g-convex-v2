@@ -22,9 +22,9 @@ export const Route = createFileRoute('/admin')({
 
 function AdminLoading() {
   return (
-    <div className="flex-1 flex flex-col bg-color-bg">
+    <div className="flex-1 flex flex-col bg-background">
       <div className="max-w-6xl mx-auto w-full px-4 py-6">
-        <div className="h-32 bg-white animate-pulse rounded-2xl" />
+        <div className="h-32 bg-card animate-pulse rounded-2xl" />
       </div>
     </div>
   )
@@ -77,8 +77,8 @@ function AdminPageContent() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <Shield className="h-8 w-8 text-color-primary" />
-              <h1 className="text-3xl font-bold text-color-text">Admin Panel</h1>
+              <Shield className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl font-bold text-foreground">Admin Panel</h1>
             </div>
             <p className="text-muted-foreground">
               Manage products and monitor community activity

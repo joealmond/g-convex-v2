@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Trophy, Flame, Star, Users, Calendar, TrendingUp, ArrowLeft } from 'lucide-react'
 import { getQuadrant, QUADRANTS } from '@/lib/types'
 import { BADGES } from '@convex/lib/gamification'
-import { getUserLevel } from '@/lib/app-config'
+import { getUserLevel, appConfig } from '@/lib/app-config'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { BadgeDisplay } from '@/components/dashboard/BadgeDisplay'
 import { DietaryProfileSettings } from '@/components/dashboard/DietaryProfileSettings'
@@ -20,13 +20,13 @@ export const Route = createFileRoute('/profile')({
 
 function ProfileLoading() {
   return (
-    <div className="flex-1 flex flex-col bg-color-bg">
+    <div className="flex-1 flex flex-col bg-background">
       <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-6">
         {/* Header skeleton */}
         <div className="h-10 w-24 bg-muted animate-pulse rounded" />
         
         {/* User card skeleton */}
-        <div className="bg-white rounded-2xl p-6 space-y-4">
+        <div className="bg-card rounded-2xl p-6 space-y-4">
           <div className="flex items-start gap-4">
             <div className="h-16 w-16 bg-muted animate-pulse rounded-full" />
             <div className="flex-1 space-y-2">
@@ -44,7 +44,7 @@ function ProfileLoading() {
         {/* Stats grid skeleton */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="bg-white rounded-2xl p-4">
+            <div key={i} className="bg-card rounded-2xl p-4">
               <div className="h-8 bg-muted animate-pulse rounded" />
             </div>
           ))}
@@ -55,7 +55,7 @@ function ProfileLoading() {
           <div className="h-6 bg-muted animate-pulse rounded w-24" />
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
             {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="bg-white rounded-2xl p-3">
+              <div key={i} className="bg-card rounded-2xl p-3">
                 <div className="h-16 bg-muted animate-pulse rounded" />
               </div>
             ))}
@@ -90,8 +90,13 @@ function ProfileContent() {
   )
 
   // Redirect to login if not authenticated
+  useEffect(() => {
+    if (user === null) {
+      navigate({ to: '/login' })
+    }
+  }, [user, navigate])
+
   if (user === null) {
-    navigate({ to: '/login' })
     return null
   }
 
@@ -134,7 +139,7 @@ function ProfileContent() {
     .slice(0, 20)
 
   return (
-    <div className="flex-1 flex flex-col bg-color-bg">
+    <div className="flex-1 flex flex-col bg-background">
       {/* Mobile-first profile layout */}
       <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-6">
         {/* Back Button */}
@@ -151,16 +156,16 @@ function ProfileContent() {
             <div className="flex items-start gap-4 mb-4">
               <Avatar className="h-16 w-16">
                 <AvatarImage src={user.image ?? undefined} />
-                <AvatarFallback className="text-2xl bg-color-primary text-white">
+                <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
                   {user.name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
 
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-bold text-color-text truncate">
+                <h1 className="text-xl font-bold text-foreground truncate">
                   {user.name || 'Anonymous User'}
                 </h1>
-                <p className="text-sm text-color-text-secondary truncate">{user.email}</p>
+                <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                 <Badge
                   className="mt-2"
                   style={{ backgroundColor: currentLevel.color, color: '#fff' }}
@@ -173,13 +178,13 @@ function ProfileContent() {
             {/* Level Progress Bar */}
             {nextLevel && (
               <div className="space-y-2">
-                <div className="flex justify-between text-xs text-color-text-secondary">
+                <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{points} XP</span>
                   <span>Next: {nextLevel.min} XP</span>
                 </div>
-                <div className="h-2 bg-color-bg rounded-full overflow-hidden">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-color-primary transition-all duration-300"
+                    className="h-full bg-primary transition-all duration-300"
                     style={{ width: `${Math.min(levelProgress, 100)}%` }}
                   />
                 </div>
@@ -193,7 +198,7 @@ function ProfileContent() {
           <StatsCard
             title="Points"
             value={points}
-            icon={<Trophy className="h-5 w-5 text-color-gold" />}
+            icon={<Trophy className="h-5 w-5 text-amber-500" />}
           />
           <StatsCard
             title="Streak"
@@ -203,29 +208,29 @@ function ProfileContent() {
           <StatsCard
             title="Votes"
             value={totalVotes}
-            icon={<TrendingUp className="h-5 w-5 text-color-primary" />}
+            icon={<TrendingUp className="h-5 w-5 text-primary" />}
           />
           <StatsCard
             title="Products"
             value={myProducts.length}
-            icon={<Star className="h-5 w-5 text-color-primary" />}
+            icon={<Star className="h-5 w-5 text-primary" />}
           />
           <StatsCard
             title="Followers"
             value={followCounts?.followers ?? 0}
-            icon={<Users className="h-5 w-5 text-color-primary" />}
+            icon={<Users className="h-5 w-5 text-primary" />}
           />
           <StatsCard
             title="Following"
             value={followCounts?.following ?? 0}
-            icon={<Users className="h-5 w-5 text-color-primary" />}
+            icon={<Users className="h-5 w-5 text-primary" />}
           />
         </div>
 
         {/* Badges Section */}
         <div>
-          <h2 className="text-lg font-semibold text-color-text mb-3">Badges</h2>
-          <BadgeDisplay badges={earnedBadges} allBadges={BADGES} />
+          <h2 className="text-lg font-semibold text-foreground mb-3">Badges</h2>
+          <BadgeDisplay earnedBadgeIds={earnedBadges} />
         </div>
 
         {/* Dietary Preferences Section */}
@@ -235,7 +240,7 @@ function ProfileContent() {
 
         {/* Contributions Feed */}
         <div>
-          <h2 className="text-lg font-semibold text-color-text mb-3">Recent Activity</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-3">Recent Activity</h2>
           {activities.length > 0 ? (
             <div className="space-y-2">
               {activities.map((activity, idx) => {
@@ -254,10 +259,10 @@ function ProfileContent() {
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <div className="flex-shrink-0 mt-1">
-                            <TrendingUp className="h-4 w-4 text-color-primary" />
+                            <TrendingUp className="h-4 w-4 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-color-text">
+                            <p className="text-sm text-foreground">
                               Voted on{' '}
                               <Link
                                 to="/product/$name"
@@ -267,17 +272,17 @@ function ProfileContent() {
                                 {product.name}
                               </Link>
                             </p>
-                            <div className="flex items-center gap-2 mt-1 text-xs text-color-text-secondary">
+                            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                               <Badge
                                 variant="secondary"
                                 className="text-xs"
                                 style={{
-                                  backgroundColor: quadrantInfo.color,
+                                  backgroundColor: quadrantInfo?.color || '#888',
                                   color: '#fff',
                                   opacity: 0.9,
                                 }}
                               >
-                                {quadrantInfo.emoji} {quadrantInfo.name}
+                                {appConfig.quadrants[quadrant as keyof typeof appConfig.quadrants]?.emoji} {quadrantInfo?.name || 'Unknown'}
                               </Badge>
                               {activity.data.storeName && (
                                 <span>• {activity.data.storeName}</span>
@@ -299,10 +304,10 @@ function ProfileContent() {
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 mt-1">
-                          <Star className="h-4 w-4 text-color-primary" />
+                          <Star className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-color-text">
+                          <p className="text-sm text-foreground">
                             Added{' '}
                             <Link
                               to="/product/$name"
@@ -312,7 +317,7 @@ function ProfileContent() {
                               {product.name}
                             </Link>
                           </p>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-color-text-secondary">
+                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                             <span>
                               <Users className="inline h-3 w-3 mr-1" />
                               {activity.data.voteCount} votes
@@ -331,8 +336,8 @@ function ProfileContent() {
           ) : (
             <Card className="rounded-xl shadow-sm">
               <CardContent className="p-8 text-center">
-                <Calendar className="h-12 w-12 mx-auto mb-3 text-color-text-secondary opacity-50" />
-                <p className="text-color-text-secondary">
+                <Calendar className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                <p className="text-muted-foreground">
                   No activity yet. Start voting and adding products!
                 </p>
               </CardContent>

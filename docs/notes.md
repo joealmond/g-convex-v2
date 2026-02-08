@@ -1,2 +1,12 @@
 - html templates should not contain text what displayed, only references, so no haardcoded text
+- top product based on reviews
+- crone job clears data, groups if equal, list wery similar for review
+- Profile - what to config
+- Marks shops on map
+- EU hosting
+- imaagehosting
+- cloudflare cdn
+- style guideline for sys prompt
+- does not ad geolocation when capturing
+- does not populates store when capturing
 - 

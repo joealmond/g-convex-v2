@@ -6,8 +6,8 @@ import { api } from '@convex/_generated/api'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { LogOut, MapPin, Trophy, Moon, Sun } from 'lucide-react'
-import { authClient } from '@/lib/auth-client'
+import { LogOut, MapPin, Trophy, Moon, Sun, Monitor } from 'lucide-react'
+import { authClient, useSession } from '@/lib/auth-client'
 import { ScoutCard } from '@/components/dashboard/ScoutCard'
 import { useGeolocation, useTheme } from '@/hooks'
 import { motion } from 'framer-motion'
@@ -22,18 +22,19 @@ export function TopBar() {
   const navigate = useNavigate()
   const profile = useQuery(api.profiles.getCurrent)
   const { coords, loading: geoLoading, requestLocation } = useGeolocation()
-  const { resolvedTheme, setTheme } = useTheme()
+  const { theme, setTheme, resolvedTheme } = useTheme()
+  const { data: session } = useSession()
 
   const handleSignOut = async () => {
     await authClient.signOut()
     navigate({ to: '/login' })
   }
 
-  // Determine location icon color
+  // Location icon: gray when off, blue when active
   const getLocationColor = () => {
-    if (geoLoading) return 'text-color-text-secondary'
-    if (coords) return 'text-color-safety-high' // Green
-    return 'text-color-text-secondary' // Gray
+    if (geoLoading) return 'text-muted-foreground'
+    if (coords) return 'text-blue-500' // Blue when active (per design)
+    return 'text-muted-foreground'
   }
 
   const getLocationTitle = () => {
@@ -42,17 +43,33 @@ export function TopBar() {
     return 'Tap to enable location'
   }
 
+  // Theme icon based on current setting
+  const ThemeIcon = theme === 'system' ? Monitor : resolvedTheme === 'dark' ? Moon : Sun
+
+  // Cycle through themes: light -> dark -> system -> light
+  const cycleTheme = () => {
+    if (theme === 'light') setTheme('dark')
+    else if (theme === 'dark') setTheme('system')
+    else setTheme('light')
+  }
+
+  const getThemeTitle = () => {
+    if (theme === 'system') return 'Theme: System (tap to change)'
+    if (theme === 'dark') return 'Theme: Dark (tap to change)'
+    return 'Theme: Light (tap to change)'
+  }
+
   return (
-    <header className="sticky top-0 z-50 h-12 bg-color-bg border-b border-color-border flex items-center justify-between px-4 sm:px-6">
+    <header className="sticky top-0 z-50 h-12 bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-4 sm:px-6">
       {/* Left: Logo/App Name */}
       <Link to="/" className="flex items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity">
-        <div className="w-8 h-8 rounded-lg bg-color-primary flex items-center justify-center">
-          <span className="text-white font-bold text-sm">G</span>
+        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+          <span className="text-primary-foreground font-bold text-sm">G</span>
         </div>
-        <span className="hidden sm:inline text-color-text">{appConfig.appName}</span>
+        <span className="hidden sm:inline text-foreground">{appConfig.appName}</span>
       </Link>
 
-      {/* Right: Location Icon + Points Badge + Auth */}
+      {/* Right: Location Icon + Theme Toggle + Points Badge + Auth */}
       <div className="flex items-center gap-2">
         {/* Location Status Icon */}
         <motion.button
@@ -64,18 +81,14 @@ export function TopBar() {
           <MapPin className="h-4 w-4" />
         </motion.button>
 
-        {/* Theme Toggle */}
+        {/* Theme Toggle (3-state: light/dark/system) */}
         <motion.button
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="h-8 w-8 rounded-lg flex items-center justify-center text-color-text-secondary hover:text-color-text transition-colors"
-          title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
+          onClick={cycleTheme}
+          className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          title={getThemeTitle()}
           whileTap={{ scale: 0.95 }}
         >
-          {resolvedTheme === 'dark' ? (
-            <Sun className="h-4 w-4" />
-          ) : (
-            <Moon className="h-4 w-4" />
-          )}
+          <ThemeIcon className="h-4 w-4" />
         </motion.button>
 
         {/* Points Badge with Popover (only for authenticated users) */}
@@ -83,7 +96,7 @@ export function TopBar() {
           <Popover>
             <PopoverTrigger asChild>
               <motion.button
-                className="h-8 px-3 bg-color-gold text-white rounded-lg flex items-center gap-1.5 font-bold text-sm hover:bg-color-gold/90 transition-colors"
+                className="h-8 px-3 bg-amber-500 text-white rounded-lg flex items-center gap-1.5 font-bold text-sm hover:bg-amber-500/90 transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -99,19 +112,28 @@ export function TopBar() {
 
         {isAuthenticated ? (
           <div className="flex items-center gap-2">
-            {/* Avatar */}
-            <Avatar className="h-8 w-8 cursor-pointer">
-              <AvatarFallback className="bg-color-primary text-white text-xs font-bold">
-                U
-              </AvatarFallback>
-            </Avatar>
+            {/* Avatar - links to profile */}
+            <Link to="/profile">
+              <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
+                {session?.user?.image && (
+                  <img 
+                    src={session.user.image} 
+                    alt={session.user.name || 'User'} 
+                    className="h-full w-full object-cover"
+                  />
+                )}
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+                  {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : 'U'}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
 
             {/* Sign Out Button */}
             <Button
               variant="ghost"
               size="icon"
               onClick={handleSignOut}
-              className="h-8 w-8 text-color-text-secondary hover:text-color-text"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
               title="Sign out"
             >
               <LogOut className="h-4 w-4" />
@@ -120,7 +142,7 @@ export function TopBar() {
         ) : (
           <Button
             onClick={() => navigate({ to: '/login' })}
-            className="bg-color-primary hover:bg-color-primary-dark text-white h-8 px-4 text-sm rounded-lg"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground h-8 px-4 text-sm rounded-lg"
           >
             Sign In
           </Button>
@@ -129,3 +151,4 @@ export function TopBar() {
     </header>
   )
 }
+

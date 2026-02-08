@@ -49,6 +49,26 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
       { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' },
     ],
+    scripts: [
+      {
+        children: `
+          (function() {
+            try {
+              const theme = localStorage.getItem('theme') || 'system';
+              const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+              const resolved = theme === 'system' 
+                ? (systemPrefersDark ? 'dark' : 'light')
+                : theme === 'dark' 
+                  ? 'dark' 
+                  : 'light';
+              if (resolved === 'dark') {
+                document.documentElement.classList.add('dark');
+              }
+            } catch (e) {}
+          })();
+        `,
+      },
+    ],
   }),
   beforeLoad: async (ctx) => {
     const token = await getAuth()

@@ -67,7 +67,7 @@ export function DeleteProductButton({
       <Button
         variant={variant}
         size={size}
-        className={className}
+        className={`${className || ''} text-destructive-foreground`}
         onClick={() => setOpen(true)}
         disabled={isDeleting}
       >

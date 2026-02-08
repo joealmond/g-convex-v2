@@ -1,4 +1,4 @@
-import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Rectangle } from 'recharts'
+import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceArea } from 'recharts'
 import { motion } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 import type { Product } from '@/lib/types'
@@ -133,8 +133,11 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
           <ZAxis type="number" dataKey="z" range={[50, 400]} />
           <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
           
-          {/* Background quadrants */}
-          <Rectangle />
+          {/* Background quadrants - light colored for distinction */}
+          <ReferenceArea x1={0} x2={50} y1={50} y2={100} fill={quadrantConfig.topLeft.color} fillOpacity={0.15} />
+          <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill={quadrantConfig.topRight.color} fillOpacity={0.15} />
+          <ReferenceArea x1={0} x2={50} y1={0} y2={50} fill={quadrantConfig.bottomLeft.color} fillOpacity={0.15} />
+          <ReferenceArea x1={50} x2={100} y1={0} y2={50} fill={quadrantConfig.bottomRight.color} fillOpacity={0.15} />
 
           <Scatter
             data={data}
@@ -161,17 +164,17 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
       </ResponsiveContainer>
       )}
 
-      {/* Quadrant labels */}
-      <div className="absolute top-4 left-4 text-xs font-medium opacity-50 pointer-events-none">
+      {/* Quadrant labels - positioned to avoid axis overlap */}
+      <div className="absolute top-16 left-24 text-xs font-medium pointer-events-none" style={{ color: quadrantConfig.topLeft.color }}>
         {quadrantConfig.topLeft.label}
       </div>
-      <div className="absolute top-4 right-4 text-xs font-medium opacity-50 pointer-events-none">
+      <div className="absolute top-16 right-16 text-xs font-medium pointer-events-none" style={{ color: quadrantConfig.topRight.color }}>
         {quadrantConfig.topRight.label}
       </div>
-      <div className="absolute bottom-4 left-4 text-xs font-medium opacity-50 pointer-events-none">
+      <div className="absolute bottom-20 left-24 text-xs font-medium pointer-events-none" style={{ color: quadrantConfig.bottomLeft.color }}>
         {quadrantConfig.bottomLeft.label}
       </div>
-      <div className="absolute bottom-4 right-4 text-xs font-medium opacity-50 pointer-events-none">
+      <div className="absolute bottom-20 right-16 text-xs font-medium pointer-events-none" style={{ color: quadrantConfig.bottomRight.color }}>
         {quadrantConfig.bottomRight.label}
       </div>
     </div>
