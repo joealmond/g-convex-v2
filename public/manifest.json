@@ -1,0 +1,45 @@
+{
+  "name": "G-Matrix",
+  "short_name": "G-Matrix",
+  "description": "Community-rated celiac-safe products",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF8F5",
+  "theme_color": "#7CB342",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["food", "health", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Add Product",
+      "short_name": "Add",
+      "description": "Add a new product",
+      "url": "/admin",
+      "icons": [
+        {
+          "src": "/icons/icon-192.svg",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

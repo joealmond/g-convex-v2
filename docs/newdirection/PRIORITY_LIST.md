@@ -56,12 +56,12 @@ Creates `src/lib/app-config.ts` and removes all hardcoded niche strings from com
 
 | | Step | Task | Verification |
 |---|------|------|-------------|
-| [ ] | 1 | Add Kimi color palette as CSS custom properties in `globals.css`: `--color-primary: #7CB342`, `--color-primary-dark: #558B2F`, `--color-primary-light: #AED581`, `--color-bg: #FAF8F5`, `--color-text: #2D3436`, `--color-text-secondary: #636E72`, `--color-border: #B2BEC3`, `--color-safety-high: #27AE60`, `--color-safety-mid: #F39C12`, `--color-safety-low: #E74C3C`, `--color-gold: #F1C40F`. Dark mode: `--color-bg-dark: #0F172A`, `--color-surface-dark: #1E293B` | CSS loads, colors visible |
-| [ ] | 2 | Update shadcn theme to map `--primary`, `--background`, `--foreground`, `--muted`, etc. to new Kimi tokens | shadcn components use new palette |
-| [ ] | 3 | Add Inter font: `<link>` to Google Fonts in `__root.tsx` head, set `font-family: 'Inter', system-ui, -apple-system, sans-serif` as body default | Font loads on page |
-| [ ] | 4 | Create `public/manifest.json` — `name: "G-Matrix"`, `short_name: "G-Matrix"`, `start_url: "/"`, `display: "standalone"`, `theme_color: "#7CB342"`, `background_color: "#FAF8F5"`, `icons: [...]` | Manifest loads in DevTools > Application |
-| [ ] | 5 | Create app icons: `public/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (can be placeholder squares initially) | Icons referenced in manifest |
-| [ ] | 6 | Add PWA meta tags to `__root.tsx` head: `<meta name="apple-mobile-web-app-capable" content="yes">`, `<meta name="theme-color" content="#7CB342">`, `<link rel="manifest" href="/manifest.json">`, updated viewport: `width=device-width, initial-scale=1, viewport-fit=cover` | "Add to Home Screen" prompt available on mobile |
+| [x] | 1 | Add Kimi color palette as CSS custom properties in `globals.css`: `--color-primary: #7CB342`, `--color-primary-dark: #558B2F`, `--color-primary-light: #AED581`, `--color-bg: #FAF8F5`, `--color-text: #2D3436`, `--color-text-secondary: #636E72`, `--color-border: #B2BEC3`, `--color-safety-high: #27AE60`, `--color-safety-mid: #F39C12`, `--color-safety-low: #E74C3C`, `--color-gold: #F1C40F`. Dark mode: `--color-bg-dark: #0F172A`, `--color-surface-dark: #1E293B` | CSS loads, colors visible |
+| [x] | 2 | Update shadcn theme to map `--primary`, `--background`, `--foreground`, `--muted`, etc. to new Kimi tokens | shadcn components use new palette |
+| [x] | 3 | Add Inter font: `<link>` to Google Fonts in `__root.tsx` head, set `font-family: 'Inter', system-ui, -apple-system, sans-serif` as body default | Font loads on page |
+| [x] | 4 | Create `public/manifest.json` — `name: "G-Matrix"`, `short_name: "G-Matrix"`, `start_url: "/"`, `display: "standalone"`, `theme_color: "#7CB342"`, `background_color: "#FAF8F5"`, `icons: [...]` | Manifest loads in DevTools > Application |
+| [x] | 5 | Create app icons: `public/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (can be placeholder squares initially) | Icons referenced in manifest |
+| [x] | 6 | Add PWA meta tags to `__root.tsx` head: `<meta name="apple-mobile-web-app-capable" content="yes">`, `<meta name="theme-color" content="#7CB342">`, `<link rel="manifest" href="/manifest.json">`, updated viewport: `width=device-width, initial-scale=1, viewport-fit=cover` | "Add to Home Screen" prompt available on mobile |
 
 ### Sprint 0c: Capacitor Shell
 
