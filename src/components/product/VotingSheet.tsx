@@ -2,10 +2,13 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { motion } from 'framer-motion'
+import { Slider } from '@/components/ui/slider'
+import { Label } from '@/components/ui/label'
+import { motion, AnimatePresence } from 'framer-motion'
 import { appConfig } from '@/lib/app-config'
 import { cn } from '@/lib/utils'
-import { ThumbsUp } from 'lucide-react'
+import { ThumbsUp, ChevronDown, ChevronUp, Sliders } from 'lucide-react'
+import { getQuadrant, QUADRANTS } from '@/lib/types'
 
 interface VotingSheetProps {
   onVote: (safety: number, taste: number, price?: number) => void
@@ -31,6 +34,11 @@ export function VotingSheet({
   const [selectedSafety, setSelectedSafety] = useState<number | null>(null)
   const [selectedTaste, setSelectedTaste] = useState<number | null>(null)
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null)
+  
+  // Fine-tune mode state
+  const [fineTuneExpanded, setFineTuneExpanded] = useState(false)
+  const [fineTuneSafety, setFineTuneSafety] = useState(50)
+  const [fineTuneTaste, setFineTuneTaste] = useState(50)
 
   const safetyPresets = appConfig.dimensions.axis1.presets
   const tastePresets = appConfig.dimensions.axis2.presets
@@ -66,12 +74,23 @@ export function VotingSheet({
     onVote(safety, taste, selectedPrice ?? undefined)
     resetSelections()
   }
+  
+  const handleFineTuneSubmit = () => {
+    if (disabled) return
+    onVote(fineTuneSafety, fineTuneTaste, selectedPrice ?? undefined)
+    resetSelections()
+    setFineTuneExpanded(false)
+  }
 
   const resetSelections = () => {
     setSelectedSafety(null)
     setSelectedTaste(null)
     setSelectedPrice(null)
   }
+  
+  // Calculate quadrant for fine-tune preview
+  const fineTuneQuadrant = getQuadrant(fineTuneSafety, fineTuneTaste)
+  const fineTuneQuadrantInfo = QUADRANTS[fineTuneQuadrant]
 
   return (
     <div className="space-y-6">
@@ -235,6 +254,122 @@ export function VotingSheet({
             </div>
           </Button>
         </motion.div>
+      </div>
+
+      {/* Fine Tune Section (Collapsible) */}
+      <div className="border border-color-border rounded-xl overflow-hidden">
+        <motion.button
+          type="button"
+          className="w-full flex items-center justify-between p-4 bg-color-bg hover:bg-gray-50 transition-colors"
+          onClick={() => setFineTuneExpanded(!fineTuneExpanded)}
+          disabled={disabled}
+        >
+          <div className="flex items-center gap-2">
+            <Sliders className="h-4 w-4 text-color-primary" />
+            <span className="font-semibold text-sm text-color-text">Fine Tune (Precise Control)</span>
+          </div>
+          {fineTuneExpanded ? (
+            <ChevronUp className="h-5 w-5 text-color-text-secondary" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-color-text-secondary" />
+          )}
+        </motion.button>
+
+        <AnimatePresence>
+          {fineTuneExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className="overflow-hidden"
+            >
+              <div className="p-4 pt-2 space-y-5 bg-white border-t border-color-border">
+                {/* Safety Slider */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="fine-safety-slider" className="text-sm font-semibold text-color-text">
+                      {appConfig.dimensions.axis1.label}
+                    </Label>
+                    <span className="text-lg font-bold text-color-primary tabular-nums min-w-[3ch] text-right">
+                      {fineTuneSafety}
+                    </span>
+                  </div>
+                  <Slider
+                    id="fine-safety-slider"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[fineTuneSafety]}
+                    onValueChange={([value]) => value !== undefined && setFineTuneSafety(value)}
+                    disabled={disabled}
+                    className="w-full [&_[role=slider]]:h-6 [&_[role=slider]]:w-6"
+                  />
+                  <div className="flex justify-between text-xs text-color-text-secondary">
+                    <span>0 (Dangerous)</span>
+                    <span>100 (Very Safe)</span>
+                  </div>
+                </div>
+
+                {/* Taste Slider */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="fine-taste-slider" className="text-sm font-semibold text-color-text">
+                      {appConfig.dimensions.axis2.label}
+                    </Label>
+                    <span className="text-lg font-bold text-color-primary tabular-nums min-w-[3ch] text-right">
+                      {fineTuneTaste}
+                    </span>
+                  </div>
+                  <Slider
+                    id="fine-taste-slider"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[fineTuneTaste]}
+                    onValueChange={([value]) => value !== undefined && setFineTuneTaste(value)}
+                    disabled={disabled}
+                    className="w-full [&_[role=slider]]:h-6 [&_[role=slider]]:w-6"
+                  />
+                  <div className="flex justify-between text-xs text-color-text-secondary">
+                    <span>0 (Terrible)</span>
+                    <span>100 (Delicious)</span>
+                  </div>
+                </div>
+
+                {/* Quadrant Preview */}
+                <div 
+                  className="p-3 rounded-lg border-2"
+                  style={{ 
+                    borderColor: fineTuneQuadrantInfo?.color || appConfig.colors.primary,
+                    backgroundColor: `${fineTuneQuadrantInfo?.color || appConfig.colors.primary}10`
+                  }}
+                >
+                  <div className="text-center">
+                    <div className="text-xs font-medium text-color-text-secondary mb-1">
+                      This will place it in:
+                    </div>
+                    <div className="text-base font-bold text-color-text flex items-center justify-center gap-2">
+                      <span className="text-lg">{appConfig.quadrants[fineTuneQuadrant as keyof typeof appConfig.quadrants]?.emoji}</span>
+                      {fineTuneQuadrantInfo?.name || 'Unknown'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <motion.div whileTap={{ scale: disabled ? 1 : 0.98 }}>
+                  <Button
+                    onClick={handleFineTuneSubmit}
+                    disabled={disabled}
+                    className="w-full h-12 bg-color-primary hover:bg-color-primary-dark text-white font-semibold"
+                  >
+                    Submit Fine-Tuned Vote
+                  </Button>
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Agree with Community Button */}

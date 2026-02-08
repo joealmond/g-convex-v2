@@ -4,11 +4,13 @@ import { useState, useEffect, useRef } from 'react'
 import type { Product } from '@/lib/types'
 import { getQuadrant, getQuadrantColor, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
+import { hashStringToColor } from '@/lib/utils'
 
 interface MatrixChartProps {
   products: Product[]
   onProductClick?: (product: Product) => void
   selectedProduct?: Product | null
+  mode?: 'vibe' | 'value' // Chart mode: vibe (safety×taste) or value (price×taste)
 }
 
 interface ChartDataPoint {
@@ -20,16 +22,31 @@ interface ChartDataPoint {
 
 /**
  * G-Matrix visualization component
- * 2D scatter chart with quadrant backgrounds
+ * Supports two modes:
+ * - Vibe: safety (Y) × taste (X) — default G-Matrix
+ * - Value: price (Y) × taste (X) — value-for-money lens
  */
-export function MatrixChart({ products, onProductClick, selectedProduct }: MatrixChartProps) {
-  // Transform products into chart data
+export function MatrixChart({ products, onProductClick, selectedProduct, mode = 'vibe' }: MatrixChartProps) {
+  // Transform products into chart data based on mode
   const data: ChartDataPoint[] = products.map((product) => ({
     product,
-    x: product.averageTaste,
-    y: product.averageSafety,
+    x: product.averageTaste, // X-axis is always taste
+    y: mode === 'vibe' ? product.averageSafety : (product.averagePrice || 50), // Y-axis: safety or price
     z: Math.max(product.voteCount, 5), // Size based on votes, minimum 5 for visibility
   }))
+  
+  // Get axis labels based on mode
+  const yAxisLabel = mode === 'vibe' 
+    ? appConfig.dimensions.axis1.label // Safety
+    : appConfig.valueLens.axis1Label // Price
+  const xAxisLabel = mode === 'vibe'
+    ? appConfig.dimensions.axis2.label // Taste
+    : appConfig.valueLens.axis2Label // Taste (same in value mode)
+  
+  // Get quadrant config based on mode
+  const quadrantConfig = mode === 'vibe' 
+    ? appConfig.quadrants 
+    : appConfig.valueLens.quadrants
 
   interface TooltipPayload {
     payload: ChartDataPoint
@@ -41,7 +58,10 @@ export function MatrixChart({ products, onProductClick, selectedProduct }: Matri
       if (!firstPayload) return null
       const data = firstPayload.payload as ChartDataPoint
       const product = data.product
-      const quadrant = getQuadrant(product.averageSafety, product.averageTaste)
+      
+      // In value mode, we don't show quadrant info (different logic needed)
+      const showQuadrant = mode === 'vibe'
+      const quadrant = showQuadrant ? getQuadrant(product.averageSafety, product.averageTaste) : null
 
       return (
         <motion.div
@@ -51,12 +71,23 @@ export function MatrixChart({ products, onProductClick, selectedProduct }: Matri
         >
           <p className="font-semibold text-sm">{product.name}</p>
           <div className="text-xs text-muted-foreground mt-1 space-y-1">
-            <p>{appConfig.dimensions.axis1.label}: {product.averageSafety.toFixed(0)}</p>
-            <p>{appConfig.dimensions.axis2.label}: {product.averageTaste.toFixed(0)}</p>
+            {mode === 'vibe' ? (
+              <>
+                <p>{appConfig.dimensions.axis1.label}: {product.averageSafety.toFixed(0)}</p>
+                <p>{appConfig.dimensions.axis2.label}: {product.averageTaste.toFixed(0)}</p>
+              </>
+            ) : (
+              <>
+                <p>{appConfig.valueLens.axis1Label}: {(product.averagePrice || 50).toFixed(0)}</p>
+                <p>{appConfig.valueLens.axis2Label}: {product.averageTaste.toFixed(0)}</p>
+              </>
+            )}
             <p>Votes: {product.voteCount}</p>
-            <p className="text-xs font-medium" style={{ color: getQuadrantColor(quadrant) }}>
-              {QUADRANTS[quadrant]?.name || 'Unknown'}
-            </p>
+            {showQuadrant && quadrant && (
+              <p className="text-xs font-medium" style={{ color: getQuadrantColor(quadrant) }}>
+                {QUADRANTS[quadrant]?.name || 'Unknown'}
+              </p>
+            )}
           </div>
         </motion.div>
       )
@@ -84,19 +115,19 @@ export function MatrixChart({ products, onProductClick, selectedProduct }: Matri
           <XAxis
             type="number"
             dataKey="x"
-            name={appConfig.dimensions.axis2.label}
+            name={xAxisLabel}
             unit=""
             domain={[0, 100]}
-            label={{ value: `${appConfig.dimensions.axis2.label} →`, position: 'bottom', offset: 0 }}
+            label={{ value: `${xAxisLabel} →`, position: 'bottom', offset: 0 }}
             stroke="hsl(var(--foreground))"
           />
           <YAxis
             type="number"
             dataKey="y"
-            name={appConfig.dimensions.axis1.label}
+            name={yAxisLabel}
             unit=""
             domain={[0, 100]}
-            label={{ value: `↑ ${appConfig.dimensions.axis1.label}`, angle: -90, position: 'left' }}
+            label={{ value: `↑ ${yAxisLabel}`, angle: -90, position: 'left' }}
             stroke="hsl(var(--foreground))"
           />
           <ZAxis type="number" dataKey="z" range={[50, 400]} />
@@ -111,13 +142,13 @@ export function MatrixChart({ products, onProductClick, selectedProduct }: Matri
           >
             {data.map((entry, index) => {
               const quadrant = getQuadrant(entry.y, entry.x)
-              const color = getQuadrantColor(quadrant)
+              const productColor = hashStringToColor(entry.product.name) // Hash-based color
               const isSelected = selectedProduct?._id === entry.product._id
 
               return (
                 <Cell
                   key={`cell-${index}`}
-                  fill={color}
+                  fill={productColor}
                   fillOpacity={isSelected ? 1 : 0.7}
                   stroke={isSelected ? 'hsl(var(--foreground))' : 'none'}
                   strokeWidth={isSelected ? 3 : 0}
@@ -132,16 +163,16 @@ export function MatrixChart({ products, onProductClick, selectedProduct }: Matri
 
       {/* Quadrant labels */}
       <div className="absolute top-4 left-4 text-xs font-medium opacity-50 pointer-events-none">
-        {appConfig.quadrants.topLeft.label}
+        {quadrantConfig.topLeft.label}
       </div>
       <div className="absolute top-4 right-4 text-xs font-medium opacity-50 pointer-events-none">
-        {appConfig.quadrants.topRight.label}
+        {quadrantConfig.topRight.label}
       </div>
       <div className="absolute bottom-4 left-4 text-xs font-medium opacity-50 pointer-events-none">
-        {appConfig.quadrants.bottomLeft.label}
+        {quadrantConfig.bottomLeft.label}
       </div>
       <div className="absolute bottom-4 right-4 text-xs font-medium opacity-50 pointer-events-none">
-        {appConfig.quadrants.bottomRight.label}
+        {quadrantConfig.bottomRight.label}
       </div>
     </div>
   )

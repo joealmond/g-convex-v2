@@ -6,10 +6,10 @@ import { api } from '@convex/_generated/api'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { LogOut, MapPin, Trophy } from 'lucide-react'
+import { LogOut, MapPin, Trophy, Moon, Sun } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import { ScoutCard } from '@/components/dashboard/ScoutCard'
-import { useGeolocation } from '@/hooks/use-geolocation'
+import { useGeolocation, useTheme } from '@/hooks'
 import { motion } from 'framer-motion'
 
 /**
@@ -22,6 +22,7 @@ export function TopBar() {
   const navigate = useNavigate()
   const profile = useQuery(api.profiles.getCurrent)
   const { coords, loading: geoLoading, requestLocation } = useGeolocation()
+  const { resolvedTheme, setTheme } = useTheme()
 
   const handleSignOut = async () => {
     await authClient.signOut()
@@ -61,6 +62,20 @@ export function TopBar() {
           whileTap={{ scale: 0.95 }}
         >
           <MapPin className="h-4 w-4" />
+        </motion.button>
+
+        {/* Theme Toggle */}
+        <motion.button
+          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+          className="h-8 w-8 rounded-lg flex items-center justify-center text-color-text-secondary hover:text-color-text transition-colors"
+          title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
+          whileTap={{ scale: 0.95 }}
+        >
+          {resolvedTheme === 'dark' ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
         </motion.button>
 
         {/* Points Badge with Popover (only for authenticated users) */}

@@ -63,25 +63,40 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    /* Kimi Dark Mode - Deep Navy + Slate + Soft Amber */
+    --color-primary: #FFB74D;          /* Soft Amber (primary accent in dark) */
+    --color-primary-dark: #FFA726;     /* Brighter Amber (hover) */
+    --color-primary-light: #FFCC80;    /* Light Amber */
+    --color-bg: #0F172A;               /* Deep Navy (background) */
+    --color-surface: #1E293B;          /* Slate (cards, surfaces) */
+    --color-text: #F1F5F9;             /* Light text */
+    --color-text-secondary: #94A3B8;   /* Muted text */
+    --color-border: #334155;           /* Darker borders */
+    --color-safety-high: #4ADE80;      /* Brighter green for visibility */
+    --color-safety-mid: #FBBF24;       /* Brighter yellow */
+    --color-safety-low: #F87171;       /* Brighter red */
+    --color-gold: #FBBF24;             /* Golden yellow */
+    
+    /* Shadcn UI Theme - Dark Mode */
+    --background: oklch(0.15 0.02 240);        /* Deep Navy */
+    --foreground: oklch(0.95 0.01 240);        /* Light text */
+    --card: oklch(0.20 0.02 240);              /* Slate surface */
+    --card-foreground: oklch(0.95 0.01 240);
+    --popover: oklch(0.20 0.02 240);
+    --popover-foreground: oklch(0.95 0.01 240);
+    --primary: oklch(0.75 0.15 75);            /* Soft Amber */
+    --primary-foreground: oklch(0.15 0.02 240); /* Dark text on amber */
+    --secondary: oklch(0.25 0.02 240);         /* Darker slate */
+    --secondary-foreground: oklch(0.95 0.01 240);
+    --muted: oklch(0.25 0.02 240);
+    --muted-foreground: oklch(0.60 0.01 240);   /* Muted text */
+    --accent: oklch(0.75 0.15 75);             /* Accent = primary (amber) */
+    --accent-foreground: oklch(0.15 0.02 240);
+    --destructive: oklch(0.65 0.25 27);
+    --destructive-foreground: oklch(0.98 0 0);
+    --border: oklch(0.30 0.02 240);            /* Darker border */
+    --input: oklch(0.30 0.02 240);
+    --ring: oklch(0.75 0.15 75);               /* Ring = amber */
   }
 }
 

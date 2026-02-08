@@ -23,6 +23,7 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 6. **Config over code** — Swapping niches should require editing `src/lib/app-config.ts` + adding a locale file in `src/locales/`. No component file changes.
 
 7. **SSR-safe** — All routes use TanStack Start SSR. Wrap hook-heavy content in `<Suspense fallback={<Skeleton/>}>`. Never call browser APIs (`window`, `localStorage`, `navigator`) outside `useEffect` or `<ClientOnly>`.
+8. **Theme-aware UI** — Dark mode is supported via CSS variables and a `dark` class on `<html>`. Use `useTheme()` for toggles or theme-aware logic, and keep UI colors tied to CSS variables (avoid hardcoded hex in components).
 
 ## Tech Stack
 
@@ -58,7 +59,7 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | `src/components/product/` | Product detail: RatingBars★, StoreList★, VotingSheet★, ImageUploadDialog |
 | `src/components/map/` | ★ Leaflet map: ProductMap, ProductPin |
 | `src/components/dashboard/` | Chart views: MatrixChart, CoordinateGrid, StatsCard, BadgeDisplay, Leaderboard, DeleteProductButton |
-| `src/hooks/` | Custom hooks: useAdmin, useGeolocation, useTranslation, useAnonymousId, useVoteMigration, useImpersonate |
+| `src/hooks/` | Custom hooks: useAdmin, useGeolocation, useTranslation, useAnonymousId, useVoteMigration, useImpersonate, useTheme |
 | `src/locales/en.json` | English translations |
 | `src/locales/hu.json` | Hungarian translations |
 
@@ -106,6 +107,14 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 - **Self-contained widgets** (Leaderboard, BadgeDisplay): OK to have internal data fetching
 - **Always** wrap route components in `<Suspense>` when they use hooks that may suspend
 
+### Chart & Feed UX
+- **Chart modes**: `MatrixChart` supports `mode="vibe"` (safety x taste) and `mode="value"` (price x taste). Use `appConfig.valueLens` for labels and quadrant names in value mode.
+- **Chart ↔ list sync**: Clicking a chart dot should scroll to the product card; clicking a card should highlight the dot. Keep the scroll behavior smooth and mobile-friendly.
+
+### Voting UX
+- **Fine tune UI lives in `VotingSheet`** as a collapsible section with sliders and a quadrant preview. Avoid adding new fine-tune layouts elsewhere unless required.
+- **Store selection** should prefer `appConfig.storeDefaults[locale]` via the dropdown, with a custom store fallback.
+
 ## Design Tokens
 
 The app uses a sage green / cream design system defined in `globals.css`:
@@ -123,6 +132,12 @@ The app uses a sage green / cream design system defined in `globals.css`:
 | Safety Low | `#E74C3C` (Red) | Scores < 40 |
 | Achievement | `#F1C40F` (Gold) | Points, badges, streaks |
 | Font | Inter | All text, loaded from Google Fonts |
+
+### Dark Mode Palette
+- Background: `#0F172A` (Deep Navy)
+- Surface: `#1E293B` (Slate)
+- Primary/Accent: `#FFB74D` (Soft Amber)
+- Text: `#F1F5F9`, Secondary text: `#94A3B8`
 
 Cards: `bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]`
 

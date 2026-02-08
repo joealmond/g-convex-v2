@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Suspense, useState, useMemo } from 'react'
+import { Suspense, useState, useMemo, useRef, useEffect } from 'react'
 import { ProductCard } from '@/components/feed/ProductCard'
 import { FeedGrid } from '@/components/feed/FeedGrid'
 import { FilterChips, type FilterType } from '@/components/feed/FilterChips'
@@ -53,9 +53,37 @@ function HomePageContent() {
 
   const [filterType, setFilterType] = useState<FilterType>('all')
   const [viewMode, setViewMode] = useState<'feed' | 'chart'>('feed')
+  const [chartMode, setChartMode] = useState<'vibe' | 'value'>('vibe')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  
+  // Refs for chart ↔ feed sync (scrolling to product cards)
+  const productCardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   const isLoading = products === undefined
+  
+  // Effect: When a product is selected in chart view, switch to feed and scroll to card
+  useEffect(() => {
+    if (selectedProduct && viewMode === 'feed') {
+      const cardElement = productCardRefs.current.get(selectedProduct._id)
+      if (cardElement) {
+        setTimeout(() => {
+          cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 100) // Delay to ensure DOM is ready
+      }
+    }
+  }, [selectedProduct, viewMode])
+  
+  // Handler: When clicking a product card, switch to chart view and highlight
+  const handleProductCardClick = (product: Product) => {
+    setSelectedProduct(product)
+    setViewMode('chart')
+  }
+  
+  // Handler: When clicking a chart dot, switch to feed view and scroll to card
+  const handleChartDotClick = (product: Product) => {
+    setSelectedProduct(product)
+    setViewMode('feed')
+  }
 
   /**
    * Helper: calculate distance between user and product stores in km
@@ -177,11 +205,23 @@ function HomePageContent() {
           ) : (
             <FeedGrid isEmpty={filteredProducts.length === 0}>
               {filteredProducts.map((product) => (
-                <ProductCard
+                <div 
                   key={product._id}
-                  product={product}
-                  distanceKm={getProductDistance(product)}
-                />
+                  ref={(el) => {
+                    if (el) {
+                      productCardRefs.current.set(product._id, el)
+                    } else {
+                      productCardRefs.current.delete(product._id)
+                    }
+                  }}
+                  onClick={() => handleProductCardClick(product)}
+                  className="cursor-pointer"
+                >
+                  <ProductCard
+                    product={product}
+                    distanceKm={getProductDistance(product)}
+                  />
+                </div>
               ))}
             </FeedGrid>
           )}
@@ -193,7 +233,31 @@ function HomePageContent() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Chart */}
           <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">G-Matrix Visualization</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">G-Matrix Visualization</h2>
+              
+              {/* Chart Mode Switcher */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setChartMode('vibe')}
+                  variant={chartMode === 'vibe' ? 'default' : 'outline'}
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  <span className="text-sm">🛡️</span>
+                  Vibe
+                </Button>
+                <Button
+                  onClick={() => setChartMode('value')}
+                  variant={chartMode === 'value' ? 'default' : 'outline'}
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  <span className="text-sm">💰</span>
+                  Value
+                </Button>
+              </div>
+            </div>
 
             {isLoading ? (
               <div className="flex items-center justify-center h-[500px]">
@@ -203,8 +267,9 @@ function HomePageContent() {
               <div className="h-[500px]">
                 <MatrixChart
                   products={products}
-                  onProductClick={setSelectedProduct}
+                  onProductClick={handleChartDotClick}
                   selectedProduct={selectedProduct}
+                  mode={chartMode}
                 />
               </div>
             ) : (

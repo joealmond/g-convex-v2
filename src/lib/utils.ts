@@ -41,3 +41,42 @@ export function formatRelativeTime(timestamp: number): string {
   if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`
   return 'just now'
 }
+
+/**
+ * 11-color palette for product dots on chart
+ * Colors are vibrant, distinct, and WCAG AA accessible against white
+ */
+const PRODUCT_COLOR_PALETTE = [
+  '#E91E63', // Pink
+  '#9C27B0', // Purple
+  '#3F51B5', // Indigo
+  '#2196F3', // Blue
+  '#00BCD4', // Cyan
+  '#009688', // Teal
+  '#4CAF50', // Green
+  '#FF9800', // Orange
+  '#FF5722', // Deep Orange
+  '#795548', // Brown
+  '#607D8B', // Blue Grey
+]
+
+/**
+ * Hash a string to a consistent color from the product color palette
+ * Same product name will always get the same color
+ */
+export function hashStringToColor(str: string): string {
+  if (!str || str.length === 0) {
+    return PRODUCT_COLOR_PALETTE[0] || '#9C27B0'
+  }
+
+  // Simple hash function (djb2)
+  let hash = 5381
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i)
+    hash = hash & hash // Convert to 32-bit integer
+  }
+
+  // Map hash to a palette index
+  const index = Math.abs(hash) % PRODUCT_COLOR_PALETTE.length
+  return PRODUCT_COLOR_PALETTE[index] || '#9C27B0'
+}

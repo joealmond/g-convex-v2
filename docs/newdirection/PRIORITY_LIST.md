@@ -124,8 +124,8 @@ Broken into 6 sub-sprints. Each sprint produces a testable increment.
 |---|----------|---|---|---|-------|------|---------|
 | [x] | 1 | 5 | 5 | M | 12.5 | **Create VotingSheet** | `src/components/product/VotingSheet.tsx` — Mobile-optimized voting UI. Full-width safety buttons (3: Clean/Sketchy/Wrecked), full-width taste buttons (3: Yass!/Meh/Pass), combo presets (4 quadrants). Price buttons integrated. All labels from `appConfig`. Auto-submits when both safety+taste selected |
 | [x] | 2 | 4 | 4 | S | 20.0 | **Add price vote buttons** | 5 pill buttons ($–$$$$$) in VotingSheet. Backend accepts `price` param (1-5 scale converted to 20-100). Optional parameter - user can skip |
-| [ ] | 3 | 4 | 3 | M | 8.5 | **Redesign FineTunePanel** | Mobile-friendly sliders with larger thumb (24px), value display. Axis labels from config. Expandable/collapsible after quick vote — **DEFERRED: Current quick vote UI is sufficient for MVP** |
-| [ ] | 4 | 3 | 3 | M | 7.5 | **Create store dropdown** | Upgrade `StoreTagInput.tsx` — Radix Select or custom dropdown: predefined stores from `appConfig.storeDefaults[userLocale]` + "Add custom store..." option. GPS button stays — **DEFERRED: Current text input works, can enhance in Wave 2** |
+| [x] | 3 | 4 | 3 | M | 8.5 | **Redesign FineTunePanel** | Mobile-friendly sliders with larger thumb (24px), value display. Axis labels from config. Expandable/collapsible after quick vote — **COMPLETED: Added as collapsible section in VotingSheet.tsx with 24px slider thumbs, value display, quadrant preview** |
+| [x] | 4 | 3 | 3 | M | 7.5 | **Create store dropdown** | Upgrade `StoreTagInput.tsx` — Radix Select or custom dropdown: predefined stores from `appConfig.storeDefaults[userLocale]` + "Add custom store..." option. GPS button stays — **COMPLETED: Dropdown with predefined stores per locale + custom input toggle** |
 | [x] | 5 | 3 | 2 | S | 12.0 | **Gamification toasts** | After vote submission, shows: `"+X Scout Points! 🎉"` based on what was included (base 10 + price 5 + store 10 + GPS 5). Only for authenticated users. Anonymous users see standard confirmation |
 
 ### Sprint 1e: Map Page
@@ -171,13 +171,13 @@ Makes the first impression "attractive" beyond functional.
 
 | Rank | I | N | E | Score | Feature | Details | Gap Ref | Status |
 |------|---|---|---|-------|---------|---------|---------|--------|
-| 1 | 4 | 1 | S | 11.0 | **Micro-animations** | Button press: `scale(0.97)` spring. Card tap: `translateY(-2px)` + shadow. Filter chip: bg-color 200ms. Rating bars: width animate on mount. Use Framer Motion `whileTap`, `whileHover`, `initial`/`animate` | Kimi spec | ✅ Complete (ProductCard hover/tap, FilterChips tap, RatingBars mount animation) |
-| 2 | 2 | 1 | S | 7.0 | **Product-hash colors** | On scatter chart, each product dot gets a consistent color based on name hash. 11-color palette. `hashStringToColor(name)` utility | Gap 1.9 | ⏳ Pending |
+| 1 | 4 | 1 | S | 11.0 | **Micro-animations** | Button press: `scale(0.97)` spring. Card tap: `translateY(-2px)` + shadow. Filter chip: bg-color 200ms. Rating bars: width animate on mount. Use Framer Motion `whileTap`, `whileHover`, `initial`/`animate` | Kimi spec | ✅ COMPLETE |
+| 2 | 2 | 1 | S | 7.0 | **Product-hash colors** | On scatter chart, each product dot gets a consistent color based on name hash. 11-color palette. `hashStringToColor(name)` utility | Gap 1.9 | ✅ COMPLETE |
 | 3 | 2 | 1 | S | 7.0 | **ScoutCard popover** | Points badge in TopBar (if signed in) → popover showing: total points, current level, streak, badge count. Quick gamification glance from any page | Gap 7.5 | ✅ Complete |
-| 4 | 2 | 1 | S | 7.0 | **Location status icon** | In TopBar: map pin icon — green (GPS enabled), red (denied), gray (not requested). Tap → requests permission | Gap 8.5 | ✅ Complete |
-| 5 | 2 | 1 | S | 7.0 | **Chart ↔ list sync** | When chart dot clicked, scroll product into view in feed list (and vice versa). `scrollIntoView({ behavior: 'smooth' })` with ref tracking | Gap 10.9 | ⏳ Pending |
-| 6 | 3 | 2 | M | 6.0 | **Chart mode switcher** | On chart toggle view: "Vibe" (safety vs taste) ↔ "Value" (price vs taste) toggle. Value-mode quadrant names ("Treat", "Rip-Off", "The Steal", "Cheap Filler") and dollar sign Y-axis from `appConfig.valueLens` | Gap 1.2, 1.3, 1.6, 1.7 | ⏳ Pending |
-| 7 | 3 | 1 | M | 4.5 | **Dark mode** | CSS custom properties switch to Kimi dark palette (Deep Navy bg, Slate surfaces, Soft Amber accents). Toggle in settings or system preference. Tailwind `dark:` classes + `prefers-color-scheme` | Kimi spec | ⏳ Pending |
+| 4 | 2 | 1 | S | 7.0 | **Location status icon** | In TopBar: map pin icon — green (GPS enabled), red (denied), gray (not requested). Tap → requests permission | Gap 8.5 | ✅ COMPLETE |
+| 5 | 2 | 1 | S | 7.0 | **Chart ↔ list sync** | When chart dot clicked, scroll product into view in feed list (and vice versa). `scrollIntoView({ behavior: 'smooth' })` with ref tracking | Gap 10.9 | ✅ COMPLETE |
+| 6 | 3 | 2 | M | 6.0 | **Chart mode switcher** | On chart toggle view: "Vibe" (safety vs taste) ↔ "Value" (price vs taste) toggle. Value-mode quadrant names ("Treat", "Rip-Off", "The Steal", "Cheap Filler") and dollar sign Y-axis from `appConfig.valueLens` | Gap 1.2, 1.3, 1.6, 1.7 | ✅ COMPLETE |
+| 7 | 3 | 1 | M | 4.5 | **Dark mode** | CSS custom properties switch to Kimi dark palette (Deep Navy bg, Slate surfaces, Soft Amber accents). Toggle in settings or system preference. Tailwind `dark:` classes + `prefers-color-scheme` | Kimi spec | ✅ COMPLETE |
 
 ---
 
@@ -216,48 +216,48 @@ Every item from `docs/FEATURE_GAP_ANALYSIS.md` is accounted for:
 
 | Gap # | Feature | Status | Wave | Item |
 |-------|---------|--------|------|------|
-| 1.2 | Price vs Taste chart (Value Lens) | ❌ → Planned | W3 | 3.2 |
-| 1.3 | Chart mode switcher | ❌ → Planned | W3 | 3.2 |
-| 1.6 | Value-mode quadrant names | ❌ → Planned | W3 | 3.6 (part of chart mode switcher) |
-| 1.7 | Dollar sign Y-axis in value mode | ❌ → Planned | W3 | 3.6 (part of chart mode switcher) |
-| 1.9 | Consistent hash colors | 🟡 → Planned | W3 | 3.2 |
+| 1.2 | Price vs Taste chart (Value Lens) | ✅ Complete | W3 | 3.2 |
+| 1.3 | Chart mode switcher | ✅ Complete | W3 | 3.2 |
+| 1.6 | Value-mode quadrant names | ✅ Complete | W3 | 3.6 (part of chart mode switcher) |
+| 1.7 | Dollar sign Y-axis in value mode | ✅ Complete | W3 | 3.6 (part of chart mode switcher) |
+| 1.9 | Consistent hash colors | ✅ Complete | W3 | 3.2 |
 | 1.12 | ProductVibeChart overlay | 🟡 → Adequate | — | Current `CoordinateGrid` serves same purpose; no change needed |
 | 1.13 | All Votes visualization | ❌ → Planned | W4 | 4.2 |
 | 1.14 | My Vote dot | ❌ → Planned | W4 | 4.1 (part of view tabs) |
 | 1.15 | Color-coded vote dots | ❌ → Planned | W4 | 4.2 |
-| 2.6 | 5-level price vote UI | ❌ → Planned | W1 | Sprint 1d #2 |
-| 2.7 | Predefined store dropdown | 🟡 → Planned | W1 | Sprint 1d #4 |
-| 2.13 | Agree with Community | ❌ → Planned | W2 | 2.6 |
+| 2.6 | 5-level price vote UI | ✅ Complete | W1 | Sprint 1d #2 |
+| 2.7 | Predefined store dropdown | ✅ Complete | W1 | Sprint 1d #4 |
+| 2.13 | Agree with Community | ✅ Complete | W2 | 2.6 |
 | 2.16 | View tabs (Avg/My/All) | ❌ → Planned | W4 | 4.1 |
 | 2.17 | Gamification toasts | 🟡 → Planned | W1 | Sprint 1d #5 |
 | 2.18 | Report Product | ❌ → Planned | W4 | 4.11 |
 | 3.2 | Quadrant quick-filter (chart dots) | ❌ → Deferred | W4 | Feed FilterChips serve a different purpose (recency/proximity). Chart-specific quadrant toggle can be added later if chart view gets heavy use |
-| 3.3 | "Near Me" GPS filter | ❌ → Planned | W2 | 2.1 |
+| 3.3 | "Near Me" GPS filter | ✅ Complete | W2 | 2.1 |
 | 3.4 | Combined filter logic (search + filters AND) | ❌ → Planned | W1 | Sprint 1b #5 (filters are composable: search text AND active filter chip) |
 | 4.2 | Back image display | ❌ → Planned | W4 | 4.10 (part of enhanced image features) |
-| 4.5 | Rating labels | ❌ → Planned | W2 | 2.7 |
-| 4.6 | Price display | ❌ → Planned | W1 | Sprint 1c #4 |
-| 4.7 | Stores list card | ❌ → Planned | W1 | Sprint 1c #3 |
-| 4.8 | Store freshness | ❌ → Planned | W2 | 2.4 |
-| 4.9 | Near Me badge stores | ❌ → Planned | W2 | 2.3 |
-| 4.10 | Store → native maps | ❌ → Planned | W2 | 2.5 |
-| 4.11 | Ingredients visible to all | 🟡 → Planned | W1 | Sprint 1c #5 |
+| 4.5 | Rating labels | ✅ Complete | W2 | 2.7 |
+| 4.6 | Price display | ✅ Complete | W1 | Sprint 1c #4 |
+| 4.7 | Stores list card | ✅ Complete | W1 | Sprint 1c #3 |
+| 4.8 | Store freshness | ✅ Complete | W2 | 2.4 |
+| 4.9 | Near Me badge stores | ✅ Complete | W2 | 2.3 |
+| 4.10 | Store → native maps | ✅ Complete | W2 | 2.5 |
+| 4.11 | Ingredients visible to all | ✅ Complete | W1 | Sprint 1c #5 |
 | 4.12 | Admin voter list (full, with actions) | 🟡 → Planned | W4 | 4.7 |
 | 4.13 | Per-vote delete (admin) | ❌ → Planned | W4 | 4.7 |
 | 4.14 | Per-vote impersonate (admin) | ❌ → Planned | W4 | 4.7 |
-| 5.7 | Image resize + WebP | ❌ → Planned | W2 | 2.2 |
+| 5.7 | Image resize + WebP | ✅ Complete | W2 | 2.2 |
 | 5.8 | Image dimension validation (min 200×200) | ❌ → Planned | W2 | 2.2 (part of client-side image processing) |
 | 5.10 | Drag-and-drop upload | ❌ → Planned | W4 | 4.10 |
 | 5.13 | Vibe-Check flow (post-scan page) | 🟡 → Deferred | W4 | Current dialog flow is simpler and works. Revisit if camera/barcode scanning (W4 4.6) justifies a multi-step flow |
 | 5.14 | Unnamed product naming (fallback) | 🟡 → Adequate | — | Current manual-entry fallback covers this use case |
-| 7.4 | Gamification toasts (specific) | ❌ → Planned | W1 | Sprint 1d #5 |
-| 7.5 | ScoutCard popover | 🟡 → Planned | W3 | 3.5 |
-| 7.6 | Level progress bar | ❌ → Planned | W2 | 2.8 |
-| 8.3 | Near Me filter | ❌ → Planned | W2 | 2.1 |
-| 8.4 | Near Me badge on stores | ❌ → Planned | W2 | 2.3 (same as 4.9) |
-| 8.5 | Location status icon | ❌ → Planned | W3 | 3.4 |
-| 8.6 | Clickable store → native maps | ❌ → Planned | W2 | 2.5 (same as 4.10) |
-| 8.9 | Store freshness list with GPS badges | ❌ → Planned | W1+W2 | Covered by Sprint 1c #3 (StoreList) + W2 items 2.3, 2.4 |
+| 7.4 | Gamification toasts (specific) | ✅ Complete | W1 | Sprint 1d #5 |
+| 7.5 | ScoutCard popover | ✅ Complete | W3 | 3.5 |
+| 7.6 | Level progress bar | ✅ Complete | W2 | 2.8 |
+| 8.3 | Near Me filter | ✅ Complete | W2 | 2.1 |
+| 8.4 | Near Me badge on stores | ✅ Complete | W2 | 2.3 (same as 4.9) |
+| 8.5 | Location status icon | ✅ Complete | W3 | 3.4 |
+| 8.6 | Clickable store → native maps | ✅ Complete | W2 | 2.5 (same as 4.10) |
+| 8.9 | Store freshness list with GPS badges | ✅ Complete | W1+W2 | Covered by Sprint 1c #3 (StoreList) + W2 items 2.3, 2.4 |
 | 9.1 | Time-decay cron | ❌ → Planned | W4 | 4.3 |
 | 9.2 | Time-decay recalc | ❌ → Planned | W4 | 4.3 |
 | 9.3 | Migrations framework | ❌ → Deferred | — | Only if schema changes warrant migration tooling |
@@ -267,7 +267,7 @@ Every item from `docs/FEATURE_GAP_ANALYSIS.md` is accounted for:
 | 6.8 | Per-vote admin delete on product page | ❌ → Planned | W4 | 4.7 (part of admin voter list) |
 | 6.9 | Admin voter list with impersonate | ❌ → Planned | W4 | 4.7 (part of admin voter list) |
 | 10.3 | Context-aware nav | 🟡 → Superseded | W1 | BottomTabs replaces context-aware top nav; fixed tabs are clearer |
-| 10.9 | Chart ↔ list sync | 🟡 → Planned | W3 | 3.7 |
+| 10.9 | Chart ↔ list sync | ✅ Complete | W3 | 3.7 |
 | 10.10 | Ad slot placeholder | ❌ → Planned | W4 | 4.19 |
 
 **New features from Kimi design (not in original gap analysis):**
