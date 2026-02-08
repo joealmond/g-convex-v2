@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Suspense, useState, useMemo } from 'react'
+import { Suspense, useState, useMemo, useEffect } from 'react'
 import { ProductMap } from '@/components/map/ProductMap'
 import { FilterChips, type FilterType } from '@/components/feed/FilterChips'
 import { useGeolocation } from '@/hooks/use-geolocation'
@@ -32,8 +32,13 @@ function MapPage() {
 
 function MapPageContent() {
   const products = useQuery(api.products.list)
-  const { coords, loading: geoLoading } = useGeolocation()
+  const { coords, loading: geoLoading, requestLocation } = useGeolocation()
   const [filterType, setFilterType] = useState<FilterType>('all')
+
+  // Auto-request location on mount
+  useEffect(() => {
+    requestLocation()
+  }, [requestLocation])
 
   const isLoading = products === undefined
 
@@ -110,50 +115,56 @@ function MapPageContent() {
     return result
   }, [products, filterType, coords])
 
+  // User location for passing to map (blue circle)
+  const userLocation: [number, number] | undefined = useMemo(() => {
+    if (coords?.latitude && coords?.longitude) {
+      return [coords.latitude, coords.longitude]
+    }
+    return undefined
+  }, [coords])
+
   return (
-    <div className="flex-1 flex flex-col relative">
-      {/* Filter Chips */}
-      <div className="absolute top-4 left-4 right-4 z-10 bg-card rounded-xl shadow-lg p-3">
-        <FilterChips value={filterType} onChange={setFilterType} />
+    <div className="absolute inset-0 top-12 bottom-16">
+      {/* Compact Filter Chips — floating over the map, offset right to avoid zoom buttons */}
+      <div className="absolute top-2 left-12 right-2 z-[400] flex items-center gap-2">
+        <FilterChips value={filterType} onChange={setFilterType} compact />
         {geoLoading && (
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            Getting your location...
-          </p>
-        )}
-        {filterType === 'nearby' && !coords?.latitude && !geoLoading && (
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            Enable location to see nearby products
-          </p>
+          <span className="text-[10px] text-muted-foreground whitespace-nowrap bg-background/80 rounded-full px-2 py-0.5">
+            Locating…
+          </span>
         )}
       </div>
 
-      {/* Map */}
-      <div className="flex-1 relative">
-        {isLoading ? (
-          <div className="absolute inset-0 bg-background flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <>
-            <ProductMap products={filteredProducts} center={mapCenter} zoom={13} />
-            {filteredProducts.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-center px-4 bg-card/90 rounded-xl p-4 shadow-lg">
-                  <p className="text-foreground mb-2">No products found with location</p>
-                  <p className="text-xs text-muted-foreground">
-                    Try adjusting your filters or add products wih store locations.
-                    Make sure to allow location access to add pinned products.
-                  </p>
-                </div>
+      {/* Map — fills entire available area */}
+      {isLoading ? (
+        <div className="absolute inset-0 bg-background flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <>
+          <ProductMap
+            products={filteredProducts}
+            center={mapCenter}
+            zoom={13}
+            userLocation={userLocation}
+          />
+          {filteredProducts.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center px-4 bg-card/90 rounded-xl p-4 shadow-lg">
+                <p className="text-foreground mb-2">No products found with location</p>
+                <p className="text-xs text-muted-foreground">
+                  Try adjusting your filters or add products with store locations.
+                  Make sure to allow location access to add pinned products.
+                </p>
               </div>
-            )}
-          </>
-        )}
-      </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Product Count Badge */}
       {!isLoading && filteredProducts.length > 0 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 bg-card rounded-full shadow-lg px-4 py-2">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[400] bg-card rounded-full shadow-lg px-3 py-1.5">
           <p className="text-xs font-semibold text-foreground">
             {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
           </p>

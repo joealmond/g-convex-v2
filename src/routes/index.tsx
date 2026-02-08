@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Suspense, useState, useMemo, useRef, useEffect } from 'react'
+import { Suspense, useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { ProductCard } from '@/components/feed/ProductCard'
+import { ProductStrip } from '@/components/feed/ProductStrip'
 import { FeedGrid } from '@/components/feed/FeedGrid'
 import { FilterChips, type FilterType } from '@/components/feed/FilterChips'
 import { MatrixChart } from '@/components/dashboard/MatrixChart'
@@ -10,7 +11,7 @@ import { Leaderboard } from '@/components/dashboard/Leaderboard'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useAdmin } from '@/hooks/use-admin'
-import { Loader2, Trophy, Flame, TrendingUp, BarChart3, Grid3X3 } from 'lucide-react'
+import { Loader2, Trophy, Flame, TrendingUp, BarChart3, Grid3X3, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/types'
 
@@ -62,15 +63,31 @@ function HomePageContent() {
     requestLocation()
   }, [requestLocation])
 
-  const [filterType, setFilterType] = useState<FilterType>('all')
+  const [filterType, setFilterType] = useState<FilterType>('recent')
+  const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'feed' | 'chart'>('feed')
   const [chartMode, setChartMode] = useState<'vibe' | 'value'>('vibe')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   
   // Refs for chart ↔ feed sync (scrolling to product cards)
   const productCardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   const isLoading = products === undefined
+
+  // When user types in search, auto-switch to "all" filter
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value)
+    if (value.trim()) {
+      setFilterType('all')
+    }
+  }, [])
+
+  // Clear search
+  const clearSearch = useCallback(() => {
+    setSearchQuery('')
+    searchInputRef.current?.focus()
+  }, [])
   
   // Effect: When a product is selected in chart view, switch to feed and scroll to card
   useEffect(() => {
@@ -79,21 +96,34 @@ function HomePageContent() {
       if (cardElement) {
         setTimeout(() => {
           cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        }, 100) // Delay to ensure DOM is ready
+        }, 100)
       }
     }
   }, [selectedProduct, viewMode])
   
-  // Handler: When clicking a product card, switch to chart view and highlight
   const handleProductCardClick = (product: Product) => {
     setSelectedProduct(product)
     setViewMode('chart')
   }
   
-  // Handler: When clicking a chart dot, switch to feed view and scroll to card
   const handleChartDotClick = (product: Product) => {
     setSelectedProduct(product)
     setViewMode('feed')
+  }
+
+  /**
+   * Simple fuzzy match — checks if all characters in query appear in order in target
+   */
+  const fuzzyMatch = (target: string, query: string): boolean => {
+    const lowerTarget = target.toLowerCase()
+    const lowerQuery = query.toLowerCase().trim()
+    if (!lowerQuery) return true
+    
+    let qi = 0
+    for (let ti = 0; ti < lowerTarget.length && qi < lowerQuery.length; ti++) {
+      if (lowerTarget[ti] === lowerQuery[qi]) qi++
+    }
+    return qi === lowerQuery.length
   }
 
   /**
@@ -108,7 +138,7 @@ function HomePageContent() {
       .filter((store) => store.geoPoint)
       .map((store) => {
         if (!store.geoPoint) return Infinity
-        const latDiff = (store.geoPoint.lat - latitude) * 111.32 // km per degree latitude
+        const latDiff = (store.geoPoint.lat - latitude) * 111.32
         const lonDiff = (store.geoPoint.lng - longitude) * 111.32 * Math.cos((latitude * Math.PI) / 180)
         return Math.sqrt(latDiff ** 2 + lonDiff ** 2)
       })
@@ -117,12 +147,17 @@ function HomePageContent() {
   }
 
   /**
-   * Filter and sort products based on selected filter
+   * Filter and sort products based on selected filter + search query
    */
   const filteredProducts = useMemo(() => {
     if (!products) return []
 
     let result = [...products]
+
+    // Apply search filter for "all" mode
+    if (filterType === 'all' && searchQuery.trim()) {
+      result = result.filter((p) => fuzzyMatch(p.name, searchQuery))
+    }
 
     // Apply filters
     switch (filterType) {
@@ -130,7 +165,6 @@ function HomePageContent() {
         result.sort((a, b) => b.createdAt - a.createdAt)
         break
       case 'nearby':
-        // Only show products with stores within 5km
         result = result.filter((p) => {
           const distance = getProductDistance(p)
           return distance !== undefined && distance <= 5
@@ -147,7 +181,10 @@ function HomePageContent() {
     }
 
     return result
-  }, [products, filterType, latitude, longitude])
+  }, [products, filterType, searchQuery, latitude, longitude])
+
+  /** Whether current filter uses card grid layout (recent, trending, nearby) vs strip list (all) */
+  const useCardLayout = filterType !== 'all'
 
   return (
     <main className="flex-1 mx-auto px-4 py-6 max-w-7xl w-full">
@@ -175,52 +212,72 @@ function HomePageContent() {
         </div>
       )}
 
-      {/* View Toggle Buttons */}
-      <div className="flex gap-2 mb-6 justify-end">
-        <Button
-          onClick={() => setViewMode('feed')}
-          variant={viewMode === 'feed' ? 'default' : 'outline'}
-          size="sm"
-          className="gap-2"
-        >
-          <Grid3X3 className="h-4 w-4" />
-          Feed
-        </Button>
-        <Button
-          onClick={() => setViewMode('chart')}
-          variant={viewMode === 'chart' ? 'default' : 'outline'}
-          size="sm"
-          className="gap-2"
-        >
-          <BarChart3 className="h-4 w-4" />
-          Chart
-        </Button>
+      {/* Search Bar + View Toggle */}
+      <div className="flex items-center gap-2 mb-4">
+        {/* Search Input */}
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Search products…"
+            className="w-full h-10 pl-9 pr-8 rounded-xl border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-full"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* View Toggle */}
+        <div className="flex gap-1">
+          <Button
+            onClick={() => setViewMode('feed')}
+            variant={viewMode === 'feed' ? 'default' : 'outline'}
+            size="icon"
+            className="h-10 w-10 rounded-xl"
+            title="Feed view"
+          >
+            <Grid3X3 className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={() => setViewMode('chart')}
+            variant={viewMode === 'chart' ? 'default' : 'outline'}
+            size="icon"
+            className="h-10 w-10 rounded-xl"
+            title="Chart view"
+          >
+            <BarChart3 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Feed View */}
       {viewMode === 'feed' && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Filters */}
-          <div>
-            <FilterChips value={filterType} onChange={setFilterType} />
-          </div>
+          <FilterChips value={filterType} onChange={(f) => { setFilterType(f); if (f !== 'all') setSearchQuery('') }} />
 
-          {/* Products Grid */}
+          {/* Products */}
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : (
+          ) : useCardLayout ? (
+            /* Card Grid for recent / trending / nearby */
             <FeedGrid isEmpty={filteredProducts.length === 0}>
               {filteredProducts.map((product) => (
                 <div 
                   key={product._id}
                   ref={(el) => {
-                    if (el) {
-                      productCardRefs.current.set(product._id, el)
-                    } else {
-                      productCardRefs.current.delete(product._id)
-                    }
+                    if (el) productCardRefs.current.set(product._id, el)
+                    else productCardRefs.current.delete(product._id)
                   }}
                   onClick={() => handleProductCardClick(product)}
                   className="cursor-pointer"
@@ -233,6 +290,27 @@ function HomePageContent() {
                 </div>
               ))}
             </FeedGrid>
+          ) : (
+            /* Strip/list view for "all" (search mode) */
+            filteredProducts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <p className="text-muted-foreground text-sm mb-2">
+                  {searchQuery ? `No products matching "${searchQuery}"` : 'No products found'}
+                </p>
+                <p className="text-xs text-muted-foreground">Try a different search term</p>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {filteredProducts.map((product) => (
+                  <ProductStrip
+                    key={product._id}
+                    product={product}
+                    distanceKm={getProductDistance(product)}
+                    highlight={searchQuery}
+                  />
+                ))}
+              </div>
+            )
           )}
         </div>
       )}
@@ -240,12 +318,9 @@ function HomePageContent() {
       {/* Chart View */}
       {viewMode === 'chart' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Chart */}
           <div className="lg:col-span-2 bg-card rounded-2xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">G-Matrix Visualization</h2>
-              
-              {/* Chart Mode Switcher */}
               <div className="flex gap-2">
                 <Button
                   onClick={() => setChartMode('vibe')}
@@ -289,7 +364,6 @@ function HomePageContent() {
             )}
           </div>
 
-          {/* Right: Leaderboard */}
           <div className="lg:col-span-1">
             <Leaderboard limit={10} />
           </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet'
 import { type Product, getQuadrant, QUADRANTS } from '@/lib/types'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -20,6 +20,8 @@ interface ProductMapProps {
   products: Product[]
   center?: [number, number]
   zoom?: number
+  /** User's current location — renders a blue circle with ~5km radius */
+  userLocation?: [number, number]
 }
 
 /**
@@ -27,8 +29,9 @@ interface ProductMapProps {
  * - Uses OpenStreetMap tiles
  * - Markers colored by product quadrant
  * - Popup shows product info
+ * - Optional blue circle showing user's approximate area (~5km)
  */
-export function ProductMap({ products, center = [47.497, 19.040], zoom = 12 }: ProductMapProps) {
+export function ProductMap({ products, center = [47.497, 19.040], zoom = 12, userLocation }: ProductMapProps) {
   // Filter products that have at least one store with GPS coordinates
   const productsWithLocations = products.filter(
     (product) => product.stores && product.stores.some((store) => store.geoPoint)
@@ -40,7 +43,6 @@ export function ProductMap({ products, center = [47.497, 19.040], zoom = 12 }: P
       zoom={zoom}
       scrollWheelZoom={true}
       className="h-full w-full z-0"
-      style={{ minHeight: '400px' }}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -49,6 +51,35 @@ export function ProductMap({ products, center = [47.497, 19.040], zoom = 12 }: P
 
       {/* Recenter map when center prop changes */}
       <RecenterMap center={center} />
+
+      {/* User location: blue translucent circle (~5km radius) */}
+      {userLocation && (
+        <Circle
+          center={userLocation}
+          radius={5000}
+          pathOptions={{
+            color: '#3B82F6',
+            fillColor: '#3B82F6',
+            fillOpacity: 0.08,
+            weight: 2,
+            dashArray: '6 4',
+          }}
+        />
+      )}
+
+      {/* User location: small dot at exact position */}
+      {userLocation && (
+        <Circle
+          center={userLocation}
+          radius={80}
+          pathOptions={{
+            color: '#FFFFFF',
+            fillColor: '#3B82F6',
+            fillOpacity: 0.9,
+            weight: 3,
+          }}
+        />
+      )}
 
       {/* Render markers for each product's stores */}
       {productsWithLocations.map((product) =>
