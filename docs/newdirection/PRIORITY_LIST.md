@@ -102,21 +102,21 @@ Broken into 6 sub-sprints. Each sprint produces a testable increment.
 
 | | Priority | I | N | E | Score | Task | Details |
 |---|----------|---|---|---|-------|------|---------|
-| [ ] | 1 | 5 | 5 | M | 12.5 | **Create new ProductCard** | `src/components/feed/ProductCard.tsx` — Safety dots row (3 × 8px circles: axis1/axis2/axis3 scores → green/yellow/red/gray). Square product image (rounded 12px). Product name (H3, 1-line truncate). Distance from user if GPS available. Quadrant badge pill. White card, 16px radius, shadow. Taps → `/product/$name` |
-| [ ] | 2 | 5 | 5 | L | 8.3 | **Rewrite home page** | `src/routes/index.tsx` — Search bar (top), FilterChips row below, FeedGrid of ProductCards. Top-right corner: Feed/Chart toggle icon button. When "Chart" active, show existing `MatrixChart` + `Leaderboard` sidebar (desktop) or full-width (mobile). Default = feed view |
-| [ ] | 3 | 4 | 4 | S | 20.0 | **Create FilterChips** | `src/components/feed/FilterChips.tsx` — Horizontal scroll container: All \| Recently Added \| Nearby \| Trending. Pill shape, 24px radius. Active = sage green bg/white text. Single-select (one active at a time) |
-| [ ] | 4 | 3 | 3 | S | 15.0 | **Create FeedGrid** | `src/components/feed/FeedGrid.tsx` — `grid grid-cols-2 gap-3` on mobile, `grid-cols-3` on tablet, `grid-cols-4` on desktop. Accepts children. Handles empty state ("No products found") |
-| [ ] | 5 | 3 | 3 | S | 15.0 | **Implement filter logic** | In home page: `All` = default sort by `lastUpdated` desc. `Recently Added` = sort by `_creationTime` desc. `Trending` = sort by `totalVotes` desc. `Nearby` = filter to products with stores ≤5km (depends on GPS — graceful degradation if denied) |
+| [x] | 1 | 5 | 5 | M | 12.5 | **Create new ProductCard** | `src/components/feed/ProductCard.tsx` — 3 colored dots for axis1/axis2/axis3 scores (green ≥60, yellow 40-59, red <40). Square product image (rounded). Product name (1-line truncate). Distance from user if GPS available. Quadrant badge with emoji. White card, rounded shadow. Links to product detail |
+| [x] | 2 | 5 | 5 | L | 8.3 | **Rewrite home page** | `src/routes/index.tsx` — Filter chips (All/Recent/Nearby/Trending), FeedGrid of ProductCards. Top-right: Feed/Chart toggle buttons. Feed view = responsive product grid. Chart view = G-Matrix + Leaderboard. Default = feed view |
+| [x] | 3 | 4 | 4 | S | 20.0 | **Create FilterChips** | `src/components/feed/FilterChips.tsx` — 4 pill buttons with single-select: All, Recently Added, Nearby, Trending. Active = sage green bg. Horizontal scroll layout |
+| [x] | 4 | 3 | 3 | S | 15.0 | **Create FeedGrid** | `src/components/feed/FeedGrid.tsx` — Responsive grid (2 cols mobile, 3 tablet, 4 desktop). Empty state handling ("No products found") |
+| [x] | 5 | 3 | 3 | S | 15.0 | **Implement filter logic** | `All` = sort by lastUpdated desc. `Recent` = sort by createdAt desc. `Trending` = sort by voteCount desc. `Nearby` = filter to stores ≤5km + sort by distance. GPS graceful degradation |
 
 ### Sprint 1c: Product Detail Page
 
 | | Priority | I | N | E | Score | Task | Details |
 |---|----------|---|---|---|-------|------|---------|
-| [ ] | 1 | 5 | 5 | L | 8.3 | **Rewrite product detail** | `src/routes/product/$name.tsx` — Hero image (full-width, 300px max height). Product name + quadrant badge. Rating bars section. Stores section. Voting section (VotingSheet). Ingredients section. Back button (top-left arrow). All sections in vertical scroll |
-| [ ] | 2 | 4 | 4 | M | 10.0 | **Create RatingBars** | `src/components/product/RatingBars.tsx` — 3 horizontal bars: axis1 (safety), axis2 (taste), axis3 (price). Each bar: label (from config) + score value + colored progress bar (green ≥60, yellow 40-59, red <40) + rating label text ("Excellent"/"Good"/"Fair"/"Poor" from config thresholds). 8px bar height, rounded, animated width on mount |
-| [ ] | 3 | 4 | 4 | M | 10.0 | **Create StoreList** | `src/components/product/StoreList.tsx` — Card listing stores from `product.stores[]`: store name, price ($ icons), last seen (relative time via `formatRelativeTime()`), user distance if GPS available, freshness border (green <7d, yellow <30d, faded >30d). Tap store → open maps (platform-aware URL) |
-| [ ] | 4 | 3 | 3 | S | 15.0 | **Add price display** | Average price shown as $ icon row or "Budget"/"Moderate"/"Expensive" label. `avgPrice` field exists in schema. Price labels from config |
-| [ ] | 5 | 3 | 2 | S | 12.0 | **Show ingredients to all** | Currently ingredients show admin-only. Make visible to all users on product detail (read-only tag list) |
+| [x] | 1 | 5 | 5 | L | 8.3 | **Rewrite product detail** | `src/routes/product/$name.tsx` — Hero image (full-width, rounded). Product name + quadrant badge. RatingBars component. StoreList component. Voting section (tabs: Quick Vote / Fine Tune). Ingredients section (visible to all). Back button. Vertical scroll layout |
+| [x] | 2 | 4 | 4 | M | 10.0 | **Create RatingBars** | `src/components/product/RatingBars.tsx` — 3 horizontal bars: axis1 (safety), axis2 (taste), axis3 (price). Each bar: label + score + colored progress bar + rating label from config thresholds |
+| [x] | 3 | 4 | 4 | M | 10.0 | **Create StoreList** | `src/components/product/StoreList.tsx` — Stores list: name, price ($), last seen (relative time), freshness indicator (border color: green <7d, yellow <30d, gray >30d). Tap to open in maps with GPS point |
+| [x] | 4 | 3 | 3 | S | 15.0 | **Add price display** | Average price shown in RatingBars as axis3 (0-100 converted from avgPrice 1-5 scale). Rating label shows "Excellent"/"Good"/"Fair"/"Poor" from config |
+| [x] | 5 | 3 | 2 | S | 12.0 | **Show ingredients to all** | Ingredients visible on product detail for all users as read-only badge list. No admin-only gate |
 
 ### Sprint 1d: Voting UX
 

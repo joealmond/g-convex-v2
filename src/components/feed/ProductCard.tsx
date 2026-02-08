@@ -1,0 +1,117 @@
+'use client'
+
+import { Link } from '@tanstack/react-router'
+import { type Product, getQuadrant, QUADRANTS } from '@/lib/types'
+import { appConfig } from '@/lib/app-config'
+
+interface ProductCardProps {
+  product: Product
+  distanceKm?: number
+}
+
+/**
+ * Product card for feed view
+ * - 3 colored dots for axis1/axis2/axis3 scores
+ * - Square product image (rounded)
+ * - Product name (1-line truncate)
+ * - Distance from user (optional)
+ * - Quadrant badge
+ * - Tappable to product detail
+ */
+export function ProductCard({ product, distanceKm }: ProductCardProps) {
+  // Determine safety score color
+  const getSafetyColor = (score: number) => {
+    if (score >= 60) return 'bg-color-safety-high' // Green
+    if (score >= 40) return 'bg-color-safety-mid' // Yellow/Amber
+    return 'bg-color-safety-low' // Red
+  }
+
+  // Get price score from avgPrice (1-5 scale → 0-100)
+  const priceScore = product.avgPrice ? (product.avgPrice / 5) * 100 : 0
+
+  // Get quadrant info
+  const quadrant = getQuadrant(product.averageSafety, product.averageTaste)
+  const quadrantInfo = QUADRANTS[quadrant]
+
+  return (
+    <Link
+      to={'/product/$name'}
+      params={{ name: product.name }}
+      className="group cursor-pointer h-full"
+      preload="intent"
+    >
+      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
+        {/* Product Image */}
+        <div className="relative aspect-square bg-color-bg overflow-hidden">
+          {product.imageUrl ? (
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-color-text-secondary text-sm">
+              No image
+            </div>
+          )}
+
+          {/* Quadrant Badge (top-right) */}
+          {quadrantInfo && (
+            <div
+              className="absolute top-2 right-2 px-2 py-1 rounded-full text-white text-xs font-semibold"
+              style={{ backgroundColor: quadrantInfo.color }}
+              title={quadrantInfo.name}
+            >
+              {appConfig.quadrants[quadrant]?.emoji || '●'}
+            </div>
+          )}
+        </div>
+
+        {/* Info Section */}
+        <div className="p-3 flex-1 flex flex-col justify-between">
+          {/* Product Name */}
+          <h3 className="font-semibold text-sm text-color-text truncate group-hover:text-color-primary transition-colors">
+            {product.name}
+          </h3>
+
+          {/* Distance (if available) */}
+          {distanceKm !== undefined && (
+            <p className="text-xs text-color-text-secondary mt-1">
+              {distanceKm < 0.1
+                ? 'Very close'
+                : distanceKm < 1
+                  ? `${(distanceKm * 1000).toFixed(0)}m away`
+                  : `${distanceKm.toFixed(1)}km away`}
+            </p>
+          )}
+
+          {/* Scoring Dots Row */}
+          <div className="flex gap-2 mt-2">
+            {/* Axis 1 (Safety) Dot */}
+            <div
+              className={`w-2 h-2 rounded-full ${getSafetyColor(product.averageSafety)}`}
+              title={`${appConfig.dimensions.axis1.label}: ${product.averageSafety.toFixed(0)}`}
+            />
+
+            {/* Axis 2 (Taste) Dot */}
+            <div
+              className={`w-2 h-2 rounded-full ${getSafetyColor(product.averageTaste)}`}
+              title={`${appConfig.dimensions.axis2.label}: ${product.averageTaste.toFixed(0)}`}
+            />
+
+            {/* Axis 3 (Price) Dot */}
+            <div
+              className={`w-2 h-2 rounded-full ${getSafetyColor(priceScore)}`}
+              title={`${appConfig.dimensions.axis3.label}: ${priceScore.toFixed(0)}`}
+            />
+          </div>
+
+          {/* Vote Count */}
+          <p className="text-xs text-color-text-secondary mt-2">
+            {product.voteCount} {product.voteCount === 1 ? 'vote' : 'votes'}
+          </p>
+        </div>
+      </div>
+    </Link>
+  )
+}

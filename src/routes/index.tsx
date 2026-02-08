@@ -1,15 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useMemo } from 'react'
+import { ProductCard } from '@/components/feed/ProductCard'
+import { FeedGrid } from '@/components/feed/FeedGrid'
+import { FilterChips, type FilterType } from '@/components/feed/FilterChips'
 import { MatrixChart } from '@/components/dashboard/MatrixChart'
-import { ProductList } from '@/components/dashboard/ProductList'
 import { Leaderboard } from '@/components/dashboard/Leaderboard'
 import { StatsCard } from '@/components/dashboard/StatsCard'
-import { AddProductDialog } from '@/components/dashboard/AddProductDialog'
-import { ImageUploadDialog } from '@/components/product/ImageUploadDialog'
-
-import { Loader2, Trophy, Flame, TrendingUp, Camera, Plus } from 'lucide-react'
+import { useGeolocation } from '@/hooks/use-geolocation'
+import { Loader2, Trophy, Flame, TrendingUp, BarChart3, Grid3X3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/types'
 
@@ -20,23 +20,15 @@ export const Route = createFileRoute('/')({
 /** SSR-safe skeleton shown while hooks hydrate on the client */
 function HomePageSkeleton() {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <main className="flex-1 container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="border border-border rounded-lg bg-card p-6">
-              <div className="h-6 w-48 bg-muted animate-pulse rounded mb-4" />
-              <div className="h-[500px] bg-muted animate-pulse rounded" />
-            </div>
-            <div className="border border-border rounded-lg bg-card p-6">
-              <div className="h-64 bg-muted animate-pulse rounded" />
-            </div>
-          </div>
-          <div className="lg:col-span-1">
-            <div className="h-96 bg-muted animate-pulse rounded" />
-          </div>
+    <div className="flex-1 container mx-auto px-4 py-6">
+      <div className="space-y-4">
+        <div className="h-10 w-32 bg-muted animate-pulse rounded" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="aspect-square bg-muted animate-pulse rounded-2xl" />
+          ))}
         </div>
-      </main>
+      </div>
     </div>
   )
 }
@@ -57,122 +49,179 @@ function HomePageContent() {
   const user = useQuery(api.users.current)
   const profile = useQuery(api.profiles.getCurrent)
   const products = useQuery(api.products.list)
+  const { latitude, longitude, isLoading: geoLoading } = useGeolocation()
 
+  const [filterType, setFilterType] = useState<FilterType>('all')
+  const [viewMode, setViewMode] = useState<'feed' | 'chart'>('feed')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
 
   const isLoading = products === undefined
 
-  const handleProductCreated = (productId: string) => {
-    // Find and select the newly created product
-    if (products) {
-      const newProduct = products.find(p => p._id === productId)
-      if (newProduct) {
-        setSelectedProduct(newProduct)
-      }
+  /**
+   * Helper: calculate distance between user and product stores in km
+   */
+  const getProductDistance = (product: Product): number | undefined => {
+    if (!latitude || !longitude || !product.stores || product.stores.length === 0) {
+      return undefined
     }
+
+    const distances = product.stores
+      .filter((store) => store.geoPoint)
+      .map((store) => {
+        if (!store.geoPoint) return Infinity
+        const latDiff = (store.geoPoint.lat - latitude) * 111.32 // km per degree latitude
+        const lonDiff = (store.geoPoint.lng - longitude) * 111.32 * Math.cos((latitude * Math.PI) / 180)
+        return Math.sqrt(latDiff ** 2 + lonDiff ** 2)
+      })
+
+    return distances.length > 0 ? Math.min(...distances) : undefined
   }
 
+  /**
+   * Filter and sort products based on selected filter
+   */
+  const filteredProducts = useMemo(() => {
+    if (!products) return []
+
+    let result = [...products]
+
+    // Apply filters
+    switch (filterType) {
+      case 'recent':
+        result.sort((a, b) => b.createdAt - a.createdAt)
+        break
+      case 'nearby':
+        // Only show products with stores within 5km
+        result = result.filter((p) => {
+          const distance = getProductDistance(p)
+          return distance !== undefined && distance <= 5
+        })
+        result.sort((a, b) => (getProductDistance(a) || Infinity) - (getProductDistance(b) || Infinity))
+        break
+      case 'trending':
+        result.sort((a, b) => b.voteCount - a.voteCount)
+        break
+      case 'all':
+      default:
+        result.sort((a, b) => b.lastUpdated - a.lastUpdated)
+        break
+    }
+
+    return result
+  }, [products, filterType, latitude, longitude])
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-6">
-        {/* Gamification Widgets for Logged-in Users */}
-        {user && profile && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <StatsCard
-              title="Your Points"
-              value={profile.points}
-              subtitle={`${profile.totalVotes} votes cast`}
-              icon={Trophy}
-              iconColor="text-yellow-500"
-            />
-            <StatsCard
-              title="Current Streak"
-              value={`${profile.streak} days`}
-              subtitle="Keep voting daily!"
-              icon={Flame}
-              iconColor="text-orange-500"
-            />
-            <StatsCard
-              title="Badges Earned"
-              value={profile.badges?.length || 0}
-              subtitle={`Keep contributing!`}
-              icon={TrendingUp}
-              iconColor="text-purple-500"
-            />
+    <main className="flex-1 mx-auto px-4 py-6 max-w-7xl w-full">
+      {/* Gamification Widgets for Logged-in Users */}
+      {user && profile && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <StatsCard
+            title="Your Points"
+            value={profile.points}
+            subtitle={`${profile.totalVotes} votes cast`}
+            icon={Trophy}
+            iconColor="text-yellow-500"
+          />
+          <StatsCard
+            title="Current Streak"
+            value={`${profile.streak} days`}
+            subtitle="Keep voting daily!"
+            icon={Flame}
+            iconColor="text-orange-500"
+          />
+          <StatsCard
+            title="Badges Earned"
+            value={profile.badges?.length || 0}
+            subtitle={`Keep contributing!`}
+            icon={TrendingUp}
+            iconColor="text-purple-500"
+          />
+        </div>
+      )}
+
+      {/* View Toggle Buttons */}
+      <div className="flex gap-2 mb-6 justify-end">
+        <Button
+          onClick={() => setViewMode('feed')}
+          variant={viewMode === 'feed' ? 'default' : 'outline'}
+          size="sm"
+          className="gap-2"
+        >
+          <Grid3X3 className="h-4 w-4" />
+          Feed
+        </Button>
+        <Button
+          onClick={() => setViewMode('chart')}
+          variant={viewMode === 'chart' ? 'default' : 'outline'}
+          size="sm"
+          className="gap-2"
+        >
+          <BarChart3 className="h-4 w-4" />
+          Chart
+        </Button>
+      </div>
+
+      {/* Feed View */}
+      {viewMode === 'feed' && (
+        <div className="space-y-4">
+          {/* Filters */}
+          <div>
+            <FilterChips value={filterType} onChange={setFilterType} />
           </div>
-        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Product List */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* G-Matrix Chart */}
-            <div className="border border-border rounded-lg bg-card p-6">
-              <h2 className="text-xl font-semibold mb-4">G-Matrix Visualization</h2>
-
-              {isLoading ? (
-                <div className="flex items-center justify-center h-[500px]">
-                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : products && products.length > 0 ? (
-                <div className="h-[500px]">
-                  <MatrixChart
-                    products={products}
-                    onProductClick={setSelectedProduct}
-                    selectedProduct={selectedProduct}
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-[500px] text-muted-foreground">
-                  <p className="text-lg mb-2">No products yet</p>
-                  <p className="text-sm">Add your first product to get started!</p>
-                </div>
-              )}
+          {/* Products Grid */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-color-text-secondary" />
             </div>
-
-            {/* Product List */}
-            <div className="border border-border rounded-lg bg-card">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <ProductList
-                  products={products || []}
-                  onProductSelect={setSelectedProduct}
-                  selectedProduct={selectedProduct}
-                  renderAddButton={() => (
-                    <div className="flex gap-2">
-                      <ImageUploadDialog
-                        onSuccess={handleProductCreated}
-                        trigger={
-                          <Button className="flex-1" variant="default">
-                            <Camera className="h-4 w-4 mr-2" />
-                            Scan Product
-                          </Button>
-                        }
-                      />
-                      <AddProductDialog
-                        trigger={
-                          <Button className="flex-1" variant="outline">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Manual Entry
-                          </Button>
-                        }
-                      />
-                    </div>
-                  )}
+          ) : (
+            <FeedGrid isEmpty={filteredProducts.length === 0}>
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                  distanceKm={getProductDistance(product)}
                 />
-              )}
-            </div>
+              ))}
+            </FeedGrid>
+          )}
+        </div>
+      )}
+
+      {/* Chart View */}
+      {viewMode === 'chart' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: Chart */}
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
+            <h2 className="text-xl font-semibold mb-4">G-Matrix Visualization</h2>
+
+            {isLoading ? (
+              <div className="flex items-center justify-center h-[500px]">
+                <Loader2 className="w-8 h-8 animate-spin text-color-text-secondary" />
+              </div>
+            ) : products && products.length > 0 ? (
+              <div className="h-[500px]">
+                <MatrixChart
+                  products={products}
+                  onProductClick={setSelectedProduct}
+                  selectedProduct={selectedProduct}
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[500px] text-color-text-secondary">
+                <p className="text-lg mb-2">No products yet</p>
+                <p className="text-sm">Add your first product to get started!</p>
+              </div>
+            )}
           </div>
 
-          {/* Right Column: Leaderboard */}
+          {/* Right: Leaderboard */}
           <div className="lg:col-span-1">
             <Leaderboard limit={10} />
           </div>
         </div>
-      </main>
-    </div>
+      )}
+    </main>
   )
 }
+
