@@ -13,14 +13,9 @@ import { createFileRoute, redirect, Outlet } from '@tanstack/react-router'
  * Example: src/routes/_authenticated/dashboard.tsx
  */
 export const Route = createFileRoute('/_authenticated')({
-  beforeLoad: async () => {
-    // Check auth from cookie - Better Auth sets a session cookie
-    // This runs on both server and client
-    const isAuthenticated = typeof window !== 'undefined'
-      && document.cookie.includes('better-auth')
-
-    if (!isAuthenticated) {
-      // Redirect to login page (or home if no login page exists)
+  beforeLoad: async ({ context }) => {
+    // Uses SSR-resolved auth state from __root.tsx beforeLoad
+    if (!context.isAuthenticated) {
       throw redirect({ to: '/login' })
     }
   },

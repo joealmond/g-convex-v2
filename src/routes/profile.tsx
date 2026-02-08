@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
+import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -11,7 +12,7 @@ import { getQuadrant, QUADRANTS } from '@/lib/types'
 import { BADGES } from '@convex/lib/gamification'
 
 export const Route = createFileRoute('/profile')({
-  component: Profile,
+  component: ProfilePage,
 })
 
 function ProfileLoading() {
@@ -29,7 +30,19 @@ function ProfileLoading() {
   )
 }
 
-function Profile() {
+/**
+ * SSR-safe wrapper — hooks are only called inside ProfileContent
+ * which is wrapped in a Suspense boundary.
+ */
+function ProfilePage() {
+  return (
+    <Suspense fallback={<ProfileLoading />}>
+      <ProfileContent />
+    </Suspense>
+  )
+}
+
+function ProfileContent() {
   const navigate = useNavigate()
   const user = useQuery(api.users.current)
   const profile = useQuery(api.profiles.getCurrent)

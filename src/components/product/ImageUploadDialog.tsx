@@ -29,6 +29,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [storageId, setStorageId] = useState<string | null>(null)
+  const [realImageUrl, setRealImageUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // AI Analysis results
@@ -50,12 +51,13 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
   const [storeName, setStoreName] = useState('')
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { anonymousId } = useAnonymousId()
+  const { anonId } = useAnonymousId()
   const { t } = useTranslation()
 
   // Convex mutations
   const generateUploadUrl = useMutation(api.files.generateUploadUrl)
-  const analyzeImage = useAction(api.ai.analyzeImage)
+  // Note: api.ai.analyzeImage is an action - will be available after convex push
+  const analyzeImage = useAction(api.ai.analyzeImage as any)
   const createProductAndVote = useMutation(api.votes.createProductAndVote)
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,7 +71,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
     }
 
     // Validate file size (max 10MB)
-    if (file.byteLength > 10 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       setError('Image must be less than 10MB')
       return
     }
@@ -109,6 +111,11 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       if (!result.success) {
         // AI analysis failed, but we can still continue with manual entry
         console.warn('AI analysis failed:', result.error)
+        setError(result.error || 'AI analysis is currently unavailable. You can fill in the details manually.')
+        // Still set the real image URL so the product image loads after creation
+        if (result.imageUrl) {
+          setRealImageUrl(result.imageUrl)
+        }
         setProductName('')
         setSafety(50)
         setTaste(50)
@@ -116,11 +123,12 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
         return
       }
 
-      // 4. Pre-fill form with AI results
+      // 4. Pre-fill form with AI results and store real image URL
       setAnalysis(result.analysis)
       setProductName(result.analysis.productName)
       setSafety(result.analysis.safety)
       setTaste(result.analysis.taste)
+      setRealImageUrl(result.imageUrl)
 
       setStep('review')
     } catch (err: any) {
@@ -139,14 +147,15 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
     setError(null)
 
     try {
-      // Get image URL from storage ID (this is a simplified approach)
-      // In production, you'd want to get the actual URL
-      const imageUrl = `https://convex.cloud/api/storage/${storageId}`
+      // Use the real Convex storage URL — never save blob: URLs to the database
+      // (blob URLs are session-local and become ERR_FILE_NOT_FOUND after reload)
+      const imageUrl = realImageUrl || ''
 
       const result = await createProductAndVote({
         name: productName.trim(),
         imageUrl,
-        anonymousId: anonymousId ?? undefined,
+        imageStorageId: storageId ?? undefined,
+        anonymousId: anonId ?? undefined,
         safety,
         taste,
         price,
@@ -174,13 +183,18 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       setError(err.message || 'Failed to create product')
       setStep('review')
     }
-  }, [storageId, productName, anonymousId, safety, taste, price, storeName, analysis, createProductAndVote, onSuccess])
+  }, [storageId, productName, anonId, safety, taste, price, storeName, analysis, realImageUrl, imagePreview, createProductAndVote, onSuccess])
 
   const resetDialog = useCallback(() => {
+    // Revoke blob URL to free memory
+    if (imagePreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview)
+    }
     setStep('upload')
     setImageFile(null)
     setImagePreview(null)
     setStorageId(null)
+    setRealImageUrl(null)
     setAnalysis(null)
     setProductName('')
     setSafety(50)
@@ -188,25 +202,25 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
     setPrice(undefined)
     setStoreName('')
     setError(null)
-  }, [])
+  }, [imagePreview])
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => { setOpen(newOpen); if (!newOpen) resetDialog() }}>
       <DialogTrigger asChild>
-        {trigger ?? <Button>{t('addProduct')}</Button>}
+        {trigger ?? <Button>{t('imageUpload.addProduct')}</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {step === 'upload' && t('uploadProductImage')}
-            {step === 'analyze' && t('analyzingImage')}
-            {step === 'review' && t('reviewProduct')}
-            {step === 'submitting' && t('submitting')}
+            {step === 'upload' && t('imageUpload.uploadProductImage')}
+            {step === 'analyze' && t('imageUpload.analyzingImage')}
+            {step === 'review' && t('imageUpload.reviewProduct')}
+            {step === 'submitting' && t('imageUpload.submitting')}
           </DialogTitle>
           <DialogDescription>
-            {step === 'upload' && t('uploadProductDescription')}
-            {step === 'analyze' && t('aiAnalyzingDescription')}
-            {step === 'review' && t('reviewProductDescription')}
+            {step === 'upload' && t('imageUpload.uploadProductDescription')}
+            {step === 'analyze' && t('imageUpload.aiAnalyzingDescription')}
+            {step === 'review' && t('imageUpload.reviewProductDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -233,7 +247,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
                 <>
                   <div className="text-4xl">📷</div>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {t('clickToUpload')}
+                    {t('imageUpload.clickToUpload')}
                   </p>
                 </>
               )}
@@ -250,18 +264,29 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
               disabled={!imageFile}
               onClick={handleUploadAndAnalyze}
             >
-              {t('uploadAndAnalyze')}
+              {t('imageUpload.uploadAndAnalyze')}
             </Button>
           </div>
         )}
 
-        {/* Step 2: Analyzing */}
+        {/* Step 2: Analyzing — multi-step progress indicator */}
         {step === 'analyze' && (
-          <div className="flex flex-col items-center justify-center py-8">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            <p className="mt-4 text-sm text-muted-foreground">
-              {t('aiAnalyzing')}...
-            </p>
+          <div className="flex flex-col items-center justify-center py-8 space-y-6">
+            <div className="relative">
+              <div className="h-16 w-16 animate-spin rounded-full border-4 border-muted border-t-primary" />
+              <span className="absolute inset-0 flex items-center justify-center text-2xl">🔍</span>
+            </div>
+            <div className="text-center space-y-2">
+              <p className="font-medium text-sm">
+                {t('imageUpload.aiAnalyzing')}...
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t('imageUpload.aiAnalyzingHint')}
+              </p>
+            </div>
+            <div className="w-full max-w-[200px] h-1.5 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full animate-[progress_3s_ease-in-out_infinite]" />
+            </div>
           </div>
         )}
 
@@ -278,25 +303,25 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
 
             {analysis?.containsGluten && (
               <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                ⚠️ {t('glutenWarning')}
+                ⚠️ {t('imageUpload.glutenWarning')}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="productName">{t('productName')}</Label>
+              <Label htmlFor="productName">{t('imageUpload.productName')}</Label>
               <Input
                 id="productName"
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
-                placeholder={t('enterProductName')}
+                placeholder={t('imageUpload.enterProductName')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>{t('safety')}: {safety}</Label>
+              <Label>{t('imageUpload.safety')}: {safety}</Label>
               <Slider
                 value={[safety]}
-                onValueChange={([v]) => setSafety(v)}
+                onValueChange={(values) => values[0] !== undefined && setSafety(values[0])}
                 min={0}
                 max={100}
                 step={1}
@@ -304,10 +329,10 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
             </div>
 
             <div className="space-y-2">
-              <Label>{t('taste')}: {taste}</Label>
+              <Label>{t('imageUpload.taste')}: {taste}</Label>
               <Slider
                 value={[taste]}
-                onValueChange={([v]) => setTaste(v)}
+                onValueChange={(values) => values[0] !== undefined && setTaste(values[0])}
                 min={0}
                 max={100}
                 step={1}
@@ -315,12 +340,12 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="storeName">{t('storeName')} ({t('optional')})</Label>
+              <Label htmlFor="storeName">{t('imageUpload.storeName')} ({t('imageUpload.optional')})</Label>
               <Input
                 id="storeName"
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
-                placeholder={t('whereDidYouBuy')}
+                placeholder={t('imageUpload.whereDidYouBuy')}
               />
             </div>
 
@@ -332,14 +357,14 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
 
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={resetDialog}>
-                {t('cancel')}
+                {t('imageUpload.cancel')}
               </Button>
               <Button
                 className="flex-1"
                 onClick={handleSubmit}
                 disabled={!productName.trim()}
               >
-                {t('submitProduct')}
+                {t('imageUpload.submitProduct')}
               </Button>
             </div>
           </div>
@@ -350,7 +375,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
           <div className="flex flex-col items-center justify-center py-8">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             <p className="mt-4 text-sm text-muted-foreground">
-              {t('creatingProduct')}...
+              {t('imageUpload.creatingProduct')}...
             </p>
           </div>
         )}

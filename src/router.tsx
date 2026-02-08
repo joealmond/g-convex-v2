@@ -1,10 +1,10 @@
 import { createRouter } from '@tanstack/react-router'
-import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react-query'
+import { QueryClient, MutationCache } from '@tanstack/react-query'
 import { ConvexQueryClient } from '@convex-dev/react-query'
-import { ConvexProvider, ConvexReactClient } from 'convex/react'
+import { ConvexReactClient } from 'convex/react'
+import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
 import { routeTree } from './routeTree.gen'
 import { env } from './lib/env'
-import { Suspense, type ReactNode } from 'react'
 import { NotFound } from './components/NotFound'
 
 // Fallback component for lazy-loaded routes
@@ -21,6 +21,9 @@ function RouteLoadingFallback() {
 
 export function getRouter() {
   const convexClient = new ConvexReactClient(env.VITE_CONVEX_URL)
+  // Don't use expectAuth: true — it blocks ALL queries until auth resolves,
+  // breaking anonymous/public features (product browsing, anonymous voting).
+  // Auth is handled via ConvexBetterAuthProvider + SSR token in __root.tsx.
   const convexQueryClient = new ConvexQueryClient(convexClient)
 
   const queryClient: QueryClient = new QueryClient({
@@ -44,19 +47,15 @@ export function getRouter() {
   const router = createRouter({
     routeTree,
     defaultPreload: 'intent',
-    context: { queryClient },
+    context: { queryClient, convexQueryClient },
     scrollRestoration: true,
     defaultPendingComponent: RouteLoadingFallback,
     defaultNotFoundComponent: NotFound,
-    Wrap: ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={queryClient}>
-        <ConvexProvider client={convexClient}>
-          <Suspense fallback={<RouteLoadingFallback />}>
-            {children}
-          </Suspense>
-        </ConvexProvider>
-      </QueryClientProvider>
-    ),
+  })
+  
+  setupRouterSsrQueryIntegration({
+    router,
+    queryClient,
   })
 
   return router

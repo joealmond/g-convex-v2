@@ -55,7 +55,7 @@ export function CoordinateGrid({
   }
 
   const handlePointerUp = () => {
-    if (disabled) return
+    if (disabled || !isDragging) return
     setIsDragging(false)
     onVote?.(safety, taste)
   }
@@ -180,6 +180,7 @@ export function CoordinateGrid({
           fill={dotColor}
           stroke="hsl(var(--foreground))"
           strokeWidth={2}
+          initial={{ scale: 1, opacity: disabled ? 0.5 : 1 }}
           animate={{
             scale: isDragging ? 1.2 : 1,
             opacity: disabled ? 0.5 : 1,

@@ -7,7 +7,13 @@ import { query, mutation } from './_generated/server'
  */
 export const list = query({
   handler: async (ctx) => {
-    return await ctx.db.query('products').order('desc').collect()
+    const products = await ctx.db.query('products').order('desc').collect()
+    return await Promise.all(products.map(async (p) => {
+      if (p.imageStorageId) {
+        return { ...p, imageUrl: await ctx.storage.getUrl(p.imageStorageId) ?? p.imageUrl }
+      }
+      return p
+    }))
   },
 })
 
@@ -17,7 +23,12 @@ export const list = query({
 export const get = query({
   args: { id: v.id('products') },
   handler: async (ctx, { id }) => {
-    return await ctx.db.get(id)
+    const product = await ctx.db.get(id)
+    if (!product) return null
+    if (product.imageStorageId) {
+      return { ...product, imageUrl: await ctx.storage.getUrl(product.imageStorageId) ?? product.imageUrl }
+    }
+    return product
   },
 })
 
@@ -27,10 +38,16 @@ export const get = query({
 export const getByName = query({
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
-    return await ctx.db
+    const product = await ctx.db
       .query('products')
       .withIndex('by_name', (q) => q.eq('name', name))
       .first()
+    
+    if (!product) return null
+    if (product.imageStorageId) {
+      return { ...product, imageUrl: await ctx.storage.getUrl(product.imageStorageId) ?? product.imageUrl }
+    }
+    return product
   },
 })
 
@@ -42,12 +59,16 @@ export const search = query({
   handler: async (ctx, { query }) => {
     const allProducts = await ctx.db.query('products').collect()
     
-    if (!query) return allProducts
+    const products = query 
+      ? allProducts.filter((product) => product.name.toLowerCase().includes(query.toLowerCase()))
+      : allProducts
 
-    const searchLower = query.toLowerCase()
-    return allProducts.filter((product) =>
-      product.name.toLowerCase().includes(searchLower)
-    )
+    return await Promise.all(products.map(async (p) => {
+      if (p.imageStorageId) {
+        return { ...p, imageUrl: await ctx.storage.getUrl(p.imageStorageId) ?? p.imageUrl }
+      }
+      return p
+    }))
   },
 })
 

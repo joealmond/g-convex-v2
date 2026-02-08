@@ -67,5 +67,30 @@
     "notFound": "Nem található",
     "unauthorized": "Be kell jelentkezned",
     "rateLimited": "Túl sok kérés. Kérlek, lassíts."
+  },
+  "imageUpload": {
+    "addProduct": "Termék Hozzáadása",
+    "uploadProductImage": "Termék Kép Feltöltése",
+    "analyzingImage": "Kép Elemzése",
+    "reviewProduct": "Termék Áttekintése",
+    "submitting": "Termék Létrehozása",
+    "uploadProductDescription": "Készíts fotót a termék címkéjéről",
+    "aiAnalyzingDescription": "AI elemzi a terméket...",
+    "reviewProductDescription": "Nézd át és módosítsd az adatokat",
+    "clickToUpload": "Kattints vagy érintsd meg a feltöltéshez",
+    "uploadAndAnalyze": "Feltöltés és Elemzés",
+    "aiAnalyzing": "AI elemzi a terméket",
+    "aiAnalyzingHint": "Ez néhány másodpercig eltarthat...",
+    "glutenWarning": "Figyelem: Ez a termék glutént tartalmazhat!",
+    "productName": "Termék Neve",
+    "enterProductName": "Add meg a termék nevét",
+    "safety": "Biztonság",
+    "taste": "Íz",
+    "storeName": "Bolt Neve",
+    "optional": "opcionális",
+    "whereDidYouBuy": "Hol vetted?",
+    "cancel": "Mégse",
+    "submitProduct": "Termék Küldése",
+    "creatingProduct": "Termék létrehozása"
   }
 }

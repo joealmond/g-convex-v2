@@ -163,6 +163,7 @@ export const createProductAndVote = mutation({
   args: {
     name: v.string(),
     imageUrl: v.optional(v.string()),
+    imageStorageId: v.optional(v.id('_storage')),
     backImageUrl: v.optional(v.string()),
     ingredients: v.optional(v.array(v.string())),
     anonymousId: v.optional(v.string()),
@@ -226,6 +227,7 @@ export const createProductAndVote = mutation({
     const productId = await ctx.db.insert('products', {
       name: args.name,
       imageUrl: args.imageUrl,
+      imageStorageId: args.imageStorageId,
       backImageUrl: args.backImageUrl,
       ingredients: args.ingredients ?? args.aiAnalysis?.tags,
       averageSafety: args.safety,

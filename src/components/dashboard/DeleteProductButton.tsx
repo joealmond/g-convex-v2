@@ -22,6 +22,8 @@ interface DeleteProductButtonProps {
   onDeleted?: () => void
   variant?: 'default' | 'destructive' | 'outline' | 'ghost'
   size?: 'default' | 'sm' | 'lg' | 'icon'
+  className?: string
+  children?: React.ReactNode
 }
 
 /**
@@ -33,6 +35,8 @@ export function DeleteProductButton({
   onDeleted,
   variant = 'destructive',
   size = 'sm',
+  className,
+  children,
 }: DeleteProductButtonProps) {
   const [open, setOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -63,11 +67,14 @@ export function DeleteProductButton({
       <Button
         variant={variant}
         size={size}
+        className={className}
         onClick={() => setOpen(true)}
         disabled={isDeleting}
       >
         {isDeleting ? (
           <Loader2 className="h-4 w-4 animate-spin" />
+        ) : children ? (
+          children
         ) : (
           <>
             <Trash2 className="h-4 w-4 mr-2" />

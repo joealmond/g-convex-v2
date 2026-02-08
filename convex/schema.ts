@@ -24,6 +24,7 @@ export default defineSchema({
   products: defineTable({
     name: v.string(),
     imageUrl: v.optional(v.string()),
+    imageStorageId: v.optional(v.id('_storage')),
     backImageUrl: v.optional(v.string()), // Back of package image
     ingredients: v.optional(v.array(v.string())),
     averageSafety: v.number(), // 0-100

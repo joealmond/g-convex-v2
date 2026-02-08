@@ -60,8 +60,9 @@ export const current = query({
  * Check if the current user is an admin.
  *
  * Admin status is determined by:
- * 1. Email whitelist (ADMIN_EMAILS in lib/config.ts)
- * 2. Role field on user record (role === 'admin')
+ * 1. First registered user (auto-admin for initial setup)
+ * 2. Email whitelist (ADMIN_EMAILS in lib/config.ts)
+ * 3. Role field on user record (role === 'admin')
  *
  * @returns true if user is an admin, false otherwise
  */
@@ -75,6 +76,14 @@ export const isAdmin = query({
 
     // Check email whitelist first (for easy setup)
     if (user.email && ADMIN_EMAILS.includes(user.email)) {
+      return true
+    }
+
+    // Check if this is the first user (auto-admin for initial setup)
+    // We use profiles table since it's created for each authenticated user
+    const allProfiles = await ctx.db.query('profiles').collect()
+    if (allProfiles.length <= 1) {
+      // Either no profiles yet (this is the first login) or only one profile exists
       return true
     }
 

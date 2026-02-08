@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { useAdmin } from '@/hooks/use-admin'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,7 +28,19 @@ function AdminLoading() {
   )
 }
 
+/**
+ * SSR-safe wrapper — hooks are only called inside AdminPageContent
+ * which is wrapped in a Suspense boundary.
+ */
 function AdminPage() {
+  return (
+    <Suspense fallback={<AdminLoading />}>
+      <AdminPageContent />
+    </Suspense>
+  )
+}
+
+function AdminPageContent() {
   const navigate = useNavigate()
   const adminStatus = useAdmin()
   const user = useQuery(api.users.current)

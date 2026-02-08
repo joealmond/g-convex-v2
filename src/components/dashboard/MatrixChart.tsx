@@ -1,5 +1,6 @@
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Rectangle } from 'recharts'
 import { motion } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
 import type { Product } from '@/lib/types'
 import { getQuadrant, getQuadrantColor, QUADRANTS } from '@/lib/types'
 
@@ -62,9 +63,19 @@ export function MatrixChart({ products, onProductClick, selectedProduct }: Matri
     return null
   }
 
+  // Defer chart rendering until container has non-zero dimensions (avoids SSR/hydration -1 warning)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
   return (
-    <div className="w-full h-full relative">
-      <ResponsiveContainer width="100%" height="100%">
+    <div ref={containerRef} className="w-full h-full relative">
+      {!mounted ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      ) : (
+      <ResponsiveContainer width="100%" height="100%" minHeight={300} minWidth={300}>
         <ScatterChart
           margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
         >
@@ -116,6 +127,7 @@ export function MatrixChart({ products, onProductClick, selectedProduct }: Matri
           </Scatter>
         </ScatterChart>
       </ResponsiveContainer>
+      )}
 
       {/* Quadrant labels */}
       <div className="absolute top-4 left-4 text-xs font-medium opacity-50 pointer-events-none">

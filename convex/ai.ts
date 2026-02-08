@@ -23,7 +23,7 @@ export const analyzeImage = action({
     // Get image URL from Convex storage
     const imageUrl = await ctx.storage.getUrl(args.storageId)
     if (!imageUrl) {
-      return { success: false, error: 'Image not found in storage' }
+      return { success: false, error: 'Image not found in storage', imageUrl: undefined }
     }
 
     try {
@@ -36,12 +36,18 @@ export const analyzeImage = action({
         return { success: false, error: 'Image too large (max 10MB)' }
       }
 
-      const base64Image = Buffer.from(buffer).toString('base64')
+      // Convert ArrayBuffer to base64 using web-standard APIs (V8 compatible)
+      const uint8Array = new Uint8Array(buffer)
+      let binary = ''
+      for (let i = 0; i < uint8Array.length; i++) {
+        binary += String.fromCharCode(uint8Array[i]!)
+      }
+      const base64Image = btoa(binary)
       const mimeType = response.headers.get('content-type') || 'image/jpeg'
 
       // Call Gemini API directly (without SDK for smaller bundle)
       const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -83,14 +89,41 @@ Only return valid JSON, no markdown formatting.`,
       if (!geminiResponse.ok) {
         const errorText = await geminiResponse.text()
         console.error('Gemini API error:', errorText)
-        return { success: false, error: 'AI service temporarily unavailable' }
+
+        // Surface a helpful message for rate-limit / quota errors
+        if (geminiResponse.status === 429) {
+          let retrySeconds: number | undefined
+          try {
+            const errJson = JSON.parse(errorText)
+            const retryDetail = errJson?.error?.details?.find(
+              (d: any) => d['@type']?.includes('RetryInfo')
+            )
+            if (retryDetail?.retryDelay) {
+              retrySeconds = parseInt(retryDetail.retryDelay, 10)
+            }
+          } catch {
+            // ignore parse errors
+          }
+
+          const retrySuffix = retrySeconds
+            ? ` Please try again in ~${retrySeconds} seconds.`
+            : ' Please try again later.'
+
+          return {
+            success: false,
+            error: 'AI analysis is currently unavailable. You can fill in the details manually.',
+            imageUrl,
+          }
+        }
+
+        return { success: false, error: 'AI analysis is currently unavailable. You can fill in the details manually.', imageUrl }
       }
 
       const geminiData = await geminiResponse.json()
       const textContent = geminiData.candidates?.[0]?.content?.parts?.[0]?.text
 
       if (!textContent) {
-        return { success: false, error: 'No analysis returned from AI' }
+        return { success: false, error: 'AI analysis is currently unavailable. You can fill in the details manually.', imageUrl }
       }
 
       // Parse JSON from response (handle potential markdown wrapping)
@@ -104,7 +137,7 @@ Only return valid JSON, no markdown formatting.`,
         }
       } catch (parseError) {
         console.error('Failed to parse AI response:', textContent)
-        return { success: false, error: 'Failed to parse AI analysis' }
+        return { success: false, error: 'AI analysis is currently unavailable. You can fill in the details manually.', imageUrl }
       }
 
       return {
@@ -124,7 +157,8 @@ Only return valid JSON, no markdown formatting.`,
       console.error('AI analysis error:', error)
       return {
         success: false,
-        error: error.message || 'AI analysis failed',
+        error: 'AI analysis is currently unavailable. You can fill in the details manually.',
+        imageUrl,
       }
     }
   },

@@ -67,5 +67,30 @@
     "notFound": "Not found",
     "unauthorized": "You must be logged in",
     "rateLimited": "Too many requests. Please slow down."
+  },
+  "imageUpload": {
+    "addProduct": "Add Product",
+    "uploadProductImage": "Upload Product Image",
+    "analyzingImage": "Analyzing Image",
+    "reviewProduct": "Review Product",
+    "submitting": "Creating Product",
+    "uploadProductDescription": "Take a photo of the product label",
+    "aiAnalyzingDescription": "Our AI is analyzing your product...",
+    "reviewProductDescription": "Review and adjust the details",
+    "clickToUpload": "Click or tap to upload image",
+    "uploadAndAnalyze": "Upload & Analyze",
+    "aiAnalyzing": "AI is analyzing your product",
+    "aiAnalyzingHint": "This may take a few seconds...",
+    "glutenWarning": "Warning: This product may contain gluten!",
+    "productName": "Product Name",
+    "enterProductName": "Enter product name",
+    "safety": "Safety",
+    "taste": "Taste",
+    "storeName": "Store Name",
+    "optional": "optional",
+    "whereDidYouBuy": "Where did you buy this?",
+    "cancel": "Cancel",
+    "submitProduct": "Submit Product",
+    "creatingProduct": "Creating product"
   }
 }

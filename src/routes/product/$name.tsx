@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -11,13 +11,16 @@ import { VotingPanel } from '@/components/dashboard/VotingPanel'
 import { FineTunePanel } from '@/components/dashboard/FineTunePanel'
 import { StoreTagInput } from '@/components/dashboard/StoreTagInput'
 import { CoordinateGrid } from '@/components/dashboard/CoordinateGrid'
-import { getQuadrant, QUADRANTS } from '@/lib/types'
+import { getQuadrant, QUADRANTS, type Product } from '@/lib/types'
 import { useAnonymousId } from '@/hooks/use-anonymous-id'
-import { ArrowLeft, Users, TrendingUp, MapPin, Calendar } from 'lucide-react'
+import { ArrowLeft, Users, TrendingUp, MapPin, Calendar, Edit } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAdmin } from '@/hooks/use-admin'
+import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
+import { EditProductDialog } from '@/components/dashboard/EditProductDialog'
 
 export const Route = createFileRoute('/product/$name')({
-  component: ProductDetail,
+  component: ProductDetailPage,
 })
 
 function ProductDetailLoading() {
@@ -34,9 +37,23 @@ function ProductDetailLoading() {
   )
 }
 
-function ProductDetail() {
+/**
+ * SSR-safe wrapper — hooks are only called inside ProductDetailContent
+ * which is wrapped in a Suspense boundary.
+ */
+function ProductDetailPage() {
+  return (
+    <Suspense fallback={<ProductDetailLoading />}>
+      <ProductDetailContent />
+    </Suspense>
+  )
+}
+
+function ProductDetailContent() {
   const { name } = Route.useParams()
+  const navigate = useNavigate()
   const { anonId: anonymousId } = useAnonymousId()
+  const adminStatus = useAdmin()
   
   const product = useQuery(api.products.getByName, { name: decodeURIComponent(name) })
   const votes = useQuery(api.votes.getByProduct, product ? { productId: product._id } : 'skip')
@@ -46,6 +63,7 @@ function ProductDetail() {
   const [storeLat, setStoreLat] = useState<number | undefined>()
   const [storeLon, setStoreLon] = useState<number | undefined>()
   const [isVoting, setIsVoting] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
 
   const handleVote = async (safety: number, taste: number) => {
     if (!product) return
@@ -89,6 +107,10 @@ function ProductDetail() {
     }
   }
 
+  const handleProductDeleted = () => {
+    navigate({ to: '/' })
+  }
+
   if (product === undefined) {
     return <ProductDetailLoading />
   }
@@ -118,16 +140,42 @@ function ProductDetail() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-5xl mx-auto">
-        {/* Back Button */}
-        <Button variant="ghost" className="mb-6" asChild>
-          <Link to="/">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to G-Matrix
-          </Link>
-        </Button>
+        {/* Navigation & Admin Controls */}
+        <div className="flex items-center justify-between mb-6">
+          <Button variant="ghost" asChild>
+            <Link to="/">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to G-Matrix
+            </Link>
+          </Button>
+
+          {adminStatus?.isAdmin && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Product
+              </Button>
+              <DeleteProductButton 
+                product={product as Product} 
+                onDeleted={handleProductDeleted}
+                className="glass hover:bg-destructive/20 text-destructive border-destructive/30"
+              />
+            </div>
+          )}
+        </div>
 
         {/* Product Header */}
         <div className="mb-8">
+          {product.imageUrl && !product.imageUrl.startsWith('blob:') && (
+            <div className="mb-6 flex justify-center rounded-xl overflow-hidden glass p-6 bg-black/20">
+              <img 
+                src={product.imageUrl} 
+                alt={product.name} 
+                className="max-h-[300px] w-full object-contain drop-shadow-lg" 
+              />
+            </div>
+          )}
+
           <div className="flex items-start justify-between gap-4 mb-4">
             <div className="flex-1">
               <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
@@ -236,7 +284,7 @@ function ProductDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {votes.slice(0, 10).map((vote) => {
+                {votes.slice(0, 10).map((vote: any) => {
                   const voteQuadrant = getQuadrant(vote.safety, vote.taste)
                   const voteQuadrantInfo = QUADRANTS[voteQuadrant]
 
@@ -287,6 +335,13 @@ function ProductDetail() {
           </Card>
         )}
       </div>
+
+      {/* Edit Dialog */}
+      <EditProductDialog 
+        product={product as Product}
+        open={isEditing}
+        onOpenChange={setIsEditing}
+      />
     </div>
   )
 }

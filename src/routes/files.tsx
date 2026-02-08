@@ -13,13 +13,48 @@ import {
   LogIn,
   Download
 } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { Suspense, useState, useRef } from 'react'
 
 export const Route = createFileRoute('/files')({
   component: FilesPage,
 })
 
+/** SSR-safe skeleton shown while hooks hydrate on the client */
+function FilesPageSkeleton() {
+  return (
+    <div className="min-h-screen">
+      <header className="border-b border-border bg-card">
+        <div className="container mx-auto px-4 py-4">
+          <div className="h-7 w-32 bg-muted animate-pulse rounded" />
+        </div>
+      </header>
+      <main className="container mx-auto px-4 py-8 max-w-3xl">
+        <div className="bg-card rounded-lg border border-border p-6 mb-6">
+          <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4" />
+          <div className="h-10 w-40 bg-muted animate-pulse rounded" />
+        </div>
+        <div className="bg-card rounded-lg border border-border p-6">
+          <div className="h-6 w-24 bg-muted animate-pulse rounded mb-4" />
+          <div className="h-32 bg-muted animate-pulse rounded" />
+        </div>
+      </main>
+    </div>
+  )
+}
+
+/**
+ * SSR-safe wrapper — hooks are only called inside FilesPageContent
+ * which is wrapped in a Suspense boundary.
+ */
 function FilesPage() {
+  return (
+    <Suspense fallback={<FilesPageSkeleton />}>
+      <FilesPageContent />
+    </Suspense>
+  )
+}
+
+function FilesPageContent() {
   const { data: session, isPending: isSessionLoading } = useSession()
   const { data: files, isLoading: isFilesLoading } = useQuery(
     convexQuery(api.files.listMyFiles, {})

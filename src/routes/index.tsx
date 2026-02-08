@@ -1,21 +1,60 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { MatrixChart } from '@/components/dashboard/MatrixChart'
 import { ProductList } from '@/components/dashboard/ProductList'
 import { Leaderboard } from '@/components/dashboard/Leaderboard'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { AddProductDialog } from '@/components/dashboard/AddProductDialog'
+import { ImageUploadDialog } from '@/components/product/ImageUploadDialog'
 import { Navigation } from '@/components/Navigation'
-import { Loader2, Trophy, Flame, TrendingUp } from 'lucide-react'
+import { Loader2, Trophy, Flame, TrendingUp, Camera, Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/types'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
 })
 
+/** SSR-safe skeleton shown while hooks hydrate on the client */
+function HomePageSkeleton() {
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navigation />
+      <main className="flex-1 container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="border border-border rounded-lg bg-card p-6">
+              <div className="h-6 w-48 bg-muted animate-pulse rounded mb-4" />
+              <div className="h-[500px] bg-muted animate-pulse rounded" />
+            </div>
+            <div className="border border-border rounded-lg bg-card p-6">
+              <div className="h-64 bg-muted animate-pulse rounded" />
+            </div>
+          </div>
+          <div className="lg:col-span-1">
+            <div className="h-96 bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+/**
+ * SSR-safe wrapper — hooks are only called inside HomePageContent
+ * which is wrapped in a Suspense boundary.
+ */
 function HomePage() {
+  return (
+    <Suspense fallback={<HomePageSkeleton />}>
+      <HomePageContent />
+    </Suspense>
+  )
+}
+
+function HomePageContent() {
   const user = useQuery(api.users.current)
   const profile = useQuery(api.profiles.getCurrent)
   const products = useQuery(api.products.list)
@@ -23,6 +62,16 @@ function HomePage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
 
   const isLoading = products === undefined
+
+  const handleProductCreated = (productId: string) => {
+    // Find and select the newly created product
+    if (products) {
+      const newProduct = products.find(p => p._id === productId)
+      if (newProduct) {
+        setSelectedProduct(newProduct)
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -95,8 +144,27 @@ function HomePage() {
                   products={products || []}
                   onProductSelect={setSelectedProduct}
                   selectedProduct={selectedProduct}
-                  onAddProduct={() => {}}
-                  renderAddButton={() => <AddProductDialog />}
+                  renderAddButton={() => (
+                    <div className="flex gap-2">
+                      <ImageUploadDialog
+                        onSuccess={handleProductCreated}
+                        trigger={
+                          <Button className="flex-1" variant="default">
+                            <Camera className="h-4 w-4 mr-2" />
+                            Scan Product
+                          </Button>
+                        }
+                      />
+                      <AddProductDialog
+                        trigger={
+                          <Button className="flex-1" variant="outline">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Manual Entry
+                          </Button>
+                        }
+                      />
+                    </div>
+                  )}
                 />
               )}
             </div>
