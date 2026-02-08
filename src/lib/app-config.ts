@@ -160,6 +160,52 @@ export const appConfig = {
   certificationName: "celiac-safe",
   
   //////////////////////////////////////////////////////////////////////////////
+  // DIETARY RESTRICTIONS (Multi-condition profiles)
+  //////////////////////////////////////////////////////////////////////////////
+  
+  /**
+   * Dietary restrictions with severity-based thresholds
+   * Each restriction has 5 thresholds (1=mild, 5=severe) mapping to minimum safety scores
+   */
+  dietaryRestrictions: [
+    {
+      id: "celiac",
+      label: "Celiac Disease",
+      emoji: "🌾",
+      description: "Severe gluten intolerance requiring strict avoidance",
+      thresholds: [40, 50, 60, 70, 80], // Severity 1-5
+    },
+    {
+      id: "gluten-sensitive",
+      label: "Gluten Sensitive",
+      emoji: "🍞",
+      description: "Non-celiac gluten sensitivity",
+      thresholds: [20, 35, 50, 65, 75], // Severity 1-5
+    },
+    {
+      id: "lactose",
+      label: "Lactose Intolerant",
+      emoji: "🥛",
+      description: "Difficulty digesting dairy products",
+      thresholds: [30, 45, 60, 75, 85], // Severity 1-5
+    },
+    {
+      id: "soy",
+      label: "Soy Allergy",
+      emoji: "🫘",
+      description: "Allergic reaction to soy products",
+      thresholds: [40, 55, 65, 75, 85], // Severity 1-5
+    },
+    {
+      id: "nut",
+      label: "Nut Allergy",
+      emoji: "🥜",
+      description: "Allergic reaction to nuts",
+      thresholds: [50, 60, 70, 80, 90], // Severity 1-5 (high stakes)
+    },
+  ],
+  
+  //////////////////////////////////////////////////////////////////////////////
   // STORE DEFAULTS (per locale)
   //////////////////////////////////////////////////////////////////////////////
   

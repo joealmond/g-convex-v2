@@ -149,6 +149,22 @@ export const cast = mutation({
         hasStore: args.storeName !== undefined,
         hasGPS: args.latitude !== undefined && args.longitude !== undefined,
       })
+      
+      // Update challenge progress
+      await ctx.scheduler.runAfter(0, internal.challenges.updateChallengeProgress, {
+        userId: userId,
+        challengeType: 'vote',
+        incrementBy: 1,
+      })
+      
+      // Update store challenge if store tagged
+      if (args.storeName) {
+        await ctx.scheduler.runAfter(0, internal.challenges.updateChallengeProgress, {
+          userId: userId,
+          challengeType: 'store',
+          incrementBy: 1,
+        })
+      }
     }
 
     return voteId
@@ -274,6 +290,28 @@ export const createProductAndVote = mutation({
         hasStore: args.storeName !== undefined,
         hasGPS: args.latitude !== undefined && args.longitude !== undefined,
       })
+      
+      // Update challenge progress
+      await ctx.scheduler.runAfter(0, internal.challenges.updateChallengeProgress, {
+        userId: userId,
+        challengeType: 'product',
+        incrementBy: 1,
+      })
+      
+      await ctx.scheduler.runAfter(0, internal.challenges.updateChallengeProgress, {
+        userId: userId,
+        challengeType: 'vote',
+        incrementBy: 1,
+      })
+      
+      // Update store challenge if store tagged
+      if (args.storeName) {
+        await ctx.scheduler.runAfter(0, internal.challenges.updateChallengeProgress, {
+          userId: userId,
+          challengeType: 'store',
+          incrementBy: 1,
+        })
+      }
     }
 
     return { productId, voteId }
@@ -282,10 +320,14 @@ export const createProductAndVote = mutation({
 
 /**
  * Internal mutation to recalculate product averages
+ * Supports time-decay: older votes have less weight using exponential decay
  */
 export const recalculateProduct = internalMutation({
-  args: { productId: v.id('products') },
-  handler: async (ctx, { productId }) => {
+  args: { 
+    productId: v.id('products'),
+    applyTimeDecay: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { productId, applyTimeDecay = false }) => {
     const votes = await ctx.db
       .query('votes')
       .withIndex('by_product', (q) => q.eq('productId', productId))
@@ -304,6 +346,18 @@ export const recalculateProduct = internalMutation({
       return
     }
 
+    // Get decay rate from settings (default 0.995 = 0.5% per day)
+    let decayRate = 0.995
+    if (applyTimeDecay) {
+      const decayRateSetting = await ctx.db
+        .query('settings')
+        .withIndex('by_key', (q) => q.eq('key', 'DECAY_RATE'))
+        .first()
+      if (decayRateSetting && typeof decayRateSetting.value === 'number') {
+        decayRate = decayRateSetting.value
+      }
+    }
+
     let totalWeightSafety = 0
     let totalWeightTaste = 0
     let totalWeightPrice = 0
@@ -315,19 +369,27 @@ export const recalculateProduct = internalMutation({
 
     const REGISTERED_WEIGHT = 2
     const ANONYMOUS_WEIGHT = 1
+    const now = Date.now()
 
     for (const vote of votes) {
-      const weight = vote.isAnonymous ? ANONYMOUS_WEIGHT : REGISTERED_WEIGHT
+      let baseWeight = vote.isAnonymous ? ANONYMOUS_WEIGHT : REGISTERED_WEIGHT
+      
+      // Apply time-decay if enabled
+      if (applyTimeDecay) {
+        const ageInDays = (now - vote.createdAt) / (1000 * 60 * 60 * 24)
+        const timeDecay = Math.pow(decayRate, ageInDays)
+        baseWeight = baseWeight * timeDecay
+      }
 
-      weightedSafetySum += vote.safety * weight
-      totalWeightSafety += weight
+      weightedSafetySum += vote.safety * baseWeight
+      totalWeightSafety += baseWeight
 
-      weightedTasteSum += vote.taste * weight
-      totalWeightTaste += weight
+      weightedTasteSum += vote.taste * baseWeight
+      totalWeightTaste += baseWeight
 
       if (vote.price !== undefined) {
-        weightedPriceSum += vote.price * weight
-        totalWeightPrice += weight
+        weightedPriceSum += vote.price * baseWeight
+        totalWeightPrice += baseWeight
       }
 
       if (vote.isAnonymous) {
@@ -346,6 +408,38 @@ export const recalculateProduct = internalMutation({
       anonymousVotes: anonymousCount,
       lastUpdated: Date.now(),
     })
+  },
+})
+
+/**
+ * Recalculate all products with time-decay
+ * Called by daily cron job
+ */
+export const recalculateAllProducts = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // Check if time-decay is enabled
+    const enabledSetting = await ctx.db
+      .query('settings')
+      .withIndex('by_key', (q) => q.eq('key', 'TIME_DECAY_ENABLED'))
+      .first()
+    
+    const isEnabled = enabledSetting?.value === true || enabledSetting?.value === 'true'
+    if (!isEnabled) {
+      console.log('Time-decay is disabled, skipping recalculation')
+      return
+    }
+
+    const products = await ctx.db.query('products').collect()
+    
+    for (const product of products) {
+      await ctx.runMutation(internal.votes.recalculateProduct, {
+        productId: product._id,
+        applyTimeDecay: true,
+      })
+    }
+    
+    console.log(`Recalculated ${products.length} products with time-decay`)
   },
 })
 

@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { query, mutation } from './_generated/server'
+import { query, mutation, internalMutation } from './_generated/server'
 import { BADGES, shouldAwardBadge } from './lib/gamification'
 
 /**
@@ -193,5 +193,35 @@ export const resetStreak = mutation({
       streak: 0,
       lastVoteDate: undefined,
     })
+  },
+})
+
+/**
+ * Internal mutation to add points (for challenges and automated rewards)
+ * No auth check since this is called by internal mutations
+ */
+export const addPointsInternal = internalMutation({
+  args: {
+    userId: v.string(),
+    points: v.number(),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, { userId, points, reason }) => {
+    const profile = await ctx.db
+      .query('profiles')
+      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .first()
+
+    if (!profile) {
+      throw new Error('Profile not found')
+    }
+
+    await ctx.db.patch(profile._id, {
+      points: Math.max(0, profile.points + points),
+    })
+    
+    if (reason) {
+      console.log(`Awarded ${points} points to ${userId}: ${reason}`)
+    }
   },
 })

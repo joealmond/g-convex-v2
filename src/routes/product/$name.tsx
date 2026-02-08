@@ -12,6 +12,7 @@ import { VotingSheet } from '@/components/product/VotingSheet'
 import { ReportProductDialog } from '@/components/product/ReportProductDialog'
 import { ShareButton } from '@/components/product/ShareButton'
 import { AllVotesChart } from '@/components/product/AllVotesChart'
+import { PriceHistoryChart } from '@/components/product/PriceHistoryChart'
 import { StoreTagInput } from '@/components/dashboard/StoreTagInput'
 import { CoordinateGrid } from '@/components/dashboard/CoordinateGrid'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
@@ -326,12 +327,15 @@ function ProductDetailContent() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="average" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsList className={`grid w-full mb-4 ${product.avgPrice ? 'grid-cols-4' : 'grid-cols-3'}`}>
                 <TabsTrigger value="average">Average</TabsTrigger>
                 <TabsTrigger value="my-vote" disabled={!myVote}>
                   My Vote
                 </TabsTrigger>
                 <TabsTrigger value="all-votes">All Votes</TabsTrigger>
+                {product.avgPrice && (
+                  <TabsTrigger value="price-history">Price</TabsTrigger>
+                )}
               </TabsList>
 
               {/* Average View */}
@@ -401,6 +405,13 @@ function ProductDetailContent() {
                   {allVotes?.length === 1 ? 'vote' : 'votes'}
                 </p>
               </TabsContent>
+
+              {/* Price History View */}
+              {product.avgPrice && (
+                <TabsContent value="price-history">
+                  <PriceHistoryChart productId={product._id} />
+                </TabsContent>
+              )}
             </Tabs>
           </CardContent>
         </Card>

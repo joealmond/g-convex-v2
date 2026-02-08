@@ -12,6 +12,7 @@ import { BADGES } from '@convex/lib/gamification'
 import { getUserLevel } from '@/lib/app-config'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { BadgeDisplay } from '@/components/dashboard/BadgeDisplay'
+import { DietaryProfileSettings } from '@/components/dashboard/DietaryProfileSettings'
 
 export const Route = createFileRoute('/profile')({
   component: ProfilePage,
@@ -225,6 +226,11 @@ function ProfileContent() {
         <div>
           <h2 className="text-lg font-semibold text-color-text mb-3">Badges</h2>
           <BadgeDisplay badges={earnedBadges} allBadges={BADGES} />
+        </div>
+
+        {/* Dietary Preferences Section */}
+        <div>
+          <DietaryProfileSettings />
         </div>
 
         {/* Contributions Feed */}

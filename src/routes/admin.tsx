@@ -7,10 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AddProductDialog } from '@/components/dashboard/AddProductDialog'
 import { EditProductDialog } from '@/components/dashboard/EditProductDialog'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
-import { Shield, ArrowLeft, Search, Users, TrendingUp, Package, Edit, Flag } from 'lucide-react'
+import { AdminSettings } from '@/components/admin/AdminSettings'
+import { Shield, ArrowLeft, Search, Users, TrendingUp, Package, Edit, Flag, Settings } from 'lucide-react'
 import { getQuadrant, QUADRANTS } from '@/lib/types'
 import type { Product } from '@/lib/types'
 
@@ -137,6 +139,21 @@ function AdminPageContent() {
           </Card>
         </div>
 
+        {/* Tabs for Products and Settings */}
+        <Tabs defaultValue="products" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="products" className="flex items-center gap-2">
+              <Package className="w-4 h-4" />
+              Products
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              Settings
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Products Tab */}
+          <TabsContent value="products">
         {/* Products Management */}
         <Card>
           <CardHeader>
@@ -230,6 +247,13 @@ function AdminPageContent() {
             </div>
           </CardContent>
         </Card>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings">
+            <AdminSettings />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Edit Dialog */}

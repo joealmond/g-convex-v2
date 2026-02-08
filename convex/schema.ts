@@ -109,4 +109,68 @@ export default defineSchema({
     .index('by_follower', ['followerId'])
     .index('by_following', ['followingId'])
     .index('by_relationship', ['followerId', 'followingId']),
+
+  // Dietary Profiles - user dietary restrictions with severity levels
+  dietaryProfiles: defineTable({
+    userId: v.string(), // Better Auth user._id is a string
+    conditions: v.array(v.object({
+      type: v.string(), // "celiac", "lactose", "gluten-sensitive", etc.
+      severity: v.number(), // 1-5 (1=mild, 5=severe)
+    })),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index('by_user', ['userId']),
+
+  // Price History - time-series price tracking
+  priceHistory: defineTable({
+    productId: v.id('products'),
+    storeId: v.optional(v.string()),
+    storeName: v.optional(v.string()),
+    price: v.number(), // 1-5 scale
+    snapshotDate: v.string(), // YYYY-MM-DD format
+    createdAt: v.number(),
+  })
+    .index('by_product', ['productId'])
+    .index('by_product_and_date', ['productId', 'snapshotDate']),
+
+  // Challenges - weekly/monthly community goals
+  challenges: defineTable({
+    title: v.string(),
+    description: v.string(),
+    type: v.string(), // "vote" | "product" | "streak" | "store"
+    targetValue: v.number(), // e.g., 10 votes, 2 products, 7 days streak
+    rewardPoints: v.number(),
+    rewardBadge: v.optional(v.string()),
+    startDate: v.number(),
+    endDate: v.number(),
+    isActive: v.boolean(),
+    isTemplate: v.boolean(), // Auto-generated vs admin-created
+    createdBy: v.optional(v.string()), // Admin userId if manually created
+    createdAt: v.number(),
+  })
+    .index('by_active', ['isActive'])
+    .index('by_date_range', ['startDate', 'endDate']),
+
+  // User Challenges - progress tracking for each user on each challenge
+  userChallenges: defineTable({
+    userId: v.string(), // Better Auth user._id is a string
+    challengeId: v.id('challenges'),
+    progress: v.number(), // Current progress (e.g., 5 out of 10 votes)
+    completed: v.boolean(),
+    completedAt: v.optional(v.number()),
+    rewardClaimed: v.boolean(), // Prevent double-claiming
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_challenge', ['challengeId'])
+    .index('by_user_and_challenge', ['userId', 'challengeId']),
+
+  // Settings - admin configuration for time-decay, crons, etc.
+  settings: defineTable({
+    key: v.string(), // "TIME_DECAY_ENABLED", "DECAY_RATE", "DECAY_HOUR", etc.
+    value: v.union(v.string(), v.number(), v.boolean()),
+    updatedBy: v.optional(v.string()), // Admin userId
+    updatedAt: v.number(),
+  }).index('by_key', ['key']),
 })

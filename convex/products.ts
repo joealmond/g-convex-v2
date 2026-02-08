@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { query, mutation } from './_generated/server'
+import { query, mutation, internalMutation } from './_generated/server'
 
 /**
  * List all products
@@ -235,5 +235,81 @@ export const recalculateAverages = mutation({
       anonymousVotes: anonymousCount,
       lastUpdated: Date.now(),
     })
+  },
+})
+
+/**
+ * Capture price snapshots for all products
+ * Called by daily cron job
+ * Only stores snapshots when price changes by >= 0.2
+ */
+export const capturePriceSnapshots = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // Check if price snapshots are enabled
+    const enabledSetting = await ctx.db
+      .query('settings')
+      .withIndex('by_key', (q) => q.eq('key', 'PRICE_SNAPSHOT_ENABLED'))
+      .first()
+    
+    const isEnabled = enabledSetting?.value !== false
+    if (!isEnabled) {
+      console.log('Price snapshots are disabled, skipping')
+      return
+    }
+
+    const products = await ctx.db.query('products').collect()
+    const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+    let snapshotCount = 0
+    
+    for (const product of products) {
+      if (product.avgPrice === undefined) continue
+      
+      // Get last snapshot
+      const lastSnapshot = await ctx.db
+        .query('priceHistory')
+        .withIndex('by_product_and_date', (q) => q.eq('productId', product._id))
+        .order('desc')
+        .first()
+      
+      // Only store if price changed by >= 0.2 or first snapshot
+      const shouldSnapshot = !lastSnapshot || 
+        Math.abs(product.avgPrice - lastSnapshot.price) >= 0.2
+      
+      if (shouldSnapshot) {
+        await ctx.db.insert('priceHistory', {
+          productId: product._id,
+          price: product.avgPrice,
+          snapshotDate: today,
+          createdAt: Date.now(),
+        })
+        snapshotCount++
+      }
+    }
+    
+    console.log(`Captured ${snapshotCount} price snapshots out of ${products.length} products`)
+  },
+})
+
+/**
+ * Get price history for a product
+ */
+export const getPriceHistory = query({
+  args: { 
+    productId: v.id('products'),
+    days: v.optional(v.number()), // Default 90 days
+  },
+  handler: async (ctx, args) => {
+    const days = args.days || 90
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - days)
+    const cutoffDateStr = cutoffDate.toISOString().split('T')[0]
+    
+    return await ctx.db
+      .query('priceHistory')
+      .withIndex('by_product', (q) => q.eq('productId', args.productId))
+      .filter((q) => q.gte(q.field('snapshotDate'), cutoffDateStr))
+      .order('desc')
+      .collect()
   },
 })
