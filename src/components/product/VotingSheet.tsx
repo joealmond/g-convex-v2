@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import { appConfig } from '@/lib/app-config'
 import { cn } from '@/lib/utils'
+import { ThumbsUp } from 'lucide-react'
 
 interface VotingSheetProps {
   onVote: (safety: number, taste: number, price?: number) => void
   disabled?: boolean
+  averageSafety?: number
+  averageTaste?: number
 }
 
 /**
@@ -17,8 +20,14 @@ interface VotingSheetProps {
  * - Full-width taste buttons (3: Yass!/Meh/Pass)
  * - 5-level price buttons ($-$$$$$)
  * - Combo preset buttons (Holy Grail/Survivor/Risky/Bin)
+ * - "Agree with Community" quick vote
  */
-export function VotingSheet({ onVote, disabled = false }: VotingSheetProps) {
+export function VotingSheet({ 
+  onVote, 
+  disabled = false,
+  averageSafety,
+  averageTaste
+}: VotingSheetProps) {
   const [selectedSafety, setSelectedSafety] = useState<number | null>(null)
   const [selectedTaste, setSelectedTaste] = useState<number | null>(null)
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null)
@@ -227,6 +236,37 @@ export function VotingSheet({ onVote, disabled = false }: VotingSheetProps) {
           </Button>
         </motion.div>
       </div>
+
+      {/* Agree with Community Button */}
+      {averageSafety !== undefined && averageTaste !== undefined && (
+        <>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-color-border"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-color-text-secondary">Quick vote</span>
+            </div>
+          </div>
+
+          <motion.div whileTap={{ scale: disabled ? 1 : 0.98 }}>
+            <Button
+              variant="outline"
+              className="w-full h-14 flex items-center justify-center gap-2 border-2 border-color-primary hover:bg-color-primary hover:text-white"
+              onClick={() => onVote(averageSafety, averageTaste, selectedPrice ?? undefined)}
+              disabled={disabled}
+            >
+              <ThumbsUp className="h-5 w-5" />
+              <div className="text-center">
+                <div className="font-semibold text-sm">Agree with Community</div>
+                <div className="text-xs text-color-text-secondary">
+                  Safety: {Math.round(averageSafety)} • Taste: {Math.round(averageTaste)}
+                </div>
+              </div>
+            </Button>
+          </motion.div>
+        </>
+      )}
 
       {/* Help Text */}
       {(selectedSafety !== null || selectedTaste !== null) && (

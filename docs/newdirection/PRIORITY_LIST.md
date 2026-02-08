@@ -152,16 +152,16 @@ Broken into 6 sub-sprints. Each sprint produces a testable increment.
 
 These make the app feel "fully working" — missing any of these makes the app feel incomplete for a new user.
 
-| Rank | I | N | E | Score | Feature | Details | Gap Ref |
-|------|---|---|---|-------|---------|---------|---------|
-| 1 | 5 | 5 | M | 12.5 | **"Near Me" GPS filter** on home feed | When "Nearby" filter chip active, filter products to those with at least one store ≤5km from user. Uses existing `useGeolocation()` hook + `calculateDistance()` from utils. Graceful fallback: if GPS denied, show toast "Enable location to see nearby products" and disable chip | Gap 3.3, 8.3 |
-| 2 | 3 | 3 | S | 15.0 | **Client-side image resize + WebP** | Before uploading product image, resize to max 1024×1024px and convert to WebP at 80% quality using Canvas API. Reduces upload size ~5-10× on mobile (critical for cellular). Apply in `ImageUploadDialog.tsx` before `storage.generateUploadUrl()` | Gap 5.7 |
-| 3 | 3 | 2 | S | 12.0 | **"Near Me" badge on stores** | In `StoreList.tsx`, stores within 5km show green "📍 Nearby" pill badge. Uses existing Haversine `calculateDistance()` + `useGeolocation()` position | Gap 4.9, 8.4 |
-| 4 | 3 | 2 | S | 12.0 | **Store freshness UI** | In `StoreList.tsx`, store entry border/indicator: green (<7 days old), yellow (7-30 days), faded/gray (>30 days). Based on `store.lastSeenAt` vs. `Date.now()`. CSS only | Gap 4.8 |
-| 5 | 3 | 2 | S | 12.0 | **Clickable store → maps** | Tap store entry → open in native maps. Platform detection: `maps://` for iOS (Capacitor or Safari), `geo:` intent for Android, `https://maps.google.com/?q=lat,lng` for desktop web | Gap 4.10, 8.6 |
-| 6 | 3 | 2 | S | 12.0 | **"Agree with Community" vote** | Button in VotingSheet: "Agree with Community 👍" — casts vote with current community average values (reads `product.averageSafety` + `product.averageTaste`). One click, maximum convenience | Gap 2.13 |
-| 7 | 2 | 2 | S | 10.0 | **Rating labels** | Next to each score on product detail: "Excellent" (≥80), "Good" (≥60), "Fair" (≥40), "Poor" (<40). Thresholds and labels from `appConfig.ratingLabels`. Small colored text next to percentage | Gap 4.5 |
-| 8 | 2 | 1 | S | 7.0 | **Level progress bar on profile** | XP progress within current level. Level thresholds from config. Circular or linear progress indicator on profile page header | Gap 7.6 |
+| Rank | I | N | E | Score | Feature | Details | Gap Ref | Status |
+|------|---|---|---|-------|---------|---------|---------|--------|
+| 1 | 5 | 5 | M | 12.5 | **"Near Me" GPS filter** on home feed | When "Nearby" filter chip active, filter products to those with at least one store ≤5km from user. Uses existing `useGeolocation()` hook + `calculateDistance()` from utils. Graceful fallback: if GPS denied, show toast "Enable location to see nearby products" and disable chip | Gap 3.3, 8.3 | ✅ Implemented in Wave 1 (index.tsx) |
+| 2 | 3 | 3 | S | 15.0 | **Client-side image resize + WebP** | Before uploading product image, resize to max 1024×1024px and convert to WebP at 80% quality using Canvas API. Reduces upload size ~5-10× on mobile (critical for cellular). Apply in `ImageUploadDialog.tsx` before `storage.generateUploadUrl()` | Gap 5.7 | ✅ Complete |
+| 3 | 3 | 2 | S | 12.0 | **"Near Me" badge on stores** | In `StoreList.tsx`, stores within 5km show green "📍 Nearby" pill badge. Uses existing Haversine `calculateDistance()` + `useGeolocation()` position | Gap 4.9, 8.4 | ✅ Complete |
+| 4 | 3 | 2 | S | 12.0 | **Store freshness UI** | In `StoreList.tsx`, store entry border/indicator: green (<7 days old), yellow (7-30 days), faded/gray (>30 days). Based on `store.lastSeenAt` vs. `Date.now()`. CSS only | Gap 4.8 | ✅ Implemented in Wave 1 |
+| 5 | 3 | 2 | S | 12.0 | **Clickable store → maps** | Tap store entry → open in native maps. Platform detection: `maps://` for iOS (Capacitor or Safari), `geo:` intent for Android, `https://maps.google.com/?q=lat,lng` for desktop web | Gap 4.10, 8.6 | ✅ Implemented in Wave 1 |
+| 6 | 3 | 2 | S | 12.0 | **"Agree with Community" vote** | Button in VotingSheet: "Agree with Community 👍" — casts vote with current community average values (reads `product.averageSafety` + `product.averageTaste`). One click, maximum convenience | Gap 2.13 | ✅ Complete |
+| 7 | 2 | 2 | S | 10.0 | **Rating labels** | Next to each score on product detail: "Excellent" (≥80), "Good" (≥60), "Fair" (≥40), "Poor" (<40). Thresholds and labels from `appConfig.ratingLabels`. Small colored text next to percentage | Gap 4.5 | ✅ Implemented in Wave 1 (RatingBars) |
+| 8 | 2 | 1 | S | 7.0 | **Level progress bar on profile** | XP progress within current level. Level thresholds from config. Circular or linear progress indicator on profile page header | Gap 7.6 | ✅ Implemented in Wave 1 (profile.tsx) |
 
 ---
 

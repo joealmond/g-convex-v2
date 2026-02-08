@@ -270,7 +270,12 @@ function ProductDetailContent() {
             </div>
 
             {/* Voting Interface */}
-            <VotingSheet onVote={handleVote} disabled={isVoting} />
+            <VotingSheet 
+              onVote={handleVote} 
+              disabled={isVoting}
+              averageSafety={product.averageSafety}
+              averageTaste={product.averageTaste}
+            />
           </CardContent>
         </Card>
 

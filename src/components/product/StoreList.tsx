@@ -3,6 +3,8 @@
 import { type Product } from '@/lib/types'
 import { MapPin, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useGeolocation } from '@/hooks/use-geolocation'
+import { Badge } from '@/components/ui/badge'
 
 interface StoreListProps {
   product: Product
@@ -14,9 +16,12 @@ interface StoreListProps {
  * - Price ($ icon row)
  * - Last seen (relative time)
  * - Freshness indicator (green <7d, yellow <30d, faded >30d)
+ * - "Near Me" badge for stores within 5km
  * - Tap to open in maps
  */
 export function StoreList({ product }: StoreListProps) {
+  const { coords } = useGeolocation()
+
   if (!product.stores || product.stores.length === 0) {
     return (
       <div className="text-center py-8 text-color-text-secondary">
@@ -62,6 +67,28 @@ export function StoreList({ product }: StoreListProps) {
   }
 
   /**
+   * Calculate distance to store in km
+   */
+  const getStoreDistance = (store: (typeof product.stores)[0]): number | undefined => {
+    if (!coords?.latitude || !coords?.longitude || !store.geoPoint) {
+      return undefined
+    }
+
+    const latDiff = (store.geoPoint.lat - coords.latitude) * 111.32
+    const lonDiff =
+      (store.geoPoint.lng - coords.longitude) * 111.32 * Math.cos((coords.latitude * Math.PI) / 180)
+    return Math.sqrt(latDiff ** 2 + lonDiff ** 2)
+  }
+
+  /**
+   * Check if store is nearby (≤5km)
+   */
+  const isNearby = (store: (typeof product.stores)[0]): boolean => {
+    const distance = getStoreDistance(store)
+    return distance !== undefined && distance <= 5
+  }
+
+  /**
    * Open store location in maps
    */
   const handleOpenMap = (store: (typeof product.stores)[0]) => {
@@ -87,7 +114,16 @@ export function StoreList({ product }: StoreListProps) {
           )}
         >
           {/* Store Name */}
-          <h4 className="font-semibold text-sm text-color-text mb-2">{store.name}</h4>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-semibold text-sm text-color-text">{store.name}</h4>
+            
+            {/* Near Me Badge */}
+            {isNearby(store) && (
+              <Badge className="bg-color-safety-high text-white text-xs">
+                📍 Nearby
+              </Badge>
+            )}
+          </div>
 
           {/* Details Row */}
           <div className="flex items-center gap-4 text-xs text-color-text-secondary">

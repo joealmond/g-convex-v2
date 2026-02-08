@@ -61,7 +61,77 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
   const analyzeImage = useAction(api.ai.analyzeImage as any)
   const createProductAndVote = useMutation(api.votes.createProductAndVote)
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  /**
+   * Resize image and convert to WebP
+   * Reduces file size significantly for mobile uploads
+   */
+  const resizeAndConvertImage = useCallback(
+    (file: File): Promise<File> => {
+      return new Promise((resolve, reject) => {
+        const img = new Image()
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+
+        if (!ctx) {
+          reject(new Error('Canvas not supported'))
+          return
+        }
+
+        img.onload = () => {
+          // Calculate new dimensions (max 1024×1024, maintain aspect ratio)
+          let width = img.width
+          let height = img.height
+          const maxSize = 1024
+
+          if (width > maxSize || height > maxSize) {
+            if (width > height) {
+              height = (height / width) * maxSize
+              width = maxSize
+            } else {
+              width = (width / height) * maxSize
+              height = maxSize
+            }
+          }
+
+          // Set canvas size
+          canvas.width = width
+          canvas.height = height
+
+          // Draw resized image
+          ctx.drawImage(img, 0, 0, width, height)
+
+          // Convert to WebP blob at 80% quality
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                // Create new File from blob
+                const resizedFile = new File(
+                  [blob],
+                  file.name.replace(/\.[^.]+$/, '.webp'),
+                  { type: 'image/webp' }
+                )
+                resolve(resizedFile)
+              } else {
+                reject(new Error('Failed to create WebP image'))
+              }
+            },
+            'image/webp',
+            0.8
+          )
+        }
+
+        img.onerror = () => {
+          reject(new Error('Failed to load image'))
+        }
+
+        // Load the image
+        img.src = URL.createObjectURL(file)
+      })
+    },
+    []
+  )
+
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -71,16 +141,24 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       return
     }
 
-    // Validate file size (max 10MB)
+    // Validate file size (max 10MB before processing)
     if (file.size > 10 * 1024 * 1024) {
       setError('Image must be less than 10MB')
       return
     }
 
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
-    setError(null)
-  }, [])
+    try {
+      // Resize and convert to WebP
+      const resizedFile = await resizeAndConvertImage(file)
+      
+      setImageFile(resizedFile)
+      setImagePreview(URL.createObjectURL(resizedFile))
+      setError(null)
+    } catch (err) {
+      console.error('Image processing error:', err)
+      setError('Failed to process image. Please try another file.')
+    }
+  }, [resizeAndConvertImage])
 
   const handleUploadAndAnalyze = useCallback(async () => {
     if (!imageFile) return
