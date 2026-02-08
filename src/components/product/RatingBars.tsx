@@ -1,5 +1,6 @@
 'use client'
 
+import { motion } from 'framer-motion'
 import { appConfig } from '@/lib/app-config'
 import { cn } from '@/lib/utils'
 
@@ -62,9 +63,11 @@ export function RatingBars({ safety, taste, price = 0 }: RatingBarsProps) {
 
           {/* Progress Bar */}
           <div className="w-full h-2 bg-color-bg rounded-full overflow-hidden">
-            <div
-              className={cn('h-full transition-all duration-500 ease-out rounded-full', getScoreColor(item.value))}
-              style={{ width: `${item.value}%` }}
+            <motion.div
+              className={cn('h-full rounded-full', getScoreColor(item.value))}
+              initial={{ width: 0 }}
+              animate={{ width: `${item.value}%` }}
+              transition={{ duration: 0.8, delay: index * 0.1, ease: 'easeOut' }}
             />
           </div>
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { Link } from '@tanstack/react-router'
+import { motion } from 'framer-motion'
 import { type Product, getQuadrant, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 
@@ -37,10 +38,15 @@ export function ProductCard({ product, distanceKm }: ProductCardProps) {
     <Link
       to={'/product/$name'}
       params={{ name: product.name }}
-      className="group cursor-pointer h-full"
+      className="group cursor-pointer h-full block"
       preload="intent"
     >
-      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
+      <motion.div
+        className="bg-white rounded-2xl overflow-hidden shadow-sm h-full flex flex-col"
+        whileHover={{ y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      >
         {/* Product Image */}
         <div className="relative aspect-square bg-color-bg overflow-hidden">
           {product.imageUrl ? (
@@ -111,7 +117,7 @@ export function ProductCard({ product, distanceKm }: ProductCardProps) {
             {product.voteCount} {product.voteCount === 1 ? 'vote' : 'votes'}
           </p>
         </div>
-      </div>
+      </motion.div>
     </Link>
   )
 }

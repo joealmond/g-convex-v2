@@ -1,6 +1,7 @@
 'use client'
 
 import { type ReactNode } from 'react'
+import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 export type FilterType = 'all' | 'recent' | 'nearby' | 'trending'
@@ -29,18 +30,20 @@ export function FilterChips({ value, onChange }: FilterChipsProps) {
   return (
     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
       {filters.map((filter) => (
-        <button
+        <motion.button
           key={filter.value}
           onClick={() => onChange(filter.value)}
           className={cn(
-            'px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 min-h-[44px]',
+            'px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 min-h-[44px]',
             value === filter.value
               ? 'bg-color-primary text-white'
               : 'bg-color-bg text-color-text-secondary border border-color-border hover:bg-white'
           )}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         >
           {filter.label}
-        </button>
+        </motion.button>
       ))}
     </div>
   )

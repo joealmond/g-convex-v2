@@ -169,15 +169,15 @@ These make the app feel "fully working" — missing any of these makes the app f
 
 Makes the first impression "attractive" beyond functional.
 
-| Rank | I | N | E | Score | Feature | Details | Gap Ref |
-|------|---|---|---|-------|---------|---------|---------|
-| 1 | 4 | 1 | S | 11.0 | **Micro-animations** | Button press: `scale(0.97)` spring. Card tap: `translateY(-2px)` + shadow. Filter chip: bg-color 200ms. Rating bars: width animate on mount. Use Framer Motion `whileTap`, `whileHover`, `initial`/`animate` | Kimi spec |
-| 2 | 2 | 1 | S | 7.0 | **Product-hash colors** | On scatter chart, each product dot gets a consistent color based on name hash. 11-color palette. `hashStringToColor(name)` utility | Gap 1.9 |
-| 3 | 2 | 1 | S | 7.0 | **ScoutCard popover** | Points badge in TopBar (if signed in) → popover showing: total points, current level, streak, badge count. Quick gamification glance from any page | Gap 7.5 |
-| 4 | 2 | 1 | S | 7.0 | **Location status icon** | In TopBar: map pin icon — green (GPS enabled), red (denied), gray (not requested). Tap → requests permission | Gap 8.5 |
-| 5 | 2 | 1 | S | 7.0 | **Chart ↔ list sync** | When chart dot clicked, scroll product into view in feed list (and vice versa). `scrollIntoView({ behavior: 'smooth' })` with ref tracking | Gap 10.9 |
-| 6 | 3 | 2 | M | 6.0 | **Chart mode switcher** | On chart toggle view: "Vibe" (safety vs taste) ↔ "Value" (price vs taste) toggle. Value-mode quadrant names ("Treat", "Rip-Off", "The Steal", "Cheap Filler") and dollar sign Y-axis from `appConfig.valueLens` | Gap 1.2, 1.3, 1.6, 1.7 |
-| 7 | 3 | 1 | M | 4.5 | **Dark mode** | CSS custom properties switch to Kimi dark palette (Deep Navy bg, Slate surfaces, Soft Amber accents). Toggle in settings or system preference. Tailwind `dark:` classes + `prefers-color-scheme` | Kimi spec |
+| Rank | I | N | E | Score | Feature | Details | Gap Ref | Status |
+|------|---|---|---|-------|---------|---------|---------|--------|
+| 1 | 4 | 1 | S | 11.0 | **Micro-animations** | Button press: `scale(0.97)` spring. Card tap: `translateY(-2px)` + shadow. Filter chip: bg-color 200ms. Rating bars: width animate on mount. Use Framer Motion `whileTap`, `whileHover`, `initial`/`animate` | Kimi spec | ✅ Complete (ProductCard hover/tap, FilterChips tap, RatingBars mount animation) |
+| 2 | 2 | 1 | S | 7.0 | **Product-hash colors** | On scatter chart, each product dot gets a consistent color based on name hash. 11-color palette. `hashStringToColor(name)` utility | Gap 1.9 | ⏳ Pending |
+| 3 | 2 | 1 | S | 7.0 | **ScoutCard popover** | Points badge in TopBar (if signed in) → popover showing: total points, current level, streak, badge count. Quick gamification glance from any page | Gap 7.5 | ✅ Complete |
+| 4 | 2 | 1 | S | 7.0 | **Location status icon** | In TopBar: map pin icon — green (GPS enabled), red (denied), gray (not requested). Tap → requests permission | Gap 8.5 | ✅ Complete |
+| 5 | 2 | 1 | S | 7.0 | **Chart ↔ list sync** | When chart dot clicked, scroll product into view in feed list (and vice versa). `scrollIntoView({ behavior: 'smooth' })` with ref tracking | Gap 10.9 | ⏳ Pending |
+| 6 | 3 | 2 | M | 6.0 | **Chart mode switcher** | On chart toggle view: "Vibe" (safety vs taste) ↔ "Value" (price vs taste) toggle. Value-mode quadrant names ("Treat", "Rip-Off", "The Steal", "Cheap Filler") and dollar sign Y-axis from `appConfig.valueLens` | Gap 1.2, 1.3, 1.6, 1.7 | ⏳ Pending |
+| 7 | 3 | 1 | M | 4.5 | **Dark mode** | CSS custom properties switch to Kimi dark palette (Deep Navy bg, Slate surfaces, Soft Amber accents). Toggle in settings or system preference. Tailwind `dark:` classes + `prefers-color-scheme` | Kimi spec | ⏳ Pending |
 
 ---
 
