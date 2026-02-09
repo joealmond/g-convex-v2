@@ -19,6 +19,14 @@ interface I18nState {
   loading: boolean
 }
 
+// Cached server snapshot — MUST be a stable reference (same object identity)
+// to avoid the React infinite loop error with useSyncExternalStore.
+const SERVER_SNAPSHOT: I18nState = Object.freeze({
+  locale: 'en' as Locale,
+  i18n: null,
+  loading: true,
+})
+
 let currentState: I18nState = {
   locale: 'en',
   i18n: null,
@@ -32,8 +40,7 @@ function getSnapshot(): I18nState {
 }
 
 function getServerSnapshot(): I18nState {
-  // During SSR, return loading state — t() will return keys
-  return { locale: 'en', i18n: null, loading: true }
+  return SERVER_SNAPSHOT
 }
 
 function subscribe(listener: () => void): () => void {
