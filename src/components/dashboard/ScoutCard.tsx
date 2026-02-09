@@ -6,6 +6,7 @@ import { Trophy, Flame, Star, TrendingUp } from 'lucide-react'
 import { getUserLevel } from '@/lib/app-config'
 import { Link } from '@tanstack/react-router'
 import { Badge } from '@/components/ui/badge'
+import { useTranslation } from '@/hooks/use-translation'
 
 /**
  * Scout Card - Quick stats popover shown from TopBar
@@ -15,6 +16,7 @@ import { Badge } from '@/components/ui/badge'
  * - Badge count
  */
 export function ScoutCard() {
+  const { t } = useTranslation()
   const profile = useQuery(api.profiles.getCurrent)
 
   if (!profile) {
@@ -42,7 +44,7 @@ export function ScoutCard() {
     <div className="w-72 p-4 space-y-4">
       {/* Level Badge */}
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-sm text-foreground">Scout Status</h3>
+        <h3 className="font-bold text-sm text-foreground">{t('scout.status')}</h3>
         <Badge style={{ backgroundColor: currentLevel.color, color: '#fff' }}>
           {currentLevel.title}
         </Badge>
@@ -55,7 +57,7 @@ export function ScoutCard() {
           <Trophy className="h-5 w-5 text-gold flex-shrink-0" />
           <div className="min-w-0">
             <div className="text-lg font-bold text-foreground">{points}</div>
-            <div className="text-xs text-muted-foreground">Points</div>
+            <div className="text-xs text-muted-foreground">{t('gamification.points')}</div>
           </div>
         </div>
 
@@ -64,7 +66,7 @@ export function ScoutCard() {
           <Flame className="h-5 w-5 text-orange-500 flex-shrink-0" />
           <div className="min-w-0">
             <div className="text-lg font-bold text-foreground">{currentStreak}</div>
-            <div className="text-xs text-muted-foreground">Day Streak</div>
+            <div className="text-xs text-muted-foreground">{t('stats.dayStreak')}</div>
           </div>
         </div>
 
@@ -73,7 +75,7 @@ export function ScoutCard() {
           <Star className="h-5 w-5 text-primary flex-shrink-0" />
           <div className="min-w-0">
             <div className="text-lg font-bold text-foreground">{earnedBadges.length}</div>
-            <div className="text-xs text-muted-foreground">Badges</div>
+            <div className="text-xs text-muted-foreground">{t('gamification.badges')}</div>
           </div>
         </div>
 
@@ -82,7 +84,7 @@ export function ScoutCard() {
           <TrendingUp className="h-5 w-5 text-primary flex-shrink-0" />
           <div className="min-w-0">
             <div className="text-lg font-bold text-foreground">{profile.totalVotes || 0}</div>
-            <div className="text-xs text-muted-foreground">Votes</div>
+            <div className="text-xs text-muted-foreground">{t('common.votes')}</div>
           </div>
         </div>
       </div>
@@ -93,7 +95,7 @@ export function ScoutCard() {
         to="/profile"
         className="block text-center text-sm text-primary hover:underline font-semibold"
       >
-        View Full Profile →
+        {t('scout.viewProfile')}
       </Link>
     </div>
   )

@@ -108,7 +108,8 @@ export function useLocale(): Locale {
     setLocaleState(initial)
 
     const handleChange = (e: Event) => {
-      setLocaleState((e as CustomEvent<Locale>).detail)
+      const newLocale = (e as CustomEvent<Locale>).detail
+      setLocaleState(newLocale)
     }
 
     window.addEventListener(LOCALE_EVENT, handleChange)

@@ -11,6 +11,7 @@ import { Leaderboard } from '@/components/dashboard/Leaderboard'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useAdmin } from '@/hooks/use-admin'
+import { useTranslation } from '@/hooks/use-translation'
 import { Loader2, Trophy, Flame, TrendingUp, BarChart3, Grid3X3, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/types'
@@ -48,6 +49,7 @@ function HomePage() {
 }
 
 function HomePageContent() {
+  const { t } = useTranslation()
   const user = useQuery(api.users.current)
   const profile = useQuery(api.profiles.getCurrent)
   const products = useQuery(api.products.list)
@@ -192,21 +194,21 @@ function HomePageContent() {
       {user && profile && (
         <div className="flex gap-2 mb-3 md:grid md:grid-cols-3 md:gap-4 md:mb-6">
           <StatsCard
-            title="Your Points"
+            title={t('stats.yourPoints')}
             value={profile.points}
-            subtitle={`${profile.totalVotes} votes cast`}
+            subtitle={t('stats.votesCast', { count: profile.totalVotes })}
             icon={<Trophy className="h-5 w-5 text-yellow-500" />}
           />
           <StatsCard
-            title="Current Streak"
-            value={`${profile.streak} days`}
-            subtitle="Keep voting daily!"
+            title={t('stats.currentStreak')}
+            value={t('stats.daysStreak', { count: profile.streak })}
+            subtitle={t('stats.keepVoting')}
             icon={<Flame className="h-5 w-5 text-orange-500" />}
           />
           <StatsCard
-            title="Badges Earned"
+            title={t('stats.badgesEarned')}
             value={profile.badges?.length || 0}
-            subtitle={`Keep contributing!`}
+            subtitle={t('stats.keepContributing')}
             icon={<TrendingUp className="h-5 w-5 text-purple-500" />}
           />
         </div>
@@ -222,7 +224,7 @@ function HomePageContent() {
             type="text"
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Search products…"
+            placeholder={t('feed.searchProducts')}
             className="w-full h-10 pl-9 pr-8 rounded-xl border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
           />
           {searchQuery && (
@@ -242,7 +244,7 @@ function HomePageContent() {
             variant={viewMode === 'feed' ? 'default' : 'outline'}
             size="icon"
             className="h-10 w-10 rounded-xl"
-            title="Feed view"
+            title={t('feed.feedView')}
           >
             <Grid3X3 className="h-4 w-4" />
           </Button>
@@ -251,7 +253,7 @@ function HomePageContent() {
             variant={viewMode === 'chart' ? 'default' : 'outline'}
             size="icon"
             className="h-10 w-10 rounded-xl"
-            title="Chart view"
+            title={t('feed.chartView')}
           >
             <BarChart3 className="h-4 w-4" />
           </Button>
@@ -295,9 +297,9 @@ function HomePageContent() {
             filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <p className="text-muted-foreground text-sm mb-2">
-                  {searchQuery ? `No products matching "${searchQuery}"` : 'No products found'}
+                  {searchQuery ? t('feed.noProductsMatching', { query: searchQuery }) : t('feed.noProductsFound')}
                 </p>
-                <p className="text-xs text-muted-foreground">Try a different search term</p>
+                <p className="text-xs text-muted-foreground">{t('feed.tryDifferentSearch')}</p>
               </div>
             ) : (
               <div className="space-y-1.5">
@@ -321,7 +323,7 @@ function HomePageContent() {
           <div className="lg:col-span-2 bg-card rounded-2xl shadow-sm p-3 sm:p-6">
             {/* Title + mode toggle — stacks vertically on narrow screens */}
             <div className="flex items-center justify-between mb-2 sm:mb-4 gap-2">
-              <h2 className="text-base sm:text-xl font-semibold truncate">G-Matrix</h2>
+              <h2 className="text-base sm:text-xl font-semibold truncate">{t('chart.gMatrix')}</h2>
               <div className="flex gap-1.5 flex-shrink-0">
                 <Button
                   onClick={() => setChartMode('vibe')}
@@ -329,7 +331,7 @@ function HomePageContent() {
                   size="sm"
                   className="gap-1 px-2.5 sm:px-3 h-8 text-xs sm:text-sm"
                 >
-                  🛡️ Vibe
+                  🛡️ {t('chart.vibe')}
                 </Button>
                 <Button
                   onClick={() => setChartMode('value')}
@@ -337,7 +339,7 @@ function HomePageContent() {
                   size="sm"
                   className="gap-1 px-2.5 sm:px-3 h-8 text-xs sm:text-sm"
                 >
-                  💰 Value
+                  💰 {t('chart.value')}
                 </Button>
               </div>
             </div>
@@ -357,8 +359,8 @@ function HomePageContent() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-[280px] sm:h-[380px] lg:h-[460px] text-muted-foreground">
-                <p className="text-lg mb-2">No products yet</p>
-                <p className="text-sm">Add your first product to get started!</p>
+                <p className="text-lg mb-2">{t('chart.noProductsYet')}</p>
+                <p className="text-sm">{t('chart.addFirstProduct')}</p>
               </div>
             )}
           </div>

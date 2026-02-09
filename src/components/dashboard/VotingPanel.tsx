@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { motion } from 'framer-motion'
 import { SAFETY_PRESETS, TASTE_PRESETS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface VotingPanelProps {
   onVote: (safety: number, taste: number) => void
@@ -14,6 +15,7 @@ interface VotingPanelProps {
  * Allows users to quickly vote without precise input
  */
 export function VotingPanel({ onVote, disabled = false }: VotingPanelProps) {
+  const { t } = useTranslation()
   const handlePresetVote = (safetyPreset: number, tastePreset: number) => {
     if (disabled) return
     onVote(safetyPreset, tastePreset)
@@ -22,7 +24,7 @@ export function VotingPanel({ onVote, disabled = false }: VotingPanelProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Quick Vote</CardTitle>
+        <CardTitle className="text-lg">{t('voting.quickVote')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Safety Presets */}
@@ -90,7 +92,7 @@ export function VotingPanel({ onVote, disabled = false }: VotingPanelProps) {
         {/* Combined Quick Votes */}
         <div>
           <h3 className="text-sm font-medium mb-3 text-muted-foreground">
-            Or choose a combo:
+            {t('voting.orChooseCombo')}
           </h3>
           <div className="grid grid-cols-2 gap-2">
             {/* Row 1: Top-Left (Survivor) | Top-Right (Holy Grail) */}
@@ -106,7 +108,7 @@ export function VotingPanel({ onVote, disabled = false }: VotingPanelProps) {
               >
                 <div className="text-center">
                   <div className="font-semibold">{appConfig.quadrants.topLeft.label}</div>
-                  <div className="text-xs opacity-80">Safe but Meh</div>
+                  <div className="text-xs opacity-80">{t('voting.safeMeh')}</div>
                 </div>
               </Button>
             </motion.div>
@@ -123,7 +125,7 @@ export function VotingPanel({ onVote, disabled = false }: VotingPanelProps) {
               >
                 <div className="text-center">
                   <div className="font-semibold">{appConfig.quadrants.topRight.label}</div>
-                  <div className="text-xs opacity-80">Safe & Tasty</div>
+                  <div className="text-xs opacity-80">{t('voting.safeTasty')}</div>
                 </div>
               </Button>
             </motion.div>
@@ -141,7 +143,7 @@ export function VotingPanel({ onVote, disabled = false }: VotingPanelProps) {
               >
                 <div className="text-center">
                   <div className="font-semibold">{appConfig.quadrants.bottomLeft.label}</div>
-                  <div className="text-xs opacity-80">Avoid!</div>
+                  <div className="text-xs opacity-80">{t('voting.avoid')}</div>
                 </div>
               </Button>
             </motion.div>
@@ -158,7 +160,7 @@ export function VotingPanel({ onVote, disabled = false }: VotingPanelProps) {
               >
                 <div className="text-center">
                   <div className="font-semibold">{appConfig.quadrants.bottomRight.label}</div>
-                  <div className="text-xs opacity-80">Tasty but Risky</div>
+                  <div className="text-xs opacity-80">{t('voting.tastyRisky')}</div>
                 </div>
               </Button>
             </motion.div>

@@ -22,6 +22,7 @@ import { getQuadrant, QUADRANTS, type Product } from '@/lib/types'
 import { useAnonymousId } from '@/hooks/use-anonymous-id'
 import { useAdmin } from '@/hooks/use-admin'
 import { useImpersonate } from '@/hooks/use-impersonate'
+import { useTranslation } from '@/hooks/use-translation'
 import { ArrowLeft, Users, Edit, Flag } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -54,6 +55,7 @@ function ProductDetailPage() {
 }
 
 function ProductDetailContent() {
+  const { t } = useTranslation()
   const { name } = Route.useParams()
   const navigate = useNavigate()
   const { anonId: anonymousId } = useAnonymousId()
@@ -152,14 +154,14 @@ function ProductDetailContent() {
     return (
       <div className="flex-1 px-4 py-8">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
+          <h1 className="text-2xl font-bold mb-4">{t('product.notFound')}</h1>
           <p className="text-muted-foreground mb-6">
-            The product "{decodeURIComponent(name)}" doesn't exist.
+            {t('product.notFoundDesc', { name: decodeURIComponent(name) })}
           </p>
           <Button asChild>
             <Link to="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
+              {t('nav.backToHome')}
             </Link>
           </Button>
         </div>
@@ -179,7 +181,7 @@ function ProductDetailContent() {
           <Button variant="ghost" size="sm" asChild>
             <Link to="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+              {t('nav.back')}
             </Link>
           </Button>
           
@@ -196,7 +198,7 @@ function ProductDetailContent() {
               className="text-muted-foreground hover:text-destructive"
             >
               <Flag className="mr-2 h-4 w-4" />
-              Report
+              {t('common.report')}
             </Button>
           </div>
         </div>
@@ -206,7 +208,7 @@ function ProductDetailContent() {
           <div className="flex gap-2 justify-end">
             <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
               <Edit className="h-4 w-4 mr-2" />
-              Edit
+              {t('common.edit')}
             </Button>
             <DeleteProductButton
               product={product as Product}
@@ -242,14 +244,14 @@ function ProductDetailContent() {
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            {product.voteCount} {product.voteCount === 1 ? 'vote' : 'votes'}
+            {product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}
           </p>
         </div>
 
         {/* Rating Bars */}
         <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="text-lg">Ratings</CardTitle>
+            <CardTitle className="text-lg">{t('product.ratings')}</CardTitle>
           </CardHeader>
           <CardContent>
             <RatingBars
@@ -264,7 +266,7 @@ function ProductDetailContent() {
         {product.stores && product.stores.length > 0 && (
           <Card className="shadow-card">
             <CardHeader>
-              <CardTitle className="text-lg">Where to Buy</CardTitle>
+              <CardTitle className="text-lg">{t('product.whereToBuy')}</CardTitle>
             </CardHeader>
             <CardContent>
               <StoreList product={product as Product} />
@@ -276,7 +278,7 @@ function ProductDetailContent() {
         {product.ingredients && product.ingredients.length > 0 && (
           <Card className="shadow-card">
             <CardHeader>
-              <CardTitle className="text-lg">Ingredients</CardTitle>
+              <CardTitle className="text-lg">{t('product.ingredients')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
@@ -297,12 +299,12 @@ function ProductDetailContent() {
         {/* Voting Section */}
         <Card className="shadow-card" data-voting-section>
           <CardHeader>
-            <CardTitle className="text-lg">Rate This Product</CardTitle>
+            <CardTitle className="text-lg">{t('product.rateThisProduct')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Store Location Input */}
             <div>
-              <h4 className="font-semibold text-sm mb-3">Where did you buy it?</h4>
+              <h4 className="font-semibold text-sm mb-3">{t('product.whereDidYouBuy')}</h4>
               <StoreTagInput
                 value={storeTag}
                 onChange={setStoreTag}
@@ -324,16 +326,16 @@ function ProductDetailContent() {
         {/* Chart View with Tabs */}
         <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="text-lg">Position on G-Matrix</CardTitle>
+            <CardTitle className="text-lg">{t('product.positionOnMatrix')}</CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="average" className="w-full">
               <TabsList className={`grid w-full mb-4 ${product.avgPrice ? 'grid-cols-4' : 'grid-cols-3'}`}>
-                <TabsTrigger value="average">Average</TabsTrigger>
+                <TabsTrigger value="average">{t('product.average')}</TabsTrigger>
                 <TabsTrigger value="my-vote" disabled={!myVote}>
-                  My Vote
+                  {t('product.myVote')}
                 </TabsTrigger>
-                <TabsTrigger value="all-votes">All Votes</TabsTrigger>
+                <TabsTrigger value="all-votes">{t('product.allVotes')}</TabsTrigger>
                 {product.avgPrice && (
                   <TabsTrigger value="price-history">Price</TabsTrigger>
                 )}
@@ -352,7 +354,7 @@ function ProductDetailContent() {
                   />
                 </div>
                 <p className="text-sm text-muted-foreground text-center mt-4">
-                  Community average position
+                  {t('voting.communityAverage')}
                 </p>
               </TabsContent>
 
@@ -371,14 +373,14 @@ function ProductDetailContent() {
                       />
                     </div>
                     <p className="text-sm text-muted-foreground text-center mt-4">
-                      Your vote: Safety {myVote.safety} · Taste {myVote.taste}
-                      {myVote.price && ` · Price ${myVote.price}/5`}
+                      {t('voting.yourVote', { safety: myVote.safety, taste: myVote.taste })}
+                      {myVote.price && t('voting.yourVotePrice', { price: myVote.price })}
                     </p>
                   </>
                 ) : (
                   <div className="text-center py-12">
                     <p className="text-muted-foreground mb-4">
-                      You haven't voted on this product yet
+                      {t('voting.notVotedYet')}
                     </p>
                     <Button
                       onClick={() =>
@@ -387,7 +389,7 @@ function ProductDetailContent() {
                           ?.scrollIntoView({ behavior: 'smooth' })
                       }
                     >
-                      Cast Your Vote
+                      {t('voting.castYourVote')}
                     </Button>
                   </div>
                 )}
@@ -402,8 +404,7 @@ function ProductDetailContent() {
                   />
                 </div>
                 <p className="text-sm text-muted-foreground text-center mt-4">
-                  {allVotes?.length || 0} individual{' '}
-                  {allVotes?.length === 1 ? 'vote' : 'votes'}
+                  {allVotes?.length || 0} {(allVotes?.length || 0) === 1 ? t('voting.individualVote') : t('voting.individualVotes')}
                 </p>
               </TabsContent>
 

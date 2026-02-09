@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { BADGES } from '@convex/lib/gamification'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface BadgeDisplayProps {
   earnedBadgeIds: string[]
@@ -17,6 +18,7 @@ export function BadgeDisplay({
   compact = false,
   showLocked = true,
 }: BadgeDisplayProps) {
+  const { t } = useTranslation()
   const earnedBadges = BADGES.filter(badge => earnedBadgeIds.includes(badge.id))
   const lockedBadges = showLocked
     ? BADGES.filter(badge => !earnedBadgeIds.includes(badge.id))
@@ -38,7 +40,7 @@ export function BadgeDisplay({
             </div>
           ))
         ) : (
-          <p className="text-sm text-muted-foreground">No badges earned yet</p>
+          <p className="text-sm text-muted-foreground">{t('badge.noBadgesYet')}</p>
         )}
       </div>
     )
@@ -48,9 +50,9 @@ export function BadgeDisplay({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Badges</CardTitle>
+        <CardTitle>{t('badge.title')}</CardTitle>
         <CardDescription>
-          {earnedBadges.length} of {BADGES.length} badges earned
+          {t('badge.countDesc', { earned: earnedBadges.length, total: BADGES.length })}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -68,7 +70,7 @@ export function BadgeDisplay({
                   {badge.description}
                 </div>
                 <Badge variant="secondary" className="text-xs">
-                  Earned ✓
+                  {t('badge.earned')}
                 </Badge>
               </div>
             </div>
@@ -88,7 +90,7 @@ export function BadgeDisplay({
                     {badge.description}
                   </div>
                   <Badge variant="outline" className="text-xs">
-                    Locked 🔒
+                    {t('badge.locked')}
                   </Badge>
                 </div>
               </div>
@@ -98,7 +100,7 @@ export function BadgeDisplay({
         {earnedBadges.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             <p className="text-4xl mb-3">🏆</p>
-            <p>Start contributing to earn your first badge!</p>
+            <p>{t('badge.startContributing')}</p>
           </div>
         )}
       </CardContent>

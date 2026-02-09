@@ -6,6 +6,7 @@ import { type Product, getQuadrant, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
 import { MapPin, Trash2 } from 'lucide-react'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface ProductCardProps {
   product: Product
@@ -23,6 +24,7 @@ interface ProductCardProps {
  * - Tappable to product detail
  */
 export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) {
+  const { t } = useTranslation()
   // Determine safety score color
   const getSafetyColor = (score: number) => {
     if (score >= 60) return 'bg-safety-high' // Green
@@ -63,7 +65,7 @@ export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) 
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
-              No image
+              {t('common.noImage')}
             </div>
           )}
 
@@ -121,10 +123,10 @@ export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) 
           {distanceKm !== undefined && (
             <p className="text-xs text-muted-foreground mt-1">
               {distanceKm < 0.1
-                ? 'Very close'
+                ? t('common.veryClose')
                 : distanceKm < 1
-                  ? `${(distanceKm * 1000).toFixed(0)}m away`
-                  : `${distanceKm.toFixed(1)}km away`}
+                  ? t('common.mAway', { distance: (distanceKm * 1000).toFixed(0) })
+                  : t('common.kmAway', { distance: distanceKm.toFixed(1) })}
             </p>
           )}
 
@@ -151,7 +153,7 @@ export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) 
 
           {/* Vote Count */}
           <p className="text-xs text-muted-foreground mt-2">
-            {product.voteCount} {product.voteCount === 1 ? 'vote' : 'votes'}
+            {product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}
           </p>
         </div>
       </motion.div>

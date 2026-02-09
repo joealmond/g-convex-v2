@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { getQuadrant, getQuadrantColor, QUADRANTS } from '@/lib/types'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface CoordinateGridProps {
   onVote?: (safety: number, taste: number) => void
@@ -19,6 +20,7 @@ export function CoordinateGrid({
   initialTaste = 50,
   disabled = false,
 }: CoordinateGridProps) {
+  const { t } = useTranslation()
   const [safety, setSafety] = useState(initialSafety)
   const [taste, setTaste] = useState(initialTaste)
   const [isDragging, setIsDragging] = useState(false)
@@ -290,11 +292,11 @@ export function CoordinateGrid({
       {/* Value display */}
       <div className="flex items-center gap-6 text-sm">
         <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">Safety:</span>
+          <span className="text-muted-foreground">{t('voting.safety')}:</span>
           <span className="font-semibold">{safety}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">Taste:</span>
+          <span className="text-muted-foreground">{t('voting.taste')}:</span>
           <span className="font-semibold">{taste}</span>
         </div>
         <div

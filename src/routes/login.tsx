@@ -5,6 +5,7 @@ import { authClient } from '@/lib/auth-client'
 import { appConfig } from '@/lib/app-config'
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { useTranslation } from '@/hooks/use-translation'
 
 export const Route = createFileRoute('/login')({
   component: Login,
@@ -20,6 +21,7 @@ interface SessionData {
 
 function Login() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const [session, setSession] = useState<SessionData | null>(null)
 
@@ -52,8 +54,8 @@ function Login() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle>Already Logged In</CardTitle>
-            <CardDescription>Redirecting...</CardDescription>
+            <CardTitle>{t('login.alreadyLoggedIn')}</CardTitle>
+            <CardDescription>{t('login.redirecting')}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -64,7 +66,7 @@ function Login() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md rounded-2xl shadow-sm">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-3xl font-bold text-foreground">Welcome to {appConfig.appName}</CardTitle>
+          <CardTitle className="text-3xl font-bold text-foreground">{t('login.welcomeTo', { appName: appConfig.appName })}</CardTitle>
           <CardDescription className="text-base text-muted-foreground">
             {appConfig.tagline}
           </CardDescription>
@@ -72,23 +74,23 @@ function Login() {
         <CardContent className="space-y-6">
           {/* Benefits Section */}
           <div className="space-y-3 p-4 bg-background rounded-xl">
-            <h3 className="font-semibold text-sm text-foreground">Why sign in?</h3>
+            <h3 className="font-semibold text-sm text-foreground">{t('login.whySignIn')}</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
                 <span className="text-primary">✓</span>
-                <span>Your votes count 2x more than anonymous votes</span>
+                <span>{t('login.voteWeight')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary">✓</span>
-                <span>Earn points and unlock badges for contributing</span>
+                <span>{t('login.earnPoints')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary">✓</span>
-                <span>Track your voting history and contributions</span>
+                <span>{t('login.trackHistory')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary">✓</span>
-                <span>Access leaderboard and compete with community</span>
+                <span>{t('login.accessLeaderboard')}</span>
               </li>
             </ul>
           </div>
@@ -103,7 +105,7 @@ function Login() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Signing in...
+                {t('login.signingIn')}
               </>
             ) : (
               <>
@@ -125,7 +127,7 @@ function Login() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Continue with Google
+                {t('login.continueGoogle')}
               </>
             )}
           </Button>
@@ -134,11 +136,11 @@ function Login() {
           <div className="text-center">
             <Button variant="link" asChild>
               <Link to="/">
-                Continue as guest
+                {t('login.continueGuest')}
               </Link>
             </Button>
             <p className="text-xs text-muted-foreground mt-2">
-              You can still vote anonymously, but your votes will have less weight
+              {t('login.guestNote')}
             </p>
           </div>
         </CardContent>

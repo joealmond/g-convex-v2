@@ -2,6 +2,7 @@ import { Eye, EyeOff, Shield } from 'lucide-react'
 import { ClientOnly } from '@tanstack/react-router'
 import { useAdmin } from '@/hooks/use-admin'
 import { useImpersonate } from '@/hooks/use-impersonate'
+import { useTranslation } from '@/hooks/use-translation'
 
 /**
  * Admin toolbar - shows at the bottom of the screen for admins.
@@ -17,6 +18,7 @@ export function AdminToolbar() {
 }
 
 function AdminToolbarContent() {
+  const { t } = useTranslation()
   const { isRealAdmin } = useAdmin()
   const { isViewingAsUser, toggleViewAsUser, stopViewingAsUser } = useImpersonate()
 
@@ -29,28 +31,28 @@ function AdminToolbarContent() {
         <>
           <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-yellow-500/20 text-yellow-600 border border-yellow-500/50">
             <Eye className="h-3 w-3" />
-            Viewing as User
+            {t('adminToolbar.viewingAsUser')}
           </span>
           <button
             onClick={stopViewingAsUser}
             className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
           >
             <Shield className="h-3 w-3" />
-            Back to Admin
+            {t('adminToolbar.backToAdmin')}
           </button>
         </>
       ) : (
         <>
           <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-primary/20 text-primary border border-primary/50">
             <Shield className="h-3 w-3" />
-            Admin Mode
+            {t('adminToolbar.adminMode')}
           </span>
           <button
             onClick={toggleViewAsUser}
             className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-muted hover:bg-muted/80 text-muted-foreground transition-colors"
           >
             <EyeOff className="h-3 w-3" />
-            View as User
+            {t('adminToolbar.viewAsUser')}
           </button>
         </>
       )}

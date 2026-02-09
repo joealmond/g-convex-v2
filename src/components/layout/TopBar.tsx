@@ -11,6 +11,7 @@ import { LogOut, MapPin, Trophy, Moon, Sun, Monitor } from 'lucide-react'
 import { authClient, useSession } from '@/lib/auth-client'
 import { ScoutCard } from '@/components/dashboard/ScoutCard'
 import { useGeolocation, useTheme } from '@/hooks'
+import { useTranslation } from '@/hooks/use-translation'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { motion } from 'framer-motion'
 
@@ -20,6 +21,7 @@ import { motion } from 'framer-motion'
  * Fixed at top, minimal height (48px)
  */
 export function TopBar() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useConvexAuth()
   const navigate = useNavigate()
   const profile = useQuery(api.profiles.getCurrent)
@@ -45,9 +47,9 @@ export function TopBar() {
   }
 
   const getLocationTitle = () => {
-    if (geoLoading) return 'Getting location...'
-    if (coords) return 'Location enabled'
-    return 'Tap to enable location'
+    if (geoLoading) return t('location.gettingLocation')
+    if (coords) return t('location.locationEnabled')
+    return t('location.tapToEnable')
   }
 
   // Theme icon based on current setting
@@ -61,9 +63,9 @@ export function TopBar() {
   }
 
   const getThemeTitle = () => {
-    if (theme === 'system') return 'Theme: System (tap to change)'
-    if (theme === 'dark') return 'Theme: Dark (tap to change)'
-    return 'Theme: Light (tap to change)'
+    if (theme === 'system') return t('theme.system')
+    if (theme === 'dark') return t('theme.dark')
+    return t('theme.light')
   }
 
   return (
@@ -154,7 +156,7 @@ export function TopBar() {
             onClick={() => navigate({ to: '/login' })}
             className="bg-primary hover:bg-primary/90 text-primary-foreground h-8 px-4 text-sm rounded-lg"
           >
-            Sign In
+            {t('nav.signIn')}
           </Button>
         )}
       </div>

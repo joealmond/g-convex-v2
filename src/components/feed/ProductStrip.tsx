@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router'
 import { type Product, getQuadrant, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import { MapPin } from 'lucide-react'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface ProductStripProps {
   product: Product
@@ -18,6 +19,7 @@ interface ProductStripProps {
  * Compact single-row layout for search results
  */
 export function ProductStrip({ product, distanceKm, highlight }: ProductStripProps) {
+  const { t } = useTranslation()
   const getSafetyColor = (score: number) => {
     if (score >= 60) return 'bg-safety-high'
     if (score >= 40) return 'bg-safety-mid'
@@ -72,7 +74,7 @@ export function ProductStrip({ product, distanceKm, highlight }: ProductStripPro
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[8px]">
-              No img
+              {t('common.noImage')}
             </div>
           )}
           {/* Quadrant color strip */}
@@ -106,7 +108,7 @@ export function ProductStrip({ product, distanceKm, highlight }: ProductStripPro
               />
             </div>
             <span className="text-[10px] text-muted-foreground">
-              {product.voteCount} {product.voteCount === 1 ? 'vote' : 'votes'}
+              {product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}
             </span>
             {distanceKm !== undefined && (
               <span className="text-[10px] text-muted-foreground">

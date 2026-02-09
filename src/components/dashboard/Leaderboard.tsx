@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { FollowButton } from '@/components/profile/FollowButton'
 import { Trophy, Medal, Award, TrendingUp } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface LeaderboardProps {
   limit?: number
@@ -17,6 +18,7 @@ interface LeaderboardProps {
  * Can be embedded or shown as full page
  */
 export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardProps) {
+  const { t } = useTranslation()
   const leaderboard = useQuery(api.profiles.leaderboard, { limit })
   const currentUser = useQuery(api.users.current)
 
@@ -24,13 +26,13 @@ export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardPr
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Leaderboard</CardTitle>
-          <CardDescription>Top contributors to the G-Matrix</CardDescription>
+          <CardTitle>{t('leaderboard.title')}</CardTitle>
+          <CardDescription>{t('leaderboard.topContributors')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             <Trophy className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No rankings yet. Be the first to contribute!</p>
+            <p>{t('leaderboard.noRankings')}</p>
           </div>
         </CardContent>
       </Card>
@@ -59,9 +61,9 @@ export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardPr
   return (
     <Card>
       <CardHeader className="pb-2 sm:pb-4">
-        <CardTitle className="text-base sm:text-lg">Leaderboard</CardTitle>
+        <CardTitle className="text-base sm:text-lg">{t('leaderboard.title')}</CardTitle>
         <CardDescription className="text-xs sm:text-sm">
-          Top {limit} contributors ranked by points
+          {t('leaderboard.topNContributors', { count: limit })}
         </CardDescription>
       </CardHeader>
       <CardContent className="px-3 sm:px-6">
@@ -106,21 +108,21 @@ export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardPr
                     )}
                   </div>
                   <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                    {entry.badges?.length || 0} badges · {entry.points} pts
+                    {entry.badges?.length || 0} {t('leaderboard.badges')} · {entry.points} {t('common.points')}
                   </div>
                 </div>
 
                 {/* Points - hidden on very small screens since shown inline above */}
                 <div className="text-right hidden sm:block flex-shrink-0">
                   <div className="text-lg font-bold">{entry.points}</div>
-                  <div className="text-xs text-muted-foreground">points</div>
+                  <div className="text-xs text-muted-foreground">{t('gamification.points')}</div>
                 </div>
 
                 {/* Streak (if showing full ranks) */}
                 {showFullRanks && (
                   <div className="text-right flex-shrink-0">
                     <div className="text-sm font-semibold">{entry.streak}</div>
-                    <div className="text-xs text-muted-foreground">streak</div>
+                    <div className="text-xs text-muted-foreground">{t('leaderboard.streak')}</div>
                   </div>
                 )}
 
@@ -144,7 +146,7 @@ export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardPr
               to="/leaderboard"
               className="text-sm text-primary hover:underline inline-flex items-center gap-1"
             >
-              View Full Leaderboard
+              {t('leaderboard.viewFull')}
               <TrendingUp className="h-4 w-4" />
             </Link>
           </div>

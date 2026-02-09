@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label'
 import { getQuadrant, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import { useState } from 'react'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface FineTunePanelProps {
   onVote: (safety: number, taste: number) => void
@@ -25,6 +26,7 @@ export function FineTunePanel({
 }: FineTunePanelProps) {
   const [safety, setSafety] = useState(initialSafety)
   const [taste, setTaste] = useState(initialTaste)
+  const { t } = useTranslation()
 
   const currentQuadrant = getQuadrant(safety, taste)
   const quadrantInfo = QUADRANTS[currentQuadrant]
@@ -37,9 +39,9 @@ export function FineTunePanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Fine Tune Vote</CardTitle>
+        <CardTitle className="text-lg">{t('voting.fineTuneVote')}</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Use sliders for precise ratings
+          {t('voting.fineTuneDesc')}
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -62,8 +64,8 @@ export function FineTunePanel({
             className="w-full"
           />
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Dangerous (0)</span>
-            <span>Very Safe (100)</span>
+            <span>{t('voting.dangerous')}</span>
+            <span>{t('voting.verySafe')}</span>
           </div>
         </div>
 
@@ -86,8 +88,8 @@ export function FineTunePanel({
             className="w-full"
           />
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Terrible (0)</span>
-            <span>Delicious (100)</span>
+            <span>{t('voting.terrible')}</span>
+            <span>{t('voting.delicious')}</span>
           </div>
         </div>
 
@@ -95,7 +97,7 @@ export function FineTunePanel({
         <div className="p-4 rounded-lg border" style={{ backgroundColor: quadrantInfo?.color || appConfig.colors.primary, opacity: 0.2 }}>
           <div className="text-center">
             <div className="text-sm font-medium mb-1">
-              This will place it in:
+              {t('voting.placeInQuadrant')}
             </div>
             <div className="text-lg font-bold">{quadrantInfo?.name || 'Unknown'}</div>
             <div className="text-xs text-muted-foreground mt-1">
@@ -111,7 +113,7 @@ export function FineTunePanel({
           className="w-full"
           size="lg"
         >
-          Submit Vote
+          {t('voting.submitVote')}
         </Button>
       </CardContent>
     </Card>

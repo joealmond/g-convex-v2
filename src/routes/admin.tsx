@@ -15,6 +15,7 @@ import { AdminSettings } from '@/components/admin/AdminSettings'
 import { Shield, ArrowLeft, Search, Users, TrendingUp, Package, Edit, Flag, Settings } from 'lucide-react'
 import { getQuadrant, QUADRANTS } from '@/lib/types'
 import type { Product } from '@/lib/types'
+import { useTranslation } from '@/hooks/use-translation'
 
 export const Route = createFileRoute('/admin')({
   component: AdminPage,
@@ -44,6 +45,7 @@ function AdminPage() {
 
 function AdminPageContent() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const adminStatus = useAdmin()
   const user = useQuery(api.users.current)
   const products = useQuery(api.products.list)
@@ -78,23 +80,23 @@ function AdminPageContent() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <Shield className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold text-foreground">Admin Panel</h1>
+              <h1 className="text-3xl font-bold text-foreground">{t('adminPanel.title')}</h1>
             </div>
             <p className="text-muted-foreground">
-              Manage products and monitor community activity
+              {t('adminPanel.subtitle')}
             </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" asChild>
               <Link to="/reports">
                 <Flag className="mr-2 h-4 w-4" />
-                Reports
+                {t('adminPanel.reports')}
               </Link>
             </Button>
             <Button variant="ghost" asChild>
               <Link to="/">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Home
+                {t('nav.backToHome')}
               </Link>
             </Button>
           </div>
@@ -106,7 +108,7 @@ function AdminPageContent() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Package className="h-4 w-4" />
-                Total Products
+                {t('adminPanel.totalProducts')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -118,7 +120,7 @@ function AdminPageContent() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Total Votes
+                {t('adminPanel.totalVotes')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -130,7 +132,7 @@ function AdminPageContent() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Avg Votes/Product
+                {t('adminPanel.avgVotes')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -144,11 +146,11 @@ function AdminPageContent() {
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Package className="w-4 h-4" />
-              Products
+              {t('adminPanel.products')}
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
-              Settings
+              {t('adminPanel.settings')}
             </TabsTrigger>
           </TabsList>
 
@@ -159,9 +161,9 @@ function AdminPageContent() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Product Management</CardTitle>
+                <CardTitle>{t('adminPanel.productManagement')}</CardTitle>
                 <CardDescription>
-                  Add, edit, or remove products from the database
+                  {t('adminPanel.productManagementDesc')}
                 </CardDescription>
               </div>
               <AddProductDialog />
@@ -173,7 +175,7 @@ function AdminPageContent() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search products..."
+                  placeholder={t('adminPanel.searchProducts')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -227,7 +229,7 @@ function AdminPageContent() {
                           onClick={() => setEditingProduct(product)}
                         >
                           <Edit className="h-4 w-4 mr-2" />
-                          Edit
+                          {t('common.edit')}
                         </Button>
                         <DeleteProductButton product={product} />
                       </div>
@@ -239,8 +241,8 @@ function AdminPageContent() {
                   <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>
                     {searchQuery
-                      ? `No products found matching "${searchQuery}"`
-                      : 'No products yet'}
+                      ? t('adminPanel.noProductsMatching', { query: searchQuery })
+                      : t('adminPanel.noProductsYet')}
                   </p>
                 </div>
               )}

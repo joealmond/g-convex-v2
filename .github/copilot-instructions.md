@@ -42,7 +42,7 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | Maps | Leaflet + react-leaflet + OpenStreetMap | Free, no API key needed |
 | Animations | Framer Motion | Micro-interactions and transitions |
 | Forms | react-hook-form + Zod | Form state + validation |
-| i18n | Custom `useTranslation()` + JSON locale files | EN + HU, extensible |
+| i18n | Custom `useTranslation()` + static JSON locale files | EN + HU, event-driven locale switching |
 
 ## Key Files
 
@@ -63,16 +63,82 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | `src/components/map/` | ★ Leaflet map: ProductMap, ProductPin |
 | `src/components/dashboard/` | Chart views: MatrixChart, CoordinateGrid, StatsCard, BadgeDisplay, Leaderboard, DeleteProductButton |
 | `src/hooks/` | Custom hooks: useAdmin, useGeolocation, useTranslation, useAnonymousId, useVoteMigration, useImpersonate, useTheme |
-| `src/locales/en.json` | English translations |
-| `src/locales/hu.json` | Hungarian translations |
+| `src/lib/i18n.ts` | i18n engine: `setLocale()`, `useLocale()`, `useTranslationHook()` — static JSON imports + CustomEvent |
+| `src/hooks/use-translation.ts` | Re-exports `useTranslationHook` as `useTranslation` for component consumption |
+| `src/locales/en.json` | English translations (~385 lines, all UI strings) |
+| `src/locales/hu.json` | Hungarian translations (~385 lines, mirrors en.json) |
 
 ## Coding Conventions
 
-### Strings & Labels
-- Use `const { t } = useTranslation()` for all user-facing text
+### Strings & Labels (i18n)
+
+All user-facing text must be translatable. The app supports EN + HU with live language switching.
+
+#### Architecture
+```
+src/locales/en.json  ──┐
+src/locales/hu.json  ──┤ static imports
+                       ▼
+src/lib/i18n.ts ─────── useLocale() hook (useState + CustomEvent listener)
+       │                    │
+       │              useTranslationHook() → { t, locale, setLocale }
+       │                    │
+src/hooks/use-translation.ts ── re-exports as useTranslation()
+       │
+   Components call: const { t } = useTranslation()
+                    t('section.key')
+                    t('section.key', { param: value })
+```
+
+#### How locale switching works
+1. `setLocale('hu')` writes to `localStorage('g-matrix-locale')` and dispatches `CustomEvent('g-matrix-locale-change')`
+2. Every component using `useTranslation()` re-renders via `useLocale()` which listens for the event
+3. SSR-safe: `useLocale()` initializes to `'en'` on server, reads `localStorage` in `useEffect` on client
+
+#### Rules
+- **Every component** with user-facing text must call `const { t } = useTranslation()`
+- Use dot-notation keys: `t('section.key')` — e.g., `t('nav.home')`, `t('voting.submitVote')`
+- Use interpolation for dynamic values: `t('stats.votesCast', { count: 42 })` → `"42 votes cast"`
+- **Never hardcode English strings** in components — always use `t()` calls
 - Read dimension names from `appConfig.dimensions.axis1.label` (not inline "Safety")
 - Read quadrant names from `appConfig.quadrants.topRight.label` (not inline "Holy Grail")
 - Niche-specific strings belong in `app-config.ts` or `locales/*.json`, never in components
+
+#### Translation file structure (locale JSON)
+The JSON files are organized by section:
+```
+nav.*           — Navigation labels (home, profile, back, signIn, signOut)
+voting.*        — Voting UI (quickVote, submitVote, safety, taste, presets)
+quadrants.*     — Quadrant names and descriptions
+gamification.*  — Points, badges, streak labels
+common.*        — Shared terms (loading, save, cancel, delete, edit, votes)
+feed.*          — Home feed (search, filters, empty states)
+stats.*         — Stats cards (yourPoints, votesCast, currentStreak)
+chart.*         — Chart view labels
+leaderboard.*   — Leaderboard labels and descriptions
+badge.*         — Badge display labels
+scout.*         — Scout status card
+product.*       — Product detail page
+profile.*       — Profile page
+login.*         — Login page
+adminPanel.*    — Admin page
+deleteProduct.* — Delete confirmation dialog
+editProduct.*   — Edit product dialog
+adminToolbar.*  — Admin toolbar
+location.*      — Map and location labels
+theme.*         — Theme toggle labels
+imageUpload.*   — Image upload dialog
+challenges.*    — Challenges feature
+admin.*         — Admin settings
+errors.*        — Error messages
+```
+
+#### Adding a new translated string
+1. Add the key to **both** `src/locales/en.json` and `src/locales/hu.json`
+2. Use the appropriate section prefix (create new section if none fits)
+3. In the component: `import { useTranslation } from '@/hooks/use-translation'`
+4. Call `const { t } = useTranslation()` and use `t('section.key')`
+5. For interpolation: `"Hello {name}"` in JSON → `t('section.greeting', { name: 'Alice' })` in code
 
 ### Styling (Tailwind CSS v4 Architecture)
 - **Tailwind v4** uses `@theme inline { ... }` in `globals.css` to register CSS variables as utility classes. The `--color-` prefix is stripped to make class names: `--color-primary` → `bg-primary`, `text-primary`.
@@ -140,6 +206,7 @@ Standard shadcn/ui tokens (`bg-background`, `bg-card`, `bg-primary`, `text-foreg
 - **Side Effects**: NEVER call `navigate` or `setState` directly in the component body. Always wrap side effects in `useEffect` or event handlers.
 - **Z-Index**: Be careful with stacking contexts. Toast/Dialogs > Dropdowns > Sticky Headers > Content.
 - **Button Content**: When overriding button children (e.g. for icon-only buttons), You MUST provide the visible Icon element. Passing only `sr-only` text will result in a blank button. Always verify the button renders with visible content.
+- **i18n**: Never hardcode user-facing English strings. Always use `t('key')` from `useTranslation()`. If you add a new string, add it to BOTH `en.json` and `hu.json` before using it. Missing keys silently return the key path as fallback text.
 
 ## Design Tokens
 
@@ -191,6 +258,8 @@ Cards: `bg-card text-card-foreground rounded-2xl shadow-sm border border-border`
 - ❌ Don't use `any` types — use proper TypeScript types from `src/lib/types.ts`
 - ❌ Don't fetch data in child components when the parent page already has it — pass via props
 - ❌ Don't import from `convex/` directly in components — use the generated `api` object
+- ❌ Don't add user-facing strings without adding them to both `src/locales/en.json` and `src/locales/hu.json`
+- ❌ Don't use hardcoded English text in JSX — always use `t('section.key')` from `useTranslation()`
 
 ## Planning Documents
 

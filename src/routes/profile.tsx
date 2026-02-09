@@ -13,6 +13,7 @@ import { getUserLevel, appConfig } from '@/lib/app-config'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { BadgeDisplay } from '@/components/dashboard/BadgeDisplay'
 import { DietaryProfileSettings } from '@/components/dashboard/DietaryProfileSettings'
+import { useTranslation } from '@/hooks/use-translation'
 
 export const Route = createFileRoute('/profile')({
   component: ProfilePage,
@@ -79,6 +80,7 @@ function ProfilePage() {
 }
 
 function ProfileContent() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const user = useQuery(api.users.current)
   const profile = useQuery(api.profiles.getCurrent)
@@ -146,7 +148,7 @@ function ProfileContent() {
         <Button variant="ghost" size="sm" asChild>
           <Link to="/">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t('nav.back')}
           </Link>
         </Button>
 
@@ -163,7 +165,7 @@ function ProfileContent() {
 
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl font-bold text-foreground truncate">
-                  {user.name || 'Anonymous User'}
+                  {user.name || t('profile.anonymousUser')}
                 </h1>
                 <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                 <Badge
@@ -179,8 +181,8 @@ function ProfileContent() {
             {nextLevel && (
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{points} XP</span>
-                  <span>Next: {nextLevel.min} XP</span>
+                  <span>{t('profile.xp', { points })}</span>
+                  <span>{t('profile.nextLevel', { points: nextLevel.min })}</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div
@@ -196,32 +198,32 @@ function ProfileContent() {
         {/* Stats Row */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <StatsCard
-            title="Points"
+            title={t('gamification.points')}
             value={points}
             icon={<Trophy className="h-5 w-5 text-amber-500" />}
           />
           <StatsCard
-            title="Streak"
+            title={t('gamification.streak')}
             value={`${currentStreak}d`}
             icon={<Flame className="h-5 w-5 text-orange-500" />}
           />
           <StatsCard
-            title="Votes"
+            title={t('common.votes')}
             value={totalVotes}
             icon={<TrendingUp className="h-5 w-5 text-primary" />}
           />
           <StatsCard
-            title="Products"
+            title={t('profile.products')}
             value={myProducts.length}
             icon={<Star className="h-5 w-5 text-primary" />}
           />
           <StatsCard
-            title="Followers"
+            title={t('profile.followers')}
             value={followCounts?.followers ?? 0}
             icon={<Users className="h-5 w-5 text-primary" />}
           />
           <StatsCard
-            title="Following"
+            title={t('profile.following')}
             value={followCounts?.following ?? 0}
             icon={<Users className="h-5 w-5 text-primary" />}
           />
@@ -229,7 +231,7 @@ function ProfileContent() {
 
         {/* Badges Section */}
         <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3">Badges</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-3">{t('gamification.badges')}</h2>
           <BadgeDisplay earnedBadgeIds={earnedBadges} />
         </div>
 
@@ -240,7 +242,7 @@ function ProfileContent() {
 
         {/* Contributions Feed */}
         <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3">Recent Activity</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-3">{t('profile.recentActivity')}</h2>
           {activities.length > 0 ? (
             <div className="space-y-2">
               {activities.map((activity, idx) => {
@@ -263,7 +265,7 @@ function ProfileContent() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-foreground">
-                              Voted on{' '}
+                              {t('profile.votedOn')}{' '}
                               <Link
                                 to="/product/$name"
                                 params={{ name: encodeURIComponent(product.name) }}
@@ -308,7 +310,7 @@ function ProfileContent() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-foreground">
-                            Added{' '}
+                            {t('profile.added')}{' '}
                             <Link
                               to="/product/$name"
                               params={{ name: encodeURIComponent(product.name) }}
@@ -320,7 +322,7 @@ function ProfileContent() {
                           <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                             <span>
                               <Users className="inline h-3 w-3 mr-1" />
-                              {activity.data.voteCount} votes
+                              {activity.data.voteCount} {t('common.votes')}
                             </span>
                             <span>
                               • {new Date(activity.timestamp).toLocaleDateString()}
@@ -338,7 +340,7 @@ function ProfileContent() {
               <CardContent className="p-8 text-center">
                 <Calendar className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
                 <p className="text-muted-foreground">
-                  No activity yet. Start voting and adding products!
+                  {t('profile.noActivity')}
                 </p>
               </CardContent>
             </Card>

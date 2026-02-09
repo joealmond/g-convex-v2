@@ -40,7 +40,9 @@ The goal is **public release ASAP** with an attractive, fully working first impr
 - English primary, Hungarian included, any language addable via locale file
 - Predefined stores per country (Hungary has 12, others start empty)
 - Community-contributed stores can be promoted to defaults over time
-- All user-facing strings through `useTranslation()` hook
+- All user-facing strings through `useTranslation()` hook — **COMPLETE: every component uses `t()` calls**
+- Live language switching via `CustomEvent` + `useLocale()` hook — no page reload needed
+- Static JSON imports (no async loading) — translations always available, SSR-safe
 
 ---
 
@@ -342,7 +344,7 @@ g-convex-v2/
 │   │   ├── platform.ts                   # ★ Platform detection (native/web/iOS/Android)
 │   │   ├── types.ts                      # Types referencing app-config (no hardcoded labels)
 │   │   ├── utils.ts                      # Generic utilities (unchanged)
-│   │   ├── i18n.ts                       # Translation system (unchanged)
+│   │   ├── i18n.ts                       # Translation system (static imports + CustomEvent locale switching)
 │   │   ├── auth-client.ts               # Auth (unchanged)
 │   │   ├── auth-server.ts               # Auth (unchanged)
 │   │   └── env.ts                        # Env detection (unchanged)

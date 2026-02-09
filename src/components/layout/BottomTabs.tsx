@@ -2,6 +2,7 @@ import { Link, useLocation } from '@tanstack/react-router'
 import { Grid3X3, BarChart3, Plus, User, Map } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AddProductDialog } from '@/components/dashboard/AddProductDialog'
+import { useTranslation } from '@/hooks/use-translation'
 
 /**
  * Bottom tab navigation bar (mobile-optimized)
@@ -12,6 +13,7 @@ import { AddProductDialog } from '@/components/dashboard/AddProductDialog'
  * Dark mode: Slate (#1E293B) with light icons, amber active
  */
 export function BottomTabs() {
+  const { t } = useTranslation()
   const location = useLocation()
 
   const isActive = (path: string) => {
@@ -40,7 +42,7 @@ export function BottomTabs() {
           activeProps={{ className: tabClass(true) }}
         >
           <Grid3X3 className="h-6 w-6" />
-          <span>Home</span>
+          <span>{t('nav.home')}</span>
         </Link>
 
         {/* Leaderboard Tab */}
@@ -50,7 +52,7 @@ export function BottomTabs() {
           activeProps={{ className: tabClass(true) }}
         >
           <BarChart3 className="h-6 w-6" />
-          <span>Leaderboard</span>
+          <span>{t('nav.leaderboard')}</span>
         </Link>
 
         {/* Add Tab (Center, larger button) - Available to everyone */}
@@ -72,7 +74,7 @@ export function BottomTabs() {
           activeProps={{ className: tabClass(true) }}
         >
           <Map className="h-6 w-6" />
-          <span>Map</span>
+          <span>{t('nav.map')}</span>
         </Link>
 
         {/* Profile Tab */}
@@ -82,7 +84,7 @@ export function BottomTabs() {
           activeProps={{ className: tabClass(true) }}
         >
           <User className="h-6 w-6" />
-          <span>Profile</span>
+          <span>{t('nav.profile')}</span>
         </Link>
       </nav>
     </>

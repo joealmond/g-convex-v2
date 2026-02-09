@@ -3,6 +3,7 @@
 import { type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/hooks/use-translation'
 
 export type FilterType = 'all' | 'recent' | 'nearby' | 'trending'
 
@@ -22,11 +23,12 @@ interface FilterChipsProps {
  * - Trending: sort by voteCount desc
  */
 export function FilterChips({ value, onChange, compact = false }: FilterChipsProps) {
+  const { t } = useTranslation()
   const filters: Array<{ value: FilterType; label: ReactNode }> = [
-    { value: 'all', label: 'All' },
-    { value: 'recent', label: 'Recent' },
-    { value: 'nearby', label: 'Nearby' },
-    { value: 'trending', label: 'Trending' },
+    { value: 'all', label: t('feed.all') },
+    { value: 'recent', label: t('feed.recent') },
+    { value: 'nearby', label: t('feed.nearby') },
+    { value: 'trending', label: t('feed.trending') },
   ]
 
   return (

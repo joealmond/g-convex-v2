@@ -18,6 +18,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import type { Product } from '@/lib/types'
+import { useTranslation } from '@/hooks/use-translation'
 
 const productSchema = z.object({
   name: z.string().min(1, 'Product name is required').max(100, 'Name too long'),
@@ -38,6 +39,7 @@ interface EditProductDialogProps {
  * Admin-only feature
  */
 export function EditProductDialog({ product, open, onOpenChange }: EditProductDialogProps) {
+  const { t } = useTranslation()
   const updateProduct = useMutation(api.products.update)
 
   const {
@@ -93,9 +95,9 @@ export function EditProductDialog({ product, open, onOpenChange }: EditProductDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Edit Product</DialogTitle>
+          <DialogTitle>{t('editProduct.title')}</DialogTitle>
           <DialogDescription>
-            Update product information. This will not affect existing votes.
+            {t('editProduct.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -103,11 +105,11 @@ export function EditProductDialog({ product, open, onOpenChange }: EditProductDi
           {/* Product Name */}
           <div className="space-y-2">
             <Label htmlFor="edit-name">
-              Product Name <span className="text-destructive">*</span>
+              {t('editProduct.productName')} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="edit-name"
-              placeholder="e.g., Awesome Bread Brand"
+              placeholder={t('editProduct.namePlaceholder')}
               {...register('name')}
               disabled={isSubmitting}
             />
@@ -118,10 +120,10 @@ export function EditProductDialog({ product, open, onOpenChange }: EditProductDi
 
           {/* Ingredients */}
           <div className="space-y-2">
-            <Label htmlFor="edit-ingredients">Ingredients (comma-separated)</Label>
+            <Label htmlFor="edit-ingredients">{t('editProduct.ingredientsLabel')}</Label>
             <Input
               id="edit-ingredients"
-              placeholder="e.g., rice flour, water, salt"
+              placeholder={t('editProduct.ingredientsPlaceholder')}
               {...register('ingredients')}
               disabled={isSubmitting}
             />
@@ -132,11 +134,11 @@ export function EditProductDialog({ product, open, onOpenChange }: EditProductDi
 
           {/* Image URL */}
           <div className="space-y-2">
-            <Label htmlFor="edit-imageUrl">Image URL</Label>
+            <Label htmlFor="edit-imageUrl">{t('editProduct.imageUrl')}</Label>
             <Input
               id="edit-imageUrl"
               type="url"
-              placeholder="https://example.com/product.jpg"
+              placeholder={t('editProduct.imageUrlPlaceholder')}
               {...register('imageUrl')}
               disabled={isSubmitting}
             />
@@ -153,16 +155,16 @@ export function EditProductDialog({ product, open, onOpenChange }: EditProductDi
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
+                  {t('common.updating')}
                 </>
               ) : (
-                'Update Product'
+                t('editProduct.updateProduct')
               )}
             </Button>
           </div>

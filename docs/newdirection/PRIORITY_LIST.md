@@ -179,6 +179,23 @@ Makes the first impression "attractive" beyond functional.
 | 6 | 3 | 2 | M | 6.0 | **Chart mode switcher** | On chart toggle view: "Vibe" (safety vs taste) ↔ "Value" (price vs taste) toggle. Value-mode quadrant names ("Treat", "Rip-Off", "The Steal", "Cheap Filler") and dollar sign Y-axis from `appConfig.valueLens` | Gap 1.2, 1.3, 1.6, 1.7 | ✅ COMPLETE |
 | 7 | 3 | 1 | M | 4.5 | **Dark mode** | CSS custom properties switch to Kimi dark palette (Deep Navy bg, Slate surfaces, Soft Amber accents). Toggle in settings or system preference. Tailwind `dark:` classes + `prefers-color-scheme` | Kimi spec | ✅ COMPLETE |
 
+### Cross-Cutting: i18n Integration ✅ COMPLETE
+
+Full internationalization pass — every user-facing string across all components now uses `t()` from `useTranslation()` instead of hardcoded English. Live language switching (EN ↔ HU) works via `CustomEvent` + `useLocale()` hook with no page reload.
+
+| | Task | Status |
+|---|------|--------|
+| [x] | Build i18n engine (`src/lib/i18n.ts`) — static JSON imports + CustomEvent + `useLocale()` hook | ✅ |
+| [x] | Expand `en.json` to ~385 lines covering all UI sections (nav, voting, feed, stats, chart, leaderboard, badge, scout, product, profile, login, adminPanel, deleteProduct, editProduct, adminToolbar, location, theme, imageUpload, challenges, admin, errors) | ✅ |
+| [x] | Create matching `hu.json` with full Hungarian translations (~385 lines) | ✅ |
+| [x] | Add `LanguageSwitcher` dropdown in `TopBar` (uses `onSelect` for Radix DropdownMenuItem) | ✅ |
+| [x] | Replace hardcoded strings in all layout components (BottomTabs, TopBar, FilterChips, FeedGrid) | ✅ |
+| [x] | Replace hardcoded strings in all feed components (ProductCard, ProductStrip, ScoutCard) | ✅ |
+| [x] | Replace hardcoded strings in all route pages (index, product/$name, profile, login, admin, leaderboard, map) | ✅ |
+| [x] | Replace hardcoded strings in all dashboard components (Leaderboard, BadgeDisplay, VotingPanel, FineTunePanel, CoordinateGrid, DeleteProductButton, EditProductDialog, AdminToolbar) | ✅ |
+| [x] | Replace hardcoded strings in product components (ImageUploadDialog, StoreTagInput) | ✅ |
+| [x] | Remove debug `console.log` statements from `i18n.ts` | ✅ |
+
 ---
 
 ## Wave 4: Post-Launch

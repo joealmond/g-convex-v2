@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Trash2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Product } from '@/lib/types'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface DeleteProductButtonProps {
   product: Product
@@ -41,6 +42,7 @@ export function DeleteProductButton({
   const [open, setOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const deleteProduct = useMutation(api.products.deleteProduct)
+  const { t } = useTranslation()
 
   const handleDelete = async () => {
     setIsDeleting(true)
@@ -78,7 +80,7 @@ export function DeleteProductButton({
         ) : (
           <>
             <Trash2 className="h-4 w-4 mr-2" />
-            Delete
+            {t('common.delete')}
           </>
         )}
       </Button>
@@ -86,17 +88,16 @@ export function DeleteProductButton({
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Product?</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteProduct.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>{product.name}</strong>?
+              {t('deleteProduct.confirm', { name: product.name })}
               <br />
               <br />
-              This will permanently remove the product and all {product.voteCount} votes
-              associated with it. This action cannot be undone.
+              {t('deleteProduct.warning', { count: product.voteCount })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
@@ -105,10 +106,10 @@ export function DeleteProductButton({
               {isDeleting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
+                  {t('common.deleting')}
                 </>
               ) : (
-                'Delete Product'
+                t('deleteProduct.deleteProduct')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

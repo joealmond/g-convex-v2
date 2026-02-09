@@ -7,6 +7,7 @@ import { FilterChips, type FilterType } from '@/components/feed/FilterChips'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { Loader2 } from 'lucide-react'
 import type { Product } from '@/lib/types'
+import { useTranslation } from '@/hooks/use-translation'
 
 export const Route = createFileRoute('/map')({
   component: MapPage,
@@ -31,6 +32,7 @@ function MapPage() {
 }
 
 function MapPageContent() {
+  const { t } = useTranslation()
   const products = useQuery(api.products.list)
   const { coords, loading: geoLoading, requestLocation } = useGeolocation()
   const [filterType, setFilterType] = useState<FilterType>('all')
@@ -138,7 +140,7 @@ function MapPageContent() {
         <FilterChips value={filterType} onChange={setFilterType} compact />
         {geoLoading && (
           <span className="text-[10px] text-muted-foreground whitespace-nowrap bg-background/80 rounded-full px-2 py-0.5">
-            Locating…
+            {t('location.locating')}
           </span>
         )}
       </div>
@@ -159,10 +161,9 @@ function MapPageContent() {
           {filteredProducts.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="text-center px-4 bg-card/90 rounded-xl p-4 shadow-lg">
-                <p className="text-foreground mb-2">No products found with location</p>
+                <p className="text-foreground mb-2">{t('location.noProductsWithLocation')}</p>
                 <p className="text-xs text-muted-foreground">
-                  Try adjusting your filters or add products with store locations.
-                  Make sure to allow location access to add pinned products.
+                  {t('location.noProductsHint')}
                 </p>
               </div>
             </div>
@@ -174,7 +175,7 @@ function MapPageContent() {
       {!isLoading && filteredProducts.length > 0 && (
         <div className="absolute bottom-2 left-2 z-[400] bg-card rounded-full shadow-lg px-3 py-1.5">
           <p className="text-xs font-semibold text-foreground">
-            {markerCount} {markerCount === 1 ? 'pin' : 'pins'} · {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+            {t('location.pins', { count: markerCount })} · {t('location.productsCount', { count: filteredProducts.length })}
           </p>
         </div>
       )}
