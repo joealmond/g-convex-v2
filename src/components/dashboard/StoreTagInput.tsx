@@ -128,7 +128,7 @@ export function StoreTagInput({
           </>
         ) : (
           <Select
-            value={value || undefined}
+            value={value || ''}
             onValueChange={handleStoreSelect}
             disabled={disabled}
           >

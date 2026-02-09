@@ -513,6 +513,16 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
                 onChange={(e) => setProductName(e.target.value)}
                 placeholder={t('imageUpload.enterProductName')}
               />
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-1.5 text-xs"
+                onClick={handleSaveAsDraft}
+                disabled={!productName.trim() || geoLoading}
+              >
+                <Bookmark className="h-3.5 w-3.5" />
+                {t('imageUpload.draft')} — {t('imageUpload.draftHint')}
+              </Button>
             </div>
 
             {/* Quick Vote — Combo Buttons (fastest path) */}
@@ -669,17 +679,6 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
             <div className="flex gap-2 pt-1">
               <Button variant="outline" size="sm" className="flex-1" onClick={resetDialog}>
                 {t('imageUpload.cancel')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={handleSaveAsDraft}
-                disabled={!productName.trim() || geoLoading}
-                title="Save as draft — you can adjust later"
-              >
-                <Bookmark className="h-3.5 w-3.5" />
-                {t('imageUpload.draft')}
               </Button>
               <Button
                 size="sm"

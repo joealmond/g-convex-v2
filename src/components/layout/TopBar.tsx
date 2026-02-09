@@ -10,6 +10,7 @@ import { LogOut, MapPin, Trophy, Moon, Sun, Monitor } from 'lucide-react'
 import { authClient, useSession } from '@/lib/auth-client'
 import { ScoutCard } from '@/components/dashboard/ScoutCard'
 import { useGeolocation, useTheme } from '@/hooks'
+import { useTranslation } from '@/hooks/use-translation'
 import { motion } from 'framer-motion'
 
 /**
@@ -23,6 +24,7 @@ export function TopBar() {
   const profile = useQuery(api.profiles.getCurrent)
   const { coords, loading: geoLoading, requestLocation } = useGeolocation()
   const { theme, setTheme, resolvedTheme } = useTheme()
+  const { locale, setLocale } = useTranslation()
   const { data: session } = useSession()
 
   const handleSignOut = async () => {
@@ -79,6 +81,16 @@ export function TopBar() {
           whileTap={{ scale: 0.95 }}
         >
           <MapPin className="h-4 w-4" />
+        </motion.button>
+
+        {/* Language Toggle */}
+        <motion.button
+          onClick={() => setLocale(locale === 'en' ? 'hu' : 'en')}
+          className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          title={locale === 'en' ? 'Switch to Magyar' : 'Switch to English'}
+          whileTap={{ scale: 0.95 }}
+        >
+          <span className="text-xs font-bold">{locale === 'en' ? '🇭🇺' : '🇬🇧'}</span>
         </motion.button>
 
         {/* Theme Toggle (3-state: light/dark/system) */}
