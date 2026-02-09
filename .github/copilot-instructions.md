@@ -12,7 +12,10 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 
 1. **Niche config, not niche code** — All niche-specific terms (app name, dimension labels like "Safety"/"Taste", quadrant names like "Holy Grail", preset labels, store defaults, colors) live in `src/lib/app-config.ts`. Components read from this config or `useTranslation()`. **Never hardcode niche strings in components.**
 
-2. **Mobile-first** — Design for 375px phone screens first. Bottom tab navigation. Desktop is progressive enhancement. Touch targets ≥ 44px. Test on iOS Safari and Android Chrome.
+2. **Mobile-first** — Design for **320px minimum width** (iPhone SE). Test at 320px, 375px, 390px, and 428px. Bottom tab navigation. Desktop is progressive enhancement. Touch targets ≥ 44px. Test on iOS Safari and Android Chrome.
+   - **Under 400px**: Avoid 3-column grids with text content — use horizontal scroll, 2-column, or stacked layouts. Keep card content to icon + number + short label maximum.
+   - **Truncation**: Always add `truncate` or `line-clamp-1` on text that might overflow at 320px.
+   - **Test viewports**: 320px (iPhone SE), 375px (iPhone 13 mini), 390px (iPhone 14), 428px (iPhone 14 Plus).
 
 3. **Readable by humans** — A mid-level developer should understand any file in under 2 minutes. Prefer explicit code over clever abstractions. No deep nesting. No magic. Name things obviously.
 

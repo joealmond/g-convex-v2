@@ -90,14 +90,14 @@
     "noCompleted": "You haven't completed any challenges yet. Start now!",
     "progress": "Progress",
     "complete": "complete",
-    "daysRemaining": "{{days}} days remaining",
+    "daysRemaining": "{days} days remaining",
     "expired": "Expired",
     "reward": "Reward",
     "badge": "Badge",
     "claimReward": "Claim Reward",
     "claimed": "Reward Claimed",
     "ready": "Ready!",
-    "rewardClaimed": "You earned {{points}} points!",
+    "rewardClaimed": "You earned {points} points!",
     "claimFailed": "Failed to claim reward. Please try again."
   },
   "admin": {
@@ -159,6 +159,22 @@
     "whereDidYouBuy": "Where did you buy this?",
     "cancel": "Cancel",
     "submitProduct": "Submit Product",
-    "creatingProduct": "Creating product"
+    "creatingProduct": "Creating product",
+    "quickRate": "Quick Rate",
+    "price": "Price",
+    "fineTune": "Fine Tune",
+    "draft": "Draft",
+    "draftSaved": "Saved as draft!",
+    "draftHint": "You can adjust your vote anytime from the product page.",
+    "locating": "Locating...",
+    "locationAcquired": "Location acquired",
+    "locationUnavailable": "Location unavailable",
+    "dropImageHere": "Drop image here",
+    "orDragAndDrop": "or drag and drop",
+    "acquiringLocation": "Acquiring location...",
+    "provideProductName": "Please provide a product name",
+    "failedToDraft": "Failed to save draft",
+    "failedToCreate": "Failed to create product",
+    "riskWarning": "Warning: This product may contain {concept}!"
   }
 }

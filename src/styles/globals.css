@@ -237,3 +237,13 @@ body {
   50% { width: 80%; }
   100% { width: 100%; }
 }
+
+/* Custom leaflet cluster icon — override default markercluster styles */
+.custom-cluster-icon {
+  background: transparent !important;
+  border: none !important;
+}
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}

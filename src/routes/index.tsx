@@ -187,10 +187,10 @@ function HomePageContent() {
   const useCardLayout = filterType !== 'all'
 
   return (
-    <main className="flex-1 mx-auto px-4 py-6 max-w-7xl w-full">
+    <main className="flex-1 mx-auto px-2 sm:px-4 py-4 sm:py-6 max-w-7xl w-full">
       {/* Gamification Widgets for Logged-in Users */}
       {user && profile && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="flex gap-2 mb-3 md:grid md:grid-cols-3 md:gap-4 md:mb-6">
           <StatsCard
             title="Your Points"
             value={profile.points}
@@ -317,38 +317,37 @@ function HomePageContent() {
 
       {/* Chart View */}
       {viewMode === 'chart' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-card rounded-2xl shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">G-Matrix Visualization</h2>
-              <div className="flex gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="lg:col-span-2 bg-card rounded-2xl shadow-sm p-3 sm:p-6">
+            {/* Title + mode toggle — stacks vertically on narrow screens */}
+            <div className="flex items-center justify-between mb-2 sm:mb-4 gap-2">
+              <h2 className="text-base sm:text-xl font-semibold truncate">G-Matrix</h2>
+              <div className="flex gap-1.5 flex-shrink-0">
                 <Button
                   onClick={() => setChartMode('vibe')}
                   variant={chartMode === 'vibe' ? 'default' : 'outline'}
                   size="sm"
-                  className="gap-1.5"
+                  className="gap-1 px-2.5 sm:px-3 h-8 text-xs sm:text-sm"
                 >
-                  <span className="text-sm">🛡️</span>
-                  Vibe
+                  🛡️ Vibe
                 </Button>
                 <Button
                   onClick={() => setChartMode('value')}
                   variant={chartMode === 'value' ? 'default' : 'outline'}
                   size="sm"
-                  className="gap-1.5"
+                  className="gap-1 px-2.5 sm:px-3 h-8 text-xs sm:text-sm"
                 >
-                  <span className="text-sm">💰</span>
-                  Value
+                  💰 Value
                 </Button>
               </div>
             </div>
 
             {isLoading ? (
-              <div className="flex items-center justify-center h-[500px]">
+              <div className="flex items-center justify-center h-[280px] sm:h-[380px] lg:h-[460px]">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
             ) : products && products.length > 0 ? (
-              <div className="h-[500px]">
+              <div className="h-[280px] sm:h-[380px] lg:h-[460px]">
                 <MatrixChart
                   products={products}
                   onProductClick={handleChartDotClick}
@@ -357,7 +356,7 @@ function HomePageContent() {
                 />
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-[500px] text-muted-foreground">
+              <div className="flex flex-col items-center justify-center h-[280px] sm:h-[380px] lg:h-[460px] text-muted-foreground">
                 <p className="text-lg mb-2">No products yet</p>
                 <p className="text-sm">Add your first product to get started!</p>
               </div>

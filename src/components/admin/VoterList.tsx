@@ -93,82 +93,75 @@ export function VoterList({ votes, onImpersonate }: VoterListProps) {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6">
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {votes.map((vote) => (
               <div
                 key={vote._id}
-                className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                className="flex items-center gap-2 p-2 sm:p-3 rounded-lg border hover:bg-muted/50 transition-colors"
               >
                 {/* Vote Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                     {vote.isAnonymous ? (
-                      <Badge variant="outline">
-                        <User className="h-3 w-3 mr-1" />
-                        Anonymous
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">
+                        <User className="h-3 w-3 mr-0.5" />
+                        Anon
                       </Badge>
                     ) : (
-                      <Badge variant="default">
-                        <User className="h-3 w-3 mr-1" />
-                        Registered
+                      <Badge variant="default" className="text-[10px] px-1.5 py-0 h-5">
+                        <User className="h-3 w-3 mr-0.5" />
+                        Reg
                       </Badge>
                     )}
                     <span className="text-xs text-muted-foreground truncate">
                       {vote.userId
-                        ? `User ${vote.userId.slice(-6)}`
+                        ? `#${vote.userId.slice(-6)}`
                         : vote.anonymousId
-                          ? `Anon ${vote.anonymousId.slice(-6)}`
-                          : 'Unknown'}
+                          ? `#${vote.anonymousId.slice(-6)}`
+                          : '?'}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground ml-auto">
+                      {new Date(vote.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="text-sm">
-                    <span className="font-medium">
-                      Safety: {vote.safety}
-                    </span>{' '}
-                    ·{' '}
-                    <span className="font-medium">Taste: {vote.taste}</span>
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className="font-medium text-safety-high">{vote.safety}</span>
+                    <span className="text-muted-foreground">/</span>
+                    <span className="font-medium text-primary">{vote.taste}</span>
                     {vote.price && (
                       <>
-                        {' '}
-                        · <span>Price: {vote.price}/5</span>
+                        <span className="text-muted-foreground">/</span>
+                        <span className="font-medium text-gold">{vote.price}</span>
                       </>
                     )}
-                  </div>
-                  {vote.storeName && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {vote.storeName}
-                      {vote.latitude && vote.longitude && ' (GPS)'}
-                    </div>
-                  )}
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {new Date(vote.createdAt).toLocaleString()}
+                    {vote.storeName && (
+                      <span className="text-muted-foreground truncate ml-1">@ {vote.storeName}</span>
+                    )}
                   </div>
                 </div>
 
                 {/* Admin Actions */}
-                <div className="flex gap-1 ml-2">
-                  {/* Impersonate Button (only for registered users) */}
+                <div className="flex gap-0.5 flex-shrink-0">
                   {!vote.isAnonymous && vote.userId && (
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
+                      className="h-8 w-8"
                       onClick={() => onImpersonate(vote.userId!)}
                       title="Impersonate this user"
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-3.5 w-3.5" />
                     </Button>
                   )}
-                  
-                  {/* Delete Button */}
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
                     onClick={() => setDeletingVoteId(vote._id)}
-                    className="text-destructive hover:text-destructive"
                     title="Delete this vote"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>

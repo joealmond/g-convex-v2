@@ -211,7 +211,8 @@ function ProductDetailContent() {
             <DeleteProductButton
               product={product as Product}
               onDeleted={handleProductDeleted}
-              className="text-destructive"
+              variant="outline"
+              className="border-destructive text-destructive hover:bg-destructive hover:text-white"
             />
           </div>
         )}
@@ -228,21 +229,21 @@ function ProductDetailContent() {
         )}
 
         {/* Product Name + Quadrant Badge */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-foreground mb-2">{product.name}</h1>
-            <p className="text-sm text-muted-foreground">
-              {product.voteCount} {product.voteCount === 1 ? 'vote' : 'votes'}
-            </p>
+        <div className="space-y-2">
+          <div className="flex items-start gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex-1 min-w-0 break-words">{product.name}</h1>
+            {quadrantInfo && (
+              <Badge
+                className="text-white font-semibold px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap flex-shrink-0"
+                style={{ backgroundColor: quadrantInfo.color }}
+              >
+                {quadrantInfo.emoji} {quadrantInfo.name}
+              </Badge>
+            )}
           </div>
-          {quadrantInfo && (
-            <Badge
-              className="text-white font-semibold px-3 py-2 rounded-lg"
-              style={{ backgroundColor: quadrantInfo.color }}
-            >
-              {quadrantInfo.name}
-            </Badge>
-          )}
+          <p className="text-sm text-muted-foreground">
+            {product.voteCount} {product.voteCount === 1 ? 'vote' : 'votes'}
+          </p>
         </div>
 
         {/* Rating Bars */}

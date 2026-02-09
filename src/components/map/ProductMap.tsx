@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet'
+import MarkerClusterGroup from 'react-leaflet-cluster'
 import { type Product, getQuadrant, QUADRANTS } from '@/lib/types'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -81,19 +82,52 @@ export function ProductMap({ products, center = [47.497, 19.040], zoom = 12, use
         />
       )}
 
-      {/* Render markers for each product's stores */}
-      {productsWithLocations.map((product) =>
-        product.stores
-          ?.filter((store) => store.geoPoint)
-          .map((store, index) => (
-            <ProductMarker
-              key={`${product._id}-${index}`}
-              product={product}
-              storeName={store.name}
-              position={[store.geoPoint!.lat, store.geoPoint!.lng]}
-            />
-          ))
-      )}
+      {/* Render clustered markers for each product's stores */}
+      <MarkerClusterGroup
+        chunkedLoading
+        maxClusterRadius={40}
+        spiderfyOnMaxZoom
+        showCoverageOnHover={false}
+        iconCreateFunction={(cluster: { getChildCount: () => number }) => {
+          const count = cluster.getChildCount()
+          let size = 'small'
+          let diameter = 36
+          if (count >= 10) { size = 'large'; diameter = 48 }
+          else if (count >= 5) { size = 'medium'; diameter = 42 }
+
+          return L.divIcon({
+            html: `<div style="
+              background: #7CB342;
+              color: white;
+              border-radius: 50%;
+              width: ${diameter}px;
+              height: ${diameter}px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 700;
+              font-size: ${size === 'large' ? 14 : 12}px;
+              border: 3px solid white;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            ">${count}</div>`,
+            className: 'custom-cluster-icon',
+            iconSize: L.point(diameter, diameter),
+          })
+        }}
+      >
+        {productsWithLocations.map((product) =>
+          product.stores
+            ?.filter((store) => store.geoPoint)
+            .map((store, index) => (
+              <ProductMarker
+                key={`${product._id}-${index}`}
+                product={product}
+                storeName={store.name}
+                position={[store.geoPoint!.lat, store.geoPoint!.lng]}
+              />
+            ))
+        )}
+      </MarkerClusterGroup>
     </MapContainer>
   )
 }

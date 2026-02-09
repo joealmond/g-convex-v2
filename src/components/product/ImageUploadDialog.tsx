@@ -16,9 +16,14 @@ import {
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Slider } from '../ui/slider'
+import { StoreTagInput } from '../dashboard/StoreTagInput'
 import { useAnonymousId } from '../../hooks/use-anonymous-id'
 import { useTranslation } from '../../hooks/use-translation'
 import { useGeolocation } from '../../hooks/use-geolocation'
+import { ChevronDown, ChevronUp, Sliders, Bookmark } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface ImageUploadDialogProps {
   trigger?: React.ReactNode
@@ -52,6 +57,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
   const [taste, setTaste] = useState(50)
   const [price, setPrice] = useState<number | undefined>(undefined)
   const [storeName, setStoreName] = useState('')
+  const [fineTuneOpen, setFineTuneOpen] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { anonId } = useAnonymousId()
@@ -270,9 +276,72 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
     }
   }, [imageFile, generateUploadUrl, analyzeImage])
 
+  const resetDialog = useCallback(() => {
+    // Revoke blob URL to free memory
+    if (imagePreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview)
+    }
+    setStep('upload')
+    setImageFile(null)
+    setImagePreview(null)
+    setStorageId(null)
+    setRealImageUrl(null)
+    setAnalysis(null)
+    setProductName('')
+    setSafety(50)
+    setTaste(50)
+    setPrice(undefined)
+    setStoreName('')
+    setFineTuneOpen(false)
+    setError(null)
+  }, [imagePreview])
+
+  /**
+   * Save as draft — submit with current values immediately (AI defaults + location).
+   * User can edit later from the product page.
+   */
+  const handleSaveAsDraft = useCallback(async () => {
+    if (!storageId || !productName.trim()) {
+      setError(t('imageUpload.provideProductName'))
+      return
+    }
+
+    setStep('submitting')
+    setError(null)
+
+    try {
+      const imageUrl = realImageUrl || ''
+
+      const result = await createProductAndVote({
+        name: productName.trim(),
+        imageUrl,
+        imageStorageId: (storageId as any) ?? undefined,
+        anonymousId: anonId ?? undefined,
+        safety,
+        taste,
+        price,
+        storeName: storeName || undefined,
+        latitude: coords?.latitude,
+        longitude: coords?.longitude,
+        ingredients: analysis?.tags,
+        aiAnalysis: analysis ?? undefined,
+      })
+
+      setOpen(false)
+      onSuccess?.(result.productId)
+      toast.success(`📋 ${t('imageUpload.draftSaved')}`, {
+        description: t('imageUpload.draftHint'),
+      })
+      resetDialog()
+    } catch (err: any) {
+      setError(err.message || t('imageUpload.failedToDraft'))
+      setStep('review')
+    }
+  }, [storageId, productName, anonId, safety, taste, price, storeName, analysis, realImageUrl, coords, createProductAndVote, onSuccess, resetDialog, t])
+
   const handleSubmit = useCallback(async () => {
     if (!storageId || !productName.trim()) {
-      setError('Please provide a product name')
+      setError(t('imageUpload.provideProductName'))
       return
     }
 
@@ -314,30 +383,12 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       setTaste(50)
       setPrice(undefined)
       setStoreName('')
+      setFineTuneOpen(false)
     } catch (err: any) {
-      setError(err.message || 'Failed to create product')
+      setError(err.message || t('imageUpload.failedToCreate'))
       setStep('review')
     }
-  }, [storageId, productName, anonId, safety, taste, price, storeName, analysis, realImageUrl, imagePreview, createProductAndVote, onSuccess])
-
-  const resetDialog = useCallback(() => {
-    // Revoke blob URL to free memory
-    if (imagePreview?.startsWith('blob:')) {
-      URL.revokeObjectURL(imagePreview)
-    }
-    setStep('upload')
-    setImageFile(null)
-    setImagePreview(null)
-    setStorageId(null)
-    setRealImageUrl(null)
-    setAnalysis(null)
-    setProductName('')
-    setSafety(50)
-    setTaste(50)
-    setPrice(undefined)
-    setStoreName('')
-    setError(null)
-  }, [imagePreview])
+  }, [storageId, productName, anonId, safety, taste, price, storeName, analysis, realImageUrl, imagePreview, createProductAndVote, onSuccess, t])
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => { setOpen(newOpen); if (!newOpen) resetDialog() }}>
@@ -389,11 +440,11 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
                 <>
                   <div className="text-4xl">📷</div>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {isDragging ? 'Drop image here' : t('imageUpload.clickToUpload')}
+                    {isDragging ? t('imageUpload.dropImageHere') : t('imageUpload.clickToUpload')}
                   </p>
                   {!isDragging && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      or drag and drop
+                      {t('imageUpload.orDragAndDrop')}
                     </p>
                   )}
                 </>
@@ -439,18 +490,18 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
 
         {/* Step 3: Review */}
         {step === 'review' && (
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
             {imagePreview && (
               <img
                 src={imagePreview}
                 alt="Product"
-                className="mx-auto max-h-[120px] rounded-md object-contain"
+                className="mx-auto max-h-[100px] rounded-md object-contain"
               />
             )}
 
             {analysis?.containsGluten && (
               <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                ⚠️ Warning: This product may contain {appConfig.riskConcept}!
+                ⚠️ {t('imageUpload.riskWarning', { concept: appConfig.riskConcept })}
               </div>
             )}
 
@@ -464,42 +515,148 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>{t('imageUpload.safety')}: {safety}</Label>
-              <Slider
-                value={[safety]}
-                onValueChange={(values) => values[0] !== undefined && setSafety(values[0])}
-                min={0}
-                max={100}
-                step={1}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>{t('imageUpload.taste')}: {taste}</Label>
-              <Slider
-                value={[taste]}
-                onValueChange={(values) => values[0] !== undefined && setTaste(values[0])}
-                min={0}
-                max={100}
-                step={1}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="storeName">{t('imageUpload.storeName')} ({t('imageUpload.optional')})</Label>
-              <Input
-                id="storeName"
-                value={storeName}
-                onChange={(e) => setStoreName(e.target.value)}
-                placeholder={t('imageUpload.whereDidYouBuy')}
-              />
-              {/* Location Status */}
-              <div className="text-xs flex items-center gap-1 mt-1">
-                {geoLoading && <span className="text-muted-foreground">📍 Acquiring location...</span>}
-                {coords && <span className="text-green-600">✅ Location acquired</span>}
-                {geoError && <span className="text-red-500">❌ Location unavailable type store manually</span>}
+            {/* Quick Vote — Combo Buttons (fastest path) */}
+            <div>
+              <Label className="mb-2 block">{t('imageUpload.quickRate')}</Label>
+              <div className="grid grid-cols-2 gap-1.5">
+                <Button
+                  type="button"
+                  className={cn(
+                    "h-12 text-white hover:opacity-90 text-xs font-semibold",
+                    safety === 90 && taste === 30 && "ring-2 ring-foreground ring-offset-2"
+                  )}
+                  style={{ backgroundColor: appConfig.quadrants.topLeft.color }}
+                  onClick={() => { setSafety(90); setTaste(30) }}
+                >
+                  {appConfig.quadrants.topLeft.emoji} {appConfig.quadrants.topLeft.label}
+                </Button>
+                <Button
+                  type="button"
+                  className={cn(
+                    "h-12 text-white hover:opacity-90 text-xs font-semibold",
+                    safety === 90 && taste === 90 && "ring-2 ring-foreground ring-offset-2"
+                  )}
+                  style={{ backgroundColor: appConfig.quadrants.topRight.color }}
+                  onClick={() => { setSafety(90); setTaste(90) }}
+                >
+                  {appConfig.quadrants.topRight.emoji} {appConfig.quadrants.topRight.label}
+                </Button>
+                <Button
+                  type="button"
+                  className={cn(
+                    "h-12 text-white hover:opacity-90 text-xs font-semibold",
+                    safety === 10 && taste === 10 && "ring-2 ring-foreground ring-offset-2"
+                  )}
+                  style={{ backgroundColor: appConfig.quadrants.bottomLeft.color }}
+                  onClick={() => { setSafety(10); setTaste(10) }}
+                >
+                  {appConfig.quadrants.bottomLeft.emoji} {appConfig.quadrants.bottomLeft.label}
+                </Button>
+                <Button
+                  type="button"
+                  className={cn(
+                    "h-12 text-white hover:opacity-90 text-xs font-semibold",
+                    safety === 30 && taste === 90 && "ring-2 ring-foreground ring-offset-2"
+                  )}
+                  style={{ backgroundColor: appConfig.quadrants.bottomRight.color }}
+                  onClick={() => { setSafety(30); setTaste(90) }}
+                >
+                  {appConfig.quadrants.bottomRight.emoji} {appConfig.quadrants.bottomRight.label}
+                </Button>
               </div>
+            </div>
+
+            {/* Price Quick Select */}
+            <div>
+              <Label className="mb-2 block">
+                {t('imageUpload.price')} <span className="text-xs font-normal text-muted-foreground">({t('imageUpload.optional')})</span>
+              </Label>
+              <div className="grid grid-cols-5 gap-1.5">
+                {appConfig.dimensions.axis3.presets.map((preset, index) => {
+                  const val = (index + 1) * 20
+                  return (
+                    <Button
+                      key={preset.label}
+                      type="button"
+                      variant={price === val ? 'default' : 'outline'}
+                      className={cn(
+                        'h-10 text-xs px-1',
+                        price === val && 'bg-primary hover:bg-primary/90'
+                      )}
+                      onClick={() => setPrice(price === val ? undefined : val)}
+                      title={preset.description}
+                    >
+                      {preset.emoji}
+                    </Button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Store — autocomplete from predefined list */}
+            <StoreTagInput
+              value={storeName}
+              onChange={setStoreName}
+              onLocationCapture={(lat, lon) => {
+                /* location already captured on dialog open */
+              }}
+              disabled={false}
+            />
+
+            {/* Fine Tune — collapsible */}
+            <div className="border border-border rounded-xl overflow-hidden">
+              <button
+                type="button"
+                className="w-full flex items-center justify-between p-3 bg-muted hover:bg-muted/80 transition-colors"
+                onClick={() => setFineTuneOpen(!fineTuneOpen)}
+              >
+                <div className="flex items-center gap-2">
+                  <Sliders className="h-4 w-4 text-primary" />
+                  <span className="font-semibold text-sm">{t('imageUpload.fineTune')}</span>
+                </div>
+                {fineTuneOpen ? (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+              <AnimatePresence>
+                {fineTuneOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-3 space-y-4">
+                      <div className="space-y-2">
+                        <Label>{appConfig.dimensions.axis1.label}: {safety}</Label>
+                        <Slider
+                          value={[safety]}
+                          onValueChange={(v) => v[0] !== undefined && setSafety(v[0])}
+                          min={0} max={100} step={1}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{appConfig.dimensions.axis2.label}: {taste}</Label>
+                        <Slider
+                          value={[taste]}
+                          onValueChange={(v) => v[0] !== undefined && setTaste(v[0])}
+                          min={0} max={100} step={1}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Location Status */}
+            <div className="text-xs flex items-center gap-1">
+              {geoLoading && <span className="text-muted-foreground">📍 {t('imageUpload.acquiringLocation')}</span>}
+              {coords && <span className="text-green-600">✅ {t('imageUpload.locationAcquired')}</span>}
+              {geoError && <span className="text-destructive">❌ {t('imageUpload.locationUnavailable')}</span>}
             </div>
 
             {analysis?.reasoning && (
@@ -508,16 +665,29 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
               </p>
             )}
 
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={resetDialog}>
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" size="sm" className="flex-1" onClick={resetDialog}>
                 {t('imageUpload.cancel')}
               </Button>
               <Button
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={handleSaveAsDraft}
+                disabled={!productName.trim() || geoLoading}
+                title="Save as draft — you can adjust later"
+              >
+                <Bookmark className="h-3.5 w-3.5" />
+                {t('imageUpload.draft')}
+              </Button>
+              <Button
+                size="sm"
                 className="flex-1"
                 onClick={handleSubmit}
                 disabled={!productName.trim() || geoLoading}
               >
-                {geoLoading ? 'Locating...' : t('imageUpload.submitProduct')}
+                {geoLoading ? t('imageUpload.locating') : t('imageUpload.submitProduct')}
               </Button>
             </div>
           </div>

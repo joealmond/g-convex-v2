@@ -58,14 +58,14 @@ export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardPr
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Leaderboard</CardTitle>
-        <CardDescription>
+      <CardHeader className="pb-2 sm:pb-4">
+        <CardTitle className="text-base sm:text-lg">Leaderboard</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
           Top {limit} contributors ranked by points
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="px-3 sm:px-6">
+        <div className="space-y-2 sm:space-y-3">
           {leaderboard.map((entry, index) => {
             const rank = index + 1
             const isTopThree = rank <= 3
@@ -73,54 +73,54 @@ export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardPr
             return (
               <div
                 key={entry.userId}
-                className={`flex items-center gap-4 p-3 rounded-lg border transition-colors ${
+                className={`flex items-center gap-2 sm:gap-4 p-2 sm:p-3 rounded-lg border transition-colors ${
                   isTopThree ? 'bg-muted/50' : 'hover:bg-muted/30'
                 }`}
               >
                 {/* Rank */}
-                <div className="flex items-center justify-center w-12">
+                <div className="flex items-center justify-center w-6 sm:w-10 flex-shrink-0">
                   {getRankIcon(rank) || (
-                    <span className="text-lg font-bold text-muted-foreground">
+                    <span className="text-sm sm:text-lg font-bold text-muted-foreground">
                       {rank}
                     </span>
                   )}
                 </div>
 
                 {/* User Avatar */}
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback>
+                <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
+                  <AvatarFallback className="text-xs sm:text-sm">
                     {entry.userId.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
 
                 {/* User Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold truncate">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm sm:text-base font-semibold truncate">
                       User #{entry.userId.slice(-6)}
                     </span>
                     {isTopThree && (
-                      <Badge variant={getRankBadgeVariant(rank)} className="text-xs">
-                        Top {rank}
+                      <Badge variant={getRankBadgeVariant(rank)} className="text-[10px] sm:text-xs px-1.5 py-0 h-4 sm:h-5 flex-shrink-0">
+                        #{rank}
                       </Badge>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {entry.badges?.length || 0} badges earned
+                  <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
+                    {entry.badges?.length || 0} badges · {entry.points} pts
                   </div>
                 </div>
 
-                {/* Points */}
-                <div className="text-right">
+                {/* Points - hidden on very small screens since shown inline above */}
+                <div className="text-right hidden sm:block flex-shrink-0">
                   <div className="text-lg font-bold">{entry.points}</div>
                   <div className="text-xs text-muted-foreground">points</div>
                 </div>
 
                 {/* Streak (if showing full ranks) */}
                 {showFullRanks && (
-                  <div className="text-right">
+                  <div className="text-right flex-shrink-0">
                     <div className="text-sm font-semibold">{entry.streak}</div>
-                    <div className="text-xs text-muted-foreground">day streak</div>
+                    <div className="text-xs text-muted-foreground">streak</div>
                   </div>
                 )}
 

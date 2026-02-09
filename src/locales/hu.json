@@ -90,14 +90,14 @@
     "noCompleted": "Még nem teljesítettél egyetlen kihívást sem. Kezdj neki most!",
     "progress": "Haladás",
     "complete": "kész",
-    "daysRemaining": "{{days}} nap van hátra",
+    "daysRemaining": "{days} nap van hátra",
     "expired": "Lejárt",
     "reward": "Jutalom",
     "badge": "Jelvény",
     "claimReward": "Jutalom Igénylése",
     "claimed": "Jutalom Igényelve",
     "ready": "Kész!",
-    "rewardClaimed": "{{points}} pontot szereztél!",
+    "rewardClaimed": "{points} pontot szereztél!",
     "claimFailed": "Jutalom igénylése sikertelen. Próbáld újra."
   },
   "admin": {
@@ -159,6 +159,22 @@
     "whereDidYouBuy": "Hol vetted?",
     "cancel": "Mégse",
     "submitProduct": "Termék Küldése",
-    "creatingProduct": "Termék létrehozása"
+    "creatingProduct": "Termék létrehozása",
+    "quickRate": "Gyors Értékelés",
+    "price": "Ár",
+    "fineTune": "Finomhangolás",
+    "draft": "Piszkozat",
+    "draftSaved": "Piszkozatként mentve!",
+    "draftHint": "A szavazatodat bármikor módosíthatod a termék oldaláról.",
+    "locating": "Helymeghatározás...",
+    "locationAcquired": "Hely rögzítve",
+    "locationUnavailable": "Hely nem elérhető",
+    "dropImageHere": "Húzd ide a képet",
+    "orDragAndDrop": "vagy húzd ide",
+    "acquiringLocation": "Helymeghatározás...",
+    "provideProductName": "Kérlek, add meg a termék nevét",
+    "failedToDraft": "Piszkozat mentése sikertelen",
+    "failedToCreate": "Term\u00e9k l\u00e9trehoz\u00e1sa sikertelen",
+    "riskWarning": "Figyelem: Ez a termék tartalmazhat {concept}-t!"
   }
 }

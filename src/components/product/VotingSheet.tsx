@@ -161,17 +161,16 @@ export function VotingSheet({
         <label className="text-sm font-semibold text-foreground mb-3 block">
           {appConfig.dimensions.axis3.question} <span className="text-xs font-normal text-muted-foreground">(optional)</span>
         </label>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-5 gap-1.5">
           {pricePresets.map((preset, index) => (
             <motion.div
               key={preset.label}
               whileTap={{ scale: disabled ? 1 : 0.95 }}
-              className="flex-1"
             >
               <Button
                 variant={selectedPrice === (index + 1) * 20 ? 'default' : 'outline'}
                 className={cn(
-                  'w-full h-10 text-xs',
+                  'w-full h-10 text-xs px-1',
                   selectedPrice === (index + 1) * 20 && 'bg-primary hover:bg-primary/90'
                 )}
                 onClick={() => handlePriceClick((index + 1) * 20)}

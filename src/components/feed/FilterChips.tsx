@@ -30,16 +30,16 @@ export function FilterChips({ value, onChange, compact = false }: FilterChipsPro
   ]
 
   return (
-    <div className={cn('flex gap-1.5 overflow-x-auto scrollbar-hide', !compact && 'gap-2 pb-2')}>
+    <div className={cn('flex flex-wrap gap-1.5', compact ? '' : 'gap-1.5')}>
       {filters.map((filter) => (
         <motion.button
           key={filter.value}
           onClick={() => onChange(filter.value)}
           className={cn(
-            'rounded-full font-medium whitespace-nowrap flex-shrink-0',
+            'rounded-full font-medium whitespace-nowrap',
             compact
               ? 'px-3 py-1 text-xs'
-              : 'px-5 py-2.5 text-sm min-h-[44px]',
+              : 'px-3 py-1.5 text-sm min-h-[36px]',
             value === filter.value
               ? 'bg-primary text-primary-foreground'
               : compact

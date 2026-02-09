@@ -115,7 +115,7 @@ function RootComponent() {
               <VoteMigrationHandler />
             </ClientOnly>
           </ImpersonateProvider>
-          <Toaster richColors position="top-center" />
+          <Toaster richColors position="top-center" toastOptions={{ style: { zIndex: 9999 } }} />
           <Scripts />
         </body>
       </html>

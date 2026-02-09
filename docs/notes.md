@@ -7,3 +7,7 @@
 - imaagehosting
 - cloudflare cdn
 - add logging
+- map should handle more product with the same location
+- hu / eng switch
+- chat on product
+- text review  and star product rating
