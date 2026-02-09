@@ -28,7 +28,7 @@ export function StoreTagInput({
   disabled = false,
 }: StoreTagInputProps) {
   const { coords, loading, error, requestLocation } = useGeolocation()
-  const { locale } = useTranslation()
+  const { locale, t } = useTranslation()
   const [hasLocation, setHasLocation] = useState(false)
   const [isCustomMode, setIsCustomMode] = useState(false)
   const pendingCapture = useRef(false)
@@ -42,7 +42,7 @@ export function StoreTagInput({
 
   // Check if current value is a custom store (not in predefined list)
   useEffect(() => {
-    if (value && !predefinedStores.includes(value) && value !== CUSTOM_STORE_VALUE) {
+    if (value && !(predefinedStores as readonly string[]).includes(value) && value !== CUSTOM_STORE_VALUE) {
       setIsCustomMode(true)
     }
   }, [value, predefinedStores, CUSTOM_STORE_VALUE])
@@ -87,12 +87,12 @@ export function StoreTagInput({
       <div className="flex items-center gap-2">
         <Label htmlFor="store-input" className="text-sm font-medium flex items-center gap-1.5">
           <Store className="h-4 w-4 text-primary" />
-          Store Name (Optional)
+          {t('imageUpload.storeLabel')} <span className="text-xs font-normal text-muted-foreground">({t('imageUpload.storeOptional')})</span>
         </Label>
         {hasLocation && (
           <Badge variant="secondary" className="text-xs gap-1">
             <MapPin className="h-3 w-3" />
-            Location saved
+            {t('imageUpload.locationSaved')}
           </Badge>
         )}
       </div>
@@ -104,7 +104,7 @@ export function StoreTagInput({
             <Input
               id="store-input"
               type="text"
-              placeholder="Enter store name..."
+              placeholder={t('imageUpload.enterStoreName')}
               value={value}
               onChange={(e) => handleCustomInputChange(e.target.value)}
               disabled={disabled}
@@ -120,10 +120,10 @@ export function StoreTagInput({
                 onChange('')
               }}
               disabled={disabled}
-              title="Back to predefined stores"
+              title={t('imageUpload.backToPredefined')}
               className="px-3 text-xs"
             >
-              Cancel
+              {t('imageUpload.cancel')}
             </Button>
           </>
         ) : (
@@ -133,7 +133,7 @@ export function StoreTagInput({
             disabled={disabled}
           >
             <SelectTrigger className="flex-1 h-10">
-              <SelectValue placeholder="Select a store..." />
+              <SelectValue placeholder={t('imageUpload.selectStore')} />
             </SelectTrigger>
             <SelectContent>
               {predefinedStores.map((store) => (
@@ -142,7 +142,7 @@ export function StoreTagInput({
                 </SelectItem>
               ))}
               <SelectItem value={CUSTOM_STORE_VALUE} className="font-semibold text-primary">
-                + Add custom store...
+                {t('imageUpload.addCustomStore')}
               </SelectItem>
             </SelectContent>
           </Select>
@@ -155,7 +155,7 @@ export function StoreTagInput({
           size="icon"
           onClick={hasLocation ? handleClearLocation : handleCaptureLocation}
           disabled={disabled || loading}
-          title={hasLocation ? 'Clear location' : 'Capture GPS location'}
+          title={hasLocation ? t('imageUpload.clearLocation') : t('imageUpload.captureLocation')}
           className="shrink-0"
         >
           {loading ? (
@@ -170,18 +170,18 @@ export function StoreTagInput({
 
       {error && (
         <p className="text-xs text-destructive">
-          Location error: {error}
+          {t('imageUpload.locationError')}: {error}
         </p>
       )}
 
       {coords && !hasLocation && (
         <p className="text-xs text-muted-foreground">
-          Current location: {coords.latitude.toFixed(4)}, {coords.longitude.toFixed(4)}
+          {t('imageUpload.currentLocation')}: {coords.latitude.toFixed(4)}, {coords.longitude.toFixed(4)}
         </p>
       )}
 
       <p className="text-xs text-muted-foreground">
-        Tag the store where you bought this. Location helps others find safe products nearby.
+        {t('imageUpload.storeHelpText')}
       </p>
     </div>
   )

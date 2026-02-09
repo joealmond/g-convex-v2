@@ -1,4 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { appConfig } from '@/lib/app-config'
 import { useConvexAuth } from '@convex-dev/react-query'
 import { useQuery } from 'convex/react'
@@ -10,7 +11,7 @@ import { LogOut, MapPin, Trophy, Moon, Sun, Monitor } from 'lucide-react'
 import { authClient, useSession } from '@/lib/auth-client'
 import { ScoutCard } from '@/components/dashboard/ScoutCard'
 import { useGeolocation, useTheme } from '@/hooks'
-import { useTranslation } from '@/hooks/use-translation'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { motion } from 'framer-motion'
 
 /**
@@ -24,8 +25,12 @@ export function TopBar() {
   const profile = useQuery(api.profiles.getCurrent)
   const { coords, loading: geoLoading, requestLocation } = useGeolocation()
   const { theme, setTheme, resolvedTheme } = useTheme()
-  const { locale, setLocale } = useTranslation()
   const { data: session } = useSession()
+
+  // Auto-request location on mount so the icon starts blue
+  useEffect(() => {
+    requestLocation()
+  }, [requestLocation])
 
   const handleSignOut = async () => {
     await authClient.signOut()
@@ -83,15 +88,8 @@ export function TopBar() {
           <MapPin className="h-4 w-4" />
         </motion.button>
 
-        {/* Language Toggle */}
-        <motion.button
-          onClick={() => setLocale(locale === 'en' ? 'hu' : 'en')}
-          className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-          title={locale === 'en' ? 'Switch to Magyar' : 'Switch to English'}
-          whileTap={{ scale: 0.95 }}
-        >
-          <span className="text-xs font-bold">{locale === 'en' ? '🇭🇺' : '🇬🇧'}</span>
-        </motion.button>
+        {/* Language Switcher (dropdown) */}
+        <LanguageSwitcher />
 
         {/* Theme Toggle (3-state: light/dark/system) */}
         <motion.button

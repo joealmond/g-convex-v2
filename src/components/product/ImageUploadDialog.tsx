@@ -521,8 +521,9 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
                 disabled={!productName.trim() || geoLoading}
               >
                 <Bookmark className="h-3.5 w-3.5" />
-                {t('imageUpload.draft')} — {t('imageUpload.draftHint')}
+                {t('imageUpload.draft')}
               </Button>
+              <p className="text-[10px] text-muted-foreground text-center">{t('imageUpload.draftHint')}</p>
             </div>
 
             {/* Quick Vote — Combo Buttons (fastest path) */}

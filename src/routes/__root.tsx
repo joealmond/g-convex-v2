@@ -13,6 +13,7 @@ import { PageShell } from '@/components/layout/PageShell'
 import { authClient } from '@/lib/auth-client'
 import { getToken } from '@/lib/auth-server'
 import { appConfig } from '@/lib/app-config'
+import { I18nProvider } from '@/hooks/i18n-context'
 import type { ConvexQueryClient } from '@convex-dev/react-query'
 import { Toaster } from 'sonner'
 
@@ -101,6 +102,7 @@ function RootComponent() {
           <HeadContent />
         </head>
         <body className="min-h-screen bg-background antialiased">
+          <I18nProvider>
           <ImpersonateProvider>
             <TopBar />
             <ErrorBoundary>
@@ -115,7 +117,8 @@ function RootComponent() {
               <VoteMigrationHandler />
             </ClientOnly>
           </ImpersonateProvider>
-          <Toaster richColors position="top-center" toastOptions={{ style: { zIndex: 9999 } }} />
+          </I18nProvider>
+          <Toaster richColors position="bottom-center" offset="8rem" toastOptions={{ style: { zIndex: 9999 } }} />
           <Scripts />
         </body>
       </html>

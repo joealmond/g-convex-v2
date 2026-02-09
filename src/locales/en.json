@@ -175,6 +175,18 @@
     "provideProductName": "Please provide a product name",
     "failedToDraft": "Failed to save draft",
     "failedToCreate": "Failed to create product",
-    "riskWarning": "Warning: This product may contain {concept}!"
+    "riskWarning": "Warning: This product may contain {concept}!",
+    "storeLabel": "Store Name",
+    "storeOptional": "Optional",
+    "selectStore": "Select a store...",
+    "addCustomStore": "+ Add custom store...",
+    "enterStoreName": "Enter store name...",
+    "locationSaved": "Location saved",
+    "locationError": "Location error",
+    "storeHelpText": "Tag the store where you bought this. Location helps others find products nearby.",
+    "clearLocation": "Clear location",
+    "captureLocation": "Capture GPS location",
+    "backToPredefined": "Back to predefined stores",
+    "currentLocation": "Current location"
   }
 }

@@ -115,6 +115,14 @@ function MapPageContent() {
     return result
   }, [products, filterType, coords])
 
+  // Count total map markers (each store with a geoPoint = 1 marker)
+  const markerCount = useMemo(() => {
+    return filteredProducts.reduce((total, p) => {
+      const storesWithGeo = p.stores?.filter((s) => s.geoPoint)?.length || 0
+      return total + storesWithGeo
+    }, 0)
+  }, [filteredProducts])
+
   // User location for passing to map (blue circle)
   const userLocation: [number, number] | undefined = useMemo(() => {
     if (coords?.latitude && coords?.longitude) {
@@ -162,11 +170,11 @@ function MapPageContent() {
         </>
       )}
 
-      {/* Product Count Badge — positioned above admin toolbar area */}
+      {/* Map Markers Badge — count matches cluster numbering */}
       {!isLoading && filteredProducts.length > 0 && (
         <div className="absolute bottom-2 left-2 z-[400] bg-card rounded-full shadow-lg px-3 py-1.5">
           <p className="text-xs font-semibold text-foreground">
-            {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+            {markerCount} {markerCount === 1 ? 'pin' : 'pins'} · {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
           </p>
         </div>
       )}
