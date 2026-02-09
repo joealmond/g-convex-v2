@@ -1,10 +1,10 @@
-import { useI18nContext } from '@/hooks/i18n-context'
+import { useTranslationHook } from '@/lib/i18n'
 
 /**
  * Hook for managing translations and locale switching.
- * Consumes the shared I18nProvider context so all components
- * share one locale state.
+ * Delegates to the useTranslationHook in i18n.ts which uses
+ * static imports + CustomEvent for reliable cross-component sync.
  */
 export function useTranslation() {
-  return useI18nContext()
+  return useTranslationHook()
 }

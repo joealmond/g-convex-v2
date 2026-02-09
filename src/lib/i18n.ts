@@ -1,7 +1,12 @@
 /**
- * Simple i18n implementation for G-Matrix
- * Supports English (EN) and Hungarian (HU)
+ * i18n for G-Matrix
+ * Pattern copied from proven g-convex codebase:
+ * Static imports + CustomEvent + useState/useEffect
  */
+
+import { useState, useEffect, useCallback } from 'react'
+import enTranslations from '@/locales/en.json'
+import huTranslations from '@/locales/hu.json'
 
 export type Locale = 'en' | 'hu'
 
@@ -9,9 +14,17 @@ export interface Translations {
   [key: string]: string | Translations
 }
 
+const LOCALE_KEY = 'g-matrix-locale'
+const LOCALE_EVENT = 'g-matrix-locale-change'
+
+// Both locale files are statically imported — no async needed
+const allTranslations: Record<Locale, Translations> = {
+  en: enTranslations as unknown as Translations,
+  hu: huTranslations as unknown as Translations,
+}
+
 /**
  * Get nested value from translations object using dot notation
- * Example: get(translations, 'nav.home') => translations.nav.home
  */
 function getNestedValue(obj: Translations, path: string): string {
   const keys = path.split('.')
@@ -23,10 +36,10 @@ function getNestedValue(obj: Translations, path: string): string {
       if (value !== undefined) {
         current = value
       } else {
-        return path // Return key if not found
+        return path
       }
     } else {
-      return path // Return key if not found
+      return path
     }
   }
 
@@ -34,84 +47,145 @@ function getNestedValue(obj: Translations, path: string): string {
 }
 
 /**
- * Load translations for a locale
- * Uses static imports to avoid Vite dynamic import issues
+ * Translate a key using the given locale's translations
  */
-export async function loadTranslations(locale: Locale): Promise<Translations> {
-  try {
-    // Static imports for Vite compatibility
-    if (locale === 'hu') {
-      const translations = await import('@/locales/hu.json')
-      return translations.default || translations
-    }
-    // Default to English
-    const translations = await import('@/locales/en.json')
-    return translations.default || translations
-  } catch (error) {
-    console.error(`Failed to load translations for locale: ${locale}`, error)
-    return {}
+function translate(
+  locale: Locale,
+  key: string,
+  params?: Record<string, string | number>
+): string {
+  let translation = getNestedValue(allTranslations[locale], key)
+
+  if (params) {
+    Object.entries(params).forEach(([paramKey, value]) => {
+      translation = translation.replace(
+        new RegExp(`\\{${paramKey}\\}`, 'g'),
+        String(value)
+      )
+    })
+  }
+
+  return translation
+}
+
+// ─── localStorage helpers (SSR-safe) ─────────────────────────────
+
+function getStoredLocale(): Locale {
+  if (typeof window === 'undefined') return 'en'
+  const stored = localStorage.getItem(LOCALE_KEY)
+  return stored === 'hu' || stored === 'en' ? stored : 'en'
+}
+
+export function getBrowserLocale(): Locale {
+  if (typeof window === 'undefined') return 'en'
+  const browserLang = navigator.language.toLowerCase()
+  if (browserLang.startsWith('hu')) return 'hu'
+  return 'en'
+}
+
+// ─── Public API ──────────────────────────────────────────────────
+
+/**
+ * Set locale globally. Persists to localStorage and notifies all hooks.
+ */
+export function setLocale(locale: Locale): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LOCALE_KEY, locale)
+    window.dispatchEvent(new CustomEvent(LOCALE_EVENT, { detail: locale }))
   }
 }
 
 /**
- * Translation helper
+ * Hook: returns the current locale, re-renders on change.
  */
+export function useLocale(): Locale {
+  const [locale, setLocaleState] = useState<Locale>('en')
+
+  useEffect(() => {
+    // Read the real locale from storage (or browser default)
+    const stored = getStoredLocale()
+    const initial = stored || getBrowserLocale()
+    setLocaleState(initial)
+
+    const handleChange = (e: Event) => {
+      setLocaleState((e as CustomEvent<Locale>).detail)
+    }
+
+    window.addEventListener(LOCALE_EVENT, handleChange)
+    return () => window.removeEventListener(LOCALE_EVENT, handleChange)
+  }, [])
+
+  return locale
+}
+
+/**
+ * Hook: returns { t, locale, setLocale, loading }
+ * This is the main hook used by components.
+ */
+export function useTranslationHook() {
+  const locale = useLocale()
+
+  const t = useCallback(
+    (key: string, params?: Record<string, string | number>): string => {
+      return translate(locale, key, params)
+    },
+    [locale]
+  )
+
+  return {
+    t,
+    locale,
+    setLocale,
+    loading: false, // translations are static imports — always loaded
+  }
+}
+
+// ─── Legacy exports (kept for backward compat) ──────────────────
+
+/** @deprecated Use static allTranslations instead */
+export async function loadTranslations(locale: Locale): Promise<Translations> {
+  return allTranslations[locale]
+}
+
+/** @deprecated Use setLocale() instead */
+export function saveLocalePreference(locale: Locale): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LOCALE_KEY, locale)
+  }
+}
+
+/** @deprecated Use getStoredLocale() instead */
+export function loadLocalePreference(): Locale | null {
+  if (typeof window === 'undefined') return null
+  const saved = localStorage.getItem(LOCALE_KEY)
+  if (saved === 'en' || saved === 'hu') return saved
+  return null
+}
+
+/** @deprecated Not needed with static imports */
 export class I18n {
-  private translations: Translations = {}
-  private locale: Locale = 'en'
+  private translations: Translations
+  private locale: Locale
 
   constructor(translations: Translations, locale: Locale) {
     this.translations = translations
     this.locale = locale
   }
 
-  /**
-   * Translate a key
-   * @param key - Translation key in dot notation (e.g., 'nav.home')
-   * @param params - Optional parameters for interpolation
-   */
   t(key: string, params?: Record<string, string | number>): string {
     let translation = getNestedValue(this.translations, key)
-
-    // Simple parameter interpolation
     if (params) {
       Object.entries(params).forEach(([paramKey, value]) => {
         translation = translation.replace(
-          new RegExp(`{${paramKey}}`, 'g'),
+          new RegExp(`\\{${paramKey}\\}`, 'g'),
           String(value)
         )
       })
     }
-
     return translation
   }
 
   getLocale(): Locale {
     return this.locale
   }
-}
-
-/**
- * Get browser's preferred locale
- */
-export function getBrowserLocale(): Locale {
-  const browserLang = navigator.language.toLowerCase()
-  if (browserLang.startsWith('hu')) return 'hu'
-  return 'en'
-}
-
-/**
- * Save locale preference to localStorage
- */
-export function saveLocalePreference(locale: Locale): void {
-  localStorage.setItem('g-matrix-locale', locale)
-}
-
-/**
- * Load locale preference from localStorage
- */
-export function loadLocalePreference(): Locale | null {
-  const saved = localStorage.getItem('g-matrix-locale')
-  if (saved === 'en' || saved === 'hu') return saved
-  return null
 }
