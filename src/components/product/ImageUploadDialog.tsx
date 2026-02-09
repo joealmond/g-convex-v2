@@ -334,7 +334,10 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       })
       resetDialog()
     } catch (err: any) {
-      setError(err.message || t('imageUpload.failedToDraft'))
+      const msg = err.message?.includes('already exists')
+        ? t('imageUpload.productAlreadyExists')
+        : (err.message || t('imageUpload.failedToDraft'))
+      setError(msg)
       setStep('review')
     }
   }, [storageId, productName, anonId, safety, taste, price, storeName, analysis, realImageUrl, coords, createProductAndVote, onSuccess, resetDialog, t])
@@ -385,7 +388,10 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       setStoreName('')
       setFineTuneOpen(false)
     } catch (err: any) {
-      setError(err.message || t('imageUpload.failedToCreate'))
+      const msg = err.message?.includes('already exists')
+        ? t('imageUpload.productAlreadyExists')
+        : (err.message || t('imageUpload.failedToCreate'))
+      setError(msg)
       setStep('review')
     }
   }, [storageId, productName, anonId, safety, taste, price, storeName, analysis, realImageUrl, imagePreview, createProductAndVote, onSuccess, t])

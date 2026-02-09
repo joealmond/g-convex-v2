@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { useSyncExternalStore, useCallback, type ReactNode } from 'react'
 import type { Locale } from '@/lib/i18n'
 import {
   I18n,
@@ -8,76 +8,123 @@ import {
   loadLocalePreference,
 } from '@/lib/i18n'
 
-interface I18nContextValue {
+// ─── Module-level singleton store ─────────────────────────────────
+// Uses useSyncExternalStore so every component subscribes to the SAME
+// store regardless of the React component tree. This avoids all
+// Context + SSR hydration issues with TanStack Start.
+
+interface I18nState {
+  locale: Locale
+  i18n: I18n | null
+  loading: boolean
+}
+
+let currentState: I18nState = {
+  locale: 'en',
+  i18n: null,
+  loading: true,
+}
+
+const listeners = new Set<() => void>()
+
+function getSnapshot(): I18nState {
+  return currentState
+}
+
+function getServerSnapshot(): I18nState {
+  // During SSR, return loading state — t() will return keys
+  return { locale: 'en', i18n: null, loading: true }
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+function setState(newState: I18nState) {
+  currentState = newState
+  // Notify all subscribers synchronously
+  listeners.forEach((listener) => listener())
+}
+
+async function switchLocale(newLocale: Locale) {
+  setState({ ...currentState, loading: true })
+  const translations = await loadTranslations(newLocale)
+  setState({
+    locale: newLocale,
+    i18n: new I18n(translations, newLocale),
+    loading: false,
+  })
+  if (typeof window !== 'undefined') {
+    saveLocalePreference(newLocale)
+  }
+}
+
+// Track whether we've already initialized
+let initialized = false
+
+async function initStore() {
+  if (initialized) return
+  initialized = true
+
+  let initialLocale: Locale = 'en'
+  if (typeof window !== 'undefined') {
+    const savedLocale = loadLocalePreference()
+    initialLocale = savedLocale || getBrowserLocale()
+  }
+
+  const translations = await loadTranslations(initialLocale)
+  setState({
+    locale: initialLocale,
+    i18n: new I18n(translations, initialLocale),
+    loading: false,
+  })
+}
+
+// ─── React hook ───────────────────────────────────────────────────
+
+interface I18nHookValue {
   t: (key: string, params?: Record<string, string | number>) => string
   locale: Locale
   setLocale: (locale: Locale) => Promise<void>
   loading: boolean
 }
 
-const I18nContext = createContext<I18nContextValue | null>(null)
-
 /**
- * Provider that shares i18n state across the entire app.
- * Wrap this around your root component so every `useTranslation()` call
- * shares the same locale and translations instance.
+ * Hook that uses `useSyncExternalStore` to subscribe to the global
+ * i18n store. All components calling this hook share the exact same state.
  */
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('en')
-  const [i18n, setI18n] = useState<I18n | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  // Initialize locale and load translations
-  useEffect(() => {
-    async function init() {
-      // SSR-safe: only access browser APIs on client
-      let initialLocale: Locale = 'en'
-      if (typeof window !== 'undefined') {
-        const savedLocale = loadLocalePreference()
-        initialLocale = savedLocale || getBrowserLocale()
-      }
-
-      const translations = await loadTranslations(initialLocale)
-      setLocaleState(initialLocale)
-      setI18n(new I18n(translations, initialLocale))
-      setLoading(false)
-    }
-
-    init()
-  }, [])
-
-  const setLocale = useCallback(async (newLocale: Locale) => {
-    setLoading(true)
-    const translations = await loadTranslations(newLocale)
-    setLocaleState(newLocale)
-    setI18n(new I18n(translations, newLocale))
-    saveLocalePreference(newLocale)
-    setLoading(false)
-  }, [])
+export function useI18nContext(): I18nHookValue {
+  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>): string => {
-      if (!i18n) return key
-      return i18n.t(key, params)
+      if (!state.i18n) return key
+      return state.i18n.t(key, params)
     },
-    [i18n]
+    [state.i18n]
   )
 
-  return (
-    <I18nContext.Provider value={{ t, locale, setLocale, loading }}>
-      {children}
-    </I18nContext.Provider>
-  )
+  return {
+    t,
+    locale: state.locale,
+    setLocale: switchLocale,
+    loading: state.loading,
+  }
 }
 
+// ─── Provider (thin wrapper — just triggers init on mount) ────────
+
 /**
- * Hook to consume the shared I18n context.
- * Must be used within an I18nProvider.
+ * Thin provider that triggers store initialization on mount.
+ * Does NOT use React Context — the store is module-level.
+ * Keep this in the tree so init runs on the client after hydration.
  */
-export function useI18nContext(): I18nContextValue {
-  const ctx = useContext(I18nContext)
-  if (!ctx) {
-    throw new Error('useI18nContext must be used within an I18nProvider')
+export function I18nProvider({ children }: { children: ReactNode }) {
+  // Initialize the store on first client render
+  if (typeof window !== 'undefined' && !initialized) {
+    void initStore()
   }
-  return ctx
+
+  return <>{children}</>
 }

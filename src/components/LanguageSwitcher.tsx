@@ -24,14 +24,14 @@ export function LanguageSwitcher() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          onClick={() => setLocale('en')}
+          onClick={() => void setLocale('en')}
           className={locale === 'en' ? 'bg-accent' : ''}
         >
           <span className="mr-2">🇬🇧</span>
           English
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => setLocale('hu')}
+          onClick={() => void setLocale('hu')}
           className={locale === 'hu' ? 'bg-accent' : ''}
         >
           <span className="mr-2">🇭🇺</span>

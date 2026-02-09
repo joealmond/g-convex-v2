@@ -175,6 +175,7 @@
     "provideProductName": "Please provide a product name",
     "failedToDraft": "Failed to save draft",
     "failedToCreate": "Failed to create product",
+    "productAlreadyExists": "A product with this name already exists. Try a different name.",
     "riskWarning": "Warning: This product may contain {concept}!",
     "storeLabel": "Store Name",
     "storeOptional": "Optional",
