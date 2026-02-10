@@ -102,16 +102,13 @@ g-convex-v2/
 │   └── styles/
 │       └── globals.css       # Tailwind base + quadrant colors
 └── docs/
+    ├── AI_AGENT_CONTEXT.md      # Context for AI coding agents
     ├── AI_GUIDELINES.md         # AI assistant best practices
+    ├── AUTH_SOLUTION.md         # Auth integration details
     ├── CLOUDFLARE_FEATURES.md   # Cloudflare setup guide
     ├── OPTIONAL_FEATURES.md     # Optional extensions
-    └── ...                      # Other setup guides
-└── doctemplateimprovements/
-    ├── TEMPLATE_IMPROVEMENTS.md # TanStack Start v1.154+ API patterns
-    ├── AI_AGENT_CONTEXT.md      # Context for AI coding agents
-    ├── DEPLOYMENT.md            # Cloudflare Workers deployment
-    ├── MISSING_FEATURES.md      # Template gaps to address
-    └── PATTERN_IMPROVEMENTS.md  # Better patterns discovered
+    ├── RBAC.md                  # Role-based access control
+    └── planning/                # Internal project planning (not linked)
 ```
 
 ## 🎮 How It Works
@@ -220,7 +217,7 @@ npm run typecheck
 
 If you see errors about `StartClient` or `createStartHandler`:
 
-- Check [doctemplateimprovements/TEMPLATE_IMPROVEMENTS.md](doctemplateimprovements/TEMPLATE_IMPROVEMENTS.md) for v1.154+ API patterns
+- TanStack Start v1.154+ simplified entry points — `start.tsx` exports `undefined`, `server.ts` uses default handler
 - Import `StartClient` from `@tanstack/react-start/client` (not root)
 - Import handler from `@tanstack/react-start/server-entry`
 
@@ -229,7 +226,6 @@ If you see errors about `StartClient` or `createStartHandler`:
 If you see `v.id('users')` type errors:
 
 - Better Auth user IDs are strings, use `v.string()` not `v.id('users')`
-- See [doctemplateimprovements/TEMPLATE_IMPROVEMENTS.md](doctemplateimprovements/TEMPLATE_IMPROVEMENTS.md) for details
 
 ## 📱 Mobile Development (iOS/Android)
 
