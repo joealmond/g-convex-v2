@@ -2,13 +2,6 @@ import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 
 export default defineSchema({
-  // Example messages table for Hello World demo (to be removed in Phase 3)
-  messages: defineTable({
-    content: v.string(),
-    authorId: v.optional(v.string()),
-    authorName: v.optional(v.string()),
-    createdAt: v.number(),
-  }).index('by_created', ['createdAt']),
 
   // File uploads (kept for image uploads)
   files: defineTable({
@@ -47,7 +40,10 @@ export default defineSchema({
     }))),
   })
     .index('by_name', ['name'])
-    .index('by_created', ['createdAt']),
+    .index('by_created', ['createdAt'])
+    .searchIndex('search_name', {
+      searchField: 'name',
+    }),
 
   // Votes - individual user ratings
   votes: defineTable({
@@ -64,6 +60,7 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index('by_product', ['productId'])
+    .index('by_product_user', ['productId', 'userId'])
     .index('by_user', ['userId'])
     .index('by_anonymous', ['anonymousId']),
 
@@ -81,17 +78,29 @@ export default defineSchema({
     storesTagged: v.optional(v.array(v.string())), // Unique stores tagged
     longestStreak: v.optional(v.number()), // Best streak ever
     votesToday: v.optional(v.number()), // Daily vote counter
-    role: v.optional(v.string()), // "admin" | "user"
-  }).index('by_user', ['userId']),
+    role: v.optional(v.union(v.literal('admin'), v.literal('user'))),
+  }).index('by_user', ['userId'])
+    .index('by_points', ['points']),
 
   // Reports - flag products for review
   reports: defineTable({
     productId: v.id('products'),
     reportedBy: v.optional(v.string()), // userId or anonymousId
     isAnonymous: v.boolean(),
-    reason: v.string(), // "inappropriate" | "duplicate" | "wrong-info" | "spam" | "other"
+    reason: v.union(
+      v.literal('inappropriate'),
+      v.literal('duplicate'),
+      v.literal('wrong-info'),
+      v.literal('spam'),
+      v.literal('other')
+    ),
     details: v.optional(v.string()),
-    status: v.string(), // "pending" | "reviewed" | "resolved" | "dismissed"
+    status: v.union(
+      v.literal('pending'),
+      v.literal('reviewed'),
+      v.literal('resolved'),
+      v.literal('dismissed')
+    ),
     reviewedBy: v.optional(v.string()), // Admin userId
     reviewedAt: v.optional(v.number()),
     createdAt: v.number(),
@@ -137,7 +146,12 @@ export default defineSchema({
   challenges: defineTable({
     title: v.string(),
     description: v.string(),
-    type: v.string(), // "vote" | "product" | "streak" | "store"
+    type: v.union(
+      v.literal('vote'),
+      v.literal('product'),
+      v.literal('streak'),
+      v.literal('store')
+    ),
     targetValue: v.number(), // e.g., 10 votes, 2 products, 7 days streak
     rewardPoints: v.number(),
     rewardBadge: v.optional(v.string()),

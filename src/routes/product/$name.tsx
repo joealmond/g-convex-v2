@@ -23,7 +23,7 @@ import { useAnonymousId } from '@/hooks/use-anonymous-id'
 import { useAdmin } from '@/hooks/use-admin'
 import { useImpersonate } from '@/hooks/use-impersonate'
 import { useTranslation } from '@/hooks/use-translation'
-import { ArrowLeft, Users, Edit, Flag } from 'lucide-react'
+import { ArrowLeft, Edit, Flag } from 'lucide-react'
 import { toast } from 'sonner'
 
 export const Route = createFileRoute('/product/$name')({

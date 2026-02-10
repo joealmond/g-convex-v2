@@ -1,11 +1,52 @@
 import { v } from 'convex/values'
 import { query, mutation, internalMutation } from './_generated/server'
+import { components } from './_generated/api'
+import { RateLimiter } from '@convex-dev/rate-limiter'
+import { requireAuth, requireAdmin } from './lib/authHelpers'
+
+const rateLimiter = new RateLimiter(components.rateLimiter, {
+  productUpdate: { kind: 'token bucket', rate: 10, period: 60000, capacity: 15 },
+})
 
 /**
- * List all products
+ * List all products with cursor-based pagination
  * Sorted by most recently created
  */
 export const list = query({
+  args: {
+    paginationOpts: v.optional(v.object({
+      cursor: v.optional(v.union(v.string(), v.null())),
+      numItems: v.optional(v.number()),
+    })),
+  },
+  handler: async (ctx, args) => {
+    const numItems = args.paginationOpts?.numItems ?? 50
+    const result = await ctx.db
+      .query('products')
+      .order('desc')
+      .paginate({ cursor: args.paginationOpts?.cursor ?? null, numItems })
+
+    const pageWithImages = await Promise.all(
+      result.page.map(async (p) => {
+        if (p.imageStorageId) {
+          return { ...p, imageUrl: await ctx.storage.getUrl(p.imageStorageId) ?? p.imageUrl }
+        }
+        return p
+      })
+    )
+
+    return {
+      ...result,
+      page: pageWithImages,
+    }
+  },
+})
+
+/**
+ * List all products (no pagination, for backward compat)
+ * @deprecated Use list() with paginationOpts instead
+ */
+export const listAll = query({
   handler: async (ctx) => {
     const products = await ctx.db.query('products').order('desc').collect()
     return await Promise.all(products.map(async (p) => {
@@ -52,16 +93,21 @@ export const getByName = query({
 })
 
 /**
- * Search products by name
+ * Search products by name using Convex search index
+ * Falls back to listing all products when query is empty
  */
 export const search = query({
   args: { query: v.string() },
-  handler: async (ctx, { query }) => {
-    const allProducts = await ctx.db.query('products').collect()
-    
-    const products = query 
-      ? allProducts.filter((product) => product.name.toLowerCase().includes(query.toLowerCase()))
-      : allProducts
+  handler: async (ctx, { query: searchQuery }) => {
+    let products
+    if (searchQuery.trim()) {
+      products = await ctx.db
+        .query('products')
+        .withSearchIndex('search_name', (q) => q.search('name', searchQuery))
+        .take(50)
+    } else {
+      products = await ctx.db.query('products').order('desc').take(50)
+    }
 
     return await Promise.all(products.map(async (p) => {
       if (p.imageStorageId) {
@@ -126,9 +172,16 @@ export const update = mutation({
     ingredients: v.optional(v.array(v.string())),
   },
   handler: async (ctx, { id, ...updates }) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) {
-      throw new Error('Must be logged in to update products')
+    const user = await requireAuth(ctx)
+
+    // Rate limiting
+    const { ok, retryAfter } = await rateLimiter.limit(ctx, 'productUpdate', {
+      key: user._id,
+    })
+    if (!ok) {
+      throw new Error(
+        `Rate limit exceeded. Please try again in ${Math.ceil(retryAfter / 1000)} seconds.`
+      )
     }
 
     await ctx.db.patch(id, {
@@ -146,12 +199,7 @@ export const update = mutation({
 export const deleteProduct = mutation({
   args: { id: v.id('products') },
   handler: async (ctx, { id }) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) {
-      throw new Error('Must be logged in to delete products')
-    }
-
-    // TODO: Add admin check from lib/authHelpers.ts
+    await requireAdmin(ctx)
     
     // Delete all votes for this product
     const votes = await ctx.db
@@ -167,76 +215,6 @@ export const deleteProduct = mutation({
   },
 })
 
-/**
- * Recalculate weighted averages for a product
- * Called after votes are added/removed
- */
-export const recalculateAverages = mutation({
-  args: { productId: v.id('products') },
-  handler: async (ctx, { productId }) => {
-    const votes = await ctx.db
-      .query('votes')
-      .withIndex('by_product', (q) => q.eq('productId', productId))
-      .collect()
-
-    if (votes.length === 0) {
-      // No votes, reset to defaults
-      await ctx.db.patch(productId, {
-        averageSafety: 50,
-        averageTaste: 50,
-        avgPrice: undefined,
-        voteCount: 0,
-        registeredVotes: 0,
-        anonymousVotes: 0,
-        lastUpdated: Date.now(),
-      })
-      return
-    }
-
-    let totalWeightSafety = 0
-    let totalWeightTaste = 0
-    let totalWeightPrice = 0
-    let weightedSafetySum = 0
-    let weightedTasteSum = 0
-    let weightedPriceSum = 0
-    let registeredCount = 0
-    let anonymousCount = 0
-
-    const REGISTERED_WEIGHT = 2
-    const ANONYMOUS_WEIGHT = 1
-
-    for (const vote of votes) {
-      const weight = vote.isAnonymous ? ANONYMOUS_WEIGHT : REGISTERED_WEIGHT
-      
-      weightedSafetySum += vote.safety * weight
-      totalWeightSafety += weight
-      
-      weightedTasteSum += vote.taste * weight
-      totalWeightTaste += weight
-
-      if (vote.price !== undefined) {
-        weightedPriceSum += vote.price * weight
-        totalWeightPrice += weight
-      }
-
-      if (vote.isAnonymous) {
-        anonymousCount++
-      } else {
-        registeredCount++
-      }
-    }
-
-    await ctx.db.patch(productId, {
-      averageSafety: totalWeightSafety > 0 ? weightedSafetySum / totalWeightSafety : 50,
-      averageTaste: totalWeightTaste > 0 ? weightedTasteSum / totalWeightTaste : 50,
-      avgPrice: totalWeightPrice > 0 ? weightedPriceSum / totalWeightPrice : undefined,
-      voteCount: votes.length,
-      registeredVotes: registeredCount,
-      anonymousVotes: anonymousCount,
-      lastUpdated: Date.now(),
-    })
-  },
-})
 
 /**
  * Capture price snapshots for all products

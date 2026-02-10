@@ -1,6 +1,12 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { components } from './_generated/api'
+import { RateLimiter } from '@convex-dev/rate-limiter'
 import { getAuthUser } from './lib/authHelpers'
+
+const rateLimiter = new RateLimiter(components.rateLimiter, {
+  follow: { kind: 'token bucket', rate: 20, period: 60000, capacity: 30 },
+})
 
 // Follow a user
 export const follow = mutation({
@@ -16,6 +22,16 @@ export const follow = mutation({
     // Can't follow yourself
     if (user._id === args.followingId) {
       throw new Error('Cannot follow yourself')
+    }
+
+    // Rate limiting
+    const { ok, retryAfter } = await rateLimiter.limit(ctx, 'follow', {
+      key: user._id,
+    })
+    if (!ok) {
+      throw new Error(
+        `Rate limit exceeded. Please try again in ${Math.ceil(retryAfter / 1000)} seconds.`
+      )
     }
 
     // Check if already following
@@ -120,20 +136,24 @@ export const getFollowers = query({
 })
 
 // Get follower/following counts for a user
+// Optimized: uses indexed queries with early termination limit
 export const getCounts = query({
   args: {
     userId: v.string(),
   },
   handler: async (ctx, args) => {
+    // Count followers and following without loading all documents
+    // Convex doesn't have a native count(), but we limit to a reasonable cap
+    const MAX_COUNT = 10000
     const [followers, following] = await Promise.all([
       ctx.db
         .query('follows')
         .withIndex('by_following', (q) => q.eq('followingId', args.userId))
-        .collect(),
+        .take(MAX_COUNT),
       ctx.db
         .query('follows')
         .withIndex('by_follower', (q) => q.eq('followerId', args.userId))
-        .collect(),
+        .take(MAX_COUNT),
     ])
 
     return {

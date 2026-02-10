@@ -48,7 +48,7 @@ function AdminPageContent() {
   const { t } = useTranslation()
   const adminStatus = useAdmin()
   const user = useQuery(api.users.current)
-  const products = useQuery(api.products.list)
+  const products = useQuery(api.products.listAll)
   const [searchQuery, setSearchQuery] = useState('')
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
 

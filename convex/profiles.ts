@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
 import { query, mutation, internalMutation } from './_generated/server'
 import { BADGES, shouldAwardBadge } from './lib/gamification'
+import { requireAdmin } from './lib/authHelpers'
 
 /**
  * Get user profile by userId
@@ -65,17 +66,29 @@ export const ensureProfile = mutation({
 
 /**
  * Get leaderboard (top users by points)
+ * Supports cursor-based pagination for large user bases
  */
 export const leaderboard = query({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit = 10 }) => {
-    const profiles = await ctx.db.query('profiles').collect()
-
-    // Sort by points descending
-    const sorted = profiles.sort((a, b) => b.points - a.points)
-
-    // Limit results
-    return sorted.slice(0, limit)
+  args: {
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.union(v.string(), v.null())),
+  },
+  handler: async (ctx, { limit = 10, cursor }) => {
+    if (cursor !== undefined) {
+      // Paginated mode
+      const result = await ctx.db
+        .query('profiles')
+        .withIndex('by_points')
+        .order('desc')
+        .paginate({ cursor: cursor ?? null, numItems: limit })
+      return result
+    }
+    // Simple mode (backward compat)
+    return await ctx.db
+      .query('profiles')
+      .withIndex('by_points')
+      .order('desc')
+      .take(limit)
   },
 })
 
@@ -144,12 +157,7 @@ export const addPoints = mutation({
     points: v.number(),
   },
   handler: async (ctx, { userId, points }) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) {
-      throw new Error('Must be logged in')
-    }
-
-    // TODO: Add admin check
+    await requireAdmin(ctx)
 
     const profile = await ctx.db
       .query('profiles')
@@ -173,12 +181,7 @@ export const addPoints = mutation({
 export const resetStreak = mutation({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) {
-      throw new Error('Must be logged in')
-    }
-
-    // TODO: Add admin check
+    await requireAdmin(ctx)
 
     const profile = await ctx.db
       .query('profiles')

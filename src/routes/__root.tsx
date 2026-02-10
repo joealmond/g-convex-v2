@@ -77,7 +77,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     // fall back to null. Client-side auth via ConvexBetterAuthProvider takes over instead.
     let token: string | null = null
     try {
-      token = await getAuth()
+      token = (await getAuth()) ?? null
     } catch {
       // Expected in SPA/Capacitor mode — no server to handle the server function
     }

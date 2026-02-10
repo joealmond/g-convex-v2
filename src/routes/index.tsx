@@ -1,17 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Suspense, useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { Suspense, useState, useRef, useEffect } from 'react'
 import { ProductCard } from '@/components/feed/ProductCard'
 import { ProductStrip } from '@/components/feed/ProductStrip'
 import { FeedGrid } from '@/components/feed/FeedGrid'
-import { FilterChips, type FilterType } from '@/components/feed/FilterChips'
+import { FilterChips } from '@/components/feed/FilterChips'
 import { MatrixChart } from '@/components/dashboard/MatrixChart'
 import { Leaderboard } from '@/components/dashboard/Leaderboard'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useAdmin } from '@/hooks/use-admin'
 import { useTranslation } from '@/hooks/use-translation'
+import { useProductFilter } from '@/hooks/use-product-filter'
 import { Loader2, Trophy, Flame, TrendingUp, BarChart3, Grid3X3, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/types'
@@ -52,7 +53,7 @@ function HomePageContent() {
   const { t } = useTranslation()
   const user = useQuery(api.users.current)
   const profile = useQuery(api.profiles.getCurrent)
-  const products = useQuery(api.products.list)
+  const products = useQuery(api.products.listAll)
   const { coords, requestLocation } = useGeolocation()
   const { isAdmin } = useAdmin()
 
@@ -65,8 +66,17 @@ function HomePageContent() {
     requestLocation()
   }, [requestLocation])
 
-  const [filterType, setFilterType] = useState<FilterType>('recent')
-  const [searchQuery, setSearchQuery] = useState('')
+  const {
+    filterType,
+    searchQuery,
+    filteredProducts,
+    useCardLayout,
+    handleSearchChange,
+    clearSearch,
+    handleFilterChange,
+    getDistance,
+  } = useProductFilter({ products, latitude, longitude })
+
   const [viewMode, setViewMode] = useState<'feed' | 'chart'>('feed')
   const [chartMode, setChartMode] = useState<'vibe' | 'value'>('vibe')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -77,19 +87,11 @@ function HomePageContent() {
 
   const isLoading = products === undefined
 
-  // When user types in search, auto-switch to "all" filter
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchQuery(value)
-    if (value.trim()) {
-      setFilterType('all')
-    }
-  }, [])
-
-  // Clear search
-  const clearSearch = useCallback(() => {
-    setSearchQuery('')
+  // When clearing search, refocus the input
+  const handleClearSearch = () => {
+    clearSearch()
     searchInputRef.current?.focus()
-  }, [])
+  }
   
   // Effect: When a product is selected in chart view, switch to feed and scroll to card
   useEffect(() => {
@@ -112,81 +114,6 @@ function HomePageContent() {
     setSelectedProduct(product)
     setViewMode('feed')
   }
-
-  /**
-   * Simple fuzzy match — checks if all characters in query appear in order in target
-   */
-  const fuzzyMatch = (target: string, query: string): boolean => {
-    const lowerTarget = target.toLowerCase()
-    const lowerQuery = query.toLowerCase().trim()
-    if (!lowerQuery) return true
-    
-    let qi = 0
-    for (let ti = 0; ti < lowerTarget.length && qi < lowerQuery.length; ti++) {
-      if (lowerTarget[ti] === lowerQuery[qi]) qi++
-    }
-    return qi === lowerQuery.length
-  }
-
-  /**
-   * Helper: calculate distance between user and product stores in km
-   */
-  const getProductDistance = (product: Product): number | undefined => {
-    if (!latitude || !longitude || !product.stores || product.stores.length === 0) {
-      return undefined
-    }
-
-    const distances = product.stores
-      .filter((store) => store.geoPoint)
-      .map((store) => {
-        if (!store.geoPoint) return Infinity
-        const latDiff = (store.geoPoint.lat - latitude) * 111.32
-        const lonDiff = (store.geoPoint.lng - longitude) * 111.32 * Math.cos((latitude * Math.PI) / 180)
-        return Math.sqrt(latDiff ** 2 + lonDiff ** 2)
-      })
-
-    return distances.length > 0 ? Math.min(...distances) : undefined
-  }
-
-  /**
-   * Filter and sort products based on selected filter + search query
-   */
-  const filteredProducts = useMemo(() => {
-    if (!products) return []
-
-    let result = [...products]
-
-    // Apply search filter for "all" mode
-    if (filterType === 'all' && searchQuery.trim()) {
-      result = result.filter((p) => fuzzyMatch(p.name, searchQuery))
-    }
-
-    // Apply filters
-    switch (filterType) {
-      case 'recent':
-        result.sort((a, b) => b.createdAt - a.createdAt)
-        break
-      case 'nearby':
-        result = result.filter((p) => {
-          const distance = getProductDistance(p)
-          return distance !== undefined && distance <= 5
-        })
-        result.sort((a, b) => (getProductDistance(a) || Infinity) - (getProductDistance(b) || Infinity))
-        break
-      case 'trending':
-        result.sort((a, b) => b.voteCount - a.voteCount)
-        break
-      case 'all':
-      default:
-        result.sort((a, b) => b.lastUpdated - a.lastUpdated)
-        break
-    }
-
-    return result
-  }, [products, filterType, searchQuery, latitude, longitude])
-
-  /** Whether current filter uses card grid layout (recent, trending, nearby) vs strip list (all) */
-  const useCardLayout = filterType !== 'all'
 
   return (
     <main className="flex-1 mx-auto px-2 sm:px-4 py-4 sm:py-6 max-w-7xl w-full">
@@ -229,7 +156,7 @@ function HomePageContent() {
           />
           {searchQuery && (
             <button
-              onClick={clearSearch}
+              onClick={handleClearSearch}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-full"
             >
               <X className="h-3.5 w-3.5" />
@@ -264,7 +191,7 @@ function HomePageContent() {
       {viewMode === 'feed' && (
         <div className="space-y-3">
           {/* Filters */}
-          <FilterChips value={filterType} onChange={(f) => { setFilterType(f); if (f !== 'all') setSearchQuery('') }} />
+          <FilterChips value={filterType} onChange={handleFilterChange} />
 
           {/* Products */}
           {isLoading ? (
@@ -286,7 +213,7 @@ function HomePageContent() {
                 >
                   <ProductCard
                     product={product}
-                    distanceKm={getProductDistance(product)}
+                    distanceKm={getDistance(product)}
                     isAdmin={isAdmin}
                   />
                 </div>
@@ -307,7 +234,7 @@ function HomePageContent() {
                   <ProductStrip
                     key={product._id}
                     product={product}
-                    distanceKm={getProductDistance(product)}
+                    distanceKm={getDistance(product)}
                     highlight={searchQuery}
                   />
                 ))}

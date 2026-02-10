@@ -40,7 +40,7 @@ function StoreProfileContent() {
   const decodedStoreName = decodeURIComponent(storeName)
 
   // Get all products
-  const allProducts = useQuery(api.products.list)
+  const allProducts = useQuery(api.products.listAll)
 
   // Filter products that have this store
   const storeProducts =

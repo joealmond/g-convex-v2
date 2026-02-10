@@ -30,6 +30,7 @@ export interface QuadrantInfo {
   name: string
   color: string
   description: string
+  emoji: string
 }
 
 // Build QUADRANTS from config
@@ -41,6 +42,7 @@ export const QUADRANTS: Record<string, QuadrantInfo> = Object.fromEntries(
       name: value.label,
       color: value.color,
       description: value.description,
+      emoji: value.emoji,
     },
   ])
 )

@@ -1,13 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Suspense, useState, useMemo, useEffect } from 'react'
-import { ProductMap } from '@/components/map/ProductMap'
+import { Suspense, useState, useMemo, useEffect, lazy } from 'react'
 import { FilterChips, type FilterType } from '@/components/feed/FilterChips'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { Loader2 } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useTranslation } from '@/hooks/use-translation'
+
+// Lazy-load the map component to defer leaflet/react-leaflet bundle
+const ProductMap = lazy(() =>
+  import('@/components/map/ProductMap').then((mod) => ({ default: mod.ProductMap }))
+)
 
 export const Route = createFileRoute('/map')({
   component: MapPage,
@@ -33,7 +37,7 @@ function MapPage() {
 
 function MapPageContent() {
   const { t } = useTranslation()
-  const products = useQuery(api.products.list)
+  const products = useQuery(api.products.listAll)
   const { coords, loading: geoLoading, requestLocation } = useGeolocation()
   const [filterType, setFilterType] = useState<FilterType>('all')
 

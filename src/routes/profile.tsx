@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Trophy, Flame, Star, Users, Calendar, TrendingUp, ArrowLeft } from 'lucide-react'
 import { getQuadrant, QUADRANTS } from '@/lib/types'
-import { BADGES } from '@convex/lib/gamification'
+// import { BADGES } from '@convex/lib/gamification'
 import { getUserLevel, appConfig } from '@/lib/app-config'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { BadgeDisplay } from '@/components/dashboard/BadgeDisplay'
@@ -85,7 +85,7 @@ function ProfileContent() {
   const user = useQuery(api.users.current)
   const profile = useQuery(api.profiles.getCurrent)
   const myVotes = useQuery(api.votes.getByUser, user ? { userId: user._id } : 'skip')
-  const products = useQuery(api.products.list)
+  const products = useQuery(api.products.listAll)
   const followCounts = useQuery(
     api.follows.getCounts,
     user ? { userId: user._id } : 'skip'

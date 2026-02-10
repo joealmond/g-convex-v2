@@ -299,7 +299,7 @@ export function getUserLevel(points: number) {
       return level;
     }
   }
-  return appConfig.levels[appConfig.levels.length - 1];
+  return appConfig.levels[appConfig.levels.length - 1]!;
 }
 
 /** Get store defaults for current locale (with fallback) */

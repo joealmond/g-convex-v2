@@ -63,6 +63,7 @@ export default defineConfig(({ mode: _mode }) => {
             'react-vendor': ['react', 'react-dom'],
             'tanstack-vendor': ['@tanstack/react-router', '@tanstack/react-query'],
             'convex-vendor': ['convex/react'],
+            'recharts-vendor': ['recharts'],
           },
         },
       },

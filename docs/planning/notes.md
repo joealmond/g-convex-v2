@@ -9,3 +9,5 @@
 - map should handle more product with the same location
 - chat on product
 - text review  and star product rating
+- know our clients
+

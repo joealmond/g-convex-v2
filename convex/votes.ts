@@ -2,6 +2,7 @@ import { v } from 'convex/values'
 import { query, mutation, internalMutation } from './_generated/server'
 import { internal, components } from './_generated/api'
 import { RateLimiter } from '@convex-dev/rate-limiter'
+import { getAuthUser, requireAuth, isAdmin } from './lib/authHelpers'
 import type { Id } from './_generated/dataModel'
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
@@ -96,8 +97,7 @@ export const cast = mutation({
     if (userId) {
       existingVote = await ctx.db
         .query('votes')
-        .withIndex('by_product', (q) => q.eq('productId', args.productId))
-        .filter((q) => q.eq(q.field('userId'), userId))
+        .withIndex('by_product_user', (q) => q.eq('productId', args.productId).eq('userId', userId))
         .first()
     } else if (args.anonymousId) {
       existingVote = await ctx.db
@@ -456,6 +456,7 @@ export const recalculateProduct = internalMutation({
 /**
  * Recalculate all products with time-decay
  * Called by daily cron job
+ * Processes products in batches to avoid mutation time limits
  */
 export const recalculateAllProducts = internalMutation({
   args: {},
@@ -473,15 +474,44 @@ export const recalculateAllProducts = internalMutation({
     }
 
     const products = await ctx.db.query('products').collect()
-    
-    for (const product of products) {
+    const BATCH_SIZE = 25
+
+    // Process first batch inline
+    const firstBatch = products.slice(0, BATCH_SIZE)
+    for (const product of firstBatch) {
       await ctx.runMutation(internal.votes.recalculateProduct, {
         productId: product._id,
         applyTimeDecay: true,
       })
     }
+
+    // Schedule remaining batches
+    for (let i = BATCH_SIZE; i < products.length; i += BATCH_SIZE) {
+      const batchIds = products.slice(i, i + BATCH_SIZE).map((p) => p._id)
+      // Stagger batches by 1 second each to spread load
+      await ctx.scheduler.runAfter((i / BATCH_SIZE) * 1000, internal.votes.recalculateProductBatch, {
+        productIds: batchIds,
+      })
+    }
     
-    console.log(`Recalculated ${products.length} products with time-decay`)
+    console.log(`Recalculating ${products.length} products with time-decay (batches of ${BATCH_SIZE})`)
+  },
+})
+
+/**
+ * Internal mutation to recalculate a batch of products
+ * Used by recalculateAllProducts to process in smaller chunks
+ */
+export const recalculateProductBatch = internalMutation({
+  args: { productIds: v.array(v.id('products')) },
+  handler: async (ctx, { productIds }) => {
+    for (const productId of productIds) {
+      await ctx.runMutation(internal.votes.recalculateProduct, {
+        productId,
+        applyTimeDecay: true,
+      })
+    }
+    console.log(`Batch recalculated ${productIds.length} products`)
   },
 })
 
@@ -617,12 +647,9 @@ export const awardPoints = internalMutation({
 export const migrateAnonymous = mutation({
   args: { anonymousId: v.string() },
   handler: async (ctx, { anonymousId }) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) {
-      throw new Error('Must be logged in to migrate votes')
-    }
+    const user = await requireAuth(ctx)
 
-    const userId = identity.subject
+    const userId = user._id
 
     // Find all anonymous votes
     const anonVotes = await ctx.db
@@ -636,8 +663,7 @@ export const migrateAnonymous = mutation({
       // Check if user already has a vote for this product
       const existingVote = await ctx.db
         .query('votes')
-        .withIndex('by_product', (q) => q.eq('productId', vote.productId))
-        .filter((q) => q.eq(q.field('userId'), userId))
+        .withIndex('by_product_user', (q) => q.eq('productId', vote.productId).eq('userId', userId))
         .first()
 
       if (existingVote) {
@@ -672,7 +698,7 @@ export const migrateAnonymous = mutation({
 export const deleteVote = mutation({
   args: { voteId: v.id('votes') },
   handler: async (ctx, { voteId }) => {
-    const identity = await ctx.auth.getUserIdentity()
+    const user = await getAuthUser(ctx)
     const vote = await ctx.db.get(voteId)
 
     if (!vote) {
@@ -680,20 +706,11 @@ export const deleteVote = mutation({
     }
 
     // Check if user owns the vote or is admin
-    const userId = identity?.subject ?? null
+    const userId = user?._id ?? null
     const isOwner = vote.userId === userId
-    
-    // Check admin status
-    let isAdmin = false
-    if (userId) {
-      const profile = await ctx.db
-        .query('profiles')
-        .withIndex('by_user', (q) => q.eq('userId', userId))
-        .first()
-      isAdmin = profile?.role === 'admin'
-    }
+    const hasAdminAccess = user ? isAdmin(user) : false
 
-    if (!isOwner && !isAdmin) {
+    if (!isOwner && !hasAdminAccess) {
       throw new Error('Not authorized to delete this vote')
     }
 

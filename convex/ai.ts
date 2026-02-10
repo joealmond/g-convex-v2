@@ -1,6 +1,50 @@
 import { v } from 'convex/values'
 import { action } from './_generated/server'
 
+const MAX_RETRIES = 3
+const BASE_RETRY_DELAY_MS = 2000
+
+/**
+ * Helper to call Gemini API with retry logic for 429 errors
+ */
+async function callGeminiWithRetry(
+  url: string,
+  body: string,
+  retries = MAX_RETRIES
+): Promise<Response> {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+  })
+
+  if (response.status === 429 && retries > 0) {
+    // Parse retry delay from error response if available
+    let delayMs = BASE_RETRY_DELAY_MS * (MAX_RETRIES - retries + 1) // exponential backoff
+    try {
+      const errorText = await response.text()
+      const errJson = JSON.parse(errorText)
+      const retryDetail = errJson?.error?.details?.find(
+        (d: any) => d['@type']?.includes('RetryInfo')
+      )
+      if (retryDetail?.retryDelay) {
+        const parsed = parseInt(retryDetail.retryDelay, 10)
+        if (!isNaN(parsed) && parsed > 0) {
+          delayMs = parsed * 1000
+        }
+      }
+    } catch {
+      // Use default backoff
+    }
+
+    console.log(`Gemini 429 rate limit, retrying in ${delayMs}ms (${retries} retries left)`)
+    await new Promise((resolve) => setTimeout(resolve, delayMs))
+    return callGeminiWithRetry(url, body, retries - 1)
+  }
+
+  return response
+}
+
 /**
  * Analyze a product image using Google Gemini AI
  * Returns product name, safety/taste scores, and ingredient tags
@@ -46,17 +90,14 @@ export const analyzeImage = action({
       const mimeType = response.headers.get('content-type') || 'image/jpeg'
 
       // Call Gemini API directly (without SDK for smaller bundle)
-      const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
+      // Includes retry logic for 429 rate limit errors
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
+      const geminiBody = JSON.stringify({
+        contents: [
+          {
+            parts: [
               {
-                parts: [
-                  {
-                    text: `Analyze this food product image. You are helping users with gluten sensitivities evaluate products.
+                text: `Analyze this food product image. You are helping users with gluten sensitivities evaluate products.
 
 Return a JSON object with:
 - productName (string): Name of the product (be specific)
@@ -68,54 +109,27 @@ Return a JSON object with:
 - warnings (array of strings): Any allergen warnings visible
 
 Only return valid JSON, no markdown formatting.`,
-                  },
-                  {
-                    inlineData: {
-                      mimeType,
-                      data: base64Image,
-                    },
-                  },
-                ],
+              },
+              {
+                inlineData: {
+                  mimeType,
+                  data: base64Image,
+                },
               },
             ],
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 1024,
-            },
-          }),
-        }
-      )
+          },
+        ],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 1024,
+        },
+      })
+
+      const geminiResponse = await callGeminiWithRetry(geminiUrl, geminiBody)
 
       if (!geminiResponse.ok) {
         const errorText = await geminiResponse.text()
-        console.error('Gemini API error:', errorText)
-
-        // Surface a helpful message for rate-limit / quota errors
-        if (geminiResponse.status === 429) {
-          let retrySeconds: number | undefined
-          try {
-            const errJson = JSON.parse(errorText)
-            const retryDetail = errJson?.error?.details?.find(
-              (d: any) => d['@type']?.includes('RetryInfo')
-            )
-            if (retryDetail?.retryDelay) {
-              retrySeconds = parseInt(retryDetail.retryDelay, 10)
-            }
-          } catch {
-            // ignore parse errors
-          }
-
-          const retrySuffix = retrySeconds
-            ? ` Please try again in ~${retrySeconds} seconds.`
-            : ' Please try again later.'
-
-          return {
-            success: false,
-            error: 'AI analysis is currently unavailable. You can fill in the details manually.',
-            imageUrl,
-          }
-        }
-
+        console.error('Gemini API error:', geminiResponse.status, errorText)
         return { success: false, error: 'AI analysis is currently unavailable. You can fill in the details manually.', imageUrl }
       }
 

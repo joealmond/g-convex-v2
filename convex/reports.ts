@@ -1,12 +1,24 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { components } from './_generated/api'
+import { RateLimiter } from '@convex-dev/rate-limiter'
 import { getAuthUser, requireAdmin } from './lib/authHelpers'
+
+const rateLimiter = new RateLimiter(components.rateLimiter, {
+  report: { kind: 'token bucket', rate: 5, period: 3600000, capacity: 10 },
+})
 
 // Create a new report
 export const create = mutation({
   args: {
     productId: v.id('products'),
-    reason: v.string(),
+    reason: v.union(
+      v.literal('inappropriate'),
+      v.literal('duplicate'),
+      v.literal('wrong-info'),
+      v.literal('spam'),
+      v.literal('other')
+    ),
     details: v.optional(v.string()),
     anonymousId: v.optional(v.string()),
   },
@@ -14,6 +26,17 @@ export const create = mutation({
     const user = await getAuthUser(ctx)
     const userId = user?._id
     const isAnonymous = !userId
+
+    // Rate limiting
+    const rateLimitKey = userId || args.anonymousId || 'unknown'
+    const { ok, retryAfter } = await rateLimiter.limit(ctx, 'report', {
+      key: rateLimitKey,
+    })
+    if (!ok) {
+      throw new Error(
+        `Rate limit exceeded. Please try again in ${Math.ceil(retryAfter / 1000)} seconds.`
+      )
+    }
 
     // Check if product exists
     const product = await ctx.db.get(args.productId)
@@ -60,7 +83,12 @@ export const create = mutation({
 // List all reports (admin only)
 export const list = query({
   args: {
-    status: v.optional(v.string()),
+    status: v.optional(v.union(
+      v.literal('pending'),
+      v.literal('reviewed'),
+      v.literal('resolved'),
+      v.literal('dismissed')
+    )),
   },
   handler: async (ctx, args) => {
     // Check if user is admin
@@ -112,7 +140,12 @@ export const list = query({
 export const updateStatus = mutation({
   args: {
     reportId: v.id('reports'),
-    status: v.string(),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('reviewed'),
+      v.literal('resolved'),
+      v.literal('dismissed')
+    ),
   },
   handler: async (ctx, args) => {
     const user = await requireAdmin(ctx)
@@ -144,16 +177,18 @@ export const getByProduct = query({
 })
 
 // Get report count for a product (public)
+// Optimized: uses take() with a cap instead of collect()
 export const getReportCount = query({
   args: {
     productId: v.id('products'),
   },
   handler: async (ctx, args) => {
+    const MAX_COUNT = 1000
     const reports = await ctx.db
       .query('reports')
       .withIndex('by_product', (q) => q.eq('productId', args.productId))
       .filter((q) => q.eq(q.field('status'), 'pending'))
-      .collect()
+      .take(MAX_COUNT)
 
     return reports.length
   },
