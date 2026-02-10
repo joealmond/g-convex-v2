@@ -72,7 +72,15 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     ],
   }),
   beforeLoad: async (ctx) => {
-    const token = await getAuth()
+    // In SSR mode (Cloudflare), getAuth() fetches the token server-side for pre-authenticated rendering.
+    // In SPA mode (Capacitor), there's no server — getAuth() will fail, so we gracefully
+    // fall back to null. Client-side auth via ConvexBetterAuthProvider takes over instead.
+    let token: string | null = null
+    try {
+      token = await getAuth()
+    } catch {
+      // Expected in SPA/Capacitor mode — no server to handle the server function
+    }
 
     // All queries, mutations and actions through TanStack Query will be
     // authenticated during SSR if we have a valid token

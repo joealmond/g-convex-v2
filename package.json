@@ -8,6 +8,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
+    "postinstall": "bash scripts/patch-capacitor-android.sh",
     "dev": "concurrently -r \"npm:dev:web\" \"npm:dev:convex\"",
     "dev:web": "vite dev",
     "dev:convex": "npx convex dev",

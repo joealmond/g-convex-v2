@@ -51,6 +51,9 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     trustedOrigins: [
       'http://localhost:3000',
       'http://localhost:8787',
+      // Capacitor WebView origins (iOS uses capacitor://, Android uses https://)
+      'capacitor://localhost',
+      'https://localhost',
       envConfig.siteUrl,
     ],
     // Google OAuth

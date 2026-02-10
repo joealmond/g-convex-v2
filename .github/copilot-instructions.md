@@ -35,8 +35,9 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | Framework | TanStack Start + TanStack Router | SSR React framework |
 | Backend | Convex | Real-time database + serverless functions |
 | Auth | Better Auth via `@convex-dev/better-auth` | Google OAuth, session-based |
-| Deployment | Cloudflare Workers | Edge SSR |
-| Native | Capacitor | iOS/Android wrapper for the same web codebase |
+| Deployment | Cloudflare Workers | Edge SSR for web |
+| Native | Capacitor | iOS/Android WebView — loads SPA shell from bundled assets |
+| Rendering | SSR (web) + SPA shell (mobile) | TanStack Start SPA Mode generates both from one build |
 | UI | shadcn/ui + Tailwind CSS v4 | Component library + utility CSS |
 | Charts | Recharts | Scatter plot visualization |
 | Maps | Leaflet + react-leaflet + OpenStreetMap | Free, no API key needed |
@@ -51,6 +52,8 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | `src/lib/app-config.ts` | ★ Central niche configuration — start here to understand the app's identity |
 | `src/lib/types.ts` | TypeScript types, quadrant logic — references app-config for labels |
 | `src/lib/platform.ts` | ★ Platform detection: isNative(), isIOS(), isAndroid(), isWeb() |
+| `src/lib/auth-client.ts` | Better Auth client — uses `VITE_CONVEX_SITE_URL` as baseURL on native, relative origin on web |
+| `capacitor.config.ts` | Capacitor config — webDir, schemes, hostname |
 | `convex/schema.ts` | Database schema: products, votes, profiles, files tables |
 | `convex/votes.ts` | Vote casting, rate limiting, weighted average recalculation |
 | `convex/products.ts` | Product CRUD operations |
@@ -207,6 +210,61 @@ Standard shadcn/ui tokens (`bg-background`, `bg-card`, `bg-primary`, `text-foreg
 - **Z-Index**: Be careful with stacking contexts. Toast/Dialogs > Dropdowns > Sticky Headers > Content.
 - **Button Content**: When overriding button children (e.g. for icon-only buttons), You MUST provide the visible Icon element. Passing only `sr-only` text will result in a blank button. Always verify the button renders with visible content.
 - **i18n**: Never hardcode user-facing English strings. Always use `t('key')` from `useTranslation()`. If you add a new string, add it to BOTH `en.json` and `hu.json` before using it. Missing keys silently return the key path as fallback text.
+
+### Known Issues & Workarounds
+
+#### Capacitor Android ProGuard Compatibility (AGP 9.x+)
+**Problem**: Capacitor v8 plugins (`@capacitor/camera`, `@capacitor/geolocation`, `@capacitor/share`) use the deprecated `proguard-android.txt` file, which causes build failures with Android Gradle Plugin 9.x+:
+```
+`getDefaultProguardFile('proguard-android.txt')` is no longer supported
+```
+
+**Solution**: Automated via `postinstall` script:
+- `scripts/patch-capacitor-android.sh` patches `node_modules/@capacitor/*/android/build.gradle` files to use `proguard-android-optimize.txt`
+- Runs automatically after `npm install` via `package.json` postinstall hook
+- Manual run: `bash scripts/patch-capacitor-android.sh`
+
+**Why not update plugins?** Capacitor 8.0.0 is the latest v8 release. The fix is in Capacitor 9.x, which requires updating the core Capacitor packages and potentially breaking changes. The postinstall patch is stable and low-risk.
+
+**If you encounter Android build errors after `npm install`**:
+1. Verify the postinstall script ran: check for "✅ All Capacitor Android plugins patched" in install output
+2. If missing, manually run: `bash scripts/patch-capacitor-android.sh`
+3. In Android Studio: **File → Sync Project with Gradle Files** or run `./gradlew clean` in `android/` directory
+
+#### Capacitor + TanStack Start SPA Architecture
+
+**Problem**: TanStack Start is an SSR framework — its build output has no `index.html` (the server generates HTML dynamically). Capacitor requires static files with an `index.html` in `webDir`.
+
+**Solution**: TanStack Start's official **SPA Mode** (`spa: { enabled: true }` in `vite.config.ts`) generates a static SPA shell alongside the SSR build. We configure `spa.prerender.outputPath: '/index.html'` so the shell lands at `dist/client/index.html` — exactly what Capacitor expects.
+
+**How the dual-target build works**:
+```
+npm run build
+  ├── SSR build → dist/server/  (Cloudflare Workers deployment)
+  └── SPA shell → dist/client/index.html  (Capacitor bundles this into native apps)
+
+npx cap sync  →  copies dist/client/* into ios/App/App/public/ and android/app/src/main/assets/public/
+```
+
+**Auth in SPA mode**: The `getAuth()` server function in `__root.tsx` is wrapped in try/catch. On Cloudflare (SSR), it fetches the token server-side for pre-authenticated rendering. On Capacitor (SPA), it gracefully fails and `ConvexBetterAuthProvider` handles client-side auth instead.
+
+**Auth client baseURL**: In `src/lib/auth-client.ts`, native apps use `VITE_CONVEX_SITE_URL` (e.g., `https://fabulous-horse-363.eu-west-1.convex.site`) as the auth endpoint. Web apps use `undefined` (relative to current origin, proxied through SSR).
+
+**Capacitor schemes** (in `capacitor.config.ts`):
+- iOS: `capacitor://localhost` (default) — WKWebView **cannot** use `http://` or `https://` as custom scheme
+- Android: `https://localhost` (default)
+- Both are added to `trustedOrigins` in `convex/auth.ts`
+
+**Key files for Capacitor**:
+| File | Role |
+|------|------|
+| `vite.config.ts` | SPA mode config (`spa.prerender.outputPath`) |
+| `capacitor.config.ts` | Capacitor config (webDir, schemes) |
+| `src/lib/auth-client.ts` | Auth baseURL routing (native vs web) |
+| `src/lib/platform.ts` | `isNative()`, `isIOS()`, `isAndroid()` detection |
+| `convex/auth.ts` | `trustedOrigins` includes Capacitor scheme URLs |
+| `src/routes/__root.tsx` | `getAuth()` try/catch for SPA graceful fallback |
+| `scripts/patch-capacitor-android.sh` | ProGuard fix for AGP 9.x+ |
 
 ## Design Tokens
 

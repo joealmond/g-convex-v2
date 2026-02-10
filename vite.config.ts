@@ -26,6 +26,14 @@ export default defineConfig(({ mode: _mode }) => {
         srcDirectory: 'src',
         start: { entry: './start.tsx' },
         server: { entry: './server.ts' },
+        // SPA Mode: generates a static /index.html shell for Capacitor (iOS/Android)
+        // The SSR build for Cloudflare Workers is unaffected
+        spa: {
+          enabled: true,
+          prerender: {
+            outputPath: '/index.html',
+          },
+        },
       }),
       tailwindcss(),
       viteReact(),

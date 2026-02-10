@@ -231,7 +231,64 @@ If you see `v.id('users')` type errors:
 - Better Auth user IDs are strings, use `v.string()` not `v.id('users')`
 - See [doctemplateimprovements/TEMPLATE_IMPROVEMENTS.md](doctemplateimprovements/TEMPLATE_IMPROVEMENTS.md) for details
 
-## 📝 Scripts
+## 📱 Mobile Development (iOS/Android)
+
+This app uses **Capacitor** to run on iOS and Android with the same web codebase.
+
+### Architecture: SSR (Web) + SPA Shell (Mobile)
+
+TanStack Start is an SSR framework — for web deployment on Cloudflare Workers, the server renders HTML dynamically. Capacitor needs static files. We use TanStack Start's **SPA Mode** to generate both from a single build:
+
+```
+npm run build
+  ├── SSR build → dist/server/  (deployed to Cloudflare Workers)
+  └── SPA shell → dist/client/index.html  (bundled into native apps by Capacitor)
+
+npx cap sync  →  copies dist/client/* into iOS and Android projects
+```
+
+On mobile, auth is handled client-side via `ConvexBetterAuthProvider` (the SSR `getAuth()` function gracefully falls back to `null`). Auth requests go directly to the Convex backend URL (`VITE_CONVEX_SITE_URL`).
+
+### Initial Setup
+
+```bash
+# 1. Build the web app (includes SPA shell generation)
+npm run build
+
+# 2. Add native platforms (first time only)
+npx cap add ios
+npx cap add android
+
+# 3. Sync web assets to native projects
+npx cap sync
+
+# 4. Open in native IDEs
+npm run cap:ios      # Opens Xcode
+npm run cap:android  # Opens Android Studio
+```
+
+### Development Workflow
+
+```bash
+# After making code changes:
+npm run build && npx cap sync
+
+# Then press Run (▶) in Xcode or Android Studio
+```
+
+### Android Build Fix (Automatic)
+
+The project includes an automatic fix for a known Android Gradle Plugin 9.x compatibility issue with Capacitor v8 plugins. A `postinstall` script (`scripts/patch-capacitor-android.sh`) runs automatically after `npm install` and patches the deprecated ProGuard configuration.
+
+**If Android builds fail after `npm install`**, manually run:
+```bash
+bash scripts/patch-capacitor-android.sh
+```
+
+Then in Android Studio: **File → Sync Project with Gradle Files**
+
+See `.github/copilot-instructions.md` for technical details.
+## �📝 Scripts
 
 ```bash
 npm run dev          # Start dev server (port 3000)
