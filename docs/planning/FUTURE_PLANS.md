@@ -22,10 +22,38 @@ Capacitor builds work on both iOS and Android but have critical bugs from initia
 - This is the most complex mobile integration — needs a dedicated spike
 
 ### UI / UX Fixes
-- Safe area insets: top bar overlaps status bar on both platforms
-- Bottom navigation touch targets too small on phones
+- Safe area insets: top bar overlaps status bar on both platforms — use `env(safe-area-inset-top/bottom)` with `viewport-fit=cover`
+- Bottom navigation touch targets too small on phones — enforce 44×44px minimum
 - Lock orientation to portrait (iOS: Xcode settings, Android: `AndroidManifest.xml`)
-- Test dark mode rendering on native WebView
+- Test dark mode rendering on native WebView — set `StatusBar.setStyle()` per theme
+
+### Cross-Device Consistency
+- Replace `100vh` with `100dvh` for full-screen layouts (fixes mobile address bar issue)
+- Use `clamp()` for fluid typography: `clamp(0.875rem, 2.5vw + 0.5rem, 1.125rem)`
+- Use container queries for component-level responsiveness (product cards, chart containers)
+- Test on minimum 3 device sizes: iPhone SE (375px), iPhone 15 (393px), iPhone 16 Pro Max (430px)
+
+### Push Notifications
+- Set up Firebase Cloud Messaging (FCM) with `@capacitor/push-notifications`
+- iOS: enable Push capability in Xcode, configure APNs
+- Android: add `google-services.json` from Firebase Console
+- Store device tokens in Convex for server-triggered notifications
+
+### Deep Linking
+- Set up Universal Links (iOS) and App Links (Android) so product URLs open in-app
+- Create `apple-app-site-association` and `assetlinks.json` on web server
+- Handle deep links with Capacitor `App.addListener('appUrlOpen', ...)`
+
+### Accessibility
+- Add `aria-label` to all icon-only buttons
+- Use `rem` units for text, not `px` — respects system font size preferences
+- Test with VoiceOver (iOS) and TalkBack (Android)
+- Honor `prefers-reduced-motion` CSS media query
+
+### Offline Handling
+- Convex auto-reconnects on brief network blips
+- Add offline status banner using `navigator.onLine` + event listeners
+- Consider optimistic updates for voting to feel instant
 
 ---
 
