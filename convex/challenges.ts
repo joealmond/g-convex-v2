@@ -202,7 +202,12 @@ export const createChallenge = mutation({
   args: {
     title: v.string(),
     description: v.string(),
-    type: v.string(),
+    type: v.union(
+      v.literal('vote'),
+      v.literal('product'),
+      v.literal('streak'),
+      v.literal('store')
+    ),
     targetValue: v.number(),
     rewardPoints: v.number(),
     rewardBadge: v.optional(v.string()),
@@ -263,7 +268,14 @@ export const resetWeeklyChallenges = internalMutation({
     }
     
     // Create new template challenges
-    const templates = [
+    const templates: Array<{
+      title: string
+      description: string
+      type: 'vote' | 'product' | 'streak' | 'store'
+      targetValue: number
+      rewardPoints: number
+      rewardBadge?: string
+    }> = [
       {
         title: 'Vote 10 Times',
         description: 'Cast 10 votes on products this week',
