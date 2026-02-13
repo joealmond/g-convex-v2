@@ -11,7 +11,7 @@ interface PageShellProps {
  */
 export function PageShell({ children, className = '' }: PageShellProps) {
   return (
-    <div className="min-h-screen bg-background pt-12 pb-20">
+    <div className="min-h-screen bg-background pb-20" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 3rem)' }}>
       <div className={`mx-auto px-4 sm:px-6 lg:max-w-7xl lg:px-8 ${className}`}>
         {children}
       </div>

@@ -34,12 +34,12 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover' },
       { title: `${appConfig.appName} - ${appConfig.tagline}` },
       { name: 'description', content: `Community-driven ratings for ${appConfig.categoryTerm}` },
       /* PWA Meta Tags */
       { name: 'apple-mobile-web-app-capable', content: 'yes' },
-      { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
+      { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
       { name: 'theme-color', content: '#7CB342' },
     ],
     links: [

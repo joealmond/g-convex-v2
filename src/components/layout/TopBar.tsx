@@ -69,7 +69,8 @@ export function TopBar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 h-12 bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-4 sm:px-6">
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border safe-top">
+    <div className="h-12 flex items-center justify-between px-4 sm:px-6">
       {/* Left: Logo/App Name */}
       <Link to="/" className="flex items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity">
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -160,6 +161,7 @@ export function TopBar() {
           </Button>
         )}
       </div>
+    </div>
     </header>
   )
 }

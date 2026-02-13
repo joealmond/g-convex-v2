@@ -32,9 +32,10 @@ export function BottomTabs() {
   return (
     <>
       <nav 
-        className="fixed bottom-0 left-0 right-0 z-50 h-16 flex items-center justify-around safe-area-inset-bottom border-t border-white/20 dark:border-border"
+        className="fixed bottom-0 left-0 right-0 z-50 flex flex-col border-t border-white/20 dark:border-border"
         style={{ backgroundColor: 'var(--nav-bg)' }}
       >
+        <div className="h-16 flex items-center justify-around">
         {/* Home Tab */}
         <Link
           to="/"
@@ -86,6 +87,9 @@ export function BottomTabs() {
           <User className="h-6 w-6" />
           <span>{t('nav.profile')}</span>
         </Link>
+        </div>
+        {/* Safe area spacer for devices with home indicator */}
+        <div className="safe-bottom" style={{ backgroundColor: 'var(--nav-bg)' }} />
       </nav>
     </>
   )

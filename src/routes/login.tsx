@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { authClient } from '@/lib/auth-client'
 import { appConfig } from '@/lib/app-config'
+import { isNative } from '@/lib/platform'
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
@@ -39,11 +40,19 @@ function Login() {
   const handleGoogleLogin = async () => {
     setIsLoading(true)
     try {
-      await authClient.signIn.social({
+      const result = await authClient.signIn.social({
         provider: 'google',
-        callbackURL: '/',
+        // On native, better-auth-capacitor converts this to gmatrix://auth/callback
+        callbackURL: isNative() ? '/auth/callback' : '/',
       })
-    } catch (error) {
+      // On native, signIn.social returns { redirect: false } — the capacitor
+      // plugin handles the OAuth flow via system browser + deep link callback.
+      // Session is stored in Capacitor Preferences and picked up automatically.
+      if (result.error) {
+        console.error('Login failed:', result.error)
+        setIsLoading(false)
+      }
+    } catch (error: unknown) {
       console.error('Login failed:', error)
       setIsLoading(false)
     }

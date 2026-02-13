@@ -35,6 +35,7 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | Framework | TanStack Start + TanStack Router | SSR React framework |
 | Backend | Convex | Real-time database + serverless functions |
 | Auth | Better Auth via `@convex-dev/better-auth` | Google OAuth, session-based |
+| Native Auth | `better-auth-capacitor` | OAuth via system browser + deep links on native |
 | Deployment | Cloudflare Workers | Edge SSR for web |
 | Native | Capacitor | iOS/Android WebView — loads SPA shell from bundled assets |
 | Rendering | SSR (web) + SPA shell (mobile) | TanStack Start SPA Mode generates both from one build |
@@ -259,12 +260,95 @@ npx cap sync  →  copies dist/client/* into ios/App/App/public/ and android/app
 | File | Role |
 |------|------|
 | `vite.config.ts` | SPA mode config (`spa.prerender.outputPath`) |
-| `capacitor.config.ts` | Capacitor config (webDir, schemes) |
-| `src/lib/auth-client.ts` | Auth baseURL routing (native vs web) |
+| `capacitor.config.ts` | Capacitor config (webDir, schemes, plugin settings) |
+| `src/lib/auth-client.ts` | Auth baseURL routing (native vs web) + `withCapacitor()` wrapper |
 | `src/lib/platform.ts` | `isNative()`, `isIOS()`, `isAndroid()` detection |
-| `convex/auth.ts` | `trustedOrigins` includes Capacitor scheme URLs |
+| `convex/auth.ts` | `trustedOrigins` includes Capacitor scheme URLs + `capacitor()` server plugin |
+| `convex/http.ts` | Native OAuth Cookie Bridge — Proxy wrapper that injects session cookie into redirect URL |
 | `src/routes/__root.tsx` | `getAuth()` try/catch for SPA graceful fallback |
 | `scripts/patch-capacitor-android.sh` | ProGuard fix for AGP 9.x+ |
+
+#### Native Auth (OAuth on Capacitor)
+
+**Problem**: Google blocks OAuth sign-in from embedded WebViews. The Capacitor WKWebView is not a real browser, so `signIn.social()` fails silently on native.
+
+**Solution**: Use `better-auth-capacitor` package (`productdevbook/better-auth-capacitor`) which:
+1. Opens OAuth in the **system browser** (Safari/Chrome) via `ASWebAuthenticationSession` (iOS) / Custom Tabs (Android)
+2. Handles the callback via **deep links** using a custom URL scheme (`gmatrix://`)
+3. Caches sessions in `@capacitor/preferences` for offline-first auth
+4. Provides `withCapacitor()` wrapper that disables default redirect plugins on native
+
+**Server side** (`convex/auth.ts`):
+```ts
+import { capacitor } from 'better-auth-capacitor'
+betterAuth({
+  baseURL: process.env.CONVEX_SITE_URL, // NOT SITE_URL from .env.local
+  plugins: [convex({ authConfig }), capacitor()],
+})
+```
+
+**Client side** (`src/lib/auth-client.ts`):
+```ts
+import { withCapacitor } from 'better-auth-capacitor/client'
+const authClient = createAuthClient(withCapacitor({
+  baseURL: isNative() ? VITE_CONVEX_SITE_URL : undefined,
+  plugins: [convexClient()],
+}, {
+  scheme: 'gmatrix',
+  storagePrefix: 'better-auth',
+}))
+```
+
+**HTTP layer — Convex Cookie Bridge** (`convex/http.ts`):
+The `capacitor()` plugin's after-hook reads `set-cookie` from `responseHeaders` to append session cookies to the native redirect URL. In Convex runtime, this hook **never executes** because Better Auth throws an `APIError` (302) which bypasses after-hooks. The fix wraps `auth.handler()` with a Proxy at the HTTP layer that post-processes 302 redirects to non-HTTP schemes (like `gmatrix://`), injecting the `set-cookie` value as a `?cookie=` query param on the redirect URL. See `convex/http.ts` for the implementation.
+
+**CORS** (`convex/http.ts`):
+`registerRoutes()` must be called with `cors` option to enable OPTIONS preflight for Capacitor WebView cross-origin requests:
+```ts
+authComponent.registerRoutes(http, createAuthWithNativeBridge, {
+  cors: {
+    allowedHeaders: ['capacitor-origin', 'x-skip-oauth-proxy'],
+    exposedHeaders: ['set-auth-token'],
+  },
+})
+```
+
+**Deep link config**:
+- iOS `Info.plist`: `CFBundleURLSchemes` → `gmatrix`
+- Android `AndroidManifest.xml`: intent-filter with `android:scheme="gmatrix"`
+- OAuth callbackURL: `/auth/callback` (plugin converts to `gmatrix://auth/callback`)
+- Google Cloud Console: Add `{CONVEX_SITE_URL}/api/auth/callback/google` as authorized redirect URI
+
+**Dependencies**: `better-auth-capacitor`, `@capacitor/preferences`, `@capacitor/app`
+
+**Reference repos**:
+- https://github.com/productdevbook/better-auth-capacitor (official plugin)
+- https://github.com/daveyplate/better-auth-capacitor (alternative approach)
+- https://github.com/daveycodez/tanstack-start-hybrid (TanStack Start + Capacitor hybrid)
+- https://github.com/aaronksaunders/tanstack-capacitor-mobile-1 (TanStack Start + Capacitor tutorial)
+
+#### Native Mobile UX (Capacitor WebView)
+
+**Safe areas**: All layout components use `env(safe-area-inset-*)` CSS variables:
+- `TopBar` uses `.safe-top` class — extends background behind status bar, keeps interactive content below
+- `BottomTabs` uses a `.safe-bottom` spacer div — fills home indicator area with nav background
+- `PageShell` uses `calc(env(safe-area-inset-top) + 3rem)` for content offset
+- Viewport meta includes `viewport-fit=cover` to enable safe area access
+
+**CSS for native feel** (in `globals.css`):
+- `overscroll-behavior: none` — prevents rubber-band bounce
+- `touch-action: manipulation` — removes 300ms tap delay
+- `-webkit-tap-highlight-color: transparent` — removes blue flash on tap
+- `-webkit-user-select: none` on body — native feel (re-enabled on inputs)
+- `maximum-scale=1, user-scalable=no` in viewport meta — prevents pinch zoom
+
+**Orientation**: Locked to portrait on both platforms (Info.plist + AndroidManifest.xml)
+
+**Status bar**: `black-translucent` style with `overlaysWebView: true` in Capacitor config
+
+**Permissions** (already configured):
+- iOS Info.plist: `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`, `NSLocationWhenInUseUsageDescription`
+- Android AndroidManifest: `CAMERA`, `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `READ_MEDIA_IMAGES`
 
 ## Design Tokens
 
@@ -318,6 +402,9 @@ Cards: `bg-card text-card-foreground rounded-2xl shadow-sm border border-border`
 - ❌ Don't import from `convex/` directly in components — use the generated `api` object
 - ❌ Don't add user-facing strings without adding them to both `src/locales/en.json` and `src/locales/hu.json`
 - ❌ Don't use hardcoded English text in JSX — always use `t('section.key')` from `useTranslation()`
+- ❌ Don't open OAuth in the Capacitor WebView — Google blocks it. Use system browser via `@capacitor/browser`
+- ❌ Don't hardcode padding/margins for notch/home indicator — use `env(safe-area-inset-*)` CSS variables
+- ❌ Don't use `<a>` tags for OAuth — on native, use `signIn.social()` with `better-auth-capacitor` which routes through system browser
 
 ## Planning Documents
 
@@ -390,3 +477,5 @@ Don't silently make assumptions that could derail the plan. The user prefers cla
 | shadcn/ui | https://ui.shadcn.com/docs |
 | Tailwind CSS v4 | https://tailwindcss.com/docs |
 | Framer Motion | https://www.framer.com/motion/introduction/ |
+| better-auth-capacitor | https://github.com/productdevbook/better-auth-capacitor |
+| Capacitor Deep Links | https://capacitorjs.com/docs/guides/deep-links |
