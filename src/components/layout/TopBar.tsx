@@ -69,7 +69,7 @@ export function TopBar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border safe-top">
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border safe-top hidden md:block">
     <div className="h-12 flex items-center justify-between px-4 sm:px-6">
       {/* Left: Logo/App Name */}
       <Link to="/" className="flex items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity">

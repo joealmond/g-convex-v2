@@ -1,7 +1,6 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { Leaderboard } from '@/components/dashboard/Leaderboard'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft, Trophy } from 'lucide-react'
+import { Trophy } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
 
 export const Route = createFileRoute('/leaderboard')({
@@ -12,24 +11,16 @@ function LeaderboardPage() {
   const { t } = useTranslation()
   return (
     <div className="flex-1 flex flex-col bg-background">
-      <div className="max-w-4xl mx-auto w-full px-4 py-6">
+      <div className="max-w-4xl mx-auto w-full px-4 py-3">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Trophy className="h-8 w-8 text-amber-500" />
-              <h1 className="text-3xl font-bold text-foreground">{t('leaderboard.title')}</h1>
-            </div>
-            <p className="text-muted-foreground">
-              {t('leaderboard.topContributors')}
-            </p>
+        <div className="mb-4">
+          <div className="flex items-center gap-3 mb-1">
+            <Trophy className="h-7 w-7 text-amber-500" />
+            <h1 className="text-2xl font-bold text-foreground">{t('leaderboard.title')}</h1>
           </div>
-          <Button variant="ghost" asChild>
-            <Link to="/">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {t('nav.back')}
-            </Link>
-          </Button>
+          <p className="text-sm text-muted-foreground">
+            {t('leaderboard.topContributors')}
+          </p>
         </div>
 
         {/* Leaderboard */}

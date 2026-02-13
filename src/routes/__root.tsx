@@ -126,7 +126,7 @@ function RootComponent() {
             </ClientOnly>
           </ImpersonateProvider>
           </I18nProvider>
-          <Toaster richColors position="bottom-center" offset="8rem" toastOptions={{ style: { zIndex: 9999 } }} />
+          <Toaster richColors position="bottom-center" offset="14rem" toastOptions={{ style: { zIndex: 9999 } }} />
           <Scripts />
         </body>
       </html>

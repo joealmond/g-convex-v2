@@ -17,32 +17,31 @@ export function BottomTabs() {
   const location = useLocation()
 
   const isActive = (path: string) => {
-    // Simple path matching for active state
     if (path === '/') return location.pathname === '/'
     return location.pathname.startsWith(path)
   }
 
   const tabClass = (active: boolean) =>
-    `flex flex-col items-center justify-center gap-1 flex-1 h-16 text-xs font-medium transition-colors ${
+    `flex flex-col items-center justify-center gap-0.5 flex-1 h-16 text-[10px] font-medium transition-colors ${
       active
-        ? 'text-[var(--nav-active)] bg-white/20 dark:bg-white/10'
+        ? 'text-[var(--nav-active)]'
         : 'text-[var(--nav-muted)] hover:text-[var(--nav-foreground)]'
     }`
 
   return (
     <>
-      <nav 
+      <nav
         className="fixed bottom-0 left-0 right-0 z-50 flex flex-col border-t border-white/20 dark:border-border"
         style={{ backgroundColor: 'var(--nav-bg)' }}
       >
-        <div className="h-16 flex items-center justify-around">
+        <div className="h-16 flex items-center justify-around relative">
         {/* Home Tab */}
         <Link
           to="/"
           className={tabClass(isActive('/'))}
           activeProps={{ className: tabClass(true) }}
         >
-          <Grid3X3 className="h-6 w-6" />
+          <Grid3X3 className="h-7 w-7" />
           <span>{t('nav.home')}</span>
         </Link>
 
@@ -52,21 +51,23 @@ export function BottomTabs() {
           className={tabClass(isActive('/leaderboard'))}
           activeProps={{ className: tabClass(true) }}
         >
-          <BarChart3 className="h-6 w-6" />
+          <BarChart3 className="h-7 w-7" />
           <span>{t('nav.leaderboard')}</span>
         </Link>
 
-        {/* Add Tab (Center, larger button) - Available to everyone */}
-        <AddProductDialog
-          trigger={
-            <Button
-              className="rounded-full w-12 h-12 p-0 bg-white text-primary hover:bg-white/90 dark:bg-accent dark:text-accent-foreground shadow-lg -mt-6 flex items-center justify-center"
-              title="Add product"
-            >
-              <Plus className="h-6 w-6" />
-            </Button>
-          }
-        />
+        {/* Add Tab (Center, elevated circle) */}
+        <div className="flex flex-col items-center justify-center flex-1">
+          <AddProductDialog
+            trigger={
+              <Button
+                className="rounded-full w-[4.5rem] h-[4.5rem] p-0 bg-white text-primary hover:bg-white/90 dark:bg-accent dark:text-accent-foreground shadow-lg -mt-8 flex items-center justify-center border-4 border-[var(--nav-bg)]"
+                title="Add product"
+              >
+                <Plus className="h-8 w-8" />
+              </Button>
+            }
+          />
+        </div>
 
         {/* Map Tab */}
         <Link
@@ -74,7 +75,7 @@ export function BottomTabs() {
           className={tabClass(isActive('/map'))}
           activeProps={{ className: tabClass(true) }}
         >
-          <Map className="h-6 w-6" />
+          <Map className="h-7 w-7" />
           <span>{t('nav.map')}</span>
         </Link>
 
@@ -84,7 +85,7 @@ export function BottomTabs() {
           className={tabClass(isActive('/profile'))}
           activeProps={{ className: tabClass(true) }}
         >
-          <User className="h-6 w-6" />
+          <User className="h-7 w-7" />
           <span>{t('nav.profile')}</span>
         </Link>
         </div>

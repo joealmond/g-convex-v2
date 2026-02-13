@@ -175,7 +175,17 @@
     "noActivity": "Még nincs tevékenység. Kezdj el szavazni és termékeket hozzáadni!",
     "followers": "Követők",
     "following": "Követett",
-    "products": "Termékek"
+    "products": "Termékek",
+    "settings": "Beállítások",
+    "language": "Nyelv",
+    "themeLabel": "Téma",
+    "themeLight": "Világos",
+    "themeDark": "Sötét",
+    "themeSystem": "Rendszer",
+    "locationStatus": "Helymeghatározás",
+    "locationOn": "Engedélyezve",
+    "locationOff": "Érintsd meg az engedélyezéshez",
+    "signOutButton": "Kijelentkezés"
   },
   "login": {
     "alreadyLoggedIn": "Már bejelentkeztél",

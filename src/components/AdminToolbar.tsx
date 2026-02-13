@@ -26,7 +26,7 @@ function AdminToolbarContent() {
   if (!isRealAdmin) return null
 
   return (
-    <div className="fixed bottom-[4.5rem] left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-background/95 backdrop-blur border border-border rounded-full shadow-lg px-3 py-1.5">
+    <div className="fixed bottom-[8.5rem] left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 bg-background/95 backdrop-blur border border-border rounded-full shadow-lg px-3 py-1.5">
       {isViewingAsUser ? (
         <>
           <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-yellow-500/20 text-yellow-600 border border-yellow-500/50">

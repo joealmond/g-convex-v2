@@ -78,7 +78,6 @@ const createAuthWithNativeBridge = (ctx: GenericCtx<DataModel>) => {
             const newHeaders = new Headers(response.headers)
             newHeaders.set('location', url.toString())
 
-            console.log('[NATIVE-BRIDGE] Injected cookie into redirect URL')
             return new Response(null, { status: 302, headers: newHeaders })
           } catch {
             return response

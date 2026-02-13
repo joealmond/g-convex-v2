@@ -175,7 +175,17 @@
     "noActivity": "No activity yet. Start voting and adding products!",
     "followers": "Followers",
     "following": "Following",
-    "products": "Products"
+    "products": "Products",
+    "settings": "Settings",
+    "language": "Language",
+    "themeLabel": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "locationStatus": "Location",
+    "locationOn": "Enabled",
+    "locationOff": "Tap to enable",
+    "signOutButton": "Sign Out"
   },
   "login": {
     "alreadyLoggedIn": "Already Logged In",

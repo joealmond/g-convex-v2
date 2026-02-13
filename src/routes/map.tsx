@@ -138,10 +138,10 @@ function MapPageContent() {
   }, [coords])
 
   return (
-    <div className="absolute inset-0 top-12 bottom-16">
-      {/* Compact Filter Chips — floating over the map, offset right to avoid zoom buttons */}
-      <div className="absolute top-2 left-12 right-2 z-[400] flex items-center gap-2">
-        <FilterChips value={filterType} onChange={setFilterType} compact />
+    <div className="absolute inset-0 top-0 md:top-12" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
+      {/* Filter Chips — floating over the map */}
+      <div className="absolute top-[calc(env(safe-area-inset-top,0px)+0.5rem)] md:top-2 left-2 right-2 z-[400] flex items-center gap-2">
+        <FilterChips value={filterType} onChange={setFilterType} />
         {geoLoading && (
           <span className="text-[10px] text-muted-foreground whitespace-nowrap bg-background/80 rounded-full px-2 py-0.5">
             {t('location.locating')}
@@ -177,7 +177,7 @@ function MapPageContent() {
 
       {/* Map Markers Badge — count matches cluster numbering */}
       {!isLoading && filteredProducts.length > 0 && (
-        <div className="absolute bottom-2 left-2 z-[400] bg-card rounded-full shadow-lg px-3 py-1.5">
+        <div className="absolute bottom-4 left-2 z-[400] bg-card rounded-full shadow-lg px-3 py-1.5">
           <p className="text-xs font-semibold text-foreground">
             {t('location.pins', { count: markerCount })} · {t('location.productsCount', { count: filteredProducts.length })}
           </p>

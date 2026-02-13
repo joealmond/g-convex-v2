@@ -117,32 +117,9 @@ function HomePageContent() {
 
   return (
     <main className="flex-1 mx-auto px-2 sm:px-4 py-4 sm:py-6 max-w-7xl w-full">
-      {/* Gamification Widgets for Logged-in Users */}
-      {user && profile && (
-        <div className="flex gap-2 mb-3 md:grid md:grid-cols-3 md:gap-4 md:mb-6">
-          <StatsCard
-            title={t('stats.yourPoints')}
-            value={profile.points}
-            subtitle={t('stats.votesCast', { count: profile.totalVotes })}
-            icon={<Trophy className="h-5 w-5 text-yellow-500" />}
-          />
-          <StatsCard
-            title={t('stats.currentStreak')}
-            value={t('stats.daysStreak', { count: profile.streak })}
-            subtitle={t('stats.keepVoting')}
-            icon={<Flame className="h-5 w-5 text-orange-500" />}
-          />
-          <StatsCard
-            title={t('stats.badgesEarned')}
-            value={profile.badges?.length || 0}
-            subtitle={t('stats.keepContributing')}
-            icon={<TrendingUp className="h-5 w-5 text-purple-500" />}
-          />
-        </div>
-      )}
-
-      {/* Search Bar + View Toggle */}
-      <div className="flex items-center gap-2 mb-4">
+      {/* Search Bar + View Toggle — sticky at top on mobile */}
+      <div className="sticky top-[calc(env(safe-area-inset-top,0px))] md:top-[calc(env(safe-area-inset-top,0px)+3.5rem)] z-[40] bg-background -mx-2 px-2 sm:-mx-4 sm:px-4 pb-2">
+        <div className="flex items-center gap-2 pt-2">
         {/* Search Input */}
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -185,14 +162,41 @@ function HomePageContent() {
             <BarChart3 className="h-4 w-4" />
           </Button>
         </div>
+        </div>
+
+        {/* Filter Chips — sticky under search, visible in both views */}
+        <div className="pt-3">
+          <FilterChips value={filterType} onChange={handleFilterChange} />
+        </div>
       </div>
+
+      {/* Gamification Widgets for Logged-in Users */}
+      {user && profile && (
+        <div className="flex gap-2 mb-3 md:grid md:grid-cols-3 md:gap-4 md:mb-6">
+          <StatsCard
+            title={t('stats.yourPoints')}
+            value={profile.points}
+            subtitle={t('stats.votesCast', { count: profile.totalVotes })}
+            icon={<Trophy className="h-5 w-5 text-yellow-500" />}
+          />
+          <StatsCard
+            title={t('stats.currentStreak')}
+            value={t('stats.daysStreak', { count: profile.streak })}
+            subtitle={t('stats.keepVoting')}
+            icon={<Flame className="h-5 w-5 text-orange-500" />}
+          />
+          <StatsCard
+            title={t('stats.badgesEarned')}
+            value={profile.badges?.length || 0}
+            subtitle={t('stats.keepContributing')}
+            icon={<TrendingUp className="h-5 w-5 text-purple-500" />}
+          />
+        </div>
+      )}
 
       {/* Feed View */}
       {viewMode === 'feed' && (
         <div className="space-y-3">
-          {/* Filters */}
-          <FilterChips value={filterType} onChange={handleFilterChange} />
-
           {/* Products */}
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
@@ -276,7 +280,7 @@ function HomePageContent() {
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
             ) : products && products.length > 0 ? (
-              <div className="h-[280px] sm:h-[380px] lg:h-[460px]">
+              <div className="h-[280px] sm:h-[380px] lg:h-[460px] min-h-[250px]">
                 <MatrixChart
                   products={products}
                   onProductClick={handleChartDotClick}

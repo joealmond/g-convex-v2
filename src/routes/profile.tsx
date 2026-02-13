@@ -2,11 +2,10 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Suspense, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Trophy, Flame, Star, Users, Calendar, TrendingUp, ArrowLeft } from 'lucide-react'
+import { Trophy, Flame, Star, Users, Calendar, TrendingUp, MapPin, Moon, Sun, Monitor, LogOut, Settings, Languages } from 'lucide-react'
 import { getQuadrant, QUADRANTS } from '@/lib/types'
 // import { BADGES } from '@convex/lib/gamification'
 import { getUserLevel, appConfig } from '@/lib/app-config'
@@ -14,6 +13,10 @@ import { StatsCard } from '@/components/dashboard/StatsCard'
 import { BadgeDisplay } from '@/components/dashboard/BadgeDisplay'
 import { DietaryProfileSettings } from '@/components/dashboard/DietaryProfileSettings'
 import { useTranslation } from '@/hooks/use-translation'
+import { useGeolocation, useTheme } from '@/hooks'
+import { useConvexAuth } from '@convex-dev/react-query'
+import { authClient } from '@/lib/auth-client'
+import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/profile')({
   component: ProfilePage,
@@ -80,7 +83,7 @@ function ProfilePage() {
 }
 
 function ProfileContent() {
-  const { t } = useTranslation()
+  const { t, locale, setLocale } = useTranslation()
   const navigate = useNavigate()
   const user = useQuery(api.users.current)
   const profile = useQuery(api.profiles.getCurrent)
@@ -90,19 +93,31 @@ function ProfileContent() {
     api.follows.getCounts,
     user ? { userId: user._id } : 'skip'
   )
+  const { coords, loading: geoLoading, requestLocation } = useGeolocation()
+  const { theme, setTheme, resolvedTheme } = useTheme()
+  const { isLoading: isAuthLoading } = useConvexAuth()
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (user === null) {
-      navigate({ to: '/login' })
-    }
-  }, [user, navigate])
-
-  if (user === null) {
-    return null
+  const ThemeIcon = theme === 'system' ? Monitor : resolvedTheme === 'dark' ? Moon : Sun
+  const themeLabel = theme === 'system' ? t('profile.themeSystem') : theme === 'dark' ? t('profile.themeDark') : t('profile.themeLight')
+  const cycleTheme = () => {
+    if (theme === 'light') setTheme('dark')
+    else if (theme === 'dark') setTheme('system')
+    else setTheme('light')
   }
 
-  if (user === undefined || profile === undefined) {
+  const handleSignOut = async () => {
+    await authClient.signOut()
+    navigate({ to: '/login' })
+  }
+
+  // Redirect to login only when auth has settled and user is definitely null
+  useEffect(() => {
+    if (!isAuthLoading && user === null) {
+      navigate({ to: '/login' })
+    }
+  }, [user, isAuthLoading, navigate])
+
+  if (isAuthLoading || user === undefined || user === null) {
     return <ProfileLoading />
   }
 
@@ -143,14 +158,7 @@ function ProfileContent() {
   return (
     <div className="flex-1 flex flex-col bg-background">
       {/* Mobile-first profile layout */}
-      <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-6">
-        {/* Back Button */}
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t('nav.back')}
-          </Link>
-        </Button>
+      <div className="max-w-3xl mx-auto w-full px-4 py-3 space-y-4">
 
         {/* User Header Card */}
         <Card className="rounded-2xl shadow-sm">
@@ -238,6 +246,74 @@ function ProfileContent() {
         {/* Dietary Preferences Section */}
         <div>
           <DietaryProfileSettings />
+        </div>
+
+        {/* Settings Section — contains functionality from TopBar (hidden on mobile) */}
+        <div>
+          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Settings className="h-5 w-5 text-muted-foreground" />
+            {t('profile.settings')}
+          </h2>
+          <Card className="rounded-2xl shadow-sm">
+            <CardContent className="p-0 divide-y divide-border">
+              {/* Location */}
+              <button
+                onClick={requestLocation}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <MapPin className={`h-5 w-5 ${coords ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                  <span className="text-sm font-medium text-foreground">{t('profile.locationStatus')}</span>
+                </div>
+                <span className={`text-xs ${coords ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                  {geoLoading ? '...' : coords ? t('profile.locationOn') : t('profile.locationOff')}
+                </span>
+              </button>
+
+              {/* Language */}
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <Languages className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">{t('profile.language')}</span>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setLocale('en')}
+                    className={`px-3 py-1 text-xs rounded-full transition-colors ${locale === 'en' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                  >
+                    🇬🇧 EN
+                  </button>
+                  <button
+                    onClick={() => setLocale('hu')}
+                    className={`px-3 py-1 text-xs rounded-full transition-colors ${locale === 'hu' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                  >
+                    🇭🇺 HU
+                  </button>
+                </div>
+              </div>
+
+              {/* Theme */}
+              <button
+                onClick={cycleTheme}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <ThemeIcon className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">{t('profile.themeLabel')}</span>
+                </div>
+                <span className="text-xs text-muted-foreground">{themeLabel}</span>
+              </button>
+
+              {/* Sign Out */}
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-destructive/10 transition-colors"
+              >
+                <LogOut className="h-5 w-5 text-destructive" />
+                <span className="text-sm font-medium text-destructive">{t('profile.signOutButton')}</span>
+              </button>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Contributions Feed */}

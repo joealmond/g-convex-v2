@@ -294,3 +294,10 @@ input, textarea, [contenteditable], .selectable {
   background: transparent !important;
   border: none !important;
 }
+
+/* Hide Leaflet zoom controls on mobile — pinch zoom is sufficient */
+@media (max-width: 767px) {
+  .leaflet-control-zoom {
+    display: none !important;
+  }
+}
