@@ -7,6 +7,9 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ImpersonateProvider } from '@/hooks/use-impersonate'
 import { AdminToolbar } from '@/components/AdminToolbar'
 import { VoteMigrationHandler } from '@/components/VoteMigrationHandler'
+import { OfflineBanner } from '@/components/OfflineBanner'
+import { SyncManager } from '@/components/SyncManager'
+import { PendingSyncBadge } from '@/components/PendingSyncBadge'
 import { TopBar } from '@/components/layout/TopBar'
 import { BottomTabs } from '@/components/layout/BottomTabs'
 import { PageShell } from '@/components/layout/PageShell'
@@ -16,6 +19,7 @@ import { appConfig } from '@/lib/app-config'
 import { I18nProvider } from '@/hooks/i18n-context'
 import type { ConvexQueryClient } from '@convex-dev/react-query'
 import { Toaster } from 'sonner'
+import { useServiceWorker } from '@/hooks/use-online-status'
 
 import '../styles/globals.css'
 
@@ -99,6 +103,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 function RootComponent() {
   const context = useRouteContext({ from: Route.id })
 
+  // Register service worker for offline caching (client-side only)
+  useServiceWorker()
+
   return (
     <ConvexBetterAuthProvider
       client={context.convexQueryClient.convexClient}
@@ -112,6 +119,7 @@ function RootComponent() {
         <body className="min-h-screen bg-background antialiased">
           <I18nProvider>
           <ImpersonateProvider>
+            <OfflineBanner />
             <TopBar />
             <ErrorBoundary>
               <PageShell>
@@ -123,6 +131,8 @@ function RootComponent() {
             {/* Vote migration runs client-side only */}
             <ClientOnly fallback={null}>
               <VoteMigrationHandler />
+              <SyncManager />
+              <PendingSyncBadge />
             </ClientOnly>
           </ImpersonateProvider>
           </I18nProvider>

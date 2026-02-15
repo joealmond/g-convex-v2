@@ -390,5 +390,14 @@
     "captureLocation": "Capture GPS location",
     "backToPredefined": "Back to predefined stores",
     "currentLocation": "Current location"
+  },
+  "offline": {
+    "banner": "You're offline — some features may be limited",
+    "syncPending": "{count} pending",
+    "syncing": "Syncing {count} actions...",
+    "syncComplete": "All changes synced!",
+    "syncFailed": "Some changes failed to sync",
+    "voteSavedOffline": "Vote saved! Will sync when online",
+    "productSavedOffline": "Product saved as draft! Will sync when online"
   }
 }

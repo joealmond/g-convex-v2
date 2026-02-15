@@ -45,6 +45,7 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | Animations | Framer Motion | Micro-interactions and transitions |
 | Forms | react-hook-form + Zod | Form state + validation |
 | i18n | Custom `useTranslation()` + static JSON locale files | EN + HU, event-driven locale switching |
+| Offline | Manual service worker + `idb-keyval` (IndexedDB) | App shell caching + offline action queue |
 
 ## Key Files
 
@@ -66,7 +67,13 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | `src/components/product/` | Product detail: RatingBars★, StoreList★, VotingSheet★, ImageUploadDialog |
 | `src/components/map/` | ★ Leaflet map: ProductMap, ProductPin |
 | `src/components/dashboard/` | Chart views: MatrixChart, CoordinateGrid, StatsCard, BadgeDisplay, Leaderboard, DeleteProductButton |
-| `src/hooks/` | Custom hooks: useAdmin, useGeolocation, useTranslation, useAnonymousId, useVoteMigration, useImpersonate, useTheme |
+| `src/hooks/` | Custom hooks: useAdmin, useGeolocation, useTranslation, useAnonymousId, useVoteMigration, useImpersonate, useTheme, useOnlineStatus |
+| `src/hooks/use-online-status.ts` | `useOnlineStatus()` — SSR-safe online/offline detection; `useServiceWorker()` — registers `/sw.js` |
+| `src/lib/offline-queue.ts` | IndexedDB queue via `idb-keyval`: `enqueue()`, `dequeue()`, `flush()`, `getPendingCount()` |
+| `src/components/OfflineBanner.tsx` | Animated amber bar above TopBar when offline |
+| `src/components/SyncManager.tsx` | Auto-flushes offline queue on reconnect via Convex mutations |
+| `src/components/PendingSyncBadge.tsx` | Floating badge showing pending sync count above BottomTabs |
+| `public/sw.js` | Manual service worker — app shell caching (fonts, static assets, HTML pages) |
 | `src/lib/i18n.ts` | i18n engine: `setLocale()`, `useLocale()`, `useTranslationHook()` — static JSON imports + CustomEvent |
 | `src/hooks/use-translation.ts` | Re-exports `useTranslationHook` as `useTranslation` for component consumption |
 | `src/locales/en.json` | English translations (~385 lines, all UI strings) |
@@ -135,6 +142,7 @@ imageUpload.*   — Image upload dialog
 challenges.*    — Challenges feature
 admin.*         — Admin settings
 errors.*        — Error messages
+offline.*       — Offline banner, sync status, pending count
 ```
 
 #### Adding a new translated string
@@ -170,6 +178,7 @@ Standard shadcn/ui tokens (`bg-background`, `bg-card`, `bg-primary`, `text-foreg
 - **Server data**: Convex queries via `useQuery(api.products.list)` — real-time, no manual refresh
 - **Local UI state**: React `useState` / `useReducer`
 - **No global state library** — Convex + React state is sufficient
+- **Offline queue**: `src/lib/offline-queue.ts` stores pending actions in IndexedDB via `idb-keyval`. `SyncManager` flushes on reconnect. Use `enqueue('vote', payload)` when `!isOnline`.
 - **Forms**: `react-hook-form` with Zod schema validation
 
 ### File Organization
@@ -405,6 +414,28 @@ Cards: `bg-card text-card-foreground rounded-2xl shadow-sm border border-border`
 - ❌ Don't open OAuth in the Capacitor WebView — Google blocks it. Use system browser via `@capacitor/browser`
 - ❌ Don't hardcode padding/margins for notch/home indicator — use `env(safe-area-inset-*)` CSS variables
 - ❌ Don't use `<a>` tags for OAuth — on native, use `signIn.social()` with `better-auth-capacitor` which routes through system browser
+- ❌ Don't try to create products offline — image upload + AI analysis requires network connectivity. Votes CAN be queued offline.
+
+### Offline Support Architecture
+
+**How offline works:**
+```
+User goes offline → OfflineBanner appears (amber bar)
+                  → VotingSheet enqueues votes to IndexedDB
+                  → PendingSyncBadge shows "N pending"
+
+User comes online → SyncManager flushes queue via Convex mutations
+                  → Toast: "All changes synced!"
+                  → Badge disappears
+```
+
+**Key rules:**
+- **Votes**: Queued offline via `enqueue('vote', payload)` in `product/$name.tsx`. `SyncManager` calls `api.votes.cast` on reconnect.
+- **Product creation**: Disabled when offline (needs image upload + AI). Submit/Draft buttons are disabled with warning.
+- **Service worker**: Manual (`public/sw.js`) — NOT `vite-plugin-pwa`. Three strategies: cache-first (fonts), stale-while-revalidate (JS/CSS/images), network-first (HTML).
+- **Never cache** Convex WebSocket or API requests.
+- **Custom events**: The queue dispatches `'offline-queue-change'` events for reactive UI updates.
+- **Retry logic**: Failed syncs retry up to 3 times before being marked as permanently failed.
 
 ## Planning Documents
 

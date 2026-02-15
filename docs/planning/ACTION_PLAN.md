@@ -31,7 +31,7 @@
 - [x] Create `public/manifest.json` (standalone, theme_color #7CB342, portrait-primary)
 - [x] Add PWA meta tags to `__root.tsx` (apple-mobile-web-app-capable, theme-color, viewport-fit=cover)
 - [x] Generate app icons (192px, 512px, maskable — SVG)
-- [ ] Add service worker for app shell caching
+- [x] Add service worker for app shell caching — `public/sw.js` (manual, not vite-plugin-pwa)
 
 ### Niche-Agnostic Refactor
 - [x] `MatrixChart.tsx` reads labels/colors from `appConfig.quadrants`
@@ -101,6 +101,16 @@
 - [ ] Test location permissions flow after fresh install
 - [ ] Add status bar dynamic styling (light/dark theme aware)
 - [ ] Add haptic feedback on voting/saving (Capacitor Haptics plugin)
+
+### Offline Support
+> Service worker + offline queue infrastructure done. Need to wire into actual user flows.
+- [x] Manual service worker (`public/sw.js`) — app shell, fonts, static asset caching
+- [x] Online status detection (`useOnlineStatus` hook + `OfflineBanner` component)
+- [x] Offline action queue (`offline-queue.ts` via `idb-keyval` / IndexedDB)
+- [x] Auto-sync on reconnect (`SyncManager` component with toast notifications)
+- [x] Pending sync counter (`PendingSyncBadge` — floating badge above BottomTabs)
+- [ ] Wire `VotingSheet` to enqueue vote when offline + show optimistic toast
+- [ ] Wire `AddProductDialog` / `ImageUploadDialog` to save draft when offline
 
 ---
 

@@ -23,6 +23,8 @@ import { useAnonymousId } from '@/hooks/use-anonymous-id'
 import { useAdmin } from '@/hooks/use-admin'
 import { useImpersonate } from '@/hooks/use-impersonate'
 import { useTranslation } from '@/hooks/use-translation'
+import { useOnlineStatus } from '@/hooks/use-online-status'
+import { enqueue } from '@/lib/offline-queue'
 import { ArrowLeft, Edit, Flag } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -61,6 +63,7 @@ function ProductDetailContent() {
   const { anonId: anonymousId } = useAnonymousId()
   const adminStatus = useAdmin()
   const { startImpersonation } = useImpersonate()
+  const { isOnline } = useOnlineStatus()
 
   const product = useQuery(api.products.getByName, { name: decodeURIComponent(name) })
   const user = useQuery(api.users.current)
@@ -91,7 +94,7 @@ function ProductDetailContent() {
 
     setIsVoting(true)
     try {
-      await castVote({
+      const votePayload = {
         productId: product._id,
         safety,
         taste,
@@ -100,23 +103,33 @@ function ProductDetailContent() {
         storeName: storeTag || undefined,
         latitude: storeLat,
         longitude: storeLon,
-      })
+      }
 
-      // Calculate points earned (only for authenticated users)
-      if (user) {
-        let points = 10 // Base vote points
-        if (price !== undefined) points += 5
-        if (storeTag) points += 10
-        if (storeLat && storeLon) points += 5
-
-        toast.success('🎉 Vote submitted!', {
-          description: `+${points} Scout Points earned!`,
+      if (!isOnline) {
+        // Queue for later sync
+        await enqueue('vote', votePayload as Record<string, unknown>)
+        toast.success('📋 ' + t('offline.voteSavedOffline'), {
           duration: 4000,
         })
       } else {
-        toast.success('Vote submitted!', {
-          description: `Safety: ${safety}, Taste: ${taste}${price ? `, Price: ${price}` : ''}`,
-        })
+        await castVote(votePayload)
+
+        // Calculate points earned (only for authenticated users)
+        if (user) {
+          let points = 10 // Base vote points
+          if (price !== undefined) points += 5
+          if (storeTag) points += 10
+          if (storeLat && storeLon) points += 5
+
+          toast.success('🎉 Vote submitted!', {
+            description: `+${points} Scout Points earned!`,
+            duration: 4000,
+          })
+        } else {
+          toast.success('Vote submitted!', {
+            description: `Safety: ${safety}, Taste: ${taste}${price ? `, Price: ${price}` : ''}`,
+          })
+        }
       }
 
       // Reset form

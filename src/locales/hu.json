@@ -390,5 +390,14 @@
     "captureLocation": "GPS hely rögzítése",
     "backToPredefined": "Vissza a bolt listához",
     "currentLocation": "Jelenlegi hely"
+  },
+  "offline": {
+    "banner": "Offline vagy — egyes funkciók korlátozottak lehetnek",
+    "syncPending": "{count} függőben",
+    "syncing": "{count} művelet szinkronizálása...",
+    "syncComplete": "Minden változás szinkronizálva!",
+    "syncFailed": "Néhány változás szinkronizálása sikertelen",
+    "voteSavedOffline": "Szavazat mentve! Online módban szinkronizálódik",
+    "productSavedOffline": "Termék piszkozatként mentve! Online módban szinkronizálódik"
   }
 }

@@ -24,6 +24,7 @@ import { ChevronDown, ChevronUp, Sliders, Bookmark } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useOnlineStatus } from '@/hooks/use-online-status'
 
 interface ImageUploadDialogProps {
   trigger?: React.ReactNode
@@ -31,6 +32,7 @@ interface ImageUploadDialogProps {
 }
 
 export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps) {
+  const { isOnline } = useOnlineStatus()
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<'upload' | 'analyze' | 'review' | 'submitting'>('upload')
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -524,11 +526,16 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
                 size="sm"
                 className="w-full gap-1.5 text-xs"
                 onClick={handleSaveAsDraft}
-                disabled={!productName.trim() || geoLoading}
+                disabled={!productName.trim() || geoLoading || !isOnline}
               >
                 <Bookmark className="h-3.5 w-3.5" />
                 {t('imageUpload.draft')}
               </Button>
+              {!isOnline && (
+                <p className="text-[10px] text-amber-600 dark:text-amber-400 text-center">
+                  ⚠️ {t('offline.banner')}
+                </p>
+              )}
               <p className="text-[10px] text-muted-foreground text-center">{t('imageUpload.draftHint')}</p>
             </div>
 
@@ -691,7 +698,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
                 size="sm"
                 className="flex-1"
                 onClick={handleSubmit}
-                disabled={!productName.trim() || geoLoading}
+                disabled={!productName.trim() || geoLoading || !isOnline}
               >
                 {geoLoading ? t('imageUpload.locating') : t('imageUpload.submitProduct')}
               </Button>
