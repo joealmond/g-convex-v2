@@ -19,8 +19,13 @@ interface LeaderboardProps {
  */
 export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardProps) {
   const { t } = useTranslation()
-  const leaderboard = useQuery(api.profiles.leaderboard, { limit })
+  const leaderboardResult = useQuery(api.profiles.leaderboard, { limit })
   const currentUser = useQuery(api.users.current)
+
+  // Normalize: API returns plain array (no cursor) or PaginationResult (with cursor)
+  const leaderboard = leaderboardResult
+    ? Array.isArray(leaderboardResult) ? leaderboardResult : leaderboardResult.page
+    : undefined
 
   if (!leaderboard || leaderboard.length === 0) {
     return (

@@ -4,7 +4,6 @@ import {
   shouldAwardBadge,
   BADGES,
   POINTS,
-  Badge,
 } from './gamification'
 
 describe('calculateVotePoints', () => {

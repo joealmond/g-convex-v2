@@ -45,7 +45,8 @@ export function ReportProductDialog({
   open,
   onOpenChange,
 }: ReportProductDialogProps) {
-  const [reason, setReason] = useState<string>('')
+  type ReportReason = 'inappropriate' | 'duplicate' | 'wrong-info' | 'spam' | 'other'
+  const [reason, setReason] = useState<ReportReason | ''>('')
   const [details, setDetails] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { anonId: anonymousId } = useAnonymousId()
@@ -102,7 +103,7 @@ export function ReportProductDialog({
           {/* Reason Selector */}
           <div className="space-y-2">
             <Label htmlFor="reason">Reason *</Label>
-            <Select value={reason} onValueChange={setReason}>
+            <Select value={reason} onValueChange={(v) => setReason(v as ReportReason)}>
               <SelectTrigger id="reason">
                 <SelectValue placeholder="Select a reason" />
               </SelectTrigger>

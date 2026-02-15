@@ -12,7 +12,7 @@ export function AddProductDialog({ trigger }: AddProductDialogProps) {
   return (
     <ImageUploadDialog 
       trigger={trigger}
-      onSuccess={(productId) => {
+      onSuccess={(_productId) => {
         // Optional: redirect to product page or refresh list
         // Currently handled by ImageUploadDialog internal state and parent query invalidation
       }}

@@ -237,7 +237,7 @@ export const capturePriceSnapshots = internalMutation({
     }
 
     const products = await ctx.db.query('products').collect()
-    const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0]! // YYYY-MM-DD
     let snapshotCount = 0
     
     for (const product of products) {
@@ -281,7 +281,7 @@ export const getPriceHistory = query({
     const days = args.days || 90
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - days)
-    const cutoffDateStr = cutoffDate.toISOString().split('T')[0]
+    const cutoffDateStr = cutoffDate.toISOString().split('T')[0]!
     
     return await ctx.db
       .query('priceHistory')

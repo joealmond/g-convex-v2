@@ -8,7 +8,7 @@ import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { useTranslation } from '@/hooks/use-translation'
 import { ChallengeCard } from '@/components/dashboard/ChallengeCard'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Trophy, Target } from 'lucide-react'
 

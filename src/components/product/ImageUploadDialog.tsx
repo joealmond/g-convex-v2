@@ -621,7 +621,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
             <StoreTagInput
               value={storeName}
               onChange={setStoreName}
-              onLocationCapture={(lat, lon) => {
+              onLocationCapture={(_lat, _lon) => {
                 /* location already captured on dialog open */
               }}
               disabled={false}

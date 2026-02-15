@@ -16,7 +16,7 @@ import { useTranslation } from '@/hooks/use-translation'
 import { useGeolocation, useTheme } from '@/hooks'
 import { useConvexAuth } from '@convex-dev/react-query'
 import { authClient } from '@/lib/auth-client'
-import { Button } from '@/components/ui/button'
+
 
 export const Route = createFileRoute('/profile')({
   component: ProfilePage,

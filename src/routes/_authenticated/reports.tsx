@@ -66,8 +66,10 @@ const STATUS_COLORS = {
   dismissed: 'bg-gray-500',
 }
 
+type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed'
+
 function ReportsContent() {
-  const [statusFilter, setStatusFilter] = useState<string>('pending')
+  const [statusFilter, setStatusFilter] = useState<ReportStatus | 'all'>('pending')
   const adminStatus = useAdmin()
 
   const reports = useQuery(
@@ -79,7 +81,7 @@ function ReportsContent() {
 
   const handleStatusUpdate = async (
     reportId: Id<'reports'>,
-    newStatus: string
+    newStatus: ReportStatus
   ) => {
     try {
       await updateStatus({ reportId, status: newStatus })
@@ -143,7 +145,7 @@ function ReportsContent() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <label className="text-sm font-medium">Filter by status:</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ReportStatus | 'all')}>
                 <SelectTrigger className="w-48">
                   <SelectValue />
                 </SelectTrigger>
