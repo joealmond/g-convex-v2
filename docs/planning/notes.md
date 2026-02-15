@@ -1,13 +1,7 @@
-- html templates should not contain text what displayed, only references, so no haardcoded text
-- top product based on reviews
-- crone job clears data, groups if equal, list wery similar for review
-- Profile - what to config
-- Marks shops on map
-- imaagehosting
-- cloudflare cdn
-- add logging
-- map should handle more product with the same location
-- chat on product
-- text review  and star product rating
-- know our clients
+# Notes
+
+> Personal drafts and ideas. When ready, move items to:
+> - [ACTION_PLAN.md](./ACTION_PLAN.md) — if actionable now
+> - [FUTURE_PLANS.md](./FUTURE_PLANS.md) — if needs more planning
+
 

@@ -1,95 +1,157 @@
-# Architecture Action Plan
+# Action Plan
 
-> Based on [Architecture Review](../../architecture_review.md) findings. Prioritized into **Fix Now** (before next feature work) and **Deferred** (backlog).
-
----
-
-## 🔴 Fix Now — Security & Critical Gaps
-
-These should be addressed before shipping any new features.
-
-### Security Fixes
-
-- [x] **Add admin check to `products.deleteProduct`** — currently any authenticated user can delete any product. Use `requireAdmin(ctx)` from `lib/authHelpers.ts`
-- [x] **Add admin check to `profiles.addPoints`** — currently any logged-in user can award points. Use `requireAdmin(ctx)`
-- [x] **Add admin check to `profiles.resetStreak`** — same issue. Use `requireAdmin(ctx)`
-- [x] **Standardize auth pattern** — migrate all mutations from raw `ctx.auth.getUserIdentity()` to `requireAuth` / `requireAdmin` / `getAuthUser` helpers. Files: `products.ts` (`update`, `deleteProduct`), `votes.ts` (`deleteVote`)
-- [x] **Update `better-auth` to ≥1.4.18** — CVE-2025-61928 (unauthenticated API key creation) patched in 1.3.26+
-
-### Performance — Quick Wins
-
-- [x] **Add compound index `['productId', 'userId']` on `votes`** — `cast()` currently scans all product votes to find existing user vote. One-line schema change, huge read improvement
-- [x] **Add `by_points` index on `profiles`** — leaderboard currently does `.collect()` + JS sort on every render. Change to `.withIndex('by_points').order('desc').take(limit)`
-
-### Cleanup
-
-- [x] **Remove `messages` table** from `schema.ts` — marked "to be removed in Phase 3", still present
-- [x] **Remove duplicate `recalculateAverages`** mutation from `products.ts` — unused, replaced by internal `recalculateProduct` in `votes.ts`
+> **How to use this checklist:**
+> 1. Pick the next unchecked `[ ]` item and mark it `[/]` (in progress)
+> 2. When done, mark it `[x]` and note the date
+> 3. If a task **cannot be completed**, do NOT delete it — add a note explaining why (e.g., `[~] Blocked: reason`)
+> 4. After each task, update relevant docs:
+>    - Project docs (`docs/`, `README.md`, `.github/copilot-instructions.md`)
+>    - If the pattern/know-how is reusable, document it in project `docs/` as knowledge base
+>    - Template upstream: if the pattern is generic, port it to `/Users/mandulaj/dev/source/convex-tanstack-cloudflare/docs`
+> 5. Keep this file as the **single source of truth** for what to do next
 
 ---
 
-## 🟡 Deferred — Scalability & Quality
+## ✅ Wave 0 — Mobile-First Foundation (DONE)
 
-Address these during regular feature work or as dedicated tech-debt sprints.
+### Mobile-First Redesign
+- [x] Implement `BottomTabs.tsx` (Home | Leaderboard | ➕ Add | Map | Profile)
+- [x] Implement `TopBar.tsx` (logo + GPS + lang + theme + points badge + auth avatar)
+- [x] Implement `PageShell.tsx` (safe areas, padding, scroll container)
+- [x] Redesign `index.tsx` as feed-based page with filter chips (All/Recent/Nearby/Trending) + product card grid
+- [x] Add Feed ↔ Chart toggle on home page (scatter chart as alternate view)
+- [x] Add Vibe ↔ Value chart mode toggle (🛡️ Vibe / 💰 Value)
+- [x] Redesign `product/$name.tsx` for mobile (hero → rating bars → stores → voting → chart tabs)
+- [x] Redesign `profile.tsx` for mobile (user header + level bar → stats → badges → dietary → activity feed → settings)
+- [x] Adapt `login.tsx` for mobile with benefits list
+- [x] Update `__root.tsx` layout: TopBar + BottomTabs shell, PWA meta tags
+- [x] Apply Kimi design system: sage green palette, Inter font, card styles, touch targets, dark mode
 
-### Search & Pagination (before 500+ products)
+### PWA Setup
+- [x] Create `public/manifest.json` (standalone, theme_color #7CB342, portrait-primary)
+- [x] Add PWA meta tags to `__root.tsx` (apple-mobile-web-app-capable, theme-color, viewport-fit=cover)
+- [x] Generate app icons (192px, 512px, maskable — SVG)
+- [ ] Add service worker for app shell caching
 
-- [x] Replace `products.search()` JS string filter with Convex search index or optimized query
-- [x] Add cursor-based pagination (`.paginate()`) to `products.list()` — currently `.collect()` on all products
-- [x] Add pagination to `profiles.leaderboard()` — currently loads all profiles
-- [x] Optimize `follows.getCounts()` and `reports.getReportCount()` — currently collect just to count
+### Niche-Agnostic Refactor
+- [x] `MatrixChart.tsx` reads labels/colors from `appConfig.quadrants`
+- [x] `VotingPanel.tsx`, `VotingSheet.tsx` use `appConfig.quadrants` for buttons
+- [x] `ImageUploadDialog.tsx` uses `appConfig.quadrants` + `appConfig.riskConcept`
+- [x] `ProductCard.tsx`, `ProductStrip.tsx` use `appConfig.quadrants`
+- [x] `login.tsx`, `__root.tsx` use `appConfig.appName` + `appConfig.tagline`
+- [x] `globals.css` uses Kimi design tokens (sage green, charcoal, cream, slate dark)
+- [x] "gluten"/"celiac" strings only in `app-config.ts` + Convex AI prompt — ✅ niche-agnostic
 
-### Rate Limiting Expansion
+### Product Detail Features
+- [x] View tabs (Average / My Vote / All Votes / Price History) — `product/$name.tsx`
+- [x] `RatingBars` component (safety, taste, price percentage bars)
+- [x] `StoreList` component with stores on product page
+- [x] `VotingSheet` mobile-optimized voting interface
+- [x] `AllVotesChart` — every vote as dot on grid
+- [x] `PriceHistoryChart` — price trend visualization
+- [x] `ShareButton` — share product
+- [x] `ReportProductDialog` — report product
+- [x] `EditProductDialog` + `DeleteProductButton` — admin edit/delete
+- [x] `VoterList` — admin voter list with impersonation
+- [x] `CoordinateGrid` — interactive 2D grid for voting
+- [x] `StoreTagInput` — store dropdown with autocomplete
 
-- [x] Add rate limit to `reports.create` — only has 24h duplicate check, no actual rate limit
-- [x] Add rate limit to `follows.follow` — no protection against follow spam
-- [x] Add rate limit to `products.update` — no protection against edit spam
+### Profile Features
+- [x] User header card (avatar, name, email, level badge, XP progress bar)
+- [x] Stats grid (points, streak, votes, products, followers, following)
+- [x] `BadgeDisplay` component
+- [x] `DietaryProfileSettings` component
+- [x] Contributions/activity feed (votes + product additions)
+- [x] Settings section (location, language, theme, sign out)
 
-### Bundle & Performance
+### Gamification & Feed
+- [x] `ScoutCard` popover in TopBar (points + badge summary)
+- [x] `StatsCard` widgets on home page (points, streak, badges)
+- [x] Filter chips (All / Recent / Nearby / Trending) with distance-based filtering
+- [x] Search bar with clear button
+- [x] `Leaderboard` component
 
-- [x] Add `recharts` as a separate manual chunk in `vite.config.ts`
-- [x] Lazy-load `leaflet` / `react-leaflet` — only used on map page
-- [x] ~~Lazy-load `framer-motion` where not critical for initial render~~ — Evaluated: framer-motion is imported across 10+ components (feed, product, dashboard, layout), making lazy-loading impractical without major refactoring. Deferred.
-- [x] Evaluate `staleTime: 5min` interaction with Convex real-time push — Evaluated: Convex's `ConvexQueryClient` pushes real-time updates through React Query regardless of `staleTime`. The 5min setting only affects non-Convex queries. No change needed.
+### Backend
+- [x] Time-decay cron (daily recalculation with exponential decay)
+- [x] Batch recalculate all products (admin mutation)
+- [x] Streak maintenance cron (2 AM UTC)
+- [x] Settings table for configurable parameters
 
-### Backend Robustness
+---
 
-- [x] Batch `recalculateAllProducts` cron — now processes in batches of 25 with staggered scheduling
-- [x] Add retry logic to `ai.ts` Gemini calls on 429 errors — up to 3 retries with exponential backoff
-- [x] Use `v.union(v.literal(...))` for string enum fields (`status`, `role`, `type`) for compile-time type safety
+## 🟡 Wave 1 — Remaining Table Stakes
 
-### Code Quality
+### Barcode Scanner
+> Camera upload + AI analysis already work. Missing: actual barcode reading + product DB lookup.
+- [ ] Evaluate barcode scanning libraries (ZXing, QuaggaJS, or Capacitor community plugin)
+- [ ] Add barcode reader component to `ImageUploadDialog.tsx` or new `BarcodeScanDialog.tsx`
+- [ ] Integrate Open Food Facts API for barcode → product data lookup
+- [ ] Create "Scan → Review → Rate → Done" flow combining barcode lookup + existing voting
 
-- [x] Add unit tests for `lib/gamification.ts` (`shouldAwardBadge`, `calculateVotePoints`) — 29 tests
+### Push Notifications
+> `@capacitor/share` already in package.json. FCM/APNs not set up.
+- [ ] Set up Firebase Cloud Messaging (FCM) + APNs
+- [ ] Store device tokens in Convex
+- [ ] Implement "streak about to expire" reminder
+- [ ] Implement "new product near you" alert
+
+### Mobile Native Fixes
+> From testing notes (2026-02-12):
+- [ ] Fix image upload on native (file URI handling + CORS)
+- [ ] Test location permissions flow after fresh install
+- [ ] Add status bar dynamic styling (light/dark theme aware)
+- [ ] Add haptic feedback on voting/saving (Capacitor Haptics plugin)
+
+---
+
+## 🟢 Wave 2 — Polish & Differentiation
+
+### Community & Social
+> `follows` table + `FollowButton` component exist. Feed is personal (profile only).
+- [ ] Create public activity feed ("X rated Y as Holy Grail")
+- [ ] Add product comments/reviews (text, not just numeric rating)
+- [ ] Add share-to-social-media using `@capacitor/share`
+
+### Product Detail Polish
+- [ ] Store freshness indicators (green <7d, yellow <30d, faded >30d)
+- [ ] "Near Me" badge on stores within 5km
+- [ ] Clickable store → open native maps (Apple Maps/Google Maps)
+- [ ] "Agree with Community" one-click vote
+- [ ] Gamification toasts (points earned + badge unlocked after voting)
+- [ ] Image dimension validation (min 200×200)
+
+### Testing
 - [ ] Add integration tests for vote cast → recalculate → average update flow
 - [ ] Add integration test for anonymous → registered vote migration
-- [x] Extract large route files (`index.tsx` 377→303 lines) — filtering/sorting logic extracted to `use-product-filter.ts` hook
+- [ ] Add E2E tests for product creation + AI analysis pipeline
 
-### Documentation
+---
 
-- [x] Document the dual SSR/SPA architecture in `ARCHITECTURE.md`
-- [x] Document the `app-config.ts` niche configuration pattern → `NICHE_CONFIG_GUIDE.md`
-- [x] Add ADR (Architecture Decision Record) for Better Auth choice over Clerk → `ADR-001-BETTER-AUTH.md`
-- [x] Document time-decay algorithm and settings → `TIME_DECAY.md`
-- [x] Add runbook for making a user admin → `ADMIN_RUNBOOK.md`
+## 🔵 Wave 3 — Launch
+
+### App Store Publishing
+- [ ] Create App Store listing (iOS) — screenshots, description, keywords
+- [ ] Create Play Store listing (Android)
+- [ ] Write privacy policy & terms of service pages
+- [ ] Submit to app stores
+
+### Offline Support
+- [ ] Add offline status banner using `navigator.onLine` + event listeners
+- [ ] Queue votes for sync when online (optimistic updates)
+- [ ] Service worker for PWA offline capabilities
 
 ---
 
 ## Cross-Reference
 
-| Area | This Plan | PRIORITY_CHECKLIST.md |
-|---|---|---|
-| Security | ✅ Covered here | Not covered |
-| Performance | ✅ Covered here | Not covered |
-| Chart features | See checklist | ✅ Covered there |
-| Voting UX | See checklist | ✅ Covered there |
-| Filtering & Search | Overlaps (search perf) | ✅ Covered there (UX) |
-| Product detail UX | See checklist | ✅ Covered there |
-| Gamification UX | See checklist | ✅ Covered there |
-| Image upload | See checklist | ✅ Covered there |
-
-> **This plan focuses on architecture, security, and infrastructure.** Feature UX work remains in [PRIORITY_CHECKLIST.md](./PRIORITY_CHECKLIST.md).
+| Document | What it covers |
+|----------|---------------|
+| [FUTURE_PLANS.md](./FUTURE_PLANS.md) | Items that need more research/planning before they become action items |
+| [COMPETITIVE_ANALYSIS.md](./references/COMPETITIVE_ANALYSIS.md) | Feature gap analysis vs competitor apps |
+| [REDESIGN_PLAN.md](./references/REDESIGN_PLAN.md) | Detailed mobile-first redesign spec (design system, file structure, architecture) |
+| [MOBILE_TESTING_NOTES.md](./references/MOBILE_TESTING_NOTES.md) | Capacitor testing results and OAuth fix documentation |
+| [MOBILE_APPROACH_DECISION.md](./references/MOBILE_APPROACH_DECISION.md) | ADR: why Capacitor over React Native |
 
 ---
 
-*Created: February 2026 — from architecture review*
+*Last updated: February 2026*
