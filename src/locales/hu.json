@@ -6,6 +6,7 @@
     "login": "Bejelentkezés",
     "logout": "Kijelentkezés",
     "leaderboard": "Ranglista",
+    "community": "Közösség",
     "map": "Térkép",
     "back": "Vissza",
     "backToHome": "Vissza a főoldalra",
@@ -45,7 +46,19 @@
     "yourVote": "Szavazatod: Biztonság {safety} · Íz {taste}",
     "yourVotePrice": " · Ár {price}/5",
     "individualVote": "egyéni szavazat",
-    "individualVotes": "egyéni szavazat"
+    "individualVotes": "egyéni szavazat",
+    "agreeWithCommunity": "Egyetértek a közösséggel",
+    "quickRate": "Gyors Értékelés",
+    "fineTune": "Finomhangolás",
+    "dangerousLabel": "0 — Veszélyes",
+    "verySafeLabel": "100 — Nagyon biztonságos",
+    "terribleLabel": "0 — Szörnyű",
+    "deliciousLabel": "100 — Isteni",
+    "placesIn": "Ide kerül:",
+    "basePoints": "Alap: +{count}p",
+    "priceBonus": "Ár: +{count}p",
+    "storeBonus": "Bolt: +{count}p",
+    "gpsBonus": "GPS: +{count}p"
   },
   "quadrants": {
     "holyGrail": "Szent Grál",
@@ -92,7 +105,9 @@
     "kmAway": "{distance}km-re",
     "report": "Jelentés",
     "deleting": "Törlés...",
-    "updating": "Frissítés..."
+    "updating": "Frissítés...",
+    "or": "vagy",
+    "price": "Ár"
   },
   "feed": {
     "searchProducts": "Termékek keresése…",
@@ -185,7 +200,9 @@
     "locationStatus": "Helymeghatározás",
     "locationOn": "Engedélyezve",
     "locationOff": "Érintsd meg az engedélyezéshez",
-    "signOutButton": "Kijelentkezés"
+    "signOutButton": "Kijelentkezés",
+    "nearbyRange": "Közelség hatótáv",
+    "leaderboardSection": "Ranglista"
   },
   "login": {
     "alreadyLoggedIn": "Már bejelentkeztél",
@@ -389,7 +406,11 @@
     "clearLocation": "Hely törlése",
     "captureLocation": "GPS hely rögzítése",
     "backToPredefined": "Vissza a bolt listához",
-    "currentLocation": "Jelenlegi hely"
+    "currentLocation": "Jelenlegi hely",
+    "imageTooSmall": "A kép túl kicsi. Minimum méret 200×200 pixel.",
+    "processingFailed": "Kép feldolgozása sikertelen. Próbálj másikat.",
+    "invalidType": "Kérlek, válassz képfájlt (JPEG, PNG, WebP, HEIC).",
+    "fileTooLarge": "A kép túl nagy. Maximum méret 5MB."
   },
   "offline": {
     "banner": "Offline vagy — egyes funkciók korlátozottak lehetnek",
@@ -399,5 +420,78 @@
     "syncFailed": "Néhány változás szinkronizálása sikertelen",
     "voteSavedOffline": "Szavazat mentve! Online módban szinkronizálódik",
     "productSavedOffline": "Termék piszkozatként mentve! Online módban szinkronizálódik"
+  },
+  "smartCamera": {
+    "scanning": "Szkennelés...",
+    "hint": "Irányítsd a vonalkódra vagy nyomd meg a gombot a fotóhoz",
+    "takePhoto": "Fotó készítése",
+    "clickOrDrag": "Érintsd meg a termékfotó feltöltéséhez",
+    "orBarcode": "vagy vonalkód megadása",
+    "enterBarcode": "Vonalkód megadása",
+    "lookup": "Keresés",
+    "lookingUp": "Vonalkód keresése...",
+    "barcodeFound": "Termék megtalálva!",
+    "barcodeNotFound": "Vonalkód nincs az adatbázisban. Készíts fotót helyette.",
+    "existingProduct": "Ez a termék már létezik",
+    "viewProduct": "Termék megtekintése",
+    "scanOrPhoto": "Vonalkód szkennelés vagy Fotó",
+    "scanTitle": "Termék szkennelés",
+    "scanDescription": "Irányítsd a kamerát a vonalkódra vagy készíts fotót",
+    "lookingUpDescription": "Open Food Facts adatbázis ellenőrzése...",
+    "scanBarcode": "Vonalkód szkennelés",
+    "scanError": "Vonalkód keresés sikertelen"
+  },
+  "push": {
+    "streakReminder": "A sorozatod hamarosan lejár! Szavazz, hogy megtartsd.",
+    "newProductNearby": "Új termék a közeledben: {name}",
+    "notificationsEnabled": "Push értesítések engedélyezve",
+    "notificationsDisabled": "Push értesítések letiltva",
+    "enableNotifications": "Értesítések engedélyezése"
+  },
+  "community": {
+    "title": "Közösség",
+    "feedTab": "Hírfolyam",
+    "followingTab": "Követettek",
+    "emptyFeed": "Még nincs aktivitás. Legyél az első, aki értékel egy terméket!",
+    "emptyFollowing": "Kövess felhasználókat, hogy lásd a tevékenységüket itt.",
+    "ratedAs": "értékelte",
+    "addedProduct": "új terméket adott hozzá",
+    "commented": "hozzászólt ehhez:",
+    "writeReview": "Írj véleményt...",
+    "postComment": "Küldés",
+    "reply": "Válasz",
+    "replyTo": "Válasz {name}-nak...",
+    "edited": "(szerkesztve)",
+    "deleted": "[törölve]",
+    "like": "Tetszik",
+    "likes": "{count} kedvelés",
+    "comments": "{count} hozzászólás",
+    "noComments": "Még nincs vélemény. Legyél az első!",
+    "commentPosted": "Hozzászólás elküldve!",
+    "commentDeleted": "Hozzászólás törölve",
+    "commentTooLong": "Túl hosszú hozzászólás (max 500 karakter)",
+    "signInToComment": "Jelentkezz be vélemény írásához",
+    "viewAll": "Összes hozzászólás",
+    "timeAgo": "{time} ezelőtt",
+    "justNow": "most",
+    "minutesAgo": "{count}p ezelőtt",
+    "hoursAgo": "{count}ó ezelőtt",
+    "daysAgo": "{count}n ezelőtt"
+  },
+  "share": {
+    "share": "Megosztás",
+    "title": "Nézd meg: {name} a G-Matrixon",
+    "text": "{name} a G-Matrixon! Nézd meg a közösségi értékeléseket.",
+    "success": "Sikeresen megosztva!",
+    "linkCopied": "Link másolva a vágólapra!",
+    "copyFailed": "Link másolása sikertelen",
+    "copied": "Másolva!",
+    "copyLink": "Link másolása"
+  },
+  "store": {
+    "noStores": "Még nincs bolt rögzítve",
+    "beFirst": "Légy az első, aki helyszínt ad hozzá!",
+    "nearMe": "Közelemben",
+    "openInMaps": "Megnyitás térképen"
   }
 }

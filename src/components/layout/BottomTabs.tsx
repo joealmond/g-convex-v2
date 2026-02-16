@@ -1,12 +1,12 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import { Grid3X3, BarChart3, Plus, User, Map } from 'lucide-react'
+import { Grid3X3, MessageCircle, Plus, User, Map } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AddProductDialog } from '@/components/dashboard/AddProductDialog'
 import { useTranslation } from '@/hooks/use-translation'
 
 /**
  * Bottom tab navigation bar (mobile-optimized)
- * 5 tabs: Home, Leaderboard, Add (center), Map, Profile
+ * 5 tabs: Home, Community, Add (center), Map, Profile
  * Fixed at bottom with iOS safe area
  * 
  * Light mode: Sage Green (#7CB342) with white icons
@@ -45,14 +45,14 @@ export function BottomTabs() {
           <span>{t('nav.home')}</span>
         </Link>
 
-        {/* Leaderboard Tab */}
+        {/* Community Tab */}
         <Link
-          to="/leaderboard"
-          className={tabClass(isActive('/leaderboard'))}
+          to="/community"
+          className={tabClass(isActive('/community'))}
           activeProps={{ className: tabClass(true) }}
         >
-          <BarChart3 className="h-7 w-7" />
-          <span>{t('nav.leaderboard')}</span>
+          <MessageCircle className="h-7 w-7" />
+          <span>{t('nav.community')}</span>
         </Link>
 
         {/* Add Tab (Center, elevated circle) */}

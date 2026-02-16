@@ -14,6 +14,7 @@ import { Route as MapRouteImport } from './routes/map'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as FilesRouteImport } from './routes/files'
+import { Route as CommunityRouteImport } from './routes/community'
 import { Route as ChallengesRouteImport } from './routes/challenges'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -47,6 +48,11 @@ const LeaderboardRoute = LeaderboardRouteImport.update({
 const FilesRoute = FilesRouteImport.update({
   id: '/files',
   path: '/files',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChallengesRoute = ChallengesRouteImport.update({
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/challenges': typeof ChallengesRoute
+  '/community': typeof CommunityRoute
   '/files': typeof FilesRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/challenges': typeof ChallengesRoute
+  '/community': typeof CommunityRoute
   '/files': typeof FilesRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/admin': typeof AdminRoute
   '/challenges': typeof ChallengesRoute
+  '/community': typeof CommunityRoute
   '/files': typeof FilesRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/challenges'
+    | '/community'
     | '/files'
     | '/leaderboard'
     | '/login'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/challenges'
+    | '/community'
     | '/files'
     | '/leaderboard'
     | '/login'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/admin'
     | '/challenges'
+    | '/community'
     | '/files'
     | '/leaderboard'
     | '/login'
@@ -195,6 +207,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AdminRoute: typeof AdminRoute
   ChallengesRoute: typeof ChallengesRoute
+  CommunityRoute: typeof CommunityRoute
   FilesRoute: typeof FilesRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
@@ -240,6 +253,13 @@ declare module '@tanstack/react-router' {
       path: '/files'
       fullPath: '/files'
       preLoaderRoute: typeof FilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/challenges': {
@@ -327,6 +347,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AdminRoute: AdminRoute,
   ChallengesRoute: ChallengesRoute,
+  CommunityRoute: CommunityRoute,
   FilesRoute: FilesRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,

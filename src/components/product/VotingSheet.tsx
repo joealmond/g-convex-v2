@@ -9,6 +9,7 @@ import { appConfig } from '@/lib/app-config'
 import { cn } from '@/lib/utils'
 import { ThumbsUp, ChevronDown, ChevronUp, Sliders } from 'lucide-react'
 import { getQuadrant, QUADRANTS } from '@/lib/types'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface VotingSheetProps {
   onVote: (safety: number, taste: number, price?: number) => void
@@ -30,6 +31,7 @@ export function VotingSheet({
   averageSafety,
   averageTaste
 }: VotingSheetProps) {
+  const { t } = useTranslation()
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null)
   
   // Fine-tune mode state
@@ -74,7 +76,7 @@ export function VotingSheet({
           >
             <ThumbsUp className="h-4 w-4" />
             <div className="text-center">
-              <span className="font-semibold text-sm">Agree with Community</span>
+              <span className="font-semibold text-sm">{t('voting.agreeWithCommunity')}</span>
               <span className="text-xs text-muted-foreground ml-2">
                 {Math.round(averageSafety)} · {Math.round(averageTaste)}
               </span>
@@ -86,7 +88,7 @@ export function VotingSheet({
       {/* Quick Rate — 4 quadrant combo buttons */}
       <div>
         <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wide">
-          Quick Rate
+          {t('voting.quickRate')}
         </label>
         <div className="grid grid-cols-2 gap-1.5">
           {[
@@ -147,7 +149,7 @@ export function VotingSheet({
         >
           <div className="flex items-center gap-2">
             <Sliders className="h-4 w-4 text-primary" />
-            <span className="font-semibold text-sm">Fine Tune</span>
+            <span className="font-semibold text-sm">{t('voting.fineTune')}</span>
           </div>
           {fineTuneExpanded ? (
             <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -183,8 +185,8 @@ export function VotingSheet({
                     disabled={disabled}
                   />
                   <div className="flex justify-between text-[10px] text-muted-foreground">
-                    <span>0 — Dangerous</span>
-                    <span>100 — Very Safe</span>
+                    <span>{t('voting.dangerousLabel')}</span>
+                    <span>{t('voting.verySafeLabel')}</span>
                   </div>
                 </div>
 
@@ -205,8 +207,8 @@ export function VotingSheet({
                     disabled={disabled}
                   />
                   <div className="flex justify-between text-[10px] text-muted-foreground">
-                    <span>0 — Terrible</span>
-                    <span>100 — Delicious</span>
+                    <span>{t('voting.terribleLabel')}</span>
+                    <span>{t('voting.deliciousLabel')}</span>
                   </div>
                 </div>
 
@@ -218,7 +220,7 @@ export function VotingSheet({
                     backgroundColor: `${fineTuneQuadrantInfo?.color || appConfig.colors.primary}10`
                   }}
                 >
-                  <span className="text-muted-foreground text-xs">Places in: </span>
+                  <span className="text-muted-foreground text-xs">{t('voting.placesIn')} </span>
                   <span className="font-bold">
                     {appConfig.quadrants[fineTuneQuadrant as keyof typeof appConfig.quadrants]?.emoji}{' '}
                     {fineTuneQuadrantInfo?.name || 'Unknown'}
@@ -231,7 +233,7 @@ export function VotingSheet({
                   disabled={disabled}
                   className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
                 >
-                  Submit Vote
+                  {t('voting.submitVote')}
                 </Button>
               </div>
             </motion.div>

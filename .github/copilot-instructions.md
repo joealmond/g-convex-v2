@@ -56,18 +56,22 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | `src/lib/platform.ts` | ★ Platform detection: isNative(), isIOS(), isAndroid(), isWeb() |
 | `src/lib/auth-client.ts` | Better Auth client — uses `VITE_CONVEX_SITE_URL` as baseURL on native, relative origin on web |
 | `capacitor.config.ts` | Capacitor config — webDir, schemes, hostname |
-| `convex/schema.ts` | Database schema: products, votes, profiles, files tables |
+| `convex/schema.ts` | Database schema: products, votes, profiles, files, comments, commentLikes tables |
 | `convex/votes.ts` | Vote casting, rate limiting, weighted average recalculation |
 | `convex/products.ts` | Product CRUD operations |
+| `convex/comments.ts` | Comment CRUD: post, edit, remove (soft-delete), toggleLike, getByProduct, getRecentFeed |
+| `convex/community.ts` | Aggregated community activity feed — merges votes, products, comments |
 | `convex/lib/gamification.ts` | Points system, badge definitions, streak logic |
 | `convex/lib/config.ts` | Admin emails, roles |
 | `src/routes/` | One file per screen/page |
+| `src/routes/community.tsx` | Community feed page — activity stream + following filter |
 | `src/components/layout/` | ★ Navigation shell: BottomTabs, TopBar, PageShell |
-| `src/components/feed/` | ★ Home feed: ProductCard, FilterChips, FeedGrid |
-| `src/components/product/` | Product detail: RatingBars★, StoreList★, VotingSheet★, ImageUploadDialog |
+| `src/components/feed/` | ★ Home feed: ProductCard, FilterChips (with nearby range dropdown), FeedGrid |
+| `src/components/product/` | Product detail: RatingBars★, StoreList★, VotingSheet★, ImageUploadDialog, ProductComments |
 | `src/components/map/` | ★ Leaflet map: ProductMap, ProductPin |
 | `src/components/dashboard/` | Chart views: MatrixChart, CoordinateGrid, StatsCard, BadgeDisplay, Leaderboard, DeleteProductButton |
 | `src/hooks/` | Custom hooks: useAdmin, useGeolocation, useTranslation, useAnonymousId, useVoteMigration, useImpersonate, useTheme, useOnlineStatus |
+| `src/hooks/use-product-filter.ts` | Product filter logic — default "nearby" with auto-fallback to "recent"; configurable range via `getNearbyRange`/`setNearbyRange` (localStorage) |
 | `src/hooks/use-online-status.ts` | `useOnlineStatus()` — SSR-safe online/offline detection; `useServiceWorker()` — registers `/sw.js` |
 | `src/lib/offline-queue.ts` | IndexedDB queue via `idb-keyval`: `enqueue()`, `dequeue()`, `flush()`, `getPendingCount()` |
 | `src/components/OfflineBanner.tsx` | Animated amber bar above TopBar when offline |
@@ -143,6 +147,7 @@ challenges.*    — Challenges feature
 admin.*         — Admin settings
 errors.*        — Error messages
 offline.*       — Offline banner, sync status, pending count
+community.*     — Community feed, comments, likes, time formatting
 ```
 
 #### Adding a new translated string
@@ -213,6 +218,19 @@ Standard shadcn/ui tokens (`bg-background`, `bg-card`, `bg-primary`, `text-foreg
 - **Store selection** should prefer `appConfig.storeDefaults[locale]` via the dropdown, with a custom store fallback.
 - **Geolocation**: Use `useGeolocation` hook for any feature requiring location. Always handle permission denied states gracefully with UI feedback.
 
+### Nearby Range (Configurable)
+- Default home filter is **"nearby"** with auto-fallback to "recent" if no products are within range or GPS is unavailable.
+- Range options: `[1, 2, 5, 10, 25, 50]` km — defined in `NEARBY_RANGE_OPTIONS` in `src/hooks/use-product-filter.ts`.
+- Stored in `localStorage('g-matrix-nearby-range')`, default 5 km.
+- **Two UIs to change range**: (1) Quick dropdown on FilterChips — tap active "Nearby" chip to expand range picker. (2) "Nearby Range" pill buttons in Profile → Settings section.
+- Cross-component sync via `CustomEvent('g-matrix-nearby-range-change')` — `setNearbyRange(km)` dispatches the event; `useProductFilter` listens and updates.
+
+### Community & Comments
+- **Community feed** (`/community`): Aggregates votes, new products, and comments into a chronological activity stream. Supports "All" vs "Following" tab.
+- **Product comments** (`ProductComments` component on product detail page): Threaded replies (1 level deep), like/unlike, edit (owner), soft-delete (owner or admin), 500 char max.
+- **Leaderboard** lives in Profile page (below badges), not as a separate bottom tab.
+- **Bottom tabs**: Home | Community | ➕ Add | Map | Profile.
+
 ### Common Pitfalls (Learned from experience)
 - **Navigation**: ALWAYS use `<Link>` from `@tanstack/react-router` for internal navigation. NEVER use `<a>` tags (causes full app reload/auth flicker).
 - **Icons**: Pass icons as JSX elements (e.g., `icon={<Trophy className="..." />}`) rather than component references (`icon={Trophy}`). This ensures proper styling control.
@@ -224,7 +242,7 @@ Standard shadcn/ui tokens (`bg-background`, `bg-card`, `bg-primary`, `text-foreg
 ### Known Issues & Workarounds
 
 #### Capacitor Android ProGuard Compatibility (AGP 9.x+)
-**Problem**: Capacitor v8 plugins (`@capacitor/camera`, `@capacitor/geolocation`, `@capacitor/share`) use the deprecated `proguard-android.txt` file, which causes build failures with Android Gradle Plugin 9.x+:
+**Problem**: Capacitor v8 plugins (`@capacitor/camera`, `@capacitor/geolocation`, `@capacitor/share`, `@capacitor/haptics`, `better-auth-capacitor`, `capacitor-camera-view`) use the deprecated `proguard-android.txt` file, which causes build failures with Android Gradle Plugin 9.x+:
 ```
 `getDefaultProguardFile('proguard-android.txt')` is no longer supported
 ```
@@ -233,6 +251,7 @@ Standard shadcn/ui tokens (`bg-background`, `bg-card`, `bg-primary`, `text-foreg
 - `scripts/patch-capacitor-android.sh` patches `node_modules/@capacitor/*/android/build.gradle` files to use `proguard-android-optimize.txt`
 - Runs automatically after `npm install` via `package.json` postinstall hook
 - Manual run: `bash scripts/patch-capacitor-android.sh`
+- Currently patches 6 plugins: camera, geolocation, share, haptics, better-auth-capacitor, capacitor-camera-view
 
 **Why not update plugins?** Capacitor 8.0.0 is the latest v8 release. The fix is in Capacitor 9.x, which requires updating the core Capacitor packages and potentially breaking changes. The postinstall patch is stable and low-risk.
 
@@ -240,6 +259,50 @@ Standard shadcn/ui tokens (`bg-background`, `bg-card`, `bg-primary`, `text-foreg
 1. Verify the postinstall script ran: check for "✅ All Capacitor Android plugins patched" in install output
 2. If missing, manually run: `bash scripts/patch-capacitor-android.sh`
 3. In Android Studio: **File → Sync Project with Gradle Files** or run `./gradlew clean` in `android/` directory
+
+**Adding new plugins**: If you install a new Capacitor plugin that fails with ProGuard errors, add its path to the `PLUGINS` array in `scripts/patch-capacitor-android.sh`.
+
+#### iOS Logging Behavior (Platform Limitation)
+**Problem**: iOS builds show verbose logs including:
+- Capacitor native bridge logs (`⚡️ To Native →`, `⚡️ TO JS`)
+- better-auth-capacitor session tokens in console
+- SQLite debug output from preferences plugin
+
+**Not Fixable via Code**: These logs are controlled by Xcode's build configuration, not code. The `loggingBehavior` option in `capacitor.config.ts` is invalid/non-functional.
+
+**Solution**: Use **Release** build configuration in Xcode:
+1. In Xcode, click the scheme dropdown (next to Stop button)
+2. Select **Edit Scheme...**
+3. Under **Run** → **Info** → **Build Configuration** → Select **Release**
+4. Build and run — logs will be minimal
+
+**Why this matters**:
+- Debug builds are intended for development with verbose logging
+- Release builds strip most logs for production use
+- Session tokens in logs are a **security concern** in production
+- This is standard iOS behavior, not a Capacitor bug
+
+**Reference**: See `docs/IOS_LOGGING.md` for detailed explanation.
+
+#### iOS SceneDelegate Incompatibility
+**Problem**: Capacitor v8 has known compatibility issues with iOS SceneDelegate architecture (GitHub issues #6662, #7961). Attempting to add SceneDelegate support results in:
+- Black screen on app launch
+- Frozen UI with no error messages
+- UIScene lifecycle methods conflicting with Capacitor's window management
+
+**Solution**: Use traditional **AppDelegate** approach:
+- `ios/App/App/AppDelegate.swift` should NOT implement UISceneSession lifecycle methods
+- Remove `UIApplicationSceneManifest` configuration from `Info.plist`
+- Delete any `SceneDelegate.swift` file
+- Ensure `AppDelegate` has `var window: UIWindow?` property
+
+**Why this matters**:
+- SceneDelegate is required for iPadOS multi-window support
+- Capacitor v8 predates widespread SceneDelegate adoption
+- Workaround: Wait for Capacitor v9+ (requires migration effort)
+- Alternative: Stick with single-window AppDelegate pattern
+
+**UIScene warnings are harmless**: Xcode may warn "UISceneConfigurationName doesn't exist" — these warnings don't affect app functionality when using AppDelegate.
 
 #### Capacitor + TanStack Start SPA Architecture
 
@@ -411,10 +474,14 @@ Cards: `bg-card text-card-foreground rounded-2xl shadow-sm border border-border`
 - ❌ Don't import from `convex/` directly in components — use the generated `api` object
 - ❌ Don't add user-facing strings without adding them to both `src/locales/en.json` and `src/locales/hu.json`
 - ❌ Don't use hardcoded English text in JSX — always use `t('section.key')` from `useTranslation()`
-- ❌ Don't open OAuth in the Capacitor WebView — Google blocks it. Use system browser via `@capacitor/browser`
+- ❌ Don't open OAuth in the Capacitor WebView — Google blocks it. Use system browser via `better-auth-capacitor`
 - ❌ Don't hardcode padding/margins for notch/home indicator — use `env(safe-area-inset-*)` CSS variables
 - ❌ Don't use `<a>` tags for OAuth — on native, use `signIn.social()` with `better-auth-capacitor` which routes through system browser
 - ❌ Don't try to create products offline — image upload + AI analysis requires network connectivity. Votes CAN be queued offline.
+- ❌ Don't try to disable iOS Capacitor logs via code — use Release build configuration in Xcode instead (see Known Issues)
+- ❌ Don't implement SceneDelegate on iOS — Capacitor v8 is incompatible, use traditional AppDelegate (see Known Issues)
+- ❌ Don't expect MacBook trackpad pinch-to-zoom on Leaflet maps — use scrollWheelZoom + boxZoom instead (enable all zoom methods)
+- ❌ Don't test GPS features in Android emulator without setting mock location — GPS is unavailable by default (see `docs/ANDROID_EMULATOR_LOCATION.md`)
 
 ### Offline Support Architecture
 

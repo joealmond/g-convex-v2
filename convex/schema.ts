@@ -16,9 +16,21 @@ export default defineSchema({
   // Products - gluten-free products with ratings
   products: defineTable({
     name: v.string(),
+    // Barcode & product identification
+    barcode: v.optional(v.string()),          // UPC/EAN barcode
+    barcodeSource: v.optional(v.string()),     // 'openfoodfacts' | 'manual' | 'ai'
+    category: v.optional(v.string()),          // e.g., 'snack', 'bread', 'pasta'
+    brand: v.optional(v.string()),             // manufacturer brand name
+    description: v.optional(v.string()),       // product description
+    // Nutrition & allergens
+    nutritionScore: v.optional(v.string()),    // Nutri-Score: 'a'|'b'|'c'|'d'|'e'
+    allergens: v.optional(v.array(v.string())),// ['gluten', 'milk', 'soy']
+    servingSize: v.optional(v.string()),       // e.g., '100g', '1 bar (40g)'
+    // Images
     imageUrl: v.optional(v.string()),
     imageStorageId: v.optional(v.id('_storage')),
     backImageUrl: v.optional(v.string()), // Back of package image
+    // Ingredients & ratings
     ingredients: v.optional(v.array(v.string())),
     averageSafety: v.number(), // 0-100
     averageTaste: v.number(), // 0-100
@@ -40,6 +52,7 @@ export default defineSchema({
     }))),
   })
     .index('by_name', ['name'])
+    .index('by_barcode', ['barcode'])
     .index('by_created', ['createdAt'])
     .searchIndex('search_name', {
       searchField: 'name',
@@ -187,4 +200,39 @@ export default defineSchema({
     updatedBy: v.optional(v.string()), // Admin userId
     updatedAt: v.number(),
   }).index('by_key', ['key']),
+
+  // Device tokens - push notification registration
+  deviceTokens: defineTable({
+    userId: v.string(),
+    token: v.string(),
+    platform: v.union(v.literal('ios'), v.literal('android'), v.literal('web')),
+    createdAt: v.number(),
+    lastUsedAt: v.optional(v.number()),
+  }).index('by_user', ['userId'])
+    .index('by_token', ['token']),
+
+  // Comments - product reviews/discussions
+  comments: defineTable({
+    productId: v.id('products'),
+    userId: v.string(),           // Better Auth user._id
+    text: v.string(),              // Comment text (max ~500 chars enforced in mutation)
+    parentId: v.optional(v.id('comments')), // For threaded replies
+    likesCount: v.number(),        // Denormalized like count
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+    isEdited: v.boolean(),
+    isDeleted: v.boolean(),        // Soft delete
+  })
+    .index('by_product', ['productId'])
+    .index('by_user', ['userId'])
+    .index('by_product_created', ['productId', 'createdAt']),
+
+  // Comment likes - prevent double-liking
+  commentLikes: defineTable({
+    commentId: v.id('comments'),
+    userId: v.string(),
+    createdAt: v.number(),
+  })
+    .index('by_comment', ['commentId'])
+    .index('by_user_comment', ['userId', 'commentId']),
 })

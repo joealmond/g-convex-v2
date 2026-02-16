@@ -20,11 +20,13 @@ import { StoreTagInput } from '../dashboard/StoreTagInput'
 import { useAnonymousId } from '../../hooks/use-anonymous-id'
 import { useTranslation } from '../../hooks/use-translation'
 import { useGeolocation } from '../../hooks/use-geolocation'
-import { ChevronDown, ChevronUp, Sliders, Bookmark } from 'lucide-react'
+import { ChevronDown, ChevronUp, Sliders, Bookmark, ScanBarcode, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useOnlineStatus } from '@/hooks/use-online-status'
+import { useHaptics } from '@/hooks/use-haptics'
+import { SmartCamera } from './SmartCamera'
 
 interface ImageUploadDialogProps {
   trigger?: React.ReactNode
@@ -33,8 +35,9 @@ interface ImageUploadDialogProps {
 
 export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps) {
   const { isOnline } = useOnlineStatus()
+  const { impact } = useHaptics()
   const [open, setOpen] = useState(false)
-  const [step, setStep] = useState<'upload' | 'analyze' | 'review' | 'submitting'>('upload')
+  const [step, setStep] = useState<'upload' | 'scan' | 'barcode-lookup' | 'analyze' | 'review' | 'submitting'>('upload')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [storageId, setStorageId] = useState<string | null>(null)
@@ -78,10 +81,13 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
   // Note: api.ai.analyzeImage is an action - will be available after convex push
   const analyzeImage = useAction(api.ai.analyzeImage as any)
   const createProductAndVote = useMutation(api.votes.createProductAndVote)
+  const lookupBarcode = useAction(api.barcode.lookupBarcode)
 
   /**
    * Resize image and convert to WebP
-   * Reduces file size significantly for mobile uploads
+   * - Rejects images smaller than 200×200
+   * - Downscales images larger than 1200×1200 (maintaining aspect ratio)
+   * - Converts to WebP at 80% quality for smaller file size
    */
   const resizeAndConvertImage = useCallback(
     (file: File): Promise<File> => {
@@ -96,10 +102,16 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
         }
 
         img.onload = () => {
-          // Calculate new dimensions (max 1024×1024, maintain aspect ratio)
+          // Reject images that are too small
+          if (img.width < 200 || img.height < 200) {
+            reject(new Error(`Image too small (${img.width}×${img.height}). Minimum size is 200×200 pixels.`))
+            return
+          }
+
+          // Calculate new dimensions (max 1200×1200, maintain aspect ratio)
           let width = img.width
           let height = img.height
-          const maxSize = 1024
+          const maxSize = 1200
 
           if (width > maxSize || height > maxSize) {
             if (width > height) {
@@ -149,19 +161,38 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
     []
   )
 
+  /**
+   * Handle photo capture from SmartCamera — same as file select
+   */
+  const handleSmartCameraPhoto = useCallback(async (file: File) => {
+    try {
+      const resizedFile = await resizeAndConvertImage(file)
+      setImageFile(resizedFile)
+      setImagePreview(URL.createObjectURL(resizedFile))
+      setError(null)
+      setStep('upload') // Return to upload step with preview ready
+    } catch (err) {
+      console.error('Image processing error:', err)
+      setError(err instanceof Error && err.message.includes('too small')
+        ? t('imageUpload.imageTooSmall')
+        : t('imageUpload.processingFailed'))
+      setStep('upload')
+    }
+  }, [resizeAndConvertImage, t])
+
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      setError('Please select an image file')
+      setError(t('imageUpload.invalidType'))
       return
     }
 
     // Validate file size (max 10MB before processing)
     if (file.size > 10 * 1024 * 1024) {
-      setError('Image must be less than 10MB')
+      setError(t('imageUpload.fileTooLarge'))
       return
     }
 
@@ -174,9 +205,11 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       setError(null)
     } catch (err) {
       console.error('Image processing error:', err)
-      setError('Failed to process image. Please try another file.')
+      setError(err instanceof Error && err.message.includes('too small')
+        ? t('imageUpload.imageTooSmall')
+        : t('imageUpload.processingFailed'))
     }
-  }, [resizeAndConvertImage])
+  }, [resizeAndConvertImage, t])
 
   /**
    * Drag-and-drop handlers
@@ -299,6 +332,55 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
   }, [imagePreview])
 
   /**
+   * Handle barcode scan result from SmartCamera
+   * Looks up the barcode on Open Food Facts + local DB
+   */
+  const handleBarcodeScan = useCallback(async (barcode: string) => {
+    setStep('barcode-lookup')
+    try {
+      const result = await lookupBarcode({ barcode })
+
+      if (result.found && result.existingProduct) {
+        // Product already exists in our DB — navigate to it
+        toast.info(t('smartCamera.existingProduct'), {
+          description: result.existingProduct.name,
+          action: {
+            label: t('smartCamera.viewProduct'),
+            onClick: () => {
+              setOpen(false)
+              resetDialog()
+              window.location.href = `/product/${encodeURIComponent(result.existingProduct!.name)}`
+            },
+          },
+        })
+        setStep('upload')
+        return
+      }
+
+      if (result.found && result.productData) {
+        // Found on Open Food Facts — pre-fill form
+        impact('medium')
+        toast.success(t('smartCamera.barcodeFound'))
+        setProductName(result.productData.name)
+        if (result.productData.imageUrl) {
+          setRealImageUrl(result.productData.imageUrl)
+          setImagePreview(result.productData.imageUrl)
+        }
+        setStep('review')
+        return
+      }
+
+      // Not found — tell user to take a photo instead
+      toast.warning(t('smartCamera.barcodeNotFound'))
+      setStep('upload')
+    } catch (error) {
+      console.error('Barcode lookup failed:', error)
+      toast.error(t('smartCamera.scanError'))
+      setStep('upload')
+    }
+  }, [lookupBarcode, impact, t, resetDialog])
+
+  /**
    * Save as draft — submit with current values immediately (AI defaults + location).
    * User can edit later from the product page.
    */
@@ -407,12 +489,16 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
         <DialogHeader>
           <DialogTitle>
             {step === 'upload' && t('imageUpload.uploadProductImage')}
+            {step === 'scan' && t('smartCamera.scanTitle')}
+            {step === 'barcode-lookup' && t('smartCamera.lookingUp')}
             {step === 'analyze' && t('imageUpload.analyzingImage')}
             {step === 'review' && t('imageUpload.reviewProduct')}
             {step === 'submitting' && t('imageUpload.submitting')}
           </DialogTitle>
           <DialogDescription>
             {step === 'upload' && t('imageUpload.uploadProductDescription')}
+            {step === 'scan' && t('smartCamera.scanDescription')}
+            {step === 'barcode-lookup' && t('smartCamera.lookingUpDescription')}
             {step === 'analyze' && t('imageUpload.aiAnalyzingDescription')}
             {step === 'review' && t('imageUpload.reviewProductDescription')}
           </DialogDescription>
@@ -472,6 +558,41 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
             >
               {t('imageUpload.uploadAndAnalyze')}
             </Button>
+
+            <div className="relative flex items-center gap-2">
+              <div className="flex-1 border-t border-border" />
+              <span className="text-xs text-muted-foreground">{t('common.or')}</span>
+              <div className="flex-1 border-t border-border" />
+            </div>
+
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={() => setStep('scan')}
+            >
+              <ScanBarcode className="h-4 w-4" />
+              {t('smartCamera.scanBarcode')}
+            </Button>
+          </div>
+        )}
+
+        {/* Step: Scan — SmartCamera with barcode + photo capture */}
+        {step === 'scan' && (
+          <div className="space-y-4">
+            <SmartCamera
+              onBarcodeScan={handleBarcodeScan}
+              onPhotoCapture={handleSmartCameraPhoto}
+              onCancel={() => setStep('upload')}
+            />
+          </div>
+        )}
+
+        {/* Step: Barcode Lookup — loading state */}
+        {step === 'barcode-lookup' && (
+          <div className="flex flex-col items-center justify-center py-8 space-y-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-sm font-medium">{t('smartCamera.lookingUp')}</p>
+            <p className="text-xs text-muted-foreground">{t('smartCamera.lookingUpDescription')}</p>
           </div>
         )}
 

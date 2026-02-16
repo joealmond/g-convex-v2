@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
-import { Trophy, User, LogOut, LogIn, Menu, Shield, Loader2 } from 'lucide-react'
+import { Trophy, User, LogOut, LogIn, Menu, Shield, Loader2, MessageCircle } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import { useAdmin } from '@/hooks/use-admin'
 
@@ -166,11 +166,11 @@ export function Navigation() {
               Home
             </Link>
             <Link
-              to="/leaderboard"
+              to="/community"
               className="text-sm font-medium transition-colors hover:text-primary inline-flex items-center gap-1"
             >
-              <Trophy className="h-4 w-4" />
-              Leaderboard
+              <MessageCircle className="h-4 w-4" />
+              Community
             </Link>
 
             {/* Language Switcher */}
@@ -197,9 +197,9 @@ export function Navigation() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/leaderboard" className="cursor-pointer">
-                    <Trophy className="mr-2 h-4 w-4" />
-                    Leaderboard
+                  <Link to="/community" className="cursor-pointer">
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Community
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

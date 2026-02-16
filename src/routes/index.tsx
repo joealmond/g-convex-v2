@@ -71,6 +71,7 @@ function HomePageContent() {
     searchQuery,
     filteredProducts,
     useCardLayout,
+    nearbyRange,
     handleSearchChange,
     clearSearch,
     handleFilterChange,
@@ -166,7 +167,7 @@ function HomePageContent() {
 
         {/* Filter Chips — sticky under search, visible in both views */}
         <div className="pt-3">
-          <FilterChips value={filterType} onChange={handleFilterChange} />
+          <FilterChips value={filterType} onChange={handleFilterChange} nearbyRange={nearbyRange} />
         </div>
       </div>
 

@@ -11,7 +11,9 @@ PLUGINS=(
   "node_modules/@capacitor/camera/android/build.gradle"
   "node_modules/@capacitor/geolocation/android/build.gradle"
   "node_modules/@capacitor/share/android/build.gradle"
+  "node_modules/@capacitor/haptics/android/build.gradle"
   "node_modules/better-auth-capacitor/android/build.gradle"
+  "node_modules/capacitor-camera-view/android/build.gradle"
 )
 
 for plugin in "${PLUGINS[@]}"; do

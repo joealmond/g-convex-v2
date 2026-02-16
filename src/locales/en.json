@@ -6,6 +6,7 @@
     "login": "Sign In",
     "logout": "Sign Out",
     "leaderboard": "Leaderboard",
+    "community": "Community",
     "map": "Map",
     "back": "Back",
     "backToHome": "Back to Home",
@@ -45,7 +46,19 @@
     "yourVote": "Your vote: Safety {safety} · Taste {taste}",
     "yourVotePrice": " · Price {price}/5",
     "individualVote": "individual vote",
-    "individualVotes": "individual votes"
+    "individualVotes": "individual votes",
+    "agreeWithCommunity": "Agree with Community",
+    "quickRate": "Quick Rate",
+    "fineTune": "Fine Tune",
+    "dangerousLabel": "0 — Dangerous",
+    "verySafeLabel": "100 — Very Safe",
+    "terribleLabel": "0 — Terrible",
+    "deliciousLabel": "100 — Delicious",
+    "placesIn": "Places in:",
+    "basePoints": "Base: +{count}pts",
+    "priceBonus": "Price: +{count}pts",
+    "storeBonus": "Store: +{count}pts",
+    "gpsBonus": "GPS: +{count}pts"
   },
   "quadrants": {
     "holyGrail": "Holy Grail",
@@ -92,7 +105,9 @@
     "kmAway": "{distance}km away",
     "report": "Report",
     "deleting": "Deleting...",
-    "updating": "Updating..."
+    "updating": "Updating...",
+    "or": "or",
+    "price": "Price"
   },
   "feed": {
     "searchProducts": "Search products…",
@@ -185,7 +200,9 @@
     "locationStatus": "Location",
     "locationOn": "Enabled",
     "locationOff": "Tap to enable",
-    "signOutButton": "Sign Out"
+    "signOutButton": "Sign Out",
+    "nearbyRange": "Nearby Range",
+    "leaderboardSection": "Leaderboard"
   },
   "login": {
     "alreadyLoggedIn": "Already Logged In",
@@ -389,7 +406,11 @@
     "clearLocation": "Clear location",
     "captureLocation": "Capture GPS location",
     "backToPredefined": "Back to predefined stores",
-    "currentLocation": "Current location"
+    "currentLocation": "Current location",
+    "imageTooSmall": "Image is too small. Minimum size is 200×200 pixels.",
+    "processingFailed": "Failed to process image. Please try another.",
+    "invalidType": "Please select an image file (JPEG, PNG, WebP, HEIC).",
+    "fileTooLarge": "Image is too large. Maximum size is 5MB."
   },
   "offline": {
     "banner": "You're offline — some features may be limited",
@@ -399,5 +420,78 @@
     "syncFailed": "Some changes failed to sync",
     "voteSavedOffline": "Vote saved! Will sync when online",
     "productSavedOffline": "Product saved as draft! Will sync when online"
+  },
+  "smartCamera": {
+    "scanning": "Scanning...",
+    "hint": "Point at a barcode or tap shutter to photograph",
+    "takePhoto": "Take a Photo",
+    "clickOrDrag": "Tap to upload a product photo",
+    "orBarcode": "or enter barcode",
+    "enterBarcode": "Enter Barcode",
+    "lookup": "Look Up",
+    "lookingUp": "Looking up barcode...",
+    "barcodeFound": "Product found!",
+    "barcodeNotFound": "Barcode not in database. Take a photo instead.",
+    "existingProduct": "This product already exists",
+    "viewProduct": "View Product",
+    "scanOrPhoto": "Scan Barcode or Photo",
+    "scanTitle": "Scan Product",
+    "scanDescription": "Point camera at a barcode or take a photo",
+    "lookingUpDescription": "Checking Open Food Facts database...",
+    "scanBarcode": "Scan Barcode",
+    "scanError": "Barcode lookup failed"
+  },
+  "push": {
+    "streakReminder": "Your streak is about to expire! Vote to keep it going.",
+    "newProductNearby": "New product added near you: {name}",
+    "notificationsEnabled": "Push notifications enabled",
+    "notificationsDisabled": "Push notifications disabled",
+    "enableNotifications": "Enable Notifications"
+  },
+  "community": {
+    "title": "Community",
+    "feedTab": "Feed",
+    "followingTab": "Following",
+    "emptyFeed": "No activity yet. Be the first to rate a product!",
+    "emptyFollowing": "Follow users to see their activity here.",
+    "ratedAs": "rated",
+    "addedProduct": "added a new product",
+    "commented": "commented on",
+    "writeReview": "Write a review...",
+    "postComment": "Post",
+    "reply": "Reply",
+    "replyTo": "Reply to {name}...",
+    "edited": "(edited)",
+    "deleted": "[deleted]",
+    "like": "Like",
+    "likes": "{count} likes",
+    "comments": "{count} comments",
+    "noComments": "No reviews yet. Be the first!",
+    "commentPosted": "Comment posted!",
+    "commentDeleted": "Comment deleted",
+    "commentTooLong": "Comment too long (max 500 characters)",
+    "signInToComment": "Sign in to write a review",
+    "viewAll": "View all comments",
+    "timeAgo": "{time} ago",
+    "justNow": "just now",
+    "minutesAgo": "{count}m ago",
+    "hoursAgo": "{count}h ago",
+    "daysAgo": "{count}d ago"
+  },
+  "share": {
+    "share": "Share",
+    "title": "Check out {name} on G-Matrix",
+    "text": "I found {name} on G-Matrix! Check out the community ratings.",
+    "success": "Shared successfully!",
+    "linkCopied": "Link copied to clipboard!",
+    "copyFailed": "Failed to copy link",
+    "copied": "Copied!",
+    "copyLink": "Copy Link"
+  },
+  "store": {
+    "noStores": "No stores recorded yet",
+    "beFirst": "Be the first to add a location!",
+    "nearMe": "Near Me",
+    "openInMaps": "Open in maps"
   }
 }

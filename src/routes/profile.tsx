@@ -1,21 +1,23 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Suspense, useEffect } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Trophy, Flame, Star, Users, Calendar, TrendingUp, MapPin, Moon, Sun, Monitor, LogOut, Settings, Languages } from 'lucide-react'
+import { Trophy, Flame, Star, Users, Calendar, TrendingUp, MapPin, Moon, Sun, Monitor, LogOut, Settings, Languages, Radar } from 'lucide-react'
 import { getQuadrant, QUADRANTS } from '@/lib/types'
 // import { BADGES } from '@convex/lib/gamification'
 import { getUserLevel, appConfig } from '@/lib/app-config'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { BadgeDisplay } from '@/components/dashboard/BadgeDisplay'
 import { DietaryProfileSettings } from '@/components/dashboard/DietaryProfileSettings'
+import { Leaderboard } from '@/components/dashboard/Leaderboard'
 import { useTranslation } from '@/hooks/use-translation'
 import { useGeolocation, useTheme } from '@/hooks'
 import { useConvexAuth } from '@convex-dev/react-query'
 import { authClient } from '@/lib/auth-client'
+import { getNearbyRange, setNearbyRange, NEARBY_RANGE_OPTIONS } from '@/hooks/use-product-filter'
 
 
 export const Route = createFileRoute('/profile')({
@@ -98,6 +100,12 @@ function ProfileContent() {
   const { isLoading: isAuthLoading } = useConvexAuth()
 
   const ThemeIcon = theme === 'system' ? Monitor : resolvedTheme === 'dark' ? Moon : Sun
+  const [nearbyRangeKm, setNearbyRangeKm] = useState(5)
+
+  // Sync nearby range from localStorage on mount
+  useEffect(() => {
+    setNearbyRangeKm(getNearbyRange())
+  }, [])
   const themeLabel = theme === 'system' ? t('profile.themeSystem') : theme === 'dark' ? t('profile.themeDark') : t('profile.themeLight')
   const cycleTheme = () => {
     if (theme === 'light') setTheme('dark')
@@ -243,6 +251,15 @@ function ProfileContent() {
           <BadgeDisplay earnedBadgeIds={earnedBadges} />
         </div>
 
+        {/* Leaderboard Section (moved from dedicated tab) */}
+        <div>
+          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-amber-500" />
+            {t('profile.leaderboardSection')}
+          </h2>
+          <Leaderboard />
+        </div>
+
         {/* Dietary Preferences Section */}
         <div>
           <DietaryProfileSettings />
@@ -269,6 +286,27 @@ function ProfileContent() {
                   {geoLoading ? '...' : coords ? t('profile.locationOn') : t('profile.locationOff')}
                 </span>
               </button>
+
+              {/* Nearby Range */}
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <Radar className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">{t('profile.nearbyRange')}</span>
+                </div>
+                <div className="flex gap-1">
+                  {NEARBY_RANGE_OPTIONS.map((km) => (
+                    <button
+                      key={km}
+                      onClick={() => { setNearbyRange(km); setNearbyRangeKm(km) }}
+                      className={`px-2.5 py-1 text-xs rounded-full transition-colors ${
+                        nearbyRangeKm === km ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                      }`}
+                    >
+                      {km}km
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {/* Language */}
               <div className="flex items-center justify-between px-4 py-3">

@@ -3,6 +3,21 @@ import { useState, useEffect } from 'react'
 type Theme = 'light' | 'dark' | 'system'
 
 /**
+ * Dynamically update native StatusBar style to match theme.
+ * Uses dynamic import to avoid bundling @capacitor/status-bar on web.
+ */
+async function setNativeStatusBarStyle(resolved: 'light' | 'dark') {
+  try {
+    const { StatusBar, Style } = await import('@capacitor/status-bar')
+    await StatusBar.setStyle({
+      style: resolved === 'dark' ? Style.Dark : Style.Light,
+    })
+  } catch {
+    // Not on native or plugin not available — ignore
+  }
+}
+
+/**
  * Hook for managing theme (light/dark/system)
  * Persists theme preference in localStorage
  * Listens to system preference changes
@@ -77,6 +92,8 @@ export function useTheme() {
     } else {
       root.classList.remove('dark')
     }
+    // Update native StatusBar style
+    setNativeStatusBarStyle(resolved)
   }
 
   return { theme, setTheme, resolvedTheme }

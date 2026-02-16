@@ -43,6 +43,10 @@ export function ProductMap({ products, center = [47.497, 19.040], zoom = 12, use
       center={center}
       zoom={zoom}
       scrollWheelZoom={true}
+      doubleClickZoom={true}
+      touchZoom={true}
+      boxZoom={true}
+      keyboard={true}
       className="h-full w-full z-0"
     >
       <TileLayer

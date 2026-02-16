@@ -17,14 +17,18 @@ import { StoreTagInput } from '@/components/dashboard/StoreTagInput'
 import { CoordinateGrid } from '@/components/dashboard/CoordinateGrid'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
 import { EditProductDialog } from '@/components/dashboard/EditProductDialog'
+import { ProductComments } from '@/components/product/ProductComments'
 import { VoterList } from '@/components/admin/VoterList'
 import { getQuadrant, QUADRANTS, type Product } from '@/lib/types'
+import { appConfig } from '@/lib/app-config'
 import { useAnonymousId } from '@/hooks/use-anonymous-id'
 import { useAdmin } from '@/hooks/use-admin'
 import { useImpersonate } from '@/hooks/use-impersonate'
 import { useTranslation } from '@/hooks/use-translation'
 import { useOnlineStatus } from '@/hooks/use-online-status'
+import { useHaptics } from '@/hooks/use-haptics'
 import { enqueue } from '@/lib/offline-queue'
+import { calculateVotePoints } from '@convex/lib/gamification'
 import { ArrowLeft, Edit, Flag } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -88,6 +92,7 @@ function ProductDetailContent() {
   const [isVoting, setIsVoting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isReporting, setIsReporting] = useState(false)
+  const { impact, notification } = useHaptics()
 
   const handleVote = async (safety: number, taste: number, price?: number) => {
     if (!product) return
@@ -108,26 +113,36 @@ function ProductDetailContent() {
       if (!isOnline) {
         // Queue for later sync
         await enqueue('vote', votePayload as Record<string, unknown>)
+        impact('light')
         toast.success('📋 ' + t('offline.voteSavedOffline'), {
           duration: 4000,
         })
       } else {
         await castVote(votePayload)
+        impact('medium')
 
-        // Calculate points earned (only for authenticated users)
+        // Calculate points earned and show gamification toast
         if (user) {
-          let points = 10 // Base vote points
-          if (price !== undefined) points += 5
-          if (storeTag) points += 10
-          if (storeLat && storeLon) points += 5
+          const points = calculateVotePoints({
+            hasPrice: price !== undefined,
+            hasStore: !!storeTag,
+            hasGPS: !!storeLat && !!storeLon,
+          })
 
-          toast.success('🎉 Vote submitted!', {
-            description: `+${points} Scout Points earned!`,
+          // Build description with point breakdown
+          const parts: string[] = []
+          parts.push(t('voting.basePoints', { count: 10 }))
+          if (price !== undefined) parts.push(t('voting.priceBonus', { count: 5 }))
+          if (storeTag) parts.push(t('voting.storeBonus', { count: 10 }))
+          if (storeLat && storeLon) parts.push(t('voting.gpsBonus', { count: 5 }))
+
+          toast.success(`🎉 ${t('voting.voteSubmitted')}`, {
+            description: `+${points} ${t('gamification.points')}! ${parts.join(' + ')}`,
             duration: 4000,
           })
         } else {
-          toast.success('Vote submitted!', {
-            description: `Safety: ${safety}, Taste: ${taste}${price ? `, Price: ${price}` : ''}`,
+          toast.success(t('voting.voteSubmitted'), {
+            description: `${appConfig.dimensions.axis1.label}: ${safety}, ${appConfig.dimensions.axis2.label}: ${taste}${price ? `, ${t('common.price')}: ${price}` : ''}`,
           })
         }
       }
@@ -137,8 +152,9 @@ function ProductDetailContent() {
       setStoreLat(undefined)
       setStoreLon(undefined)
     } catch (error: unknown) {
-      toast.error('Failed to submit vote', {
-        description: error instanceof Error ? error.message : 'Please try again later',
+      notification('error')
+      toast.error(t('voting.voteFailed'), {
+        description: error instanceof Error ? error.message : t('errors.generic'),
       })
     } finally {
       setIsVoting(false)
@@ -430,6 +446,9 @@ function ProductDetailContent() {
             </Tabs>
           </CardContent>
         </Card>
+
+        {/* Comments / Reviews */}
+        <ProductComments productId={product._id} />
 
         {/* Admin Voter List */}
         {adminStatus?.isAdmin && allVotes && (

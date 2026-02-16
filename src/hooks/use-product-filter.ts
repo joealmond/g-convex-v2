@@ -1,6 +1,30 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import type { FilterType } from '@/components/feed/FilterChips'
 import type { Product } from '@/lib/types'
+
+/** Default nearby range in km, overridden by localStorage "g-matrix-nearby-range" */
+const DEFAULT_NEARBY_RANGE_KM = 5
+
+/** Read user's preferred nearby range from localStorage (SSR-safe) */
+export function getNearbyRange(): number {
+  if (typeof window === 'undefined') return DEFAULT_NEARBY_RANGE_KM
+  const stored = localStorage.getItem('g-matrix-nearby-range')
+  if (stored) {
+    const parsed = parseFloat(stored)
+    if (!isNaN(parsed) && parsed > 0) return parsed
+  }
+  return DEFAULT_NEARBY_RANGE_KM
+}
+
+/** Persist the user's preferred nearby range */
+export function setNearbyRange(km: number) {
+  localStorage.setItem('g-matrix-nearby-range', String(km))
+  // Dispatch event so listening hooks re-render
+  window.dispatchEvent(new CustomEvent('g-matrix-nearby-range-change'))
+}
+
+/** Available range presets (km) */
+export const NEARBY_RANGE_OPTIONS = [1, 2, 5, 10, 25, 50] as const
 
 /**
  * Simple fuzzy match — checks if all characters in query appear in order in target
@@ -49,8 +73,19 @@ interface UseProductFilterOptions {
 }
 
 export function useProductFilter({ products, latitude, longitude }: UseProductFilterOptions) {
-  const [filterType, setFilterType] = useState<FilterType>('recent')
+  const [filterType, setFilterType] = useState<FilterType>('nearby')
   const [searchQuery, setSearchQuery] = useState('')
+  const [nearbyRange, setNearbyRangeState] = useState(DEFAULT_NEARBY_RANGE_KM)
+  const [hasAutoFallback, setHasAutoFallback] = useState(false)
+
+  // Sync range from localStorage + listen for changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setNearbyRangeState(getNearbyRange())
+    const handler = () => setNearbyRangeState(getNearbyRange())
+    window.addEventListener('g-matrix-nearby-range-change', handler)
+    return () => window.removeEventListener('g-matrix-nearby-range-change', handler)
+  }, [])
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value)
@@ -94,7 +129,7 @@ export function useProductFilter({ products, latitude, longitude }: UseProductFi
       case 'nearby':
         result = result.filter((p) => {
           const distance = getDistance(p)
-          return distance !== undefined && distance <= 5
+          return distance !== undefined && distance <= nearbyRange
         })
         result.sort(
           (a, b) => (getDistance(a) || Infinity) - (getDistance(b) || Infinity)
@@ -110,7 +145,16 @@ export function useProductFilter({ products, latitude, longitude }: UseProductFi
     }
 
     return result
-  }, [products, filterType, searchQuery, getDistance])
+  }, [products, filterType, searchQuery, getDistance, nearbyRange])
+
+  // Auto-fallback: if "nearby" returns 0 results (no GPS or no products within range),
+  // automatically switch to "recent"
+  useEffect(() => {
+    if (filterType === 'nearby' && products && products.length > 0 && filteredProducts.length === 0 && !hasAutoFallback) {
+      setHasAutoFallback(true)
+      setFilterType('recent')
+    }
+  }, [filterType, products, filteredProducts.length, hasAutoFallback])
 
   /** Whether current filter uses card grid layout (recent, trending, nearby) vs strip list (all) */
   const useCardLayout = filterType !== 'all'
@@ -120,6 +164,7 @@ export function useProductFilter({ products, latitude, longitude }: UseProductFi
     searchQuery,
     filteredProducts,
     useCardLayout,
+    nearbyRange,
     handleSearchChange,
     clearSearch,
     handleFilterChange,
