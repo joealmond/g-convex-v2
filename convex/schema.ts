@@ -201,7 +201,8 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index('by_key', ['key']),
 
-  // Device tokens - push notification registration
+  // Device tokens - DEPRECATED (OneSignal manages tokens internally)
+  // Kept for backward compatibility — can be removed in a future schema migration
   deviceTokens: defineTable({
     userId: v.string(),
     token: v.string(),

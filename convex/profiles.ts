@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { query, mutation, internalMutation } from './_generated/server'
+import { query, mutation, internalMutation, internalQuery } from './_generated/server'
 import { BADGES, shouldAwardBadge } from './lib/gamification'
 import { requireAdmin } from './lib/authHelpers'
 
@@ -226,5 +226,21 @@ export const addPointsInternal = internalMutation({
     if (reason) {
       console.log(`Awarded ${points} points to ${userId}: ${reason}`)
     }
+  },
+})
+
+/**
+ * Get all profiles with active streaks (3+ days) for reminder notifications.
+ * Internal query used by streak reminder cron.
+ */
+export const getActiveStreakers = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    // Fetch all profiles with streak >= 3
+    const allProfiles = await ctx.db.query('profiles').collect()
+    
+    return allProfiles.filter((profile) => 
+      profile.streak && profile.streak >= 3 && profile.lastVoteDate
+    )
   },
 })

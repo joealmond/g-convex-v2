@@ -1,10 +1,18 @@
 /**
- * Push Notification Token Management
+ * Push Notification Token Management (DEPRECATED)
  *
- * Stores and removes device tokens for push notifications.
- * Actual push delivery requires an external service (Firebase Cloud Messaging
- * for Android, APNs for iOS). See docs/PUSH_NOTIFICATIONS_SETUP.md for
- * integration instructions.
+ * ⚠️  DEPRECATED: These functions are no longer used after migrating to OneSignal.
+ * OneSignal manages device tokens internally — no manual token storage needed.
+ *
+ * The `deviceTokens` table remains in the schema for backward compatibility
+ * but is no longer written to. These mutations/queries are kept to avoid
+ * breaking any existing references but can be removed in a future cleanup.
+ *
+ * New push architecture:
+ * - Client: OneSignal SDK handles token registration (src/lib/onesignal.ts)
+ * - Server: OneSignal REST API targets users by external_id (convex/actions/sendPush.ts)
+ *
+ * @deprecated Use OneSignal SDK instead. See docs/PUSH_NOTIFICATIONS_SETUP.md.
  */
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'

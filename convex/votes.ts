@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { query, mutation, internalMutation } from './_generated/server'
+import { query, mutation, internalMutation, internalQuery } from './_generated/server'
 import { internal, components } from './_generated/api'
 import { RateLimiter } from '@convex-dev/rate-limiter'
 import { getAuthUser, requireAuth, isAdmin } from './lib/authHelpers'
@@ -354,6 +354,17 @@ export const createProductAndVote = mutation({
           incrementBy: 1,
         })
       }
+    }
+
+    // Trigger "new product near you" notifications if GPS provided
+    if (args.latitude !== undefined && args.longitude !== undefined) {
+      await ctx.scheduler.runAfter(0, internal.actions.nearbyProduct.notifyNearbyProduct, {
+        productId: productId.toString(),
+        productName: args.name,
+        latitude: args.latitude,
+        longitude: args.longitude,
+        createdBy: userId,
+      })
     }
 
     return { productId, voteId }
@@ -721,5 +732,22 @@ export const deleteVote = mutation({
     await ctx.scheduler.runAfter(0, internal.votes.recalculateProduct, {
       productId,
     })
+  },
+})
+
+/**
+ * Get all votes with GPS coordinates (internal query for nearby product notifications).
+ * Only returns votes from registered users with GPS data.
+ */
+export const getVotesWithGPS = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const allVotes = await ctx.db.query('votes').collect()
+    
+    return allVotes.filter((vote) => 
+      vote.latitude !== undefined && 
+      vote.longitude !== undefined && 
+      vote.userId !== undefined // Only registered users (can receive push notifications)
+    )
   },
 })

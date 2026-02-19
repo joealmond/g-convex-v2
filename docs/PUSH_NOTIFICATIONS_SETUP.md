@@ -1,109 +1,184 @@
-# Push Notifications Setup Guide
+# Push Notifications Setup Guide (OneSignal)
 
-Push notification infrastructure is scaffolded in code but requires external service configuration to deliver messages.
+Push notifications are delivered via [OneSignal](https://onesignal.com/). The client-side SDK handles device registration automatically. Server-side delivery uses the OneSignal REST API from Convex actions.
 
-## What's Already Done (Code)
+## Architecture Overview
 
-| Component | Status | Location |
-|-----------|--------|----------|
-| `deviceTokens` table | ✅ | `convex/schema.ts` |
-| Token register/remove mutations | ✅ | `convex/notifications.ts` |
-| `usePushNotifications` hook | ✅ | `src/hooks/use-push-notifications.ts` |
-| `@capacitor/push-notifications` | ✅ | Installed in `package.json` |
-| i18n keys (push.*) | ✅ | `src/locales/en.json`, `hu.json` |
+```
+┌─────────────────────────────────┐
+│  Mobile App (Capacitor)         │
+│  onesignal-cordova-plugin       │
+│  ┌───────────────────────────┐  │
+│  │ OneSignal.initialize(ID)  │  │  ← App startup
+│  │ OneSignal.login(userId)   │  │  ← After auth
+│  │ OneSignal.Notifications   │  │  ← Permission & listeners
+│  └───────────────────────────┘  │
+└───────────┬─────────────────────┘
+            │ Device registers itself
+            ▼
+┌─────────────────────────────────┐
+│  OneSignal Dashboard            │
+│  Manages tokens, segments,      │
+│  delivery, analytics            │
+└───────────┬─────────────────────┘
+            ▲ REST API
+            │ POST /notifications
+┌───────────┴─────────────────────┐
+│  Convex Actions                 │
+│  convex/actions/sendPush.ts     │
+│  Targets users by external_id   │
+└─────────────────────────────────┘
+```
 
-## What You Need to Configure
+## What's Implemented (Code)
 
-### 1. Firebase Cloud Messaging (Android)
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| OneSignal SDK init | `src/lib/onesignal.ts` | Initialize, login/logout, permission |
+| Push hook | `src/hooks/use-push-notifications.ts` | React hook wiring OneSignal lifecycle |
+| Push manager | `src/components/PushNotificationManager.tsx` | Auto-init in root layout |
+| Push delivery | `convex/actions/sendPush.ts` | OneSignal REST API from Convex |
+| Streak reminder | `convex/actions/streakReminder.ts` | Daily cron → push expiring streaks |
+| Nearby product | `convex/actions/nearbyProduct.ts` | Push to nearby users on new product |
+| Cron schedule | `convex/crons.ts` | Triggers streak reminder daily |
 
-1. Go to [Firebase Console](https://console.firebase.google.com/) and create/select a project
-2. Add an Android app with package name `com.gmatrix.app` (from `capacitor.config.ts`)
-3. Download `google-services.json` and place it in `android/app/`
-4. Add Firebase dependencies to `android/app/build.gradle`:
+## Setup Steps
+
+### 1. Create a OneSignal App
+
+1. Go to [OneSignal Dashboard](https://dashboard.onesignal.com/) → **New App/Website**
+2. Enter app name (e.g., "G-Matrix")
+3. Select platform: **Google Android (FCM)** and/or **Apple iOS (APNs)**
+
+### 2. Configure Android (FCM)
+
+1. In OneSignal dashboard → **Settings → Platforms → Google Android**
+2. You need a **Firebase Server Key** (FCM v1):
+   - Go to [Firebase Console](https://console.firebase.google.com/) → Project Settings → Cloud Messaging
+   - Copy the **Server key** (or create a service account JSON for FCM v1)
+   - Paste into OneSignal dashboard
+3. Download `google-services.json` from Firebase Console → place in `android/app/`
+4. Ensure these are in `android/app/build.gradle`:
    ```gradle
    apply plugin: 'com.google.gms.google-services'
    ```
-5. Add to `android/build.gradle`:
-   ```gradle
-   classpath 'com.google.gms:google-services:4.4.2'
-   ```
 
-### 2. Apple Push Notification service (iOS)
+### 3. Configure iOS (APNs)
 
-1. Go to [Apple Developer Portal](https://developer.apple.com/) → Certificates, Identifiers & Profiles
-2. Create an APNs Key (or certificate) for your App ID
-3. Enable "Push Notifications" capability in Xcode:
+1. In OneSignal dashboard → **Settings → Platforms → Apple iOS**
+2. Upload your **APNs Authentication Key** (.p8 file):
+   - Go to [Apple Developer Portal](https://developer.apple.com/) → Keys → Create key with "Apple Push Notifications service (APNs)"
+   - Download the `.p8` file
+   - Enter Key ID, Team ID, and Bundle ID (`com.gmatrix.app`)
+3. In Xcode, enable Push Notifications capability:
    - Open `ios/App/App.xcodeproj`
-   - Select the App target → Signing & Capabilities
-   - Click "+ Capability" → Push Notifications
-4. Upload the APNs key to Firebase (if using FCM as unified provider) or configure directly
+   - Target → Signing & Capabilities → "+ Capability" → **Push Notifications**
+   - Also add **Background Modes** → check "Remote notifications"
 
-### 3. Server-Side Push Delivery
+### 4. Set Environment Variables
 
-To actually **send** push notifications, you need a Convex action that calls FCM/APNs:
+#### Client-side (Vite)
 
-```typescript
-// convex/actions/sendPush.ts (example)
-import { action } from '../_generated/server'
-import { v } from 'convex/values'
-
-export const sendPush = action({
-  args: {
-    userId: v.string(),
-    title: v.string(),
-    body: v.string(),
-    data: v.optional(v.any()),
-  },
-  handler: async (ctx, { userId, title, body, data }) => {
-    // 1. Fetch user's device tokens
-    const tokens = await ctx.runQuery(api.notifications.getTokensByUser, { userId })
-    
-    // 2. Send via FCM HTTP v1 API
-    for (const { token, platform } of tokens) {
-      await fetch('https://fcm.googleapis.com/v1/projects/YOUR_PROJECT/messages:send', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${await getAccessToken()}`, // OAuth2 service account
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: {
-            token,
-            notification: { title, body },
-            data: data ?? {},
-          },
-        }),
-      })
-    }
-  },
-})
+Add to `.env` (or `.env.local`):
+```bash
+# OneSignal App ID (from Dashboard → Settings → Keys & IDs)
+VITE_ONESIGNAL_APP_ID=your-onesignal-app-id-here
 ```
 
-### 4. Cron Triggers (Optional)
+#### Server-side (Convex)
 
-The app has a cron system in `convex/crons.ts`. Add triggers for:
+Set via `npx convex env set`:
+```bash
+npx convex env set ONESIGNAL_APP_ID "your-onesignal-app-id-here"
+npx convex env set ONESIGNAL_REST_API_KEY "your-rest-api-key-here"
+```
 
-- **Streak expiry reminder**: Check profiles where `lastVoteDate` is approaching 24h, send push
-- **New product near you**: When a product is created, find users with recent GPS votes nearby
+> **Where to find these**: OneSignal Dashboard → Settings → Keys & IDs
+> - **App ID**: The UUID shown at the top
+> - **REST API Key**: Under "REST API Key"
 
-### 5. Wire Hook into App
+### 5. Sync Native Projects
 
-In the root layout or profile page, call the hook:
+After configuration:
+```bash
+npx cap sync
+```
 
-```tsx
-import { usePushNotifications } from '@/hooks/use-push-notifications'
+This copies the OneSignal Cordova plugin to both iOS and Android native projects.
 
-function App() {
-  const user = useCurrentUser() // your auth hook
-  const { requestPermission } = usePushNotifications(user?._id)
-  
-  // Call requestPermission() from a settings toggle or first-launch prompt
+### 6. Native Build Notes
+
+#### Android
+- OneSignal auto-configures via `google-services.json` — no additional Gradle changes needed beyond what `cap sync` provides.
+- The `onesignal-cordova-plugin` Cordova hook handles manifest permissions.
+
+#### iOS
+- After `cap sync`, open Xcode and verify the Push Notifications entitlement is present.
+- OneSignal requires **real device** testing — push does not work on iOS Simulator.
+
+## How It Works
+
+### Client-side Flow
+1. `PushNotificationManager` (in root layout, inside `<ClientOnly>`) calls `initOneSignal()` on mount
+2. `initOneSignal()` calls `OneSignal.initialize(appId)` — SDK registers device with OneSignal servers
+3. When user authenticates, `oneSignalLogin(userId)` links device to the user's `external_id`
+4. On sign-out, `oneSignalLogout()` dissociates the device from the user
+5. Notification permission is requested via `requestPushPermission()` — can be triggered from settings UI
+
+### Server-side Flow
+1. Convex cron triggers `streakReminder` or `nearbyProduct` action
+2. Action identifies target user IDs
+3. Calls `sendPushToUser` / `sendPushToUsers` which POST to OneSignal REST API
+4. OneSignal resolves `external_id` → device tokens → delivers push via APNs/FCM
+
+### Key Concept: external_id
+OneSignal uses `external_id` to link a device to your app's user. This is set by `OneSignal.login(userId)` on the client. Server-side, we target users with:
+```json
+{
+  "include_aliases": { "external_id": ["user-id-here"] },
+  "target_channel": "push"
 }
 ```
+No manual token storage needed — OneSignal maps external_id to device tokens automatically.
 
 ## Testing
 
-1. **Android**: Run on physical device (emulator has limited FCM support)
-2. **iOS**: Run on physical device (simulator doesn't support push)
-3. Use Firebase Console → Cloud Messaging → "Send test message" with a device token
-4. Check Convex dashboard for `deviceTokens` table entries
+1. **Physical devices only** — push notifications don't work on emulators/simulators
+2. Use OneSignal dashboard → **Messages → Push → New Push** to send a test
+3. Or target a specific user:
+   ```bash
+   curl -X POST https://api.onesignal.com/notifications \
+     -H "Authorization: Key YOUR_REST_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "app_id": "YOUR_APP_ID",
+       "include_aliases": { "external_id": ["test-user-id"] },
+       "target_channel": "push",
+       "headings": { "en": "Test" },
+       "contents": { "en": "Hello from OneSignal!" }
+     }'
+   ```
+4. Check Convex dashboard logs for `[Push]` prefixed messages
+
+## Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| `VITE_ONESIGNAL_APP_ID not set` in console | Add to `.env` and restart dev server |
+| `OneSignal not configured` in Convex logs | Run `npx convex env set ONESIGNAL_APP_ID ...` and `ONESIGNAL_REST_API_KEY ...` |
+| No notifications on iOS | Verify APNs key uploaded, Push capability enabled in Xcode, test on real device |
+| No notifications on Android | Verify `google-services.json` in `android/app/`, FCM key set in OneSignal dashboard |
+| User not receiving targeted push | Verify `OneSignal.login(userId)` is called after auth — check console for `[OneSignal] Logged in user:` |
+
+## Migration Notes (from FCM direct)
+
+The previous implementation used:
+- `@capacitor/push-notifications` (removed) — replaced by `onesignal-cordova-plugin`
+- `convex/notifications.ts` (deprecated) — token CRUD, no longer needed
+- `deviceTokens` table (deprecated) — kept in schema for backward compat
+- `FCM_SERVER_KEY` env var (removed) — replaced by `ONESIGNAL_REST_API_KEY`
+
+References:
+- [OneSignal Cordova/Capacitor SDK](https://github.com/nicefiction/onesignal-cordova-plugin)
+- [OneSignal REST API — Create Notification](https://documentation.onesignal.com/reference/create-notification)
+- [OneSignal Mobile SDK Reference](https://documentation.onesignal.com/docs/mobile-sdk-reference)

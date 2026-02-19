@@ -89,6 +89,38 @@
 - Evaluate migrating from Convex storage to Cloudflare R2 (free egress)
 - Set up Cloudflare CDN for image delivery
 
+### O(log n) Aggregates via `@convex-dev/aggregate`
+> The single highest-value DX improvement. Replace O(n) `.collect()` patterns with efficient aggregates.
+> Reference: [@convex-dev/aggregate docs](https://www.convex.dev/components/aggregate) | [Better Convex Aggregates guide](https://www.better-convex.com/docs/server/advanced/aggregates)
+
+- Adopt [`@convex-dev/aggregate`](https://www.npmjs.com/package/@convex-dev/aggregate) (official Convex component)
+- **Leaderboard rankings** — O(log n) `indexOf()` for user rank + `paginate()` for top-N, replacing current "fetch all profiles + sort" pattern
+- **Vote counts per product** — aggregate counts by `productId` namespace, possibly removing denormalized `voteCount` field
+- **Follower/following counts** — aggregate counts on `follows` table by `followerId` / `followingId`
+- **Dashboard stats** — global counts for total users, votes, products (admin panel)
+- **Price percentiles** — sorted aggregate for p50/p95 price analysis
+- Requires: add `aggregate` component to `convex/convex.config.ts`, define `TableAggregate` instances, backfill existing data
+
+### Reusable Middleware via `convex-helpers`
+> Replace scattered `requireAuth()` / `isAdmin()` calls with composable function wrappers.
+> Reference: [convex-helpers customFunctions](https://github.com/get-convex/convex-helpers#custom-functions) | [Better Convex Middlewares](https://www.better-convex.com/docs/server/middlewares)
+
+- Create `authQuery`, `authMutation`, `adminQuery`, `adminMutation` wrappers using `customQuery`/`customMutation` from `convex-helpers/server/customFunctions`
+- Auth middleware: checks session, injects `ctx.user` + `ctx.userId` — guaranteed non-null in handler
+- Admin middleware: extends auth middleware with `isAdmin` check
+- Rate-limit middleware: composable with auth variants
+- Eliminates boilerplate `const user = await getAuthUser(ctx); if (!user) throw ...` in every function
+
+### Trigger-Like Side Effects Pattern
+> Centralize side effects (gamification, denormalized updates) instead of scattering them across mutations.
+> Reference: [Better Convex Triggers](https://www.better-convex.com/docs/orm/triggers) (pattern inspiration — no need to adopt the ORM)
+
+- Create `internal.sideEffects.onVoteCast` — handles gamification points, streak update, badge check, nearby notification
+- Create `internal.sideEffects.onProductCreated` — handles creator points, feed entry
+- Create `internal.sideEffects.onCommentPosted` — handles commenter points
+- Wire via `ctx.scheduler.runAfter(0, ...)` in mutations (already used for nearby notifications)
+- Benefits: single source of truth for side effects, easier testing, no forgotten point awards
+
 ### Scaling
 - Evaluate sharded counters for high-concurrency vote counts (100+ writes/sec)
 - Set up `@convex-dev/migrations` framework for schema evolution
@@ -113,6 +145,18 @@
 - Integrate Sentry for error tracking
 - PostHog for product analytics
 - User analytics, retention metrics
+
+### Convex Library Evaluation Notes
+> Researched 2026-02-19. Neither library recommended for full adoption, but valuable patterns extracted above.
+
+| Library | Verdict | Key Takeaway |
+|---------|---------|-------------|
+| [Better Convex](https://www.better-convex.com/docs) (udecode) | **Don't adopt** — full backend rewrite, Next.js-centric | Aggregates wrapper, trigger pattern, middleware composition |
+| [fluent-convex](https://github.com/mikecann/fluent-convex) (mikecann) | **Don't adopt** — too immature (39★), marginal syntax benefit | Callable builder pattern (already achievable with helper functions) |
+
+- Better Convex's aggregates are just a wrapper around `@convex-dev/aggregate` — use the official component directly
+- Better Convex's middleware is similar to `convex-helpers/customFunctions` — use the lighter existing tool
+- fluent-convex's `.query().input().handler().public()` is nice syntax but not worth the migration + dependency risk
 
 ### Template Upstream
 - Contribute battle-tested patterns back to `convex-tanstack-cloudflare` template
@@ -141,4 +185,4 @@ These files have been moved to `references/` for historical context:
 
 ---
 
-*Last updated: February 2026*
+*Last updated: 2026-02-19*

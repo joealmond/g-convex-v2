@@ -10,6 +10,7 @@ import { VoteMigrationHandler } from '@/components/VoteMigrationHandler'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { SyncManager } from '@/components/SyncManager'
 import { PendingSyncBadge } from '@/components/PendingSyncBadge'
+import { PushNotificationManager } from '@/components/PushNotificationManager'
 import { TopBar } from '@/components/layout/TopBar'
 import { BottomTabs } from '@/components/layout/BottomTabs'
 import { PageShell } from '@/components/layout/PageShell'
@@ -133,6 +134,7 @@ function RootComponent() {
               <VoteMigrationHandler />
               <SyncManager />
               <PendingSyncBadge />
+              <PushNotificationManager />
             </ClientOnly>
           </ImpersonateProvider>
           </I18nProvider>

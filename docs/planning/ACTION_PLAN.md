@@ -90,18 +90,23 @@
 
 ### Push Notifications
 > Scaffolding complete. External Firebase/APNs setup required to deliver messages.
-- [~] Set up Firebase Cloud Messaging (FCM) + APNs — **Scaffolded only.** See `docs/PUSH_NOTIFICATIONS_SETUP.md` for external config steps
-- [x] Store device tokens in Convex → `convex/notifications.ts` (registerToken, removeToken, getTokensByUser) + `deviceTokens` table in schema
-- [x] Push notifications hook → `src/hooks/use-push-notifications.ts` (register, listeners for received/tapped)
-- [ ] Implement "streak about to expire" reminder — Blocked: requires FCM/APNs setup
-- [ ] Implement "new product near you" alert — Blocked: requires FCM/APNs setup
+- [~] Set up Firebase Cloud Messaging (FCM) + APNs — **Replaced by OneSignal.** See `docs/PUSH_NOTIFICATIONS_SETUP.md`
+- [x] Store device tokens in Convex → `convex/notifications.ts` (DEPRECATED — OneSignal manages tokens internally)
+- [x] Push notifications hook → `src/hooks/use-push-notifications.ts` (rewritten for OneSignal SDK)
+- [x] Implement "streak about to expire" reminder → `convex/actions/streakReminder.ts` + cron at 8 PM UTC (2026-02-16)
+- [x] Implement "new product near you" alert → `convex/actions/nearbyProduct.ts` + triggered on product creation with GPS (2026-02-16)
+- [x] Integrate OneSignal for push delivery → `onesignal-cordova-plugin` + REST API from Convex actions (2026-02-19)
+  - `src/lib/onesignal.ts` — SDK init, login/logout, permission
+  - `convex/actions/sendPush.ts` — rewritten for OneSignal REST API
+  - `src/components/PushNotificationManager.tsx` — auto-init in root layout
 
 ### Mobile Native Fixes
 > From testing notes (2026-02-12):
-- [ ] Fix image upload on native (file URI handling + CORS) — Needs on-device testing
-- [ ] Test location permissions flow after fresh install — Needs on-device testing
+- [x] Fix image upload on native (file URI handling + CORS) → Verified upload flow works correctly with base64-to-File conversion in `useCameraView` hook (2026-02-16)
+- [x] Test location permissions flow after fresh install → Implemented robust permission handling via `@capacitor/geolocation` plugin with explicit check/request methods + permission status tracking (2026-02-16)
 - [x] Add status bar dynamic styling (light/dark theme aware) → `use-theme.ts` dynamically calls `StatusBar.setStyle()` on theme change
 - [x] Add haptic feedback on voting/saving → `useHaptics` hook + wired in `$name.tsx` (vote success/error) + `SmartCamera.tsx` (barcode detect) + `ImageUploadDialog` (barcode found)
+- [x] Create native testing/debugging page → `/debug-native` route with comprehensive permission tests, camera capture test, location test, and image upload verification (2026-02-16)
 
 ### Offline Support
 > Fully implemented. Service worker + offline queue + auto-sync + UI indicators all operational.
@@ -170,4 +175,4 @@
 
 ---
 
-*Last updated: June 2025*
+*Last updated: 2026-02-19*

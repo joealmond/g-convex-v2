@@ -14,6 +14,7 @@ import { Route as MapRouteImport } from './routes/map'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as FilesRouteImport } from './routes/files'
+import { Route as DebugNativeRouteImport } from './routes/debug-native'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as ChallengesRouteImport } from './routes/challenges'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -48,6 +49,11 @@ const LeaderboardRoute = LeaderboardRouteImport.update({
 const FilesRoute = FilesRouteImport.update({
   id: '/files',
   path: '/files',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DebugNativeRoute = DebugNativeRouteImport.update({
+  id: '/debug-native',
+  path: '/debug-native',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityRoute = CommunityRouteImport.update({
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/challenges': typeof ChallengesRoute
   '/community': typeof CommunityRoute
+  '/debug-native': typeof DebugNativeRoute
   '/files': typeof FilesRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/challenges': typeof ChallengesRoute
   '/community': typeof CommunityRoute
+  '/debug-native': typeof DebugNativeRoute
   '/files': typeof FilesRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/challenges': typeof ChallengesRoute
   '/community': typeof CommunityRoute
+  '/debug-native': typeof DebugNativeRoute
   '/files': typeof FilesRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/challenges'
     | '/community'
+    | '/debug-native'
     | '/files'
     | '/leaderboard'
     | '/login'
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/challenges'
     | '/community'
+    | '/debug-native'
     | '/files'
     | '/leaderboard'
     | '/login'
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/challenges'
     | '/community'
+    | '/debug-native'
     | '/files'
     | '/leaderboard'
     | '/login'
@@ -208,6 +220,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   ChallengesRoute: typeof ChallengesRoute
   CommunityRoute: typeof CommunityRoute
+  DebugNativeRoute: typeof DebugNativeRoute
   FilesRoute: typeof FilesRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
@@ -253,6 +266,13 @@ declare module '@tanstack/react-router' {
       path: '/files'
       fullPath: '/files'
       preLoaderRoute: typeof FilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/debug-native': {
+      id: '/debug-native'
+      path: '/debug-native'
+      fullPath: '/debug-native'
+      preLoaderRoute: typeof DebugNativeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community': {
@@ -348,6 +368,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   ChallengesRoute: ChallengesRoute,
   CommunityRoute: CommunityRoute,
+  DebugNativeRoute: DebugNativeRoute,
   FilesRoute: FilesRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,

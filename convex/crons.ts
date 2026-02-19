@@ -5,6 +5,7 @@
  * 1. Time-decay: Daily recalculation of product averages with time-weighted votes
  * 2. Price snapshots: Daily capture of price changes
  * 3. Challenge reset: Weekly generation of new community challenges
+ * 4. Streak reminders: Daily check for streaks about to expire
  */
 
 import { cronJobs } from "convex/server";
@@ -43,6 +44,17 @@ crons.weekly(
   "reset-weekly-challenges",
   { dayOfWeek: "monday", hourUTC: 0, minuteUTC: 0 },
   internal.challenges.resetWeeklyChallenges,
+);
+
+/**
+ * Check for streaks about to expire and send reminders
+ * Runs daily at 8 PM UTC (evening reminder for users to vote before midnight)
+ * Sends push notifications to users with 3+ day streaks who haven't voted today
+ */
+crons.daily(
+  "check-streak-expiry",
+  { hourUTC: 20, minuteUTC: 0 },
+  internal.actions.streakReminder.checkStreakExpiry,
 );
 
 export default crons;
