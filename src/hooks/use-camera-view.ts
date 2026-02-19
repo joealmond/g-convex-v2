@@ -128,7 +128,7 @@ export function useCameraView() {
 
     try {
       const { CameraView } = await import('capacitor-camera-view')
-      const result = await CameraView.capture()
+      const result = await CameraView.capture({ quality: 90 })
 
       if (!result.photo) return null
 

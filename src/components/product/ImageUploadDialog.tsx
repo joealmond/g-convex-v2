@@ -77,7 +77,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
   }, [open, requestLocation])
 
   // Convex mutations
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl)
+  const generateR2UploadUrl = useAction(api.files.generateR2UploadUrl)
   // Note: api.ai.analyzeImage is an action - will be available after convex push
   const analyzeImage = useAction(api.ai.analyzeImage as any)
   const createProductAndVote = useMutation(api.votes.createProductAndVote)
@@ -262,25 +262,32 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
     setError(null)
 
     try {
-      // 1. Get upload URL from Convex
-      const uploadUrl = await generateUploadUrl()
+      // 1. Get pre-signed upload URL for Cloudflare R2
+      const { uploadUrl, publicUrl } = await generateR2UploadUrl({
+        contentType: imageFile.type,
+      })
 
-      // 2. Upload image to Convex storage
+      // 2. Upload image directly to Cloudflare R2 via PUT request
       const response = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': imageFile.type },
+        method: 'PUT',
+        headers: {
+          'Content-Type': imageFile.type,
+        },
         body: imageFile,
       })
 
       if (!response.ok) {
-        throw new Error('Failed to upload image')
+        throw new Error('Failed to upload image to CDN')
       }
 
-      const { storageId: newStorageId } = await response.json()
-      setStorageId(newStorageId)
+      // We don't have a Convex storageId anymore, just the public R2 URL
+      setRealImageUrl(publicUrl)
+      // Set storageId to a dummy value to pass any lingering falsy checks during refactor
+      // We will rely on realImageUrl for the actual product creation
+      setStorageId('r2_upload' as any)
 
-      // 3. Run AI analysis
-      const result = await analyzeImage({ storageId: newStorageId })
+      // 3. Run AI analysis using the public URL
+      const result = await analyzeImage({ imageUrl: publicUrl })
 
       if (!result.success) {
         // AI analysis failed, but we can still continue with manual entry
@@ -309,7 +316,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       setError(err.message || 'Failed to upload image')
       setStep('upload')
     }
-  }, [imageFile, generateUploadUrl, analyzeImage])
+  }, [imageFile, generateR2UploadUrl, analyzeImage])
 
   const resetDialog = useCallback(() => {
     // Revoke blob URL to free memory
@@ -340,7 +347,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
     try {
       const result = await lookupBarcode({ barcode })
 
-      if (result.found && result.existingProduct) {
+      if (result.found && 'existingProduct' in result && result.existingProduct) {
         // Product already exists in our DB — navigate to it
         toast.info(t('smartCamera.existingProduct'), {
           description: result.existingProduct.name,
@@ -357,7 +364,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
         return
       }
 
-      if (result.found && result.productData) {
+      if (result.found && 'productData' in result && result.productData) {
         // Found on Open Food Facts — pre-fill form
         impact('medium')
         toast.success(t('smartCamera.barcodeFound'))
@@ -385,7 +392,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
    * User can edit later from the product page.
    */
   const handleSaveAsDraft = useCallback(async () => {
-    if (!storageId || !productName.trim()) {
+    if (!realImageUrl || !productName.trim()) {
       setError(t('imageUpload.provideProductName'))
       return
     }
@@ -399,7 +406,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       const result = await createProductAndVote({
         name: productName.trim(),
         imageUrl,
-        imageStorageId: (storageId as any) ?? undefined,
+        imageStorageId: storageId === 'r2_upload' ? undefined : (storageId as any) ?? undefined,
         anonymousId: anonId ?? undefined,
         safety,
         taste,
@@ -427,7 +434,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
   }, [storageId, productName, anonId, safety, taste, price, storeName, analysis, realImageUrl, coords, createProductAndVote, onSuccess, resetDialog, t])
 
   const handleSubmit = useCallback(async () => {
-    if (!storageId || !productName.trim()) {
+    if (!realImageUrl || !productName.trim()) {
       setError(t('imageUpload.provideProductName'))
       return
     }
@@ -443,7 +450,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       const result = await createProductAndVote({
         name: productName.trim(),
         imageUrl,
-        imageStorageId: (storageId as any) ?? undefined,
+        imageStorageId: storageId === 'r2_upload' ? undefined : (storageId as any) ?? undefined,
         anonymousId: anonId ?? undefined,
         safety,
         taste,

@@ -3,6 +3,7 @@ import { mutation, query } from './_generated/server'
 import { components } from './_generated/api'
 import { RateLimiter } from '@convex-dev/rate-limiter'
 import { getAuthUser } from './lib/authHelpers'
+import { followsByFollower, followsByFollowing } from './aggregates'
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
   follow: { kind: 'token bucket', rate: 20, period: 60000, capacity: 30 },
@@ -47,11 +48,17 @@ export const follow = mutation({
     }
 
     // Create follow
-    await ctx.db.insert('follows', {
+    const followId = await ctx.db.insert('follows', {
       followerId: user._id,
       followingId: args.followingId,
       createdAt: Date.now(),
     })
+    
+    const followDoc = await ctx.db.get(followId)
+    if (followDoc) {
+      await followsByFollower.insert(ctx, followDoc)
+      await followsByFollowing.insert(ctx, followDoc)
+    }
   },
 })
 
@@ -79,7 +86,12 @@ export const unfollow = mutation({
     }
 
     // Delete follow
+    const docToDelete = await ctx.db.get(existing._id)
     await ctx.db.delete(existing._id)
+    if (docToDelete) {
+      await followsByFollower.delete(ctx, docToDelete)
+      await followsByFollowing.delete(ctx, docToDelete)
+    }
   },
 })
 
@@ -142,23 +154,14 @@ export const getCounts = query({
     userId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Count followers and following without loading all documents
-    // Convex doesn't have a native count(), but we limit to a reasonable cap
-    const MAX_COUNT = 10000
-    const [followers, following] = await Promise.all([
-      ctx.db
-        .query('follows')
-        .withIndex('by_following', (q) => q.eq('followingId', args.userId))
-        .take(MAX_COUNT),
-      ctx.db
-        .query('follows')
-        .withIndex('by_follower', (q) => q.eq('followerId', args.userId))
-        .take(MAX_COUNT),
+    const [followersCount, followingCount] = await Promise.all([
+      followsByFollowing.count(ctx, { namespace: args.userId }),
+      followsByFollower.count(ctx, { namespace: args.userId }),
     ])
 
     return {
-      followers: followers.length,
-      following: following.length,
+      followers: followersCount,
+      following: followingCount,
     }
   },
 })

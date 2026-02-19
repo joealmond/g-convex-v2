@@ -41,6 +41,8 @@ export default defineSchema({
     lastUpdated: v.number(),
     createdBy: v.optional(v.string()), // Better Auth user._id is a string
     createdAt: v.number(),
+    latitude: v.optional(v.number()),
+    longitude: v.optional(v.number()),
     // Extended fields from g-convex
     currency: v.optional(v.string()), // e.g., "HUF", "EUR"
     purchaseLocation: v.optional(v.string()),

@@ -1,8 +1,11 @@
 import { v } from 'convex/values'
 import { query, mutation, internalMutation } from './_generated/server'
 import { components } from './_generated/api'
+import { internal } from './_generated/api'
+import { productsGeo } from './geospatial'
 import { RateLimiter } from '@convex-dev/rate-limiter'
-import { requireAuth, requireAdmin } from './lib/authHelpers'
+import { authMutation, adminMutation } from './lib/customFunctions'
+import { productsAggregate, votesByProduct } from './aggregates'
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
   productUpdate: { kind: 'token bucket', rate: 10, period: 60000, capacity: 15 },
@@ -155,7 +158,19 @@ export const create = mutation({
       lastUpdated: Date.now(),
       createdBy: identity?.subject,
       createdAt: Date.now(),
+      latitude: undefined,
+      longitude: undefined,
     })
+
+    const newProduct = await ctx.db.get(productId)
+    if (newProduct) await productsAggregate.insert(ctx, newProduct)
+
+    if (identity?.subject) {
+      await ctx.scheduler.runAfter(0, internal.sideEffects.onProductCreated, {
+        productId,
+        creatorId: identity.subject,
+      })
+    }
 
     return productId
   },
@@ -164,19 +179,19 @@ export const create = mutation({
 /**
  * Update a product
  */
-export const update = mutation({
+export const update = authMutation({
   args: {
     id: v.id('products'),
     name: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     ingredients: v.optional(v.array(v.string())),
+    latitude: v.optional(v.number()),
+    longitude: v.optional(v.number()),
   },
   handler: async (ctx, { id, ...updates }) => {
-    const user = await requireAuth(ctx)
-
     // Rate limiting
     const { ok, retryAfter } = await rateLimiter.limit(ctx, 'productUpdate', {
-      key: user._id,
+      key: ctx.userId,
     })
     if (!ok) {
       throw new Error(
@@ -188,6 +203,19 @@ export const update = mutation({
       ...updates,
       lastUpdated: Date.now(),
     })
+    
+    // Update geospatial index if coordinates changed
+    if (updates.latitude !== undefined || updates.longitude !== undefined) {
+      const product = await ctx.db.get(id)
+      if (product && product.latitude !== undefined && product.longitude !== undefined) {
+        // Geospatial Index insert handles upserts automatically
+        // 4th arg is filterKeys, which we aren't using for now, so we pass {}
+        await productsGeo.insert(ctx, id, {
+          latitude: product.latitude,
+          longitude: product.longitude
+        }, {})
+      }
+    }
 
     return id
   },
@@ -196,11 +224,9 @@ export const update = mutation({
 /**
  * Delete a product (admin only)
  */
-export const deleteProduct = mutation({
+export const deleteProduct = adminMutation({
   args: { id: v.id('products') },
   handler: async (ctx, { id }) => {
-    await requireAdmin(ctx)
-    
     // Delete all votes for this product
     const votes = await ctx.db
       .query('votes')
@@ -209,9 +235,15 @@ export const deleteProduct = mutation({
     
     for (const vote of votes) {
       await ctx.db.delete(vote._id)
+      await votesByProduct.delete(ctx, vote)
     }
 
+    const docToDelete = await ctx.db.get(id)
     await ctx.db.delete(id)
+    if (docToDelete) {
+      await productsAggregate.delete(ctx, docToDelete)
+      await productsGeo.remove(ctx, id)
+    }
   },
 })
 
@@ -289,5 +321,53 @@ export const getPriceHistory = query({
       .filter((q) => q.gte(q.field('snapshotDate'), cutoffDateStr))
       .order('desc')
       .collect()
+  },
+})
+
+/**
+ * Get nearby products using the Geospatial Index
+ */
+export const getNearbyProducts = query({
+  args: {
+    latitude: v.number(),
+    longitude: v.number(),
+    radiusInMeters: v.optional(v.number()), // default 10km = 10000m
+    limit: v.optional(v.number()), // default 20
+  },
+  handler: async (ctx, args) => {
+    const radius = args.radiusInMeters ?? 10000
+    const limitAmount = args.limit ?? 20
+
+    // queryNearest handles the geospatial math and sorting natively!
+    const results = await productsGeo.nearest(ctx, {
+      point: { 
+        latitude: args.latitude,
+        longitude: args.longitude,
+      },
+      maxDistance: radius,
+      limit: limitAmount,
+    })
+
+    // Wait for all product document reads to complete
+    const products = await Promise.all(
+      results.map(async (result) => {
+        const product = await ctx.db.get(result.key as import('./_generated/dataModel').Id<"products">)
+        if (!product) return null
+        
+        let finalImageUrl = product.imageUrl
+        if (product.imageStorageId) {
+          finalImageUrl = await ctx.storage.getUrl(product.imageStorageId) ?? product.imageUrl
+        }
+
+        return {
+          ...product,
+          imageUrl: finalImageUrl,
+          distance: result.distance // distance in meters is returned by the index
+        }
+      })
+    )
+
+    // filter out nulls in case a product was hard-deleted outside of deleteProduct
+    return products.filter((p): p is NonNullable<typeof p> => p !== null)
   },
 })

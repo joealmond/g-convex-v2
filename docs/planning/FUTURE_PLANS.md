@@ -168,6 +168,19 @@
 - "Scan your first product" CTA
 - Gamification intro ("Here's how you earn badges")
 
+## ✅ Launch & QA Testing (Moved from Action Plan)
+
+### Testing
+- [ ] Add integration tests for vote cast → recalculate → average update flow
+- [ ] Add integration test for anonymous → registered vote migration
+- [ ] Add E2E tests for product creation + AI analysis pipeline
+
+### App Store Publishing
+- [ ] Create App Store listing (iOS) — screenshots, description, keywords
+- [ ] Create Play Store listing (Android)
+- [ ] Write privacy policy & terms of service pages
+- [ ] Submit to app stores
+
 ---
 
 ## 📋 Reference Documents

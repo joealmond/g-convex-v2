@@ -4,6 +4,7 @@
  * Checks for users whose voting streak is about to expire and sends push notifications.
  * A streak expires if the user doesn't vote within 24 hours of their last vote.
  */
+"use node";
 import { internalAction } from '../_generated/server'
 import { api, internal } from '../_generated/api'
 
@@ -18,7 +19,7 @@ import { api, internal } from '../_generated/api'
  */
 export const checkStreakExpiry = internalAction({
   args: {},
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<{ sent: number; failed?: number; total?: number }> => {
     // Get all profiles with active streaks (3+ days)
     const profiles = await ctx.runQuery(internal.profiles.getActiveStreakers)
 
@@ -28,7 +29,6 @@ export const checkStreakExpiry = internalAction({
     }
 
     const now = Date.now()
-    const twentyThreeHoursAgo = now - 23 * 60 * 60 * 1000
 
     const usersToRemind: string[] = []
 
@@ -53,7 +53,7 @@ export const checkStreakExpiry = internalAction({
     // Send push notifications
     console.log(`[Streak Reminder] Sending to ${usersToRemind.length} users`)
 
-    const result = await ctx.runAction(api.actions.sendPush.sendPushToUsers, {
+    const result: any = await ctx.runAction(api.actions.sendPush.sendPushToUsers, {
       userIds: usersToRemind,
       title: '🔥 Your streak is about to expire!',
       body: "Don't lose your streak! Vote today to keep it alive.",

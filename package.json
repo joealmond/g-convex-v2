@@ -32,6 +32,8 @@
     "cap:android": "npx cap open android"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.994.0",
+    "@aws-sdk/s3-request-presigner": "^3.994.0",
     "@better-auth/core": "^1.4.18",
     "@capacitor/android": "^8.0.2",
     "@capacitor/app": "^8.0.1",
@@ -46,7 +48,10 @@
     "@capacitor/share": "^8.0.0",
     "@capacitor/status-bar": "^8.0.1",
     "@cloudflare/vite-plugin": "^1.13.10",
+    "@convex-dev/action-retrier": "^0.3.0",
+    "@convex-dev/aggregate": "^0.2.1",
     "@convex-dev/better-auth": "^0.10.10",
+    "@convex-dev/geospatial": "^0.2.1",
     "@convex-dev/rate-limiter": "^0.3.2",
     "@convex-dev/react-query": "^0.1.0",
     "@hookform/resolvers": "^5.2.2",

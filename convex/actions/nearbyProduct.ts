@@ -4,6 +4,7 @@
  * Sends push notifications to users when a new product is created near their location.
  * Uses vote GPS coordinates to find nearby users.
  */
+"use node";
 import { internalAction } from '../_generated/server'
 import { api, internal } from '../_generated/api'
 import { v } from 'convex/values'
@@ -93,7 +94,7 @@ export const notifyNearbyProduct = internalAction({
     longitude: v.number(),
     createdBy: v.optional(v.string()),
   },
-  handler: async (ctx, { productId, productName, latitude, longitude, createdBy }) => {
+  handler: async (ctx, { productId, productName, latitude, longitude, createdBy }): Promise<{ sent: number; failed?: number; total?: number }> => {
     console.log(`[Nearby Product] Finding users near ${productName} (${latitude}, ${longitude})`)
 
     // Find users within 10km radius
@@ -112,7 +113,7 @@ export const notifyNearbyProduct = internalAction({
     console.log(`[Nearby Product] Sending to ${nearbyUserIds.length} nearby users`)
 
     // Send push notifications
-    const result = await ctx.runAction(api.actions.sendPush.sendPushToUsers, {
+    const result: any = await ctx.runAction(api.actions.sendPush.sendPushToUsers, {
       userIds: nearbyUserIds,
       title: '📍 New product near you!',
       body: `${productName} was just added nearby. Be the first to rate it!`,

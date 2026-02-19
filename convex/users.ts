@@ -29,15 +29,16 @@
 import { query, type QueryCtx } from './_generated/server'
 import { authComponent } from './auth'
 import { ADMIN_EMAILS, ROLES } from './lib/config'
-import type { AuthUser } from './lib/authHelpers'
+import { getAuthUser } from './lib/authHelpers'
+import { profilesAggregate } from './aggregates'
 
 /**
  * Safely get the authenticated user, returning null if unauthenticated.
  * This prevents throwing during SSR when no session exists.
  */
-async function getAuthUserSafe(ctx: QueryCtx): Promise<AuthUser | null> {
+async function getAuthUserSafe(ctx: QueryCtx): Promise<Awaited<ReturnType<typeof getAuthUser>> | null> {
   try {
-    return (await authComponent.getAuthUser(ctx)) as AuthUser | null
+    return (await authComponent.getAuthUser(ctx)) as any
   } catch {
     // Unauthenticated - return null instead of throwing
     return null
@@ -81,8 +82,9 @@ export const isAdmin = query({
 
     // Check if this is the first user (auto-admin for initial setup)
     // We use profiles table since it's created for each authenticated user
-    const allProfiles = await ctx.db.query('profiles').collect()
-    if (allProfiles.length <= 1) {
+    // Auto-admin for initial setup
+    const profileCount = await profilesAggregate.count(ctx)
+    if (profileCount <= 1) {
       // Either no profiles yet (this is the first login) or only one profile exists
       return true
     }

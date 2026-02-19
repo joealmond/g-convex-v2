@@ -1,0 +1,43 @@
+
+> g-matrix@1.0.0 typecheck
+> tsc --noEmit
+
+convex/actions/streakReminder.ts(32,11): error TS6133: 'twentyThreeHoursAgo' is declared but its value is never read.
+convex/challenges.ts(9,28): error TS6133: 'mutation' is declared but its value is never read.
+convex/challenges.ts(10,10): error TS6133: 'requireAuth' is declared but its value is never read.
+convex/dietaryProfiles.ts(9,10): error TS6133: 'mutation' is declared but its value is never read.
+convex/files.ts(19,19): error TS6133: 'ctx' is declared but its value is never read.
+convex/products.ts(7,1): error TS6192: All imports in import declaration are unused.
+convex/sideEffects.ts(4,10): error TS6133: 'BADGES' is declared but its value is never read.
+convex/sideEffects.ts(4,18): error TS6133: 'shouldAwardBadge' is declared but its value is never read.
+convex/sideEffects.ts(119,19): error TS6133: 'ctx' is declared but its value is never read.
+convex/sideEffects.ts(119,24): error TS6133: 'args' is declared but its value is never read.
+convex/stats.ts(1,1): error TS6133: 'query' is declared but its value is never read.
+convex/stats.ts(3,1): error TS6133: 'requireAdmin' is declared but its value is never read.
+convex/votes.ts(5,10): error TS6133: 'getAuthUser' is declared but its value is never read.
+convex/votes.ts(5,23): error TS6133: 'requireAuth' is declared but its value is never read.
+src/components/product/ImageUploadDialog.tsx(350,34): error TS2339: Property 'existingProduct' does not exist on type '{ found: true; existingProduct: { _id: string; name: string; barcode?: string | undefined; imageUrl?: string | undefined; }; source: "local"; } | { found: true; source: "openfoodfacts"; productData: { ...; }; }'.
+  Property 'existingProduct' does not exist on type '{ found: true; source: "openfoodfacts"; productData: { name: string; brand?: string | undefined; category?: string | undefined; ingredients: string[]; allergens: string[]; nutritionScore?: string | undefined; servingSize?: string | undefined; imageUrl?: string | undefined; barcode: string; }; }'.
+src/components/product/ImageUploadDialog.tsx(353,31): error TS2339: Property 'existingProduct' does not exist on type '{ found: true; existingProduct: { _id: string; name: string; barcode?: string | undefined; imageUrl?: string | undefined; }; source: "local"; } | { found: true; source: "openfoodfacts"; productData: { ...; }; }'.
+  Property 'existingProduct' does not exist on type '{ found: true; source: "openfoodfacts"; productData: { name: string; brand?: string | undefined; category?: string | undefined; ingredients: string[]; allergens: string[]; nutritionScore?: string | undefined; servingSize?: string | undefined; imageUrl?: string | undefined; barcode: string; }; }'.
+src/components/product/ImageUploadDialog.tsx(359,76): error TS2339: Property 'existingProduct' does not exist on type '{ found: true; existingProduct: { _id: string; name: string; barcode?: string | undefined; imageUrl?: string | undefined; }; source: "local"; } | { found: true; source: "openfoodfacts"; productData: { ...; }; }'.
+  Property 'existingProduct' does not exist on type '{ found: true; source: "openfoodfacts"; productData: { name: string; brand?: string | undefined; category?: string | undefined; ingredients: string[]; allergens: string[]; nutritionScore?: string | undefined; servingSize?: string | undefined; imageUrl?: string | undefined; barcode: string; }; }'.
+src/components/product/ImageUploadDialog.tsx(367,34): error TS2339: Property 'productData' does not exist on type '{ found: true; existingProduct: { _id: string; name: string; barcode?: string | undefined; imageUrl?: string | undefined; }; source: "local"; } | { found: true; source: "openfoodfacts"; productData: { ...; }; }'.
+  Property 'productData' does not exist on type '{ found: true; existingProduct: { _id: string; name: string; barcode?: string | undefined; imageUrl?: string | undefined; }; source: "local"; }'.
+src/components/product/ImageUploadDialog.tsx(371,31): error TS2339: Property 'productData' does not exist on type '{ found: true; existingProduct: { _id: string; name: string; barcode?: string | undefined; imageUrl?: string | undefined; }; source: "local"; } | { found: true; source: "openfoodfacts"; productData: { ...; }; }'.
+  Property 'productData' does not exist on type '{ found: true; existingProduct: { _id: string; name: string; barcode?: string | undefined; imageUrl?: string | undefined; }; source: "local"; }'.
+src/components/product/ImageUploadDialog.tsx(372,20): error TS2339: Property 'productData' does not exist on type '{ found: true; existingProduct: { _id: string; name: string; barcode?: string | undefined; imageUrl?: string | undefined; }; source: "local"; } | { found: true; source: "openfoodfacts"; productData: { ...; }; }'.
+  Property 'productData' does not exist on type '{ found: true; existingProduct: { _id: string; name: string; barcode?: string | undefined; imageUrl?: string | undefined; }; source: "local"; }'.
+src/components/product/ImageUploadDialog.tsx(373,34): error TS2339: Property 'productData' does not exist on type '{ found: true; existingProduct: { _id: string; name: string; barcode?: string | undefined; imageUrl?: string | undefined; }; source: "local"; } | { found: true; source: "openfoodfacts"; productData: { ...; }; }'.
+  Property 'productData' does not exist on type '{ found: true; existingProduct: { _id: string; name: string; barcode?: string | undefined; imageUrl?: string | undefined; }; source: "local"; }'.
+src/components/product/ImageUploadDialog.tsx(374,34): error TS2339: Property 'productData' does not exist on type '{ found: true; existingProduct: { _id: string; name: string; barcode?: string | undefined; imageUrl?: string | undefined; }; source: "local"; } | { found: true; source: "openfoodfacts"; productData: { ...; }; }'.
+  Property 'productData' does not exist on type '{ found: true; existingProduct: { _id: string; name: string; barcode?: string | undefined; imageUrl?: string | undefined; }; source: "local"; }'.
+src/components/product/StoreList.tsx(4,10): error TS6133: 'MapPin' is declared but its value is never read.
+src/hooks/use-camera-view.ts(131,39): error TS2554: Expected 1 arguments, but got 0.
+src/hooks/use-product-filter.ts(4,1): error TS6133: 'useQuery' is declared but its value is never read.
+src/hooks/use-product-filter.ts(5,1): error TS6133: 'api' is declared but its value is never read.
+src/routes/debug-native.tsx(26,42): error TS6133: 'ImageIcon' is declared but its value is never read.
+src/routes/debug-native.tsx(28,1): error TS6133: 'cn' is declared but its value is never read.
+src/routes/debug-native.tsx(54,16): error TS6133: 'cameraRunning' is declared but its value is never read.
+src/routes/debug-native.tsx(168,16): error TS2322: Type '{ children: Element; title: string; showBack: true; }' is not assignable to type 'IntrinsicAttributes & PageShellProps'.
+  Property 'title' does not exist on type 'IntrinsicAttributes & PageShellProps'.

@@ -51,7 +51,8 @@ async function callGeminiWithRetry(
  */
 export const analyzeImage = action({
   args: {
-    storageId: v.id('_storage'),
+    storageId: v.optional(v.id('_storage')),
+    imageUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const apiKey = process.env.GOOGLE_API_KEY
@@ -64,8 +65,17 @@ export const analyzeImage = action({
       }
     }
 
-    // Get image URL from Convex storage
-    const imageUrl = await ctx.storage.getUrl(args.storageId)
+    if (!args.storageId && !args.imageUrl) {
+      return { success: false, error: 'Must provide either storageId or imageUrl' }
+    }
+
+    // Get image URL from Convex storage or use provided URL
+    let imageUrl = args.imageUrl
+    if (!imageUrl && args.storageId) {
+       const url = await ctx.storage.getUrl(args.storageId)
+       if (url) imageUrl = url
+    }
+    
     if (!imageUrl) {
       return { success: false, error: 'Image not found in storage', imageUrl: undefined }
     }

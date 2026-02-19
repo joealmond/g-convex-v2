@@ -1,4 +1,4 @@
-import { query, mutation } from './_generated/server'
+import { query, mutation, action } from './_generated/server'
 import { v } from 'convex/values'
 
 // Generate an upload URL for file uploads
@@ -6,9 +6,57 @@ import { v } from 'convex/values'
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    // Allow both authenticated and anonymous users to upload product images
-    // The product creation mutation will handle attribution
+    // Generate a secure, pre-signed upload URL for Convex Storage
     return await ctx.storage.generateUploadUrl()
+  },
+})
+
+// Generate an upload URL for Cloudflare R2
+export const generateR2UploadUrl = action({
+  args: {
+    contentType: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3')
+    const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner')
+
+    const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID
+    const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID
+    const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY
+    const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME
+    const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL
+
+    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET_NAME || !R2_PUBLIC_URL) {
+      throw new Error("Missing Cloudflare R2 configuration")
+    }
+
+    const s3 = new S3Client({
+      region: 'auto',
+      endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: R2_ACCESS_KEY_ID,
+        secretAccessKey: R2_SECRET_ACCESS_KEY,
+      },
+    })
+
+    // Generate a unique filename using crypto.randomUUID()
+    const fileExtension = args.contentType.split('/')[1] || 'bin'
+    const fileName = `${crypto.randomUUID()}.${fileExtension}`
+
+    const command = new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: fileName,
+      ContentType: args.contentType,
+    })
+
+    // URL expires in 1 hour
+    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 })
+    
+    // The public URL the file will have once uploaded
+    // Use the custom domain if configured (R2_PUBLIC_URL), otherwise default
+    const publicUrl = `${R2_PUBLIC_URL.replace(/\/$/, '')}/${fileName}`
+
+    return { uploadUrl, publicUrl }
   },
 })
 

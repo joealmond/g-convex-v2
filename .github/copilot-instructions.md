@@ -23,10 +23,15 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 
 5. **Backend is generic** — Convex functions in `convex/` are niche-agnostic. They operate on two-axis voting (fields named `safety`/`taste` for historical reasons, but the logic is generic threshold-based math). Don't add niche-specific logic to backend functions.
 
-6. **Config over code** — Swapping niches should require editing `src/lib/app-config.ts` + adding a locale file in `src/locales/`. No component file changes.
+6. **Convex Backend Patterns (New Architecture)**
+   - **Auth Middlewares**: Always use `authQuery`, `authMutation`, `adminQuery`, `adminMutation` from `convex/lib/customFunctions.ts`. Do not use RAW `query` / `mutation` unless explicitly public.
+   - **Aggregates**: NEVER use `.collect().length` to count records. Use `@convex-dev/aggregate` (`productsAggregate`, `profilesAggregate`, etc.) for highly scalable `O(log n)` stats.
+   - **Triggers**: Place background async behaviors (gamification, notifications, AI analysis) in `convex/sideEffects.ts` using `ctx.scheduler.runAfter(0, internal.sideEffects.onX)`. Keep mutations pure + fast.
 
-7. **SSR-safe** — All routes use TanStack Start SSR. Wrap hook-heavy content in `<Suspense fallback={<Skeleton/>}>`. Never call browser APIs (`window`, `localStorage`, `navigator`) outside `useEffect` or `<ClientOnly>`.
-8. **Theme-aware UI** — Dark mode is supported via CSS variables and a `dark` class on `<html>`. Use `useTheme()` for toggles or theme-aware logic, and keep UI colors tied to CSS variables (avoid hardcoded hex in components).
+7. **Config over code** — Swapping niches should require editing `src/lib/app-config.ts` + adding a locale file in `src/locales/`. No component file changes.
+
+8. **SSR-safe** — All routes use TanStack Start SSR. Wrap hook-heavy content in `<Suspense fallback={<Skeleton/>}>`. Never call browser APIs (`window`, `localStorage`, `navigator`) outside `useEffect` or `<ClientOnly>`.
+9. **Theme-aware UI** — Dark mode is supported via CSS variables and a `dark` class on `<html>`. Use `useTheme()` for toggles or theme-aware logic, and keep UI colors tied to CSS variables (avoid hardcoded hex in components).
 
 ## Tech Stack
 

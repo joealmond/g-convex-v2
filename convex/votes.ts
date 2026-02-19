@@ -2,7 +2,9 @@ import { v } from 'convex/values'
 import { query, mutation, internalMutation, internalQuery } from './_generated/server'
 import { internal, components } from './_generated/api'
 import { RateLimiter } from '@convex-dev/rate-limiter'
-import { getAuthUser, requireAuth, isAdmin } from './lib/authHelpers'
+import { isAdmin } from './lib/authHelpers'
+import { authMutation } from './lib/customFunctions'
+import { votesByProduct } from './aggregates'
 import type { Id } from './_generated/dataModel'
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
@@ -110,6 +112,7 @@ export const cast = mutation({
     let voteId
     if (existingVote) {
       // Update existing vote
+      const oldVote = await ctx.db.get(existingVote._id)
       await ctx.db.patch(existingVote._id, {
         safety: args.safety,
         taste: args.taste,
@@ -118,6 +121,8 @@ export const cast = mutation({
         latitude: args.latitude,
         longitude: args.longitude,
       })
+      const newVote = await ctx.db.get(existingVote._id)
+      if (oldVote && newVote) await votesByProduct.replace(ctx, oldVote, newVote)
       voteId = existingVote._id
     } else {
       // Create new vote
@@ -134,79 +139,32 @@ export const cast = mutation({
         longitude: args.longitude,
         createdAt: Date.now(),
       })
+      const newVoteDoc = await ctx.db.get(voteId)
+      if (newVoteDoc) await votesByProduct.insert(ctx, newVoteDoc)
     }
 
-    // Recalculate product averages
-    await ctx.scheduler.runAfter(0, internal.votes.recalculateProduct, {
+    // Side effects: recalculate average, gamification, and push notifications
+    await ctx.scheduler.runAfter(0, internal.sideEffects.onVoteCast, {
+      userId: userId,
       productId: args.productId,
+      voteId: voteId,
+      hasGps: args.latitude !== undefined && args.longitude !== undefined,
+      isNewProduct: false,
+      hasPrice: args.price !== undefined,
+      hasStore: !!args.storeName,
+      isEdit: !!existingVote,
     })
 
-    // Update product stores array if store or GPS info was provided
-    if (args.storeName || (args.latitude !== undefined && args.longitude !== undefined)) {
-      const product = await ctx.db.get(args.productId)
-      if (product) {
-        const existingStores = product.stores || []
-        const storeName = args.storeName || 'Unknown Location'
-        const newGeoPoint = (args.latitude !== undefined && args.longitude !== undefined)
-          ? { lat: args.latitude, lng: args.longitude }
-          : undefined
-
-        // Check if this store already exists (by name)
-        const existingStoreIndex = existingStores.findIndex(
-          (s) => s.name.toLowerCase() === storeName.toLowerCase()
-        )
-
-        if (existingStoreIndex >= 0) {
-          // Update existing store entry with latest data
-          const updatedStores = [...existingStores]
-          const existingStore = updatedStores[existingStoreIndex]!
-          updatedStores[existingStoreIndex] = {
-            ...existingStore,
-            lastSeenAt: Date.now(),
-            price: args.price ?? existingStore.price,
-            // Update geoPoint if new GPS is provided
-            geoPoint: newGeoPoint ?? existingStore.geoPoint,
-          }
-          await ctx.db.patch(args.productId, { stores: updatedStores })
-        } else {
-          // Add new store entry
-          const newStore = {
-            name: storeName,
-            lastSeenAt: Date.now(),
-            price: args.price,
-            geoPoint: newGeoPoint,
-          }
-          await ctx.db.patch(args.productId, {
-            stores: [...existingStores, newStore],
-          })
-        }
-      }
-    }
-
-    // Award points if registered user
-    if (userId && !existingVote) {
-      await ctx.scheduler.runAfter(0, internal.votes.awardPoints, {
-        userId: userId,
-        hasPrice: args.price !== undefined,
-        hasStore: args.storeName !== undefined,
-        hasGPS: args.latitude !== undefined && args.longitude !== undefined,
+    // Trigger "new product near you" notifications if GPS provided
+    // This isn't strictly gamification, so it stays separate or can be moved to sideEffects later
+    if (args.latitude !== undefined && args.longitude !== undefined && !existingVote) {
+      await ctx.scheduler.runAfter(0, internal.actions.nearbyProduct.notifyNearbyProduct, {
+        productId: args.productId.toString(),
+        productName: 'A product',
+        latitude: args.latitude,
+        longitude: args.longitude,
+        createdBy: userId,
       })
-      
-      // Update challenge progress
-      await ctx.scheduler.runAfter(0, internal.challenges.updateChallengeProgress, {
-        userId: userId,
-        challengeType: 'vote',
-        incrementBy: 1,
-      })
-      
-      // Update store challenge if store tagged
-      if (args.storeName) {
-        await ctx.scheduler.runAfter(0, internal.challenges.updateChallengeProgress, {
-          userId: userId,
-          challengeType: 'store',
-          incrementBy: 1,
-        })
-      }
     }
 
     return voteId
@@ -323,38 +281,20 @@ export const createProductAndVote = mutation({
       longitude: args.longitude,
       createdAt: now,
     })
+    const newVoteDoc = await ctx.db.get(voteId)
+    if (newVoteDoc) await votesByProduct.insert(ctx, newVoteDoc)
 
-    // Award bonus points for discovering a new product
-    if (userId) {
-      await ctx.scheduler.runAfter(0, internal.votes.awardNewProductPoints, {
-        userId,
-        hasPrice: args.price !== undefined,
-        hasStore: args.storeName !== undefined,
-        hasGPS: args.latitude !== undefined && args.longitude !== undefined,
-      })
-      
-      // Update challenge progress
-      await ctx.scheduler.runAfter(0, internal.challenges.updateChallengeProgress, {
-        userId: userId,
-        challengeType: 'product',
-        incrementBy: 1,
-      })
-      
-      await ctx.scheduler.runAfter(0, internal.challenges.updateChallengeProgress, {
-        userId: userId,
-        challengeType: 'vote',
-        incrementBy: 1,
-      })
-      
-      // Update store challenge if store tagged
-      if (args.storeName) {
-        await ctx.scheduler.runAfter(0, internal.challenges.updateChallengeProgress, {
-          userId: userId,
-          challengeType: 'store',
-          incrementBy: 1,
-        })
-      }
-    }
+    // Side effects: recalculate average, gamification, challenge progress, etc.
+    await ctx.scheduler.runAfter(0, internal.sideEffects.onVoteCast, {
+      userId: userId,
+      productId: productId,
+      voteId: voteId,
+      hasGps: args.latitude !== undefined && args.longitude !== undefined,
+      isNewProduct: true,
+      hasPrice: args.price !== undefined,
+      hasStore: !!args.storeName,
+      isEdit: false,
+    })
 
     // Trigger "new product near you" notifications if GPS provided
     if (args.latitude !== undefined && args.longitude !== undefined) {
@@ -527,140 +467,13 @@ export const recalculateProductBatch = internalMutation({
 })
 
 /**
- * Internal mutation to award bonus points for discovering a new product
- */
-export const awardNewProductPoints = internalMutation({
-  args: {
-    userId: v.string(),
-    hasPrice: v.boolean(),
-    hasStore: v.boolean(),
-    hasGPS: v.boolean(),
-  },
-  handler: async (ctx, args) => {
-    let profile = await ctx.db
-      .query('profiles')
-      .withIndex('by_user', (q) => q.eq('userId', args.userId))
-      .first()
-
-    if (!profile) {
-      // Create profile if it doesn't exist
-      const profileId = await ctx.db.insert('profiles', {
-        userId: args.userId,
-        points: 0,
-        badges: [],
-        streak: 0,
-        totalVotes: 0,
-      })
-      profile = await ctx.db.get(profileId)
-    }
-
-    if (!profile) return
-
-    // Calculate points - bonus for new product discovery
-    let points = 25 // Base new product points (more than regular vote)
-    if (args.hasPrice) points += 5
-    if (args.hasStore) points += 10
-    if (args.hasGPS) points += 10 // Extra bonus for GPS on new products
-
-    // Update profile with extended fields
-    const newProductVotes = (profile.newProductVotes ?? 0) + 1
-    const gpsVotes = args.hasGPS ? (profile.gpsVotes ?? 0) + 1 : (profile.gpsVotes ?? 0)
-
-    await ctx.db.patch(profile._id, {
-      points: profile.points + points,
-      totalVotes: profile.totalVotes + 1,
-      newProductVotes,
-      gpsVotes,
-    })
-  },
-})
-
-/**
- * Internal mutation to award points for voting
- */
-export const awardPoints = internalMutation({
-  args: {
-    userId: v.string(),
-    hasPrice: v.boolean(),
-    hasStore: v.boolean(),
-    hasGPS: v.boolean(),
-  },
-  handler: async (ctx, args) => {
-    let profile = await ctx.db
-      .query('profiles')
-      .withIndex('by_user', (q) => q.eq('userId', args.userId))
-      .first()
-
-    if (!profile) {
-      // Create profile if it doesn't exist
-      const profileId = await ctx.db.insert('profiles', {
-        userId: args.userId,
-        points: 0,
-        badges: [],
-        streak: 0,
-        totalVotes: 0,
-      })
-      profile = await ctx.db.get(profileId)
-    }
-
-    if (!profile) return
-
-    // Calculate points
-    let points = 10 // Base vote points
-    if (args.hasPrice) points += 5
-    if (args.hasStore) points += 10
-    if (args.hasGPS) points += 5
-
-    // Check streak
-    const todayParts = new Date().toISOString().split('T')
-    const today = todayParts[0] ?? ''
-    const lastVoteDate = profile.lastVoteDate
-    let newStreak = profile.streak
-
-    if (lastVoteDate) {
-      const lastDate = new Date(lastVoteDate)
-      const todayDate = new Date(today)
-      const diffDays = Math.floor(
-        (todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
-      )
-
-      if (diffDays === 1) {
-        newStreak = profile.streak + 1
-      } else if (diffDays > 1) {
-        newStreak = 1
-      }
-      // If same day, keep current streak
-    } else {
-      newStreak = 1
-    }
-
-    if (newStreak >= 3) {
-      points += 15 // Streak bonus
-    }
-
-    // Update profile
-    await ctx.db.patch(profile._id, {
-      points: profile.points + points,
-      totalVotes: profile.totalVotes + 1,
-      streak: newStreak,
-      lastVoteDate: today,
-    })
-
-    // Check for new badges
-    // This will be implemented in profiles.ts
-  },
-})
-
-/**
  * Migrate anonymous votes to registered user
  * Called when user signs in
  */
-export const migrateAnonymous = mutation({
+export const migrateAnonymous = authMutation({
   args: { anonymousId: v.string() },
   handler: async (ctx, { anonymousId }) => {
-    const user = await requireAuth(ctx)
-
-    const userId = user._id
+    const userId = ctx.userId
 
     // Find all anonymous votes
     const anonVotes = await ctx.db
@@ -679,14 +492,19 @@ export const migrateAnonymous = mutation({
 
       if (existingVote) {
         // User already voted, delete anonymous vote
+        const oldVote = await ctx.db.get(vote._id)
         await ctx.db.delete(vote._id)
+        if (oldVote) await votesByProduct.delete(ctx, oldVote)
       } else {
         // Migrate vote to user
+        const oldVote = await ctx.db.get(vote._id)
         await ctx.db.patch(vote._id, {
           userId: userId,
           anonymousId: undefined,
           isAnonymous: false,
         })
+        const newVote = await ctx.db.get(vote._id)
+        if (oldVote && newVote) await votesByProduct.replace(ctx, oldVote, newVote)
       }
 
       affectedProducts.add(vote.productId)
@@ -706,10 +524,9 @@ export const migrateAnonymous = mutation({
 /**
  * Delete a vote (user's own or admin)
  */
-export const deleteVote = mutation({
+export const deleteVote = authMutation({
   args: { voteId: v.id('votes') },
   handler: async (ctx, { voteId }) => {
-    const user = await getAuthUser(ctx)
     const vote = await ctx.db.get(voteId)
 
     if (!vote) {
@@ -717,16 +534,18 @@ export const deleteVote = mutation({
     }
 
     // Check if user owns the vote or is admin
-    const userId = user?._id ?? null
+    const userId = ctx.userId
     const isOwner = vote.userId === userId
-    const hasAdminAccess = user ? isAdmin(user) : false
+    const hasAdminAccess = isAdmin(ctx.user)
 
     if (!isOwner && !hasAdminAccess) {
       throw new Error('Not authorized to delete this vote')
     }
 
+    const docToDelete = await ctx.db.get(voteId)
     const productId = vote.productId
     await ctx.db.delete(voteId)
+    if (docToDelete) await votesByProduct.delete(ctx, docToDelete)
 
     // Recalculate product averages
     await ctx.scheduler.runAfter(0, internal.votes.recalculateProduct, {

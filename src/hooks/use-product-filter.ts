@@ -68,11 +68,12 @@ function getProductDistance(
 
 interface UseProductFilterOptions {
   products: Product[] | undefined
+  nearbyProducts?: (Product & { distance?: number })[] | undefined
   latitude?: number
   longitude?: number
 }
 
-export function useProductFilter({ products, latitude, longitude }: UseProductFilterOptions) {
+export function useProductFilter({ products, nearbyProducts, latitude, longitude }: UseProductFilterOptions) {
   const [filterType, setFilterType] = useState<FilterType>('nearby')
   const [searchQuery, setSearchQuery] = useState('')
   const [nearbyRange, setNearbyRangeState] = useState(DEFAULT_NEARBY_RANGE_KM)
@@ -127,13 +128,19 @@ export function useProductFilter({ products, latitude, longitude }: UseProductFi
         result.sort((a, b) => b.createdAt - a.createdAt)
         break
       case 'nearby':
-        result = result.filter((p) => {
-          const distance = getDistance(p)
-          return distance !== undefined && distance <= nearbyRange
-        })
-        result.sort(
-          (a, b) => (getDistance(a) || Infinity) - (getDistance(b) || Infinity)
-        )
+        // If server returned results via nearbyProducts (which already applied distance limits),
+        // we use them directly. If undefined, we fallback to client-side math.
+        if (nearbyProducts !== undefined) {
+          result = nearbyProducts as Product[]
+        } else {
+          result = result.filter((p) => {
+            const distance = getDistance(p)
+            return distance !== undefined && distance <= nearbyRange
+          })
+          result.sort(
+            (a, b) => (getDistance(a) || Infinity) - (getDistance(b) || Infinity)
+          )
+        }
         break
       case 'trending':
         result.sort((a, b) => b.voteCount - a.voteCount)

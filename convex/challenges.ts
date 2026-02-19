@@ -6,8 +6,9 @@
  */
 
 import { v } from 'convex/values'
-import { internalMutation, mutation, query } from './_generated/server'
-import { requireAuth, getAuthUser } from './lib/authHelpers'
+import { internalMutation, query } from './_generated/server'
+import { getAuthUser } from './lib/authHelpers'
+import { authMutation, adminMutation } from './lib/customFunctions'
 import { internal } from './_generated/api'
 
 /**
@@ -153,15 +154,13 @@ export const updateChallengeProgress = internalMutation({
 /**
  * Claim reward for completed challenge
  */
-export const claimReward = mutation({
+export const claimReward = authMutation({
   args: { challengeId: v.id('challenges') },
   handler: async (ctx, args) => {
-    const user = await requireAuth(ctx)
-    
     const userChallenge = await ctx.db
       .query('userChallenges')
       .withIndex('by_user_and_challenge', (q) => 
-        q.eq('userId', user._id).eq('challengeId', args.challengeId)
+        q.eq('userId', ctx.userId).eq('challengeId', args.challengeId)
       )
       .first()
     
@@ -198,7 +197,7 @@ export const claimReward = mutation({
 /**
  * Admin: Create custom challenge
  */
-export const createChallenge = mutation({
+export const createChallenge = adminMutation({
   args: {
     title: v.string(),
     description: v.string(),
@@ -214,18 +213,6 @@ export const createChallenge = mutation({
     durationDays: v.number(),
   },
   handler: async (ctx, args) => {
-    const user = await requireAuth(ctx)
-    
-    // Check admin permission (you may want to add this to authHelpers)
-    const profile = await ctx.db
-      .query('profiles')
-      .withIndex('by_user', (q) => q.eq('userId', user._id))
-      .first()
-    
-    if (profile?.role !== 'admin') {
-      throw new Error('Admin permission required')
-    }
-    
     const now = Date.now()
     const endDate = now + (args.durationDays * 24 * 60 * 60 * 1000)
     
@@ -240,7 +227,7 @@ export const createChallenge = mutation({
       endDate,
       isActive: true,
       isTemplate: false, // Admin-created, not auto-generated
-      createdBy: user._id,
+      createdBy: ctx.userId,
       createdAt: now,
     })
   },

@@ -1,7 +1,7 @@
 'use client'
 
 import { type Product } from '@/lib/types'
-import { MapPin, Clock, Navigation } from 'lucide-react'
+import { Clock, Navigation } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { Badge } from '@/components/ui/badge'

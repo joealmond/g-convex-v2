@@ -61,6 +61,14 @@ function HomePageContent() {
   const latitude = coords?.latitude
   const longitude = coords?.longitude
 
+  // Server-side nearby query
+  const nearbyProducts = useQuery(
+    api.products.getNearbyProducts,
+    latitude && longitude
+      ? { latitude, longitude, radiusInMeters: 50000 } // Fetch a wide radius, hook handles smaller ranges
+      : 'skip'
+  )
+
   // Request location on mount (needed for "Nearby" filter)
   useEffect(() => {
     requestLocation()
@@ -76,7 +84,7 @@ function HomePageContent() {
     clearSearch,
     handleFilterChange,
     getDistance,
-  } = useProductFilter({ products, latitude, longitude })
+  } = useProductFilter({ products, nearbyProducts, latitude, longitude })
 
   const [viewMode, setViewMode] = useState<'feed' | 'chart'>('feed')
   const [chartMode, setChartMode] = useState<'vibe' | 'value'>('vibe')

@@ -2,6 +2,7 @@ import { v } from 'convex/values'
 import { query, mutation, internalMutation, internalQuery } from './_generated/server'
 import { BADGES, shouldAwardBadge } from './lib/gamification'
 import { requireAdmin } from './lib/authHelpers'
+import { profilesAggregate } from './aggregates'
 
 /**
  * Get user profile by userId
@@ -58,6 +59,7 @@ export const ensureProfile = mutation({
         totalVotes: 0,
       })
       profile = await ctx.db.get(profileId)
+      if (profile) await profilesAggregate.insert(ctx, profile)
     }
 
     return profile

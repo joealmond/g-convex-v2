@@ -23,9 +23,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { 
   Camera, MapPin, Upload, Check, X, AlertCircle, Info, 
-  Smartphone, Monitor, Loader2, Image as ImageIcon
+  Smartphone, Monitor, Loader2
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+
 import { PageShell } from '@/components/layout/PageShell'
 
 export const Route = createFileRoute('/debug-native')({
@@ -51,7 +51,7 @@ function DebugNativePage() {
   // Camera testing
   const {
     hasPermission: cameraPermission,
-    isRunning: cameraRunning,
+
     checkPermissions: checkCameraPermissions,
     requestPermissions: requestCameraPermissions,
     startCamera,
@@ -165,7 +165,7 @@ function DebugNativePage() {
   }, [handleUploadImage])
 
   return (
-    <PageShell title="Native Testing" showBack>
+    <PageShell>
       <div className="space-y-4 pb-8">
         {/* Platform Info */}
         <Card>

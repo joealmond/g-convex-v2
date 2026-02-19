@@ -6,20 +6,19 @@
  */
 
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { query } from './_generated/server'
 import { requireAuth } from './lib/authHelpers'
+import { authQuery, authMutation } from './lib/customFunctions'
 
 /**
  * Get user's dietary profile
  */
-export const getUserProfile = query({
+export const getUserProfile = authQuery({
   args: {},
   handler: async (ctx) => {
-    const user = await requireAuth(ctx)
-    
     const profile = await ctx.db
       .query('dietaryProfiles')
-      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .withIndex('by_user', (q) => q.eq('userId', ctx.userId))
       .first()
     
     return profile || null
@@ -29,7 +28,7 @@ export const getUserProfile = query({
 /**
  * Update user's dietary profile
  */
-export const updateProfile = mutation({
+export const updateProfile = authMutation({
   args: {
     conditions: v.array(v.object({
       type: v.string(),
@@ -37,7 +36,6 @@ export const updateProfile = mutation({
     })),
   },
   handler: async (ctx, args) => {
-    const user = await requireAuth(ctx)
     
     // Validate severity levels
     for (const condition of args.conditions) {
@@ -48,7 +46,7 @@ export const updateProfile = mutation({
     
     const existing = await ctx.db
       .query('dietaryProfiles')
-      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .withIndex('by_user', (q) => q.eq('userId', ctx.userId))
       .first()
     
     const now = Date.now()
@@ -61,7 +59,7 @@ export const updateProfile = mutation({
       return existing._id
     } else {
       return await ctx.db.insert('dietaryProfiles', {
-        userId: user._id,
+        userId: ctx.userId,
         conditions: args.conditions,
         createdAt: now,
         updatedAt: now,
