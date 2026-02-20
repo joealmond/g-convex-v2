@@ -1,5 +1,3 @@
-'use client'
-
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
@@ -10,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { ThumbsUp, ChevronDown, ChevronUp, Sliders } from 'lucide-react'
 import { getQuadrant, QUADRANTS } from '@/lib/types'
 import { useTranslation } from '@/hooks/use-translation'
+import { QuadrantPicker } from '@/components/QuadrantPicker'
 
 interface VotingSheetProps {
   onVote: (safety: number, taste: number, price?: number) => void
@@ -90,25 +89,7 @@ export function VotingSheet({
         <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wide">
           {t('voting.quickRate')}
         </label>
-        <div className="grid grid-cols-2 gap-1.5">
-          {[
-            { q: appConfig.quadrants.topLeft, s: 90, t: 30 },
-            { q: appConfig.quadrants.topRight, s: 90, t: 90 },
-            { q: appConfig.quadrants.bottomLeft, s: 10, t: 10 },
-            { q: appConfig.quadrants.bottomRight, s: 30, t: 90 },
-          ].map(({ q, s, t }) => (
-            <motion.div key={q.label} whileTap={{ scale: disabled ? 1 : 0.97 }}>
-              <Button
-                className="w-full h-12 text-white hover:opacity-90 text-xs font-semibold"
-                style={{ backgroundColor: q.color }}
-                onClick={() => handleComboVote(s, t)}
-                disabled={disabled}
-              >
-                {q.emoji} {q.label}
-              </Button>
-            </motion.div>
-          ))}
-        </div>
+        <QuadrantPicker onSelect={handleComboVote} disabled={disabled} />
       </div>
 
       {/* Price (Optional) */}

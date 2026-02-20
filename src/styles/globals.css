@@ -217,11 +217,6 @@ input, textarea, [contenteditable], .selectable {
   --sidebar-border: #334155;
   --sidebar-ring: #7CB342;
   
-  /* Dark mode semantic colors */
-  --safety-high-dark: #27AE60;
-  --safety-mid-dark: #F39C12;
-  --safety-low-dark: #E74C3C;
-
   /* Dark mode semantic safety colors */
   --safety-high: #4ADE80;
   --safety-mid: #FBBF24;

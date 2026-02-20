@@ -17,10 +17,10 @@ import { PageShell } from '@/components/layout/PageShell'
 import { authClient } from '@/lib/auth-client'
 import { getToken } from '@/lib/auth-server'
 import { appConfig } from '@/lib/app-config'
-import { I18nProvider } from '@/hooks/i18n-context'
 import type { ConvexQueryClient } from '@convex-dev/react-query'
 import { Toaster } from 'sonner'
 import { useServiceWorker } from '@/hooks/use-online-status'
+import { useLocale } from '@/lib/i18n'
 
 import '../styles/globals.css'
 
@@ -103,6 +103,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootComponent() {
   const context = useRouteContext({ from: Route.id })
+  const locale = useLocale()
 
   // Register service worker for offline caching (client-side only)
   useServiceWorker()
@@ -113,12 +114,11 @@ function RootComponent() {
       authClient={authClient}
       initialToken={context.token}
     >
-      <html lang="en" suppressHydrationWarning>
+      <html lang={locale} suppressHydrationWarning>
         <head>
           <HeadContent />
         </head>
         <body className="min-h-screen bg-background antialiased">
-          <I18nProvider>
           <ImpersonateProvider>
             <OfflineBanner />
             <TopBar />
@@ -137,7 +137,6 @@ function RootComponent() {
               <PushNotificationManager />
             </ClientOnly>
           </ImpersonateProvider>
-          </I18nProvider>
           <Toaster richColors position="bottom-center" offset="14rem" toastOptions={{ style: { zIndex: 9999 } }} />
           <Scripts />
         </body>

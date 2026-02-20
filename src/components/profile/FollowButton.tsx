@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { UserPlus, UserMinus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useState } from 'react'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface FollowButtonProps {
   userId: string
@@ -23,6 +24,7 @@ export function FollowButton({
   showIcon = true,
 }: FollowButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const { t } = useTranslation()
 
   const isFollowing = useQuery(api.follows.isFollowing, { followingId: userId })
   const follow = useMutation(api.follows.follow)
@@ -33,15 +35,15 @@ export function FollowButton({
     try {
       if (isFollowing) {
         await unfollow({ followingId: userId })
-        toast.success(`Unfollowed ${userName || 'user'}`)
+        toast.success(t('community.unfollowed', { name: userName || t('community.defaultUser') }))
       } else {
         await follow({ followingId: userId })
-        toast.success(`Following ${userName || 'user'}!`)
+        toast.success(t('community.nowFollowing', { name: userName || t('community.defaultUser') }))
       }
     } catch (error: unknown) {
-      toast.error('Failed to update follow status', {
+      toast.error(t('community.followFailed'), {
         description:
-          error instanceof Error ? error.message : 'Please try again',
+          error instanceof Error ? error.message : t('community.followFailedRetry'),
       })
     } finally {
       setIsLoading(false)
@@ -66,7 +68,7 @@ export function FollowButton({
         ) : (
           <UserPlus className="h-4 w-4 mr-2" />
         ))}
-      {isFollowing ? 'Following' : 'Follow'}
+      {isFollowing ? t('community.followingBtn') : t('community.follow')}
     </Button>
   )
 }

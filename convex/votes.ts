@@ -561,12 +561,19 @@ export const deleteVote = authMutation({
 export const getVotesWithGPS = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const allVotes = await ctx.db.query('votes').collect()
+    // Use DB-level filter to reduce data transferred from storage
+    // Note: No index on lat/lng, but filter is pushed to the DB engine
+    const votes = await ctx.db
+      .query('votes')
+      .filter((q) =>
+        q.and(
+          q.neq(q.field('latitude'), undefined),
+          q.neq(q.field('longitude'), undefined),
+          q.neq(q.field('userId'), undefined)
+        )
+      )
+      .collect()
     
-    return allVotes.filter((vote) => 
-      vote.latitude !== undefined && 
-      vote.longitude !== undefined && 
-      vote.userId !== undefined // Only registered users (can receive push notifications)
-    )
+    return votes
   },
 })

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
 import { api } from '@convex/_generated/api'
+import { type Id } from '@convex/_generated/dataModel'
 import { useSession, signIn } from '@/lib/auth-client'
 import { formatFileSize, formatRelativeTime } from '@/lib/utils'
 import { 
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react'
 import { Suspense, useState, useRef } from 'react'
 import { logger } from '@/lib/logger'
+import { useTranslation } from '@/hooks/use-translation'
 
 export const Route = createFileRoute('/files')({
   component: FilesPage,
@@ -57,6 +59,7 @@ function FilesPage() {
 
 function FilesPageContent() {
   const { data: session, isPending: isSessionLoading } = useSession()
+  const { t } = useTranslation()
   const { data: files, isLoading: isFilesLoading } = useQuery(
     convexQuery(api.files.listMyFiles, {})
   )
@@ -74,13 +77,13 @@ function FilesPageContent() {
     if (!file) return
 
     setIsUploading(true)
-    setUploadProgress('Getting upload URL...')
+    setUploadProgress(t('files.gettingUrl'))
 
     try {
       // Get upload URL from Convex
       const uploadUrl = await generateUploadUrl()
 
-      setUploadProgress('Uploading file...')
+      setUploadProgress(t('files.uploading'))
 
       // Upload file to Convex storage
       const response = await fetch(uploadUrl, {
@@ -95,7 +98,7 @@ function FilesPageContent() {
 
       const { storageId } = await response.json()
 
-      setUploadProgress('Saving metadata...')
+      setUploadProgress(t('files.savingMetadata'))
 
       // Save file metadata
       await saveFile({
@@ -108,7 +111,7 @@ function FilesPageContent() {
       setUploadProgress('')
     } catch (error) {
       logger.error('Upload failed:', error)
-      setUploadProgress('Upload failed!')
+      setUploadProgress(t('files.uploadFailed'))
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) {
@@ -117,11 +120,11 @@ function FilesPageContent() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this file?')) return
+  const handleDelete = async (id: Id<'files'>) => {
+    if (!confirm(t('files.confirmDelete'))) return
 
     try {
-      await deleteFile({ id: id as any })
+      await deleteFile({ id })
     } catch (error) {
       logger.error('Delete failed:', error)
     }
@@ -137,23 +140,23 @@ function FilesPageContent() {
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="text-center max-w-md">
           <File className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h1 className="text-2xl font-bold mb-2">File Storage Demo</h1>
+          <h1 className="text-2xl font-bold mb-2">{t('files.demoTitle')}</h1>
           <p className="text-muted-foreground mb-6">
-            Sign in to upload and manage your files using Convex storage.
+            {t('files.demoDesc')}
           </p>
           <button
             onClick={handleSignIn}
             className="flex items-center gap-2 px-6 py-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors mx-auto"
           >
             <LogIn className="w-5 h-5" />
-            Sign in with Google
+            {t('files.signInGoogle')}
           </button>
           <Link
             to="/"
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mt-4 justify-center"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            {t('nav.backToHome')}
           </Link>
         </div>
       </div>
@@ -171,11 +174,11 @@ function FilesPageContent() {
               className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back
+              {t('nav.back')}
             </Link>
             <h1 className="text-xl font-bold flex items-center gap-2">
               <File className="w-5 h-5" />
-              File Storage
+              {t('files.title')}
             </h1>
           </div>
         </div>
@@ -185,7 +188,7 @@ function FilesPageContent() {
       <main className="container mx-auto px-4 py-8 max-w-3xl">
         {/* Upload Section */}
         <div className="bg-card rounded-lg border border-border p-6 mb-6">
-          <h2 className="font-semibold mb-4">Upload a File</h2>
+          <h2 className="font-semibold mb-4">{t('files.uploadFile')}</h2>
           
           <div className="flex items-center gap-4">
             <input
@@ -207,7 +210,7 @@ function FilesPageContent() {
               ) : (
                 <Upload className="w-5 h-5" />
               )}
-              <span>{isUploading ? uploadProgress : 'Choose a file'}</span>
+              <span>{isUploading ? uploadProgress : t('files.chooseFile')}</span>
             </label>
           </div>
         </div>
@@ -215,7 +218,7 @@ function FilesPageContent() {
         {/* Files List */}
         <div className="bg-card rounded-lg border border-border">
           <div className="p-4 border-b border-border">
-            <h2 className="font-semibold">Your Files</h2>
+            <h2 className="font-semibold">{t('files.yourFiles')}</h2>
           </div>
 
           {isFilesLoading || isSessionLoading ? (
@@ -225,7 +228,7 @@ function FilesPageContent() {
           ) : files?.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <File className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No files uploaded yet.</p>
+              <p>{t('files.noFiles')}</p>
             </div>
           ) : (
             <div className="divide-y divide-border">

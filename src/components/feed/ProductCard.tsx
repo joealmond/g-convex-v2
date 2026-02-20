@@ -1,5 +1,3 @@
-'use client'
-
 import { Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { type Product, getQuadrant, QUADRANTS } from '@/lib/types'
@@ -7,6 +5,7 @@ import { appConfig } from '@/lib/app-config'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
 import { MapPin, Trash2 } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
+import { formatDistance } from '@/lib/format-distance'
 
 interface ProductCardProps {
   product: Product
@@ -122,11 +121,7 @@ export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) 
           {/* Distance (if available) */}
           {distanceKm !== undefined && (
             <p className="text-xs text-muted-foreground mt-1">
-              {distanceKm < 0.1
-                ? t('common.veryClose')
-                : distanceKm < 1
-                  ? t('common.mAway', { distance: (distanceKm * 1000).toFixed(0) })
-                  : t('common.kmAway', { distance: distanceKm.toFixed(1) })}
+              {formatDistance(distanceKm, t)}
             </p>
           )}
 

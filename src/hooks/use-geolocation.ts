@@ -117,24 +117,25 @@ export function useGeolocation() {
           error: null,
           permissionStatus: 'granted',
         })
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Geolocation error:', error)
+        const message = error instanceof Error ? error.message : ''
         let errorMessage = 'Failed to get location'
         
-        if (error.message?.includes('permission')) {
+        if (message.includes('permission')) {
           errorMessage = 'Location permission denied'
-        } else if (error.message?.includes('unavailable')) {
+        } else if (message.includes('unavailable')) {
           errorMessage = 'Location service unavailable'
-        } else if (error.message?.includes('timeout')) {
+        } else if (message.includes('timeout')) {
           errorMessage = 'Location request timed out'
         }
 
-        setState({
+        setState(prev => ({
           coords: null,
           loading: false,
           error: errorMessage,
-          permissionStatus: error.message?.includes('permission') ? 'denied' : state.permissionStatus,
-        })
+          permissionStatus: message.includes('permission') ? 'denied' : prev.permissionStatus,
+        }))
       }
     } else {
       // Web path: Use browser geolocation API
@@ -176,12 +177,12 @@ export function useGeolocation() {
               break
           }
 
-          setState({
+          setState(prev => ({
             coords: null,
             loading: false,
             error: errorMessage,
-            permissionStatus: error.code === error.PERMISSION_DENIED ? 'denied' : state.permissionStatus,
-          })
+            permissionStatus: error.code === error.PERMISSION_DENIED ? 'denied' : prev.permissionStatus,
+          }))
         },
         {
           enableHighAccuracy: true,
@@ -190,7 +191,7 @@ export function useGeolocation() {
         }
       )
     }
-  }, [isNative, checkPermissions, requestPermissions, state.permissionStatus])
+  }, [isNative, checkPermissions, requestPermissions])
 
   /**
    * Clear current location

@@ -1,10 +1,10 @@
-import { publicQuery, publicMutation, publicAction } from './lib/customFunctions'
+import { publicQuery, authMutation, publicAction, publicMutation } from './lib/customFunctions'
 
 import { v } from 'convex/values'
 
 // Generate an upload URL for file uploads
-// Allows both authenticated and anonymous users (for product image uploads)
-export const generateUploadUrl = publicMutation({
+// Requires authentication to prevent storage abuse
+export const generateUploadUrl = authMutation({
   args: {},
   handler: async (ctx) => {
     // Generate a secure, pre-signed upload URL for Convex Storage

@@ -208,7 +208,7 @@ function ReportsContent() {
                         Reported by:{' '}
                         {report.isAnonymous
                           ? 'Anonymous'
-                          : ("name" in (report.reporter || {}) ? (report.reporter as any).name : 'Unknown')}
+                          : (report.reporter?.id ?? 'Unknown')}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(report.createdAt).toLocaleString()}
@@ -270,7 +270,7 @@ function ReportsContent() {
 
                     {report.reviewedBy && report.reviewer && (
                       <p className="text-xs text-muted-foreground mt-2">
-                        Reviewed by {"name" in report.reviewer ? (report.reviewer as any).name : 'Admin'} on{' '}
+                        Reviewed by {report.reviewer?.id ?? 'Admin'} on{' '}
                         {report.reviewedAt &&
                           new Date(report.reviewedAt).toLocaleString()}
                       </p>

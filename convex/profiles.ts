@@ -1,8 +1,7 @@
-import { publicQuery, publicMutation, internalQuery, internalMutation } from './lib/customFunctions'
+import { publicQuery, publicMutation, adminMutation, internalQuery, internalMutation } from './lib/customFunctions'
 import { v } from 'convex/values'
 
 import { BADGES, shouldAwardBadge } from './lib/gamification'
-import { requireAdmin } from './lib/authHelpers'
 import { profilesAggregate } from './aggregates'
 
 /**
@@ -99,7 +98,7 @@ export const leaderboard = publicQuery({
  * Check and award badges for a user
  * Note: userId is a string because Better Auth uses string UUIDs, not Convex IDs
  */
-export const checkBadges = publicMutation({
+export const checkBadges = internalMutation({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
     const profile = await ctx.db
@@ -120,8 +119,11 @@ export const checkBadges = publicMutation({
       votes.filter((v) => v.storeName).map((v) => v.storeName)
     ).size
 
-    const products = await ctx.db.query('products').collect()
-    const productsCreated = products.filter((p) => p.createdBy === userId).length
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_creator', (q) => q.eq('createdBy', userId))
+      .collect()
+    const productsCreated = products.length
 
     const stats = {
       totalVotes: profile.totalVotes,
@@ -154,14 +156,12 @@ export const checkBadges = publicMutation({
  * Manually add points to a user (admin only)
  * Note: userId is a string because Better Auth uses string UUIDs, not Convex IDs
  */
-export const addPoints = publicMutation({
+export const addPoints = adminMutation({
   args: {
     userId: v.string(),
     points: v.number(),
   },
   handler: async (ctx, { userId, points }) => {
-    await requireAdmin(ctx)
-
     const profile = await ctx.db
       .query('profiles')
       .withIndex('by_user', (q) => q.eq('userId', userId))
@@ -181,11 +181,9 @@ export const addPoints = publicMutation({
  * Reset user streak (for testing)
  * Note: userId is a string because Better Auth uses string UUIDs, not Convex IDs
  */
-export const resetStreak = publicMutation({
+export const resetStreak = adminMutation({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
-    await requireAdmin(ctx)
-
     const profile = await ctx.db
       .query('profiles')
       .withIndex('by_user', (q) => q.eq('userId', userId))
@@ -239,11 +237,13 @@ export const addPointsInternal = internalMutation({
 export const getActiveStreakers = internalQuery({
   args: {},
   handler: async (ctx) => {
-    // Fetch all profiles with streak >= 3
-    const allProfiles = await ctx.db.query('profiles').collect()
+    // Use by_streak index — only fetch profiles where streak >= 3
+    // Convex range queries on numeric indexes: streak >= 3
+    const profiles = await ctx.db
+      .query('profiles')
+      .withIndex('by_streak', (q) => q.gte('streak', 3))
+      .collect()
     
-    return allProfiles.filter((profile) => 
-      profile.streak && profile.streak >= 3 && profile.lastVoteDate
-    )
+    return profiles.filter((profile) => profile.lastVoteDate)
   },
 })

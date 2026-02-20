@@ -1,4 +1,4 @@
-import { publicQuery, publicMutation } from './lib/customFunctions'
+import { publicQuery, authMutation } from './lib/customFunctions'
 /**
  * Comments — product reviews/discussions
  *
@@ -6,6 +6,7 @@ import { publicQuery, publicMutation } from './lib/customFunctions'
  * and like/unlike comments. Supports threaded replies (1 level deep).
  */
 import { v } from 'convex/values'
+import { requireAdmin } from './lib/authHelpers'
 
 
 const MAX_COMMENT_LENGTH = 500
@@ -14,14 +15,14 @@ const MAX_COMMENTS_PER_PAGE = 30
 /**
  * Post a new comment (or reply) on a product.
  */
-export const post = publicMutation({
+export const post = authMutation({
   args: {
     productId: v.id('products'),
-    userId: v.string(),
     text: v.string(),
     parentId: v.optional(v.id('comments')),
   },
-  handler: async (ctx, { productId, userId, text, parentId }) => {
+  handler: async (ctx, { productId, text, parentId }) => {
+    const userId = ctx.userId
     const trimmed = text.trim()
     if (!trimmed) throw new Error('Comment cannot be empty')
     if (trimmed.length > MAX_COMMENT_LENGTH) {
@@ -54,13 +55,13 @@ export const post = publicMutation({
 /**
  * Edit an existing comment (only by original author).
  */
-export const edit = publicMutation({
+export const edit = authMutation({
   args: {
     commentId: v.id('comments'),
-    userId: v.string(),
     text: v.string(),
   },
-  handler: async (ctx, { commentId, userId, text }) => {
+  handler: async (ctx, { commentId, text }) => {
+    const userId = ctx.userId
     const comment = await ctx.db.get(commentId)
     if (!comment || comment.isDeleted) throw new Error('Comment not found')
     if (comment.userId !== userId) throw new Error('Not authorized')
@@ -82,15 +83,17 @@ export const edit = publicMutation({
 /**
  * Soft-delete a comment (by author or admin).
  */
-export const remove = publicMutation({
+export const remove = authMutation({
   args: {
     commentId: v.id('comments'),
-    userId: v.string(),
-    isAdmin: v.optional(v.boolean()),
   },
-  handler: async (ctx, { commentId, userId, isAdmin }) => {
+  handler: async (ctx, { commentId }) => {
+    const userId = ctx.userId
     const comment = await ctx.db.get(commentId)
     if (!comment) throw new Error('Comment not found')
+    // Check if user is owner or admin
+    let isAdmin = false
+    try { await requireAdmin(ctx); isAdmin = true } catch { /* not admin */ }
     if (comment.userId !== userId && !isAdmin) throw new Error('Not authorized')
 
     await ctx.db.patch(commentId, {
@@ -104,12 +107,12 @@ export const remove = publicMutation({
 /**
  * Toggle like/unlike on a comment.
  */
-export const toggleLike = publicMutation({
+export const toggleLike = authMutation({
   args: {
     commentId: v.id('comments'),
-    userId: v.string(),
   },
-  handler: async (ctx, { commentId, userId }) => {
+  handler: async (ctx, { commentId }) => {
+    const userId = ctx.userId
     const comment = await ctx.db.get(commentId)
     if (!comment || comment.isDeleted) throw new Error('Comment not found')
 

@@ -1,8 +1,9 @@
 /**
  * Global logger utility for the frontend.
  * Provides a centralized way to log errors, warnings, and info messages.
- * Can be extended later to send logs to an external service (e.g., Sentry, Datadog).
+ * Integrates with Sentry for production error tracking.
  */
+import * as Sentry from '@sentry/react'
 
 type LogLevel = 'info' | 'warn' | 'error'
 
@@ -35,12 +36,17 @@ class Logger {
           break
       }
     } else {
-      // In production, we could send this to a logging service
-      // For now, just use console.error for errors to ensure they are captured by basic monitoring
+      // In production, we send this to a logging service (Sentry)
       if (level === 'error') {
         console.error(JSON.stringify(logData))
+        Sentry.captureException(error || new Error(message), {
+          extra: context,
+        })
       } else {
         // Optional: console.log(JSON.stringify(logData))
+        if (level === 'warn') {
+           Sentry.captureMessage(message, { level: 'warning', extra: context })
+        }
       }
     }
   }

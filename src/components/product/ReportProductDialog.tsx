@@ -23,14 +23,7 @@ import {
 import { toast } from 'sonner'
 import { Flag } from 'lucide-react'
 import { useAnonymousId } from '@/hooks/use-anonymous-id'
-
-const REPORT_REASONS = [
-  { value: 'inappropriate', label: 'Inappropriate content' },
-  { value: 'duplicate', label: 'Duplicate product' },
-  { value: 'wrong-info', label: 'Wrong information' },
-  { value: 'spam', label: 'Spam' },
-  { value: 'other', label: 'Other' },
-] as const
+import { useTranslation } from '@/hooks/use-translation'
 
 interface ReportProductDialogProps {
   productId: Id<'products'>
@@ -50,12 +43,21 @@ export function ReportProductDialog({
   const [details, setDetails] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { anonId: anonymousId } = useAnonymousId()
+  const { t } = useTranslation()
+
+  const reportReasons = [
+    { value: 'inappropriate' as const, label: t('report.inappropriate') },
+    { value: 'duplicate' as const, label: t('report.duplicate') },
+    { value: 'wrong-info' as const, label: t('report.wrongInfo') },
+    { value: 'spam' as const, label: t('report.spam') },
+    { value: 'other' as const, label: t('report.other') },
+  ]
 
   const createReport = useMutation(api.reports.create)
 
   const handleSubmit = async () => {
     if (!reason) {
-      toast.error('Please select a reason')
+      toast.error(t('report.selectReasonError'))
       return
     }
 
@@ -68,8 +70,8 @@ export function ReportProductDialog({
         anonymousId: anonymousId ?? undefined,
       })
 
-      toast.success('Report submitted', {
-        description: 'Thank you for helping keep our community safe',
+      toast.success(t('report.submitted'), {
+        description: t('report.submittedDesc'),
       })
 
       // Reset form and close dialog
@@ -77,9 +79,9 @@ export function ReportProductDialog({
       setDetails('')
       onOpenChange(false)
     } catch (error: unknown) {
-      toast.error('Failed to submit report', {
+      toast.error(t('report.failed'), {
         description:
-          error instanceof Error ? error.message : 'Please try again later',
+          error instanceof Error ? error.message : t('report.tryAgainLater'),
       })
     } finally {
       setIsSubmitting(false)
@@ -92,23 +94,23 @@ export function ReportProductDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Flag className="h-5 w-5 text-destructive" />
-            Report Product
+            {t('report.title')}
           </DialogTitle>
           <DialogDescription>
-            Report "{productName}" for review by our moderation team.
+            {t('report.description', { name: productName })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           {/* Reason Selector */}
           <div className="space-y-2">
-            <Label htmlFor="reason">Reason *</Label>
+            <Label htmlFor="reason">{t('report.reasonLabel')}</Label>
             <Select value={reason} onValueChange={(v) => setReason(v as ReportReason)}>
               <SelectTrigger id="reason">
-                <SelectValue placeholder="Select a reason" />
+                <SelectValue placeholder={t('report.selectReason')} />
               </SelectTrigger>
               <SelectContent>
-                {REPORT_REASONS.map((r) => (
+                {reportReasons.map((r) => (
                   <SelectItem key={r.value} value={r.value}>
                     {r.label}
                   </SelectItem>
@@ -119,10 +121,10 @@ export function ReportProductDialog({
 
           {/* Details Textarea */}
           <div className="space-y-2">
-            <Label htmlFor="details">Additional details (optional)</Label>
+            <Label htmlFor="details">{t('report.detailsLabel')}</Label>
             <Textarea
               id="details"
-              placeholder="Provide more context about the issue..."
+              placeholder={t('report.detailsPlaceholder')}
               value={details}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setDetails(e.target.value)
@@ -139,14 +141,14 @@ export function ReportProductDialog({
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="destructive"
             onClick={handleSubmit}
             disabled={isSubmitting || !reason}
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Report'}
+            {isSubmitting ? t('report.submitting') : t('report.submitReport')}
           </Button>
         </DialogFooter>
       </DialogContent>

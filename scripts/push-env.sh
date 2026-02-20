@@ -1,14 +1,17 @@
 #!/bin/bash
 
-# Path to the .env file in the root directory
-ENV_FILE="$(dirname "$0")/../.env"
-
-if [ ! -f "$ENV_FILE" ]; then
-  echo "❌ No .env file found in the root directory!"
+# Prefer .env.local (Convex convention for local dev), fall back to .env
+ROOT_DIR="$(dirname "$0")/.."
+if [ -f "$ROOT_DIR/.env.local" ]; then
+  ENV_FILE="$ROOT_DIR/.env.local"
+elif [ -f "$ROOT_DIR/.env" ]; then
+  ENV_FILE="$ROOT_DIR/.env"
+else
+  echo "❌ Neither .env.local nor .env file found in the root directory!"
   exit 1
 fi
 
-echo "🚀 Syncing .env to Convex..."
+echo "🚀 Syncing $ENV_FILE to Convex..."
 
 success_count=0
 skip_count=0

@@ -1,5 +1,5 @@
 "use node";
-import { publicAction, internalAction } from '../lib/customFunctions'
+import { internalAction } from '../lib/customFunctions'
 /**
  * Push Notification Delivery via OneSignal REST API
  *
@@ -30,7 +30,7 @@ const ONESIGNAL_API_URL = 'https://api.onesignal.com/notifications'
  * @param body - Notification body text
  * @param data - Optional custom data payload (delivered to app on tap)
  */
-export const sendPushToUser = publicAction({
+export const sendPushToUser = internalAction({
   args: {
     userId: v.string(),
     title: v.string(),
@@ -115,7 +115,7 @@ export const sendPushToUserInternal = internalAction({
  * @param body - Notification body text
  * @param data - Optional data payload
  */
-export const sendPushToUsers = publicAction({
+export const sendPushToUsers = internalAction({
   args: {
     userIds: v.array(v.string()),
     title: v.string(),

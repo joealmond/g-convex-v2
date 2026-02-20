@@ -6,6 +6,7 @@ const envSchema = z.object({
   VITE_CONVEX_URL: z.string().url(),
   VITE_CONVEX_SITE_URL: z.string().url().optional(),
   VITE_APP_ENV: z.enum(['development', 'preview', 'production']).default('development'),
+  VITE_SENTRY_DSN: z.string().url().optional(),
 })
 
 // Type for validated environment
@@ -17,6 +18,7 @@ function getEnv(): Env {
     VITE_CONVEX_URL: import.meta.env.VITE_CONVEX_URL,
     VITE_CONVEX_SITE_URL: import.meta.env.VITE_CONVEX_SITE_URL,
     VITE_APP_ENV: import.meta.env.VITE_APP_ENV,
+    VITE_SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN,
   })
 
   if (!parsed.success) {

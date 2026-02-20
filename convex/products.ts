@@ -4,12 +4,26 @@ import { components } from './_generated/api'
 import { internal } from './_generated/api'
 import { productsGeo } from './geospatial'
 import { RateLimiter } from '@convex-dev/rate-limiter'
-import { authMutation, adminMutation, publicQuery, publicMutation, internalMutation } from './lib/customFunctions'
+import { authMutation, adminMutation, publicQuery, internalMutation } from './lib/customFunctions'
 import { productsAggregate, votesByProduct } from './aggregates'
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
   productUpdate: { kind: 'token bucket', rate: 10, period: 60000, capacity: 15 },
 })
+
+/**
+ * Resolve product image URL from Convex storage.
+ * If the product has an imageStorageId, fetch the signed URL; otherwise fall back to imageUrl.
+ */
+async function resolveProductImage<T extends { imageStorageId?: string; imageUrl?: string }>(
+  ctx: { storage: { getUrl: (id: string) => Promise<string | null> } },
+  product: T,
+): Promise<T> {
+  if (product.imageStorageId) {
+    return { ...product, imageUrl: (await ctx.storage.getUrl(product.imageStorageId)) ?? product.imageUrl }
+  }
+  return product
+}
 
 /**
  * List all products with cursor-based pagination
@@ -30,12 +44,7 @@ export const list = publicQuery({
       .paginate({ cursor: args.paginationOpts?.cursor ?? null, numItems })
 
     const pageWithImages = await Promise.all(
-      result.page.map(async (p) => {
-        if (p.imageStorageId) {
-          return { ...p, imageUrl: await ctx.storage.getUrl(p.imageStorageId) ?? p.imageUrl }
-        }
-        return p
-      })
+      result.page.map((p) => resolveProductImage(ctx, p))
     )
 
     return {
@@ -52,12 +61,44 @@ export const list = publicQuery({
 export const listAll = publicQuery({
   handler: async (ctx) => {
     const products = await ctx.db.query('products').order('desc').collect()
-    return await Promise.all(products.map(async (p) => {
-      if (p.imageStorageId) {
-        return { ...p, imageUrl: await ctx.storage.getUrl(p.imageStorageId) ?? p.imageUrl }
-      }
-      return p
-    }))
+    return await Promise.all(products.map((p) => resolveProductImage(ctx, p)))
+  },
+})
+
+/**
+ * Get products created by a specific user
+ * Uses by_creator index — avoids fetching all products and filtering client-side
+ */
+export const getByCreator = publicQuery({
+  args: { userId: v.string() },
+  handler: async (ctx, { userId }) => {
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_creator', (q) => q.eq('createdBy', userId))
+      .order('desc')
+      .collect()
+    return await Promise.all(products.map((p) => resolveProductImage(ctx, p)))
+  },
+})
+
+/**
+ * Get products available at a specific store
+ * Checks the stores array for matching store name
+ */
+export const getByStore = publicQuery({
+  args: { storeName: v.string() },
+  handler: async (ctx, { storeName }) => {
+    // No direct index on stores array; we filter at DB level
+    const products = await ctx.db
+      .query('products')
+      .filter((q) => q.neq(q.field('stores'), undefined))
+      .collect()
+
+    const matching = products.filter((p) =>
+      p.stores?.some((s) => s.name.toLowerCase() === storeName.toLowerCase())
+    )
+
+    return await Promise.all(matching.map((p) => resolveProductImage(ctx, p)))
   },
 })
 
@@ -69,10 +110,7 @@ export const get = publicQuery({
   handler: async (ctx, { id }) => {
     const product = await ctx.db.get(id)
     if (!product) return null
-    if (product.imageStorageId) {
-      return { ...product, imageUrl: await ctx.storage.getUrl(product.imageStorageId) ?? product.imageUrl }
-    }
-    return product
+    return resolveProductImage(ctx, product)
   },
 })
 
@@ -88,10 +126,7 @@ export const getByName = publicQuery({
       .first()
     
     if (!product) return null
-    if (product.imageStorageId) {
-      return { ...product, imageUrl: await ctx.storage.getUrl(product.imageStorageId) ?? product.imageUrl }
-    }
-    return product
+    return resolveProductImage(ctx, product)
   },
 })
 
@@ -112,19 +147,14 @@ export const search = publicQuery({
       products = await ctx.db.query('products').order('desc').take(50)
     }
 
-    return await Promise.all(products.map(async (p) => {
-      if (p.imageStorageId) {
-        return { ...p, imageUrl: await ctx.storage.getUrl(p.imageStorageId) ?? p.imageUrl }
-      }
-      return p
-    }))
+    return await Promise.all(products.map((p) => resolveProductImage(ctx, p)))
   },
 })
 
 /**
  * Create a new product
  */
-export const create = publicMutation({
+export const create = authMutation({
   args: {
     name: v.string(),
     imageUrl: v.optional(v.string()),
@@ -133,7 +163,7 @@ export const create = publicMutation({
     initialTaste: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
+    const userId = ctx.userId
     
     // Check if product already exists
     const existing = await ctx.db
@@ -156,7 +186,7 @@ export const create = publicMutation({
       registeredVotes: 0,
       anonymousVotes: 0,
       lastUpdated: Date.now(),
-      createdBy: identity?.subject,
+      createdBy: userId,
       createdAt: Date.now(),
       latitude: undefined,
       longitude: undefined,
@@ -164,13 +194,6 @@ export const create = publicMutation({
 
     const newProduct = await ctx.db.get(productId)
     if (newProduct) await productsAggregate.insert(ctx, newProduct)
-
-    if (identity?.subject) {
-      await ctx.scheduler.runAfter(0, internal.sideEffects.onProductCreated, {
-        productId,
-        creatorId: identity.subject,
-      })
-    }
 
     return productId
   },
@@ -268,7 +291,10 @@ export const capturePriceSnapshots = internalMutation({
       return
     }
 
-    const products = await ctx.db.query('products').collect()
+    const products = await ctx.db
+      .query('products')
+      .filter((q) => q.neq(q.field('avgPrice'), undefined))
+      .collect()
     const today = new Date().toISOString().split('T')[0]! // YYYY-MM-DD
     let snapshotCount = 0
     
@@ -354,14 +380,10 @@ export const getNearbyProducts = publicQuery({
         const product = await ctx.db.get(result.key as import('./_generated/dataModel').Id<"products">)
         if (!product) return null
         
-        let finalImageUrl = product.imageUrl
-        if (product.imageStorageId) {
-          finalImageUrl = await ctx.storage.getUrl(product.imageStorageId) ?? product.imageUrl
-        }
+        const resolved = await resolveProductImage(ctx, product)
 
         return {
-          ...product,
-          imageUrl: finalImageUrl,
+          ...resolved,
           distance: result.distance // distance in meters is returned by the index
         }
       })

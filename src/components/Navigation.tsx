@@ -16,6 +16,7 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { Trophy, User, LogOut, LogIn, Menu, Shield, Loader2, MessageCircle } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import { useAdmin } from '@/hooks/use-admin'
+import { useTranslation } from '@/hooks/use-translation'
 
 /** Loading fallback for auth section */
 function AuthLoadingFallback() {
@@ -31,6 +32,7 @@ function AuthSection() {
   const user = useQuery(api.users.current)
   const profile = useQuery(api.profiles.getCurrent)
   const { isAdmin } = useAdmin()
+  const { t } = useTranslation()
 
   const handleSignOut = async () => {
     await authClient.signOut()
@@ -42,7 +44,7 @@ function AuthSection() {
       <Button asChild size="sm">
         <Link to="/login">
           <LogIn className="mr-2 h-4 w-4" />
-          Sign In
+          {t('nav.signIn')}
         </Link>
       </Button>
     )
@@ -63,7 +65,7 @@ function AuthSection() {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name || 'User'}</p>
+            <p className="text-sm font-medium leading-none">{user.name || t('nav.user')}</p>
             <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
           </div>
         </DropdownMenuLabel>
@@ -71,27 +73,27 @@ function AuthSection() {
         {profile && (
           <DropdownMenuItem disabled className="text-xs">
             <Trophy className="mr-2 h-4 w-4" />
-            {profile.points} points
+            {profile.points} {t('gamification.points')}
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link to="/profile" className="cursor-pointer">
             <User className="mr-2 h-4 w-4" />
-            Profile
+            {t('nav.profile')}
           </Link>
         </DropdownMenuItem>
         {isAdmin && (
           <DropdownMenuItem asChild>
             <Link to="/admin" className="cursor-pointer">
               <Shield className="mr-2 h-4 w-4" />
-              Admin Panel
+              {t('nav.adminPanel')}
             </Link>
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
-          Sign Out
+          {t('nav.signOut')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -102,6 +104,7 @@ function AuthSection() {
 function MobileAuthItems() {
   const user = useQuery(api.users.current)
   const { isAdmin } = useAdmin()
+  const { t } = useTranslation()
 
   const handleSignOut = async () => {
     await authClient.signOut()
@@ -113,7 +116,7 @@ function MobileAuthItems() {
       <DropdownMenuItem asChild>
         <Link to="/login" className="cursor-pointer">
           <LogIn className="mr-2 h-4 w-4" />
-          Sign In
+          {t('nav.signIn')}
         </Link>
       </DropdownMenuItem>
     )
@@ -124,20 +127,20 @@ function MobileAuthItems() {
       <DropdownMenuItem asChild>
         <Link to="/profile" className="cursor-pointer">
           <User className="mr-2 h-4 w-4" />
-          Profile
+          {t('nav.profile')}
         </Link>
       </DropdownMenuItem>
       {isAdmin && (
         <DropdownMenuItem asChild>
           <Link to="/admin" className="cursor-pointer">
             <Shield className="mr-2 h-4 w-4" />
-            Admin Panel
+            {t('nav.adminPanel')}
           </Link>
         </DropdownMenuItem>
       )}
       <DropdownMenuItem onClick={handleSignOut}>
         <LogOut className="mr-2 h-4 w-4" />
-        Sign Out
+        {t('nav.signOut')}
       </DropdownMenuItem>
     </>
   )
@@ -147,6 +150,7 @@ function MobileAuthItems() {
  * Main navigation header with user menu
  */
 export function Navigation() {
+  const { t } = useTranslation()
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
@@ -154,7 +158,7 @@ export function Navigation() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 font-bold text-xl">
             <span className="text-2xl">🌾</span>
-            <span>G-Matrix</span>
+            <span>{t('nav.appName')}</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -163,14 +167,14 @@ export function Navigation() {
               to="/"
               className="text-sm font-medium transition-colors hover:text-primary"
             >
-              Home
+              {t('nav.home')}
             </Link>
             <Link
               to="/community"
               className="text-sm font-medium transition-colors hover:text-primary inline-flex items-center gap-1"
             >
               <MessageCircle className="h-4 w-4" />
-              Community
+              {t('nav.community')}
             </Link>
 
             {/* Language Switcher */}
@@ -193,13 +197,13 @@ export function Navigation() {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem asChild>
                   <Link to="/" className="cursor-pointer">
-                    Home
+                    {t('nav.home')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/community" className="cursor-pointer">
                     <MessageCircle className="mr-2 h-4 w-4" />
-                    Community
+                    {t('nav.community')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

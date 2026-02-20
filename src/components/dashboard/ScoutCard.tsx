@@ -1,5 +1,3 @@
-'use client'
-
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Trophy, Flame, Star, TrendingUp } from 'lucide-react'

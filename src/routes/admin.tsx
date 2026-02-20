@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { useAdmin } from '@/hooks/use-admin'
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,9 +52,15 @@ function AdminPageContent() {
   const [searchQuery, setSearchQuery] = useState('')
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
 
-  // Redirect if not admin
-  if (adminStatus && !adminStatus.isAdmin || user === null) {
-    navigate({ to: '/' })
+  // Redirect if not admin (wrapped in useEffect to avoid side effects in render)
+  const shouldRedirect = (adminStatus && !adminStatus.isAdmin) || user === null
+  useEffect(() => {
+    if (shouldRedirect) {
+      navigate({ to: '/' })
+    }
+  }, [shouldRedirect, navigate])
+
+  if (shouldRedirect) {
     return null
   }
 

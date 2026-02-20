@@ -1,5 +1,3 @@
-'use client'
-
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { Suspense, useState } from 'react'
@@ -70,14 +68,11 @@ function formatTimeAgo(timestamp: number, t: (key: string, params?: Record<strin
 
 function CommunityContent() {
   const { t } = useTranslation()
-  const user = useQuery(api.users.current)
   const [tab, setTab] = useState<'all' | 'following'>('all')
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- API types generated after `npx convex dev`
-  const feed = useQuery((api as any).community?.getCommunityFeed, {
+  const feed = useQuery(api.community.getCommunityFeed, {
     limit: 30,
     followingOnly: tab === 'following',
-    currentUserId: user?._id,
   })
 
   const isLoading = feed === undefined

@@ -56,6 +56,7 @@ export default defineSchema({
     .index('by_name', ['name'])
     .index('by_barcode', ['barcode'])
     .index('by_created', ['createdAt'])
+    .index('by_creator', ['createdBy'])
     .searchIndex('search_name', {
       searchField: 'name',
     }),
@@ -76,6 +77,7 @@ export default defineSchema({
   })
     .index('by_product', ['productId'])
     .index('by_product_user', ['productId', 'userId'])
+    .index('by_product_anonymous', ['productId', 'anonymousId'])
     .index('by_user', ['userId'])
     .index('by_anonymous', ['anonymousId']),
 
@@ -95,7 +97,8 @@ export default defineSchema({
     votesToday: v.optional(v.number()), // Daily vote counter
     role: v.optional(v.union(v.literal('admin'), v.literal('user'))),
   }).index('by_user', ['userId'])
-    .index('by_points', ['points']),
+    .index('by_points', ['points'])
+    .index('by_streak', ['streak']),
 
   // Reports - flag products for review
   reports: defineTable({
@@ -122,6 +125,7 @@ export default defineSchema({
   })
     .index('by_product', ['productId'])
     .index('by_status', ['status'])
+    .index('by_product_status', ['productId', 'status'])
     .index('by_reporter', ['reportedBy']),
 
   // Follows - user following relationships

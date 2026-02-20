@@ -1,4 +1,5 @@
 import { publicQuery } from './lib/customFunctions'
+import { getAuthUser } from './lib/authHelpers'
 /**
  * Community Feed — aggregated activity stream
  *
@@ -27,10 +28,13 @@ export const getCommunityFeed = publicQuery({
     limit: v.optional(v.number()),
     /** Only show activity from users I follow */
     followingOnly: v.optional(v.boolean()),
-    currentUserId: v.optional(v.string()),
   },
-  handler: async (ctx, { limit, followingOnly, currentUserId }) => {
+  handler: async (ctx, { limit, followingOnly }) => {
     const pageSize = Math.min(limit ?? 30, 50)
+
+    // Derive currentUserId from auth context (not client arg)
+    const authUser = await getAuthUser(ctx)
+    const currentUserId = authUser?._id
 
     // If following-only, get the set of user IDs the current user follows
     let followingSet: Set<string> | null = null
@@ -51,11 +55,22 @@ export const getCommunityFeed = publicQuery({
       .filter((q) => q.neq(q.field('userId'), undefined))
       .take(pageSize * 2)
 
-    for (const vote of votes) {
-      if (!vote.userId) continue
-      if (followingSet && !followingSet.has(vote.userId)) continue
+    // Filter by following set if needed
+    const filteredVotes = followingSet
+      ? votes.filter((v) => v.userId && followingSet!.has(v.userId))
+      : votes
 
-      const product = await ctx.db.get(vote.productId)
+    // Batch-fetch unique products for votes to avoid N+1
+    const voteProductIds = [...new Set(filteredVotes.map((v) => v.productId))]
+    const voteProductMap = new Map<string, { name: string; imageUrl?: string }>()
+    for (const pid of voteProductIds) {
+      const product = await ctx.db.get(pid)
+      if (product) voteProductMap.set(pid as string, { name: product.name, imageUrl: product.imageUrl })
+    }
+
+    for (const vote of filteredVotes) {
+      if (!vote.userId) continue
+      const product = voteProductMap.get(vote.productId as string)
       if (!product) continue
 
       feed.push({
@@ -100,10 +115,26 @@ export const getCommunityFeed = publicQuery({
       .filter((q) => q.eq(q.field('isDeleted'), false))
       .take(pageSize)
 
-    for (const comment of comments) {
-      if (followingSet && !followingSet.has(comment.userId)) continue
+    // Filter by following set if needed
+    const filteredComments = followingSet
+      ? comments.filter((c) => followingSet!.has(c.userId))
+      : comments
 
-      const product = await ctx.db.get(comment.productId)
+    // Batch-fetch unique products for comments to avoid N+1
+    const commentProductIds = [...new Set(filteredComments.map((c) => c.productId))]
+    const commentProductMap = new Map<string, { name: string; imageUrl?: string }>()
+    for (const pid of commentProductIds) {
+      // Reuse from vote map if already fetched
+      if (voteProductMap.has(pid as string)) {
+        commentProductMap.set(pid as string, voteProductMap.get(pid as string)!)
+      } else {
+        const product = await ctx.db.get(pid)
+        if (product) commentProductMap.set(pid as string, { name: product.name, imageUrl: product.imageUrl })
+      }
+    }
+
+    for (const comment of filteredComments) {
+      const product = commentProductMap.get(comment.productId as string)
       if (!product) continue
 
       feed.push({

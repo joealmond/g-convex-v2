@@ -1,5 +1,3 @@
-'use client'
-
 import { type Product } from '@/lib/types'
 import { Clock, Navigation } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -8,6 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from '@/hooks/use-translation'
 import { isIOS, isNative } from '@/lib/platform'
+import { formatRelativeTimeI18n } from '@/lib/format-time'
+import { formatDistance } from '@/lib/format-distance'
 
 interface StoreListProps {
   product: Product
@@ -33,18 +33,6 @@ export function StoreList({ product }: StoreListProps) {
         <p className="text-xs">{t('store.beFirst')}</p>
       </div>
     )
-  }
-
-  const formatRelativeTime = (timestamp: number): string => {
-    const diff = Date.now() - timestamp
-    const minutes = Math.floor(diff / 60000)
-    const hours = Math.floor(minutes / 60)
-    const days = Math.floor(hours / 24)
-
-    if (days > 0) return t('community.daysAgo', { count: days })
-    if (hours > 0) return t('community.hoursAgo', { count: hours })
-    if (minutes > 0) return t('community.minutesAgo', { count: minutes })
-    return t('community.justNow')
   }
 
   /**
@@ -133,13 +121,13 @@ export function StoreList({ product }: StoreListProps) {
               {/* Last Seen */}
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                <span>{formatRelativeTime(store.lastSeenAt)}</span>
+                <span>{formatRelativeTimeI18n(store.lastSeenAt, t)}</span>
               </div>
 
               {/* Distance */}
               {distance !== undefined && (
                 <span className="text-xs">
-                  {distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`}
+                  {formatDistance(distance, t)}
                 </span>
               )}
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search, Plus } from 'lucide-react'
@@ -25,14 +25,20 @@ export function ProductList({
 }: ProductListProps) {
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Filter products by search query
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter products by search query — memoized to avoid re-filtering on every render
+  const filteredProducts = useMemo(() =>
+    products.filter((product) =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+    [products, searchQuery]
   )
 
-  // Sort by total votes (descending)
-  const sortedProducts = [...filteredProducts].sort(
-    (a, b) => b.voteCount - a.voteCount
+  // Sort by total votes (descending) — memoized to avoid re-sorting on every render
+  const sortedProducts = useMemo(() =>
+    [...filteredProducts].sort(
+      (a, b) => b.voteCount - a.voteCount
+    ),
+    [filteredProducts]
   )
 
   return (

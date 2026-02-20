@@ -1,5 +1,3 @@
-'use client'
-
 import { motion } from 'framer-motion'
 import { appConfig } from '@/lib/app-config'
 import { cn } from '@/lib/utils'

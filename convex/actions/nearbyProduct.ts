@@ -7,7 +7,7 @@ import { internalAction } from '../lib/customFunctions'
  * Uses vote GPS coordinates to find nearby users.
  */
 
-import { api, internal } from '../_generated/api'
+import { internal } from '../_generated/api'
 import { v } from 'convex/values'
 
 /**
@@ -114,7 +114,7 @@ export const notifyNearbyProduct = internalAction({
     console.log(`[Nearby Product] Sending to ${nearbyUserIds.length} nearby users`)
 
     // Send push notifications
-    await ctx.runAction(api.actions.sendPush.sendPushToUsers, {
+    await ctx.runAction(internal.actions.sendPush.sendPushToUsers, {
       userIds: nearbyUserIds,
       title: '📍 New product near you!',
       body: `${productName} was just added nearby. Be the first to rate it!`,

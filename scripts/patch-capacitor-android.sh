@@ -16,9 +16,17 @@ PLUGINS=(
   "node_modules/capacitor-camera-view/android/build.gradle"
 )
 
+# Detect OS for portable sed -i usage
+# macOS sed requires -i '' (empty extension), Linux sed uses -i (no argument)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  SED_INPLACE=(sed -i '')
+else
+  SED_INPLACE=(sed -i)
+fi
+
 for plugin in "${PLUGINS[@]}"; do
   if [ -f "$plugin" ]; then
-    sed -i '' "s/proguard-android\.txt/proguard-android-optimize.txt/g" "$plugin"
+    "${SED_INPLACE[@]}" "s/proguard-android\.txt/proguard-android-optimize.txt/g" "$plugin"
     echo "  ✓ Patched $plugin"
   fi
 done

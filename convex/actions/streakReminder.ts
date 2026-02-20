@@ -7,7 +7,7 @@ import { internalAction } from '../lib/customFunctions'
  * A streak expires if the user doesn't vote within 24 hours of their last vote.
  */
 
-import { api, internal } from '../_generated/api'
+import { internal } from '../_generated/api'
 
 /**
  * Check for streaks about to expire and send reminders.
@@ -30,20 +30,21 @@ export const checkStreakExpiry = internalAction({
     }
 
     const now = Date.now()
+    const todayStr = new Date(now).toISOString().split('T')[0]!
+    const yesterdayStr = new Date(now - 86_400_000).toISOString().split('T')[0]!
 
     const usersToRemind: string[] = []
 
     for (const profile of profiles) {
       if (!profile.lastVoteDate) continue
 
-      // Parse lastVoteDate (YYYY-MM-DD format) as UTC midnight
-      const lastVoteTime = new Date(profile.lastVoteDate + 'T00:00:00Z').getTime()
-
-      // If last vote was ~23 hours ago (between 22-24h ago), send reminder
-      const hoursSinceVote = (now - lastVoteTime) / (1000 * 60 * 60)
-      if (hoursSinceVote >= 22 && hoursSinceVote <= 24) {
+      // Remind users whose last vote was yesterday (haven't voted today yet).
+      // The cron runs at 20:00 UTC — gives an evening nudge before midnight.
+      if (profile.lastVoteDate === yesterdayStr) {
         usersToRemind.push(profile.userId)
       }
+      // Don't remind if they already voted today (lastVoteDate === todayStr)
+      // Don't remind if they missed more than 1 day — streak already broke
     }
 
     if (usersToRemind.length === 0) {
@@ -54,7 +55,7 @@ export const checkStreakExpiry = internalAction({
     // Send push notifications
     console.log(`[Streak Reminder] Sending to ${usersToRemind.length} users`)
 
-    await ctx.runAction(api.actions.sendPush.sendPushToUsers, {
+    await ctx.runAction(internal.actions.sendPush.sendPushToUsers, {
       userIds: usersToRemind,
       title: '🔥 Your streak is about to expire!',
       body: "Don't lose your streak! Vote today to keep it alive.",

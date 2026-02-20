@@ -1,14 +1,18 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-console.log('Uploading .env variables to Convex...');
+console.log('Uploading .env.local variables to Convex...');
 
-if (!fs.existsSync('.env')) {
-  console.error('Error: .env file not found in the root directory.');
+// Prefer .env.local (Convex convention for local dev), fall back to .env
+const envPath = fs.existsSync('.env.local') ? '.env.local' : '.env';
+
+if (!fs.existsSync(envPath)) {
+  console.error('Error: Neither .env.local nor .env file found in the root directory.');
   process.exit(1);
 }
 
-const envFile = fs.readFileSync('.env', 'utf-8');
+console.log(`Reading from ${envPath}`);
+const envFile = fs.readFileSync(envPath, 'utf-8');
 const lines = envFile.split('\n');
 
 let successCount = 0;

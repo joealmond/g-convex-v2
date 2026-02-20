@@ -1,5 +1,3 @@
-'use client'
-
 import { type ReactNode, useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'

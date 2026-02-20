@@ -61,7 +61,8 @@ export function BottomTabs() {
             trigger={
               <Button
                 className="rounded-full w-[4.5rem] h-[4.5rem] p-0 bg-white text-primary hover:bg-white/90 dark:bg-accent dark:text-accent-foreground shadow-lg -mt-8 flex items-center justify-center border-4 border-[var(--nav-bg)]"
-                title="Add product"
+                title={t('common.addProduct')}
+                aria-label={t('common.addProduct')}
               >
                 <Plus className="h-8 w-8" />
               </Button>

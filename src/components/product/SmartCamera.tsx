@@ -1,5 +1,3 @@
-'use client'
-
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useCameraView } from '@/hooks/use-camera-view'
 import { useHaptics } from '@/hooks/use-haptics'

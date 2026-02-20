@@ -66,6 +66,8 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
       // Deep link scheme for OAuth callback on native
       'gmatrix://',
       envConfig.siteUrl,
+      // Production Cloudflare Workers domain (set SITE_URL env var in Convex dashboard)
+      ...(process.env.SITE_URL ? [process.env.SITE_URL] : []),
     ],
     // Google OAuth
     socialProviders: {

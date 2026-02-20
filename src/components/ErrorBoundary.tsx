@@ -1,5 +1,6 @@
 import { Component, ErrorInfo, ReactNode } from 'react'
 import { logger } from '@/lib/logger'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface Props {
   children: ReactNode
@@ -59,41 +60,48 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback
       }
 
-      // Default fallback UI
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="max-w-md p-8 rounded-lg border border-border bg-card text-center">
-            <div className="text-4xl mb-4">⚠️</div>
-            <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
-            <p className="text-muted-foreground mb-4">
-              An unexpected error occurred. Please try again.
-            </p>
-            
-            {/* Show error details in development */}
-            {import.meta.env.DEV && this.state.error && (
-              <details className="mb-4 text-left">
-                <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-                  Error details
-                </summary>
-                <pre className="mt-2 p-2 rounded bg-muted text-xs overflow-auto">
-                  {this.state.error.message}
-                  {'\n\n'}
-                  {this.state.error.stack}
-                </pre>
-              </details>
-            )}
-
-            <button
-              onClick={this.handleRetry}
-              className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      )
+      // Default fallback UI uses a functional component for i18n
+      return <DefaultErrorFallback error={this.state.error} onRetry={this.handleRetry} />
     }
 
     return this.props.children
   }
+}
+
+/** Functional fallback component — enables useTranslation() hook */
+function DefaultErrorFallback({ error, onRetry }: { error: Error | null; onRetry: () => void }) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="max-w-md p-8 rounded-lg border border-border bg-card text-center">
+        <div className="text-4xl mb-4">⚠️</div>
+        <h2 className="text-xl font-semibold mb-2">{t('errors.generic')}</h2>
+        <p className="text-muted-foreground mb-4">
+          {t('errors.genericDesc')}
+        </p>
+        
+        {/* Show error details in development */}
+        {import.meta.env.DEV && error && (
+          <details className="mb-4 text-left">
+            <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+              {t('errors.errorDetails')}
+            </summary>
+            <pre className="mt-2 p-2 rounded bg-muted text-xs overflow-auto">
+              {error.message}
+              {'\n\n'}
+              {error.stack}
+            </pre>
+          </details>
+        )}
+
+        <button
+          onClick={onRetry}
+          className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          {t('errors.tryAgain')}
+        </button>
+      </div>
+    </div>
+  )
 }

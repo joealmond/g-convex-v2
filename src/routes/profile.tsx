@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -90,7 +90,7 @@ function ProfileContent() {
   const user = useQuery(api.users.current)
   const profile = useQuery(api.profiles.getCurrent)
   const myVotes = useQuery(api.votes.getByUser, user ? { userId: user._id } : 'skip')
-  const products = useQuery(api.products.listAll)
+  const myProducts = useQuery(api.products.getByCreator, user ? { userId: user._id } : 'skip')
   const followCounts = useQuery(
     api.follows.getCounts,
     user ? { userId: user._id } : 'skip'
@@ -135,25 +135,28 @@ function ProfileContent() {
   const earnedBadges = profile?.badges || []
   const currentStreak = profile?.streak || 0
 
-  // Get products created by user
-  const myProducts = products?.filter(p => p.createdBy === user._id) || []
+  // Get products created by user (fetched via getByCreator query)
+  const myProductsList = myProducts || []
 
-  // Get user level and progress
-  const currentLevel = getUserLevel(points)
-  const nextLevel = currentLevel.max === Infinity ? null : getUserLevel(currentLevel.max + 1)
-  const levelProgress = nextLevel
-    ? ((points - currentLevel.min) / (nextLevel.min - currentLevel.min)) * 100
-    : 100
+  // Get user level and progress — memoized to avoid recalc on every render
+  const { currentLevel, nextLevel, levelProgress } = useMemo(() => {
+    const current = getUserLevel(points)
+    const next = current.max === Infinity ? null : getUserLevel(current.max + 1)
+    const progress = next
+      ? ((points - current.min) / (next.min - current.min)) * 100
+      : 100
+    return { currentLevel: current, nextLevel: next, levelProgress: progress }
+  }, [points])
 
-  // Combine votes and products for activity feed
-  const activities = [
+  // Combine votes and products for activity feed — memoized (merge + sort + slice)
+  const activities = useMemo(() => [
     ...(myVotes?.map(v => ({
       type: 'vote' as const,
       timestamp: v.createdAt,
       productId: v.productId,
       data: { safety: v.safety, taste: v.taste, storeName: v.storeName, price: v.price },
     })) || []),
-    ...(myProducts.map(p => ({
+    ...(myProductsList.map(p => ({
       type: 'product' as const,
       timestamp: p.createdAt,
       productId: p._id,
@@ -161,7 +164,9 @@ function ProfileContent() {
     }))),
   ]
     .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 20)
+    .slice(0, 20),
+    [myVotes, myProductsList]
+  )
 
   return (
     <div className="flex-1 flex flex-col bg-background">
@@ -230,7 +235,7 @@ function ProfileContent() {
           />
           <StatsCard
             title={t('profile.products')}
-            value={myProducts.length}
+            value={myProductsList.length}
             icon={<Star className="h-5 w-5 text-primary" />}
           />
           <StatsCard
@@ -360,7 +365,7 @@ function ProfileContent() {
           {activities.length > 0 ? (
             <div className="space-y-2">
               {activities.map((activity, idx) => {
-                const product = products?.find(p => p._id === activity.productId)
+                const product = myProductsList?.find(p => p._id === activity.productId)
                 if (!product) return null
 
                 if (activity.type === 'vote') {

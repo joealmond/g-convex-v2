@@ -13,12 +13,12 @@ import { Languages } from 'lucide-react'
  * Switches between English and Hungarian
  */
 export function LanguageSwitcher() {
-  const { locale, setLocale } = useTranslation()
+  const { t, locale, setLocale } = useTranslation()
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8" title="Change language">
+        <Button variant="ghost" size="icon" className="h-8 w-8" title={t('common.changeLanguage')} aria-label={t('common.changeLanguage')}>
           <Languages className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>

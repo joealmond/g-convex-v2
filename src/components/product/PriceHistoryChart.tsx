@@ -3,7 +3,7 @@
  * Line chart showing price changes over time
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
@@ -29,9 +29,9 @@ export function PriceHistoryChart({ productId }: PriceHistoryChartProps) {
   })
 
   // Prevent SSR/hydration issues
-  useState(() => {
+  useEffect(() => {
     setMounted(true)
-  })
+  }, [])
 
   if (!mounted) {
     return (
@@ -64,8 +64,8 @@ export function PriceHistoryChart({ productId }: PriceHistoryChartProps) {
     )
   }
 
-  // Prepare chart data
-  const chartData = history
+  // Prepare chart data (spread to avoid mutating source array)
+  const chartData = [...history]
     .reverse() // Oldest first
     .map((snapshot) => ({
       date: new Date(snapshot.snapshotDate).toLocaleDateString(undefined, { 

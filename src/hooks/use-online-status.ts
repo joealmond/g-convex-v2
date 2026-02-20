@@ -41,11 +41,6 @@ export function useServiceWorker() {
     try {
       const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
       setRegistration(reg)
-
-      // Check for updates periodically (every 60 minutes)
-      setInterval(() => {
-        reg.update()
-      }, 60 * 60 * 1000)
     } catch (err) {
       console.warn('Service worker registration failed:', err)
     }
@@ -53,7 +48,14 @@ export function useServiceWorker() {
 
   useEffect(() => {
     register()
-  }, [register])
+
+    // Check for updates periodically (every 60 minutes)
+    const intervalId = setInterval(() => {
+      if (registration) registration.update()
+    }, 60 * 60 * 1000)
+
+    return () => clearInterval(intervalId)
+  }, [register, registration])
 
   return { registration }
 }

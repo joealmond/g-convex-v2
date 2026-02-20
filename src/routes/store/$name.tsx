@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProductCard } from '@/components/dashboard/ProductCard'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { Store, MapPin, Package, TrendingUp, ArrowLeft, Shield } from 'lucide-react'
+import { useTranslation } from '@/hooks/use-translation'
 
 export const Route = createFileRoute('/store/$name')({
   component: StoreProfilePage,
@@ -38,19 +39,10 @@ function StoreProfilePage() {
 function StoreProfileContent() {
   const { name: storeName } = Route.useParams()
   const decodedStoreName = decodeURIComponent(storeName)
+  const { t } = useTranslation()
 
-  // Get all products
-  const allProducts = useQuery(api.products.listAll)
-
-  // Filter products that have this store
-  const storeProducts =
-    allProducts?.filter(
-      (product) =>
-        product.stores?.some(
-          (store) =>
-            store.name.toLowerCase() === decodedStoreName.toLowerCase()
-        )
-    ) || []
+  // Get products for this store (indexed query)
+  const storeProducts = useQuery(api.products.getByStore, { storeName: decodedStoreName }) || []
 
   // Calculate store stats
   const productCount = storeProducts.length
@@ -89,7 +81,7 @@ function StoreProfileContent() {
             <Button variant="ghost" size="sm" asChild className="mb-2">
               <Link to="/">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
+                {t('nav.back')}
               </Link>
             </Button>
             <div className="flex items-center gap-3 mb-2">
@@ -99,7 +91,7 @@ function StoreProfileContent() {
               </h1>
             </div>
             <p className="text-muted-foreground">
-              Community-rated products available at this location
+              {t('store.subtitle')}
             </p>
           </div>
         </div>
@@ -108,22 +100,22 @@ function StoreProfileContent() {
         {productCount > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <StatsCard
-              title="Products"
+              title={t('store.products')}
               value={productCount}
               icon={<Package className="h-5 w-5 text-primary" />}
             />
             <StatsCard
-              title="Total Votes"
+              title={t('store.totalVotes')}
               value={totalVotes}
               icon={<TrendingUp className="h-5 w-5 text-primary" />}
             />
             <StatsCard
-              title="Avg Safety"
+              title={t('store.avgSafety')}
               value={avgSafety}
               icon={<Shield className="h-5 w-5 text-primary" />}
             />
             <StatsCard
-              title="Locations"
+              title={t('store.locations')}
               value={uniqueLocations}
               icon={<MapPin className="h-5 w-5 text-primary" />}
             />
@@ -136,10 +128,10 @@ function StoreProfileContent() {
             <CardContent className="py-12 text-center">
               <Store className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-lg font-medium text-foreground mb-2">
-                No products found
+                {t('store.noProductsFound')}
               </p>
               <p className="text-sm text-muted-foreground">
-                No one has tagged products from "{decodedStoreName}" yet
+                {t('store.noProductsAt', { name: decodedStoreName })}
               </p>
             </CardContent>
           </Card>
@@ -148,7 +140,7 @@ function StoreProfileContent() {
             <Card>
               <CardHeader>
                 <CardTitle>
-                  Products at {decodedStoreName} ({productCount})
+                  {t('store.productsAt', { name: decodedStoreName, count: String(productCount) })}
                 </CardTitle>
               </CardHeader>
               <CardContent>

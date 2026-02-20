@@ -1,9 +1,9 @@
-import { publicQuery, publicMutation } from './lib/customFunctions'
+import { publicQuery, publicMutation, adminQuery, adminMutation } from './lib/customFunctions'
 import { v } from 'convex/values'
 
 import { components } from './_generated/api'
 import { RateLimiter } from '@convex-dev/rate-limiter'
-import { getAuthUser, requireAdmin } from './lib/authHelpers'
+import { getAuthUser } from './lib/authHelpers'
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
   report: { kind: 'token bucket', rate: 5, period: 3600000, capacity: 10 },
@@ -82,7 +82,7 @@ export const create = publicMutation({
 })
 
 // List all reports (admin only)
-export const list = publicQuery({
+export const list = adminQuery({
   args: {
     status: v.optional(v.union(
       v.literal('pending'),
@@ -92,8 +92,6 @@ export const list = publicQuery({
     )),
   },
   handler: async (ctx, args) => {
-    // Check if user is admin
-    await requireAdmin(ctx)
 
     // Query reports
     let reports
@@ -138,7 +136,7 @@ export const list = publicQuery({
 })
 
 // Update report status (admin only)
-export const updateStatus = publicMutation({
+export const updateStatus = adminMutation({
   args: {
     reportId: v.id('reports'),
     status: v.union(
@@ -149,24 +147,21 @@ export const updateStatus = publicMutation({
     ),
   },
   handler: async (ctx, args) => {
-    const user = await requireAdmin(ctx)
-
-    // Update report
+    // Update report — ctx.userId provided by adminMutation middleware
     await ctx.db.patch(args.reportId, {
       status: args.status,
-      reviewedBy: user._id,
+      reviewedBy: ctx.userId,
       reviewedAt: Date.now(),
     })
   },
 })
 
 // Get reports for a specific product (admin only)
-export const getByProduct = publicQuery({
+export const getByProduct = adminQuery({
   args: {
     productId: v.id('products'),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx)
 
     const reports = await ctx.db
       .query('reports')

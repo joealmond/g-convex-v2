@@ -30,16 +30,16 @@ import { publicQuery } from './lib/customFunctions'
 import { type QueryCtx } from './_generated/server'
 import { authComponent } from './auth'
 import { ADMIN_EMAILS, ROLES } from './lib/config'
-import { getAuthUser } from './lib/authHelpers'
+import { type AuthUser } from './lib/authHelpers'
 import { profilesAggregate } from './aggregates'
 
 /**
  * Safely get the authenticated user, returning null if unauthenticated.
  * This prevents throwing during SSR when no session exists.
  */
-async function getAuthUserSafe(ctx: QueryCtx): Promise<Awaited<ReturnType<typeof getAuthUser>> | null> {
+async function getAuthUserSafe(ctx: QueryCtx): Promise<AuthUser | null> {
   try {
-    return (await authComponent.getAuthUser(ctx)) as any
+    return (await authComponent.getAuthUser(ctx)) as AuthUser | null
   } catch {
     // Unauthenticated - return null instead of throwing
     return null

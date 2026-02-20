@@ -34,8 +34,6 @@
     "cap:android": "npx cap open android"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.994.0",
-    "@aws-sdk/s3-request-presigner": "^3.994.0",
     "@better-auth/core": "^1.4.18",
     "@capacitor/android": "^8.0.2",
     "@capacitor/app": "^8.0.1",
@@ -96,9 +94,11 @@
     "zod": "^4.3.6"
   },
   "optionalDependencies": {
-    "@sentry/react": "^9.36.0"
+    "@sentry/react": "10.36.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.994.0",
+    "@aws-sdk/s3-request-presigner": "^3.994.0",
     "@tailwindcss/vite": "^4.1.18",
     "@testing-library/dom": "^10.0.0",
     "@testing-library/react": "^16.0.0",
@@ -108,12 +108,11 @@
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.4",
-    "autoprefixer": "^10.4.21",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "eslint": "^9.0.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "happy-dom": "^20.3.7",
-    "postcss": "^8.5.6",
     "prettier": "^3.6.2",
     "tailwindcss": "^4.1.18",
     "terser": "^5.44.1",

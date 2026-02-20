@@ -11,7 +11,10 @@
     "back": "Vissza",
     "backToHome": "Vissza a főoldalra",
     "signIn": "Bejelentkezés",
-    "signOut": "Kijelentkezés"
+    "signOut": "Kijelentkezés",
+    "adminPanel": "Admin Panel",
+    "appName": "G-Matrix",
+    "user": "Felhasználó"
   },
   "voting": {
     "safe": "Tiszta",
@@ -58,7 +61,18 @@
     "basePoints": "Alap: +{count}p",
     "priceBonus": "Ár: +{count}p",
     "storeBonus": "Bolt: +{count}p",
-    "gpsBonus": "GPS: +{count}p"
+    "gpsBonus": "GPS: +{count}p",
+    "voterList": "Szavazók listája",
+    "noVotesYet": "Még nincs szavazat",
+    "votesCountDesc": "{total} szavazat ({registered} regisztrált, {anonymous} anonim)",
+    "anon": "Anonim",
+    "reg": "Reg.",
+    "voteDeleted": "Szavazat törölve",
+    "deleteVoteFailed": "Szavazat törlése sikertelen",
+    "deleteVoteTitle": "Szavazat törlése?",
+    "deleteVoteDesc": "Ez véglegesen törli a szavazatot és újraszámolja a termék átlagokat. Ez a művelet nem vonható vissza.",
+    "impersonateUser": "Felhasználó megszemélyesítése",
+    "deleteThisVote": "Szavazat törlése"
   },
   "quadrants": {
     "holyGrail": "Szent Grál",
@@ -107,7 +121,9 @@
     "deleting": "Törlés...",
     "updating": "Frissítés...",
     "or": "vagy",
-    "price": "Ár"
+    "price": "Ár",
+    "sendComment": "Hozzászólás küldése",
+    "changeLanguage": "Nyelv váltása"
   },
   "feed": {
     "searchProducts": "Termékek keresése…",
@@ -138,7 +154,13 @@
     "value": "Érték",
     "noProductsYet": "Még nincs termék",
     "addFirstProduct": "Add hozzá az első terméket a kezdéshez!",
-    "votes": "Szavazatok: "
+    "votes": "Szavazatok: ",
+    "noVotesYet": "Még nincs szavazat",
+    "beFirstToVote": "Legyél az első szavazó!",
+    "registeredUser": "Regisztrált felhasználó",
+    "anonymous": "Anonim",
+    "registered": "Regisztrált",
+    "impersonated": "Megszemélyesített"
   },
   "leaderboard": {
     "title": "Ranglista",
@@ -350,9 +372,16 @@
   },
   "errors": {
     "generic": "Valami hiba történt",
+    "genericDesc": "Váratlan hiba történt. Kérlek, próbáld újra.",
+    "errorDetails": "Hiba részletei",
     "notFound": "Nem található",
     "unauthorized": "Be kell jelentkezned",
-    "rateLimited": "Túl sok kérés. Kérlek, lassíts."
+    "rateLimited": "Túl sok kérés. Kérlek, lassíts.",
+    "pageNotFound": "Az oldal nem található",
+    "pageNotFoundDesc": "A keresett oldal nem létezik vagy áthelyezték.",
+    "goHome": "Főoldal",
+    "goBack": "Vissza",
+    "tryAgain": "Kérlek, próbáld újra"
   },
   "imageUpload": {
     "addProduct": "Termék Hozzáadása",
@@ -367,7 +396,6 @@
     "uploadAndAnalyze": "Feltöltés és Elemzés",
     "aiAnalyzing": "AI elemzi a terméket",
     "aiAnalyzingHint": "Ez néhány másodpercig eltarthat...",
-    "glutenWarning": "Figyelem: Ez a termék glutént tartalmazhat!",
     "productName": "Termék Neve",
     "enterProductName": "Add meg a termék nevét",
     "safety": "Biztonság",
@@ -476,7 +504,17 @@
     "justNow": "most",
     "minutesAgo": "{count}p ezelőtt",
     "hoursAgo": "{count}ó ezelőtt",
-    "daysAgo": "{count}n ezelőtt"
+    "daysAgo": "{count}n ezelőtt",
+    "weeksAgo": "{count}hét ezelőtt",
+    "monthsAgo": "{count}hó ezelőtt",
+    "yearsAgo": "{count}év ezelőtt",
+    "follow": "Követés",
+    "followingBtn": "Követed",
+    "unfollowed": "{name} követése megszüntetve",
+    "nowFollowing": "Mostantól követed: {name}!",
+    "followFailed": "Követés frissítése sikertelen",
+    "followFailedRetry": "Kérlek, próbáld újra",
+    "defaultUser": "felhasználó"
   },
   "share": {
     "share": "Megosztás",
@@ -488,10 +526,84 @@
     "copied": "Másolva!",
     "copyLink": "Link másolása"
   },
+  "files": {
+    "title": "Fájl Tárolás",
+    "demoTitle": "Fájl Tárolás Demó",
+    "demoDesc": "Jelentkezz be a fájlok feltöltéséhez és kezeléséhez a Convex tárhelyen.",
+    "signInGoogle": "Bejelentkezés Google-lel",
+    "uploadFile": "Fájl feltöltése",
+    "chooseFile": "Válassz fájlt",
+    "yourFiles": "Fájljaid",
+    "noFiles": "Még nincs feltöltött fájl.",
+    "gettingUrl": "Feltöltési URL lekérése...",
+    "uploading": "Fájl feltöltése...",
+    "savingMetadata": "Metaadatok mentése...",
+    "uploadFailed": "Feltöltés sikertelen!",
+    "confirmDelete": "Biztosan törölni szeretnéd ezt a fájlt?"
+  },
+  "reports": {
+    "title": "Termék Jelentések",
+    "allReports": "Összes Jelentés",
+    "pending": "Függőben",
+    "reviewed": "Áttekintve",
+    "resolved": "Megoldva",
+    "dismissed": "Elutasítva",
+    "statusUpdated": "Jelentés állapota frissítve",
+    "statusUpdateFailed": "Állapot frissítése sikertelen",
+    "accessDenied": "Hozzáférés Megtagadva",
+    "accessDeniedDesc": "Admin jogosultság szükséges a jelentések megtekintéséhez.",
+    "totalReport": "jelentés összesen",
+    "totalReports": "jelentés összesen",
+    "filterByStatus": "Szűrés állapot szerint:",
+    "noReports": "Nem találhatók jelentések",
+    "noReportsYet": "Még nem érkezett jelentés",
+    "noStatusReports": "Nincs {status} jelentés",
+    "unknownProduct": "Ismeretlen Termék",
+    "anonymous": "Névtelen",
+    "unknown": "Ismeretlen",
+    "resolve": "Megoldás",
+    "dismiss": "Elutasítás",
+    "details": "Részletek:",
+    "viewProduct": "Termék Megtekintése →",
+    "adminFallback": "Admin"
+  },
+  "productMap": {
+    "safetyTitle": "Biztonság: {score}",
+    "tasteTitle": "Íz: {score}",
+    "viewProduct": "Termék Megtekintése →"
+  },
   "store": {
     "noStores": "Még nincs bolt rögzítve",
     "beFirst": "Légy az első, aki helyszínt ad hozzá!",
     "nearMe": "Közelemben",
-    "openInMaps": "Megnyitás térképen"
+    "openInMaps": "Megnyitás térképen",
+    "subtitle": "A közösség által értékelt termékek ezen a helyen",
+    "products": "Termékek",
+    "totalVotes": "Összes Szavazat",
+    "avgSafety": "Átl. Biztonság",
+    "locations": "Helyszínek",
+    "noProductsFound": "Nem található termék",
+    "noProductsAt": "Még senki sem jelölt terméket a(z) \"{name}\" boltban",
+    "productsAt": "Termékek: {name} ({count})"
+  },
+  "report": {
+    "title": "Termék jelentése",
+    "description": "A(z) \"{name}\" jelentése a moderációs csapatnak ellenőrzésre.",
+    "reasonLabel": "Ok *",
+    "selectReason": "Válassz okot",
+    "detailsLabel": "További részletek (opcionális)",
+    "detailsPlaceholder": "Adj meg további információt a problémáról...",
+    "submitting": "Küldés...",
+    "submitReport": "Jelentés küldése",
+    "selectReasonError": "Kérlek, válassz okot",
+    "submitted": "Jelentés elküldve",
+    "submittedDesc": "Köszönjük, hogy segítesz a közösség biztonságában",
+    "failed": "Jelentés küldése sikertelen",
+    "tryAgainLater": "Kérlek, próbáld újra később",
+    "inappropriate": "Nem megfelelő tartalom",
+    "duplicate": "Duplikált termék",
+    "wrongInfo": "Téves információ",
+    "spam": "Spam",
+    "other": "Egyéb"
   }
 }

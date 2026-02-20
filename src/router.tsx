@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react'
 import { createRouter } from '@tanstack/react-router'
 import { QueryClient, MutationCache, QueryCache } from '@tanstack/react-query'
 import { ConvexQueryClient } from '@convex-dev/react-query'
@@ -20,6 +21,17 @@ function RouteLoadingFallback() {
       </div>
     </div>
   )
+}
+
+// Initialize Sentry early so it catches startup errors too
+if (typeof window !== 'undefined' && env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: env.VITE_SENTRY_DSN,
+    environment: env.VITE_APP_ENV,
+    // Enable performance monitoring
+    tracesSampleRate: env.VITE_APP_ENV === 'production' ? 0.2 : 1.0,
+    // Capture React Router navigations if desired, but base configuration is fine
+  })
 }
 
 export function getRouter() {

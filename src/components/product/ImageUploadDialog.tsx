@@ -1,10 +1,8 @@
-'use client'
-
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useMutation, useAction } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
-import { appConfig } from '@/lib/app-config'
+import { appConfig } from '@/lib/app-config'\nimport { QuadrantPicker } from '@/components/QuadrantPicker'
 import { Button } from '../ui/button'
 import {
   Dialog,
@@ -78,6 +76,15 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
     }
   }, [open, requestLocation])
 
+  // Revoke blob URLs when imagePreview changes or on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (imagePreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview)
+      }
+    }
+  }, [imagePreview])
+
   // Convex mutations
   const generateR2UploadUrl = useAction(api.files.generateR2UploadUrl)
   const analyzeImage = useAction(api.ai.analyzeImage)
@@ -103,6 +110,9 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
         }
 
         img.onload = () => {
+          // Revoke the temporary objectURL now that the image is loaded
+          URL.revokeObjectURL(img.src)
+
           // Reject images that are too small
           if (img.width < 200 || img.height < 200) {
             reject(new Error(`Image too small (${img.width}×${img.height}). Minimum size is 200×200 pixels.`))
@@ -152,6 +162,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
         }
 
         img.onerror = () => {
+          URL.revokeObjectURL(img.src)
           reject(new Error('Failed to load image'))
         }
 
@@ -392,10 +403,9 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
   }, [lookupBarcode, impact, t, resetDialog])
 
   /**
-   * Save as draft — submit with current values immediately (AI defaults + location).
-   * User can edit later from the product page.
+   * Shared product creation logic used by both draft save and full submit.
    */
-  const handleSaveAsDraft = useCallback(async () => {
+  const submitProduct = useCallback(async (options: { isDraft: boolean }) => {
     if (!realImageUrl || !productName.trim()) {
       setError(t('imageUpload.provideProductName'))
       return
@@ -424,74 +434,26 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
 
       setOpen(false)
       onSuccess?.(result.productId)
-      toast.success(`📋 ${t('imageUpload.draftSaved')}`, {
-        description: t('imageUpload.draftHint'),
-      })
+
+      if (options.isDraft) {
+        toast.success(`📋 ${t('imageUpload.draftSaved')}`, {
+          description: t('imageUpload.draftHint'),
+        })
+      }
+
       resetDialog()
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : ''
       const msg = errorMessage.includes('already exists')
         ? t('imageUpload.productAlreadyExists')
-        : (errorMessage || t('imageUpload.failedToDraft'))
+        : (errorMessage || (options.isDraft ? t('imageUpload.failedToDraft') : t('imageUpload.failedToCreate')))
       setError(msg)
       setStep('review')
     }
   }, [storageId, productName, anonId, safety, taste, price, storeName, analysis, realImageUrl, coords, createProductAndVote, onSuccess, resetDialog, t])
 
-  const handleSubmit = useCallback(async () => {
-    if (!realImageUrl || !productName.trim()) {
-      setError(t('imageUpload.provideProductName'))
-      return
-    }
-
-    setStep('submitting')
-    setError(null)
-
-    try {
-      // Use the real Convex storage URL — never save blob: URLs to the database
-      // (blob URLs are session-local and become ERR_FILE_NOT_FOUND after reload)
-      const imageUrl = realImageUrl || ''
-
-      const result = await createProductAndVote({
-        name: productName.trim(),
-        imageUrl,
-        imageStorageId: storageId === 'r2_upload' ? undefined : (storageId as Id<'_storage'> ?? undefined),
-        anonymousId: anonId ?? undefined,
-        safety,
-        taste,
-        price,
-        storeName: storeName || undefined,
-        latitude: coords?.latitude,
-        longitude: coords?.longitude,
-        ingredients: analysis?.tags,
-        aiAnalysis: analysis ?? undefined,
-      })
-
-      // Success!
-      setOpen(false)
-      onSuccess?.(result.productId)
-
-      // Reset form
-      setStep('upload')
-      setImageFile(null)
-      setImagePreview(null)
-      setStorageId(null)
-      setAnalysis(null)
-      setProductName('')
-      setSafety(50)
-      setTaste(50)
-      setPrice(undefined)
-      setStoreName('')
-      setFineTuneOpen(false)
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : ''
-      const msg = errorMessage.includes('already exists')
-        ? t('imageUpload.productAlreadyExists')
-        : (errorMessage || t('imageUpload.failedToCreate'))
-      setError(msg)
-      setStep('review')
-    }
-  }, [storageId, productName, anonId, safety, taste, price, storeName, analysis, realImageUrl, imagePreview, createProductAndVote, onSuccess, t])
+  const handleSaveAsDraft = useCallback(() => submitProduct({ isDraft: true }), [submitProduct])
+  const handleSubmit = useCallback(() => submitProduct({ isDraft: false }), [submitProduct])
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => { setOpen(newOpen); if (!newOpen) resetDialog() }}>
@@ -676,52 +638,9 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
             {/* Quick Vote — Combo Buttons (fastest path) */}
             <div>
               <Label className="mb-2 block">{t('imageUpload.quickRate')}</Label>
-              <div className="grid grid-cols-2 gap-1.5">
-                <Button
-                  type="button"
-                  className={cn(
-                    "h-12 text-white hover:opacity-90 text-xs font-semibold",
-                    safety === 90 && taste === 30 && "ring-2 ring-foreground ring-offset-2"
-                  )}
-                  style={{ backgroundColor: appConfig.quadrants.topLeft.color }}
-                  onClick={() => { setSafety(90); setTaste(30) }}
-                >
-                  {appConfig.quadrants.topLeft.emoji} {appConfig.quadrants.topLeft.label}
-                </Button>
-                <Button
-                  type="button"
-                  className={cn(
-                    "h-12 text-white hover:opacity-90 text-xs font-semibold",
-                    safety === 90 && taste === 90 && "ring-2 ring-foreground ring-offset-2"
-                  )}
-                  style={{ backgroundColor: appConfig.quadrants.topRight.color }}
-                  onClick={() => { setSafety(90); setTaste(90) }}
-                >
-                  {appConfig.quadrants.topRight.emoji} {appConfig.quadrants.topRight.label}
-                </Button>
-                <Button
-                  type="button"
-                  className={cn(
-                    "h-12 text-white hover:opacity-90 text-xs font-semibold",
-                    safety === 10 && taste === 10 && "ring-2 ring-foreground ring-offset-2"
-                  )}
-                  style={{ backgroundColor: appConfig.quadrants.bottomLeft.color }}
-                  onClick={() => { setSafety(10); setTaste(10) }}
-                >
-                  {appConfig.quadrants.bottomLeft.emoji} {appConfig.quadrants.bottomLeft.label}
-                </Button>
-                <Button
-                  type="button"
-                  className={cn(
-                    "h-12 text-white hover:opacity-90 text-xs font-semibold",
-                    safety === 30 && taste === 90 && "ring-2 ring-foreground ring-offset-2"
-                  )}
-                  style={{ backgroundColor: appConfig.quadrants.bottomRight.color }}
-                  onClick={() => { setSafety(30); setTaste(90) }}
-                >
-                  {appConfig.quadrants.bottomRight.emoji} {appConfig.quadrants.bottomRight.label}
-                </Button>
-              </div>
+              <QuadrantPicker
+                onSelect={(s, t) => { setSafety(s); setTaste(t) }}
+              />
             </div>
 
             {/* Price Quick Select */}

@@ -16,19 +16,20 @@ const config: CapacitorConfig = {
       // Style will be set dynamically based on theme (light/dark)
       style: 'DARK', // Dark text on light background (default)
     },
-    Keyboard: {
-      // Resize content when keyboard opens (avoids inputs being hidden)
-      resize: 'body',
-      // Scroll to input when focused
-      scrollAssist: true,
-    },
-    SplashScreen: {
-      // Splash screen auto-hide after app is ready
-      launchAutoHide: true,
-      launchShowDuration: 2000,
-      backgroundColor: '#7CB342',
-      showSpinner: false,
-    },
+    // Note: @capacitor/keyboard is not installed. Install it to enable these settings:
+    // npm install @capacitor/keyboard
+    // Keyboard: {
+    //   resize: 'body',
+    //   scrollAssist: true,
+    // },
+    // Note: @capacitor/splash-screen is not installed. Install it to enable these settings:
+    // npm install @capacitor/splash-screen
+    // SplashScreen: {
+    //   launchAutoHide: true,
+    //   launchShowDuration: 2000,
+    //   backgroundColor: '#7CB342',
+    //   showSpinner: false,
+    // },
   },
   ios: {
     // Allow inline media playback (no fullscreen required)

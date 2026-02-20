@@ -1,5 +1,3 @@
-'use client'
-
 import { useState, useRef } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
@@ -12,6 +10,7 @@ import { useTranslation } from '@/hooks/use-translation'
 import { useAdmin } from '@/hooks/use-admin'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { formatRelativeTimeI18n } from '@/lib/format-time'
 
 interface ProductCommentsProps {
   productId: Id<'products'>
@@ -98,7 +97,7 @@ export function ProductComments({ productId }: ProductCommentsProps) {
  */
 function CommentInput({
   productId,
-  userId,
+  userId: _userId,
   parentId,
   replyToName,
   onCancel,
@@ -125,7 +124,6 @@ function CommentInput({
     try {
       await postComment({
         productId,
-        userId,
         text: trimmed,
         parentId,
       })
@@ -176,7 +174,7 @@ function CommentInput({
       />
       <div className="flex gap-1 flex-shrink-0">
         {onCancel && (
-          <Button variant="ghost" size="icon" onClick={onCancel} className="h-10 w-10">
+          <Button variant="ghost" size="icon" onClick={onCancel} className="h-10 w-10" aria-label={t('common.cancel')}>
             <X className="h-4 w-4" />
           </Button>
         )}
@@ -185,6 +183,7 @@ function CommentInput({
           onClick={handleSubmit}
           disabled={!text.trim() || posting}
           className="h-10 w-10 rounded-xl"
+          aria-label={t('common.sendComment')}
         >
           <Send className="h-4 w-4" />
         </Button>
@@ -232,7 +231,7 @@ function CommentItem({
   const handleLike = async () => {
     if (!currentUserId) return
     try {
-      await toggleLike({ commentId: comment._id, userId: currentUserId })
+      await toggleLike({ commentId: comment._id })
     } catch {
       toast.error(t('errors.generic'))
     }
@@ -242,8 +241,6 @@ function CommentItem({
     try {
       await removeComment({
         commentId: comment._id,
-        userId: currentUserId || '',
-        isAdmin,
       })
       toast.success(t('community.commentDeleted'))
     } catch {
@@ -255,14 +252,14 @@ function CommentItem({
     const trimmed = editText.trim()
     if (!trimmed || !currentUserId) return
     try {
-      await editComment({ commentId: comment._id, userId: currentUserId, text: trimmed })
+      await editComment({ commentId: comment._id, text: trimmed })
       setEditing(false)
     } catch {
       toast.error(t('errors.generic'))
     }
   }
 
-  const timeAgo = formatRelativeTime(comment.createdAt, t)
+  const timeAgo = formatRelativeTimeI18n(comment.createdAt, t)
 
   return (
     <div className="py-2">
@@ -313,6 +310,7 @@ function CommentItem({
               <button
                 onClick={handleLike}
                 disabled={!currentUserId}
+                aria-label={t('community.like')}
                 className={cn(
                   'flex items-center gap-1 text-[11px] transition-colors',
                   comment.liked ? 'text-red-500' : 'text-muted-foreground hover:text-red-500',
@@ -338,6 +336,7 @@ function CommentItem({
               {isOwner && (
                 <button
                   onClick={() => { setEditing(true); setEditText(comment.text) }}
+                  aria-label={t('common.edit')}
                   className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <Pencil className="h-3 w-3" />
@@ -348,6 +347,7 @@ function CommentItem({
               {(isOwner || isAdmin) && (
                 <button
                   onClick={handleDelete}
+                  aria-label={t('common.delete')}
                   className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
                 >
                   <Trash2 className="h-3 w-3" />
@@ -390,16 +390,4 @@ function CommentItem({
       </div>
     </div>
   )
-}
-
-function formatRelativeTime(timestamp: number, t: (key: string, params?: Record<string, string | number>) => string): string {
-  const diff = Date.now() - timestamp
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-
-  if (minutes < 1) return t('community.justNow')
-  if (minutes < 60) return t('community.minutesAgo', { count: minutes })
-  if (hours < 24) return t('community.hoursAgo', { count: hours })
-  return t('community.daysAgo', { count: days })
 }

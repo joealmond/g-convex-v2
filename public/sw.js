@@ -2,7 +2,9 @@
 // Manual service worker for app shell caching + offline fallback
 // Strategy: Cache-first for static assets, network-first for API/data
 
-const CACHE_NAME = 'gmatrix-v1'
+// IMPORTANT: Bump this version string on every deploy to invalidate old caches.
+// The activate handler automatically deletes caches that don't match CACHE_NAME.
+const CACHE_NAME = 'gmatrix-2025.02.20-v1'
 
 // Static assets to precache on install
 const PRECACHE_URLS = [

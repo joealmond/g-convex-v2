@@ -86,6 +86,7 @@ export function TopBar() {
           onClick={requestLocation}
           className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${getLocationColor()}`}
           title={getLocationTitle()}
+          aria-label={getLocationTitle()}
           whileTap={{ scale: 0.95 }}
         >
           <MapPin className="h-4 w-4" />
@@ -99,6 +100,7 @@ export function TopBar() {
           onClick={cycleTheme}
           className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           title={getThemeTitle()}
+          aria-label={getThemeTitle()}
           whileTap={{ scale: 0.95 }}
         >
           <ThemeIcon className="h-4 w-4" />
@@ -147,7 +149,8 @@ export function TopBar() {
               size="icon"
               onClick={handleSignOut}
               className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              title="Sign out"
+              title={t('nav.signOut')}
+              aria-label={t('nav.signOut')}
             >
               <LogOut className="h-4 w-4" />
             </Button>

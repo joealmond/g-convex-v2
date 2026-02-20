@@ -1,10 +1,59 @@
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceArea, ReferenceLine } from 'recharts'
 import { motion } from 'framer-motion'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import type { Product } from '@/lib/types'
 import { getQuadrant, getQuadrantColor, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import { hashStringToColor } from '@/lib/utils'
+
+interface TooltipPayload {
+  payload: ChartDataPoint
+}
+
+/**
+ * Extracted to module level to avoid re-creating on every render.
+ */
+function CustomTooltip({ active, payload, mode }: { active?: boolean; payload?: TooltipPayload[]; mode: 'vibe' | 'value' }) {
+  if (active && payload && payload.length > 0) {
+    const firstPayload = payload[0]
+    if (!firstPayload) return null
+    const data = firstPayload.payload as ChartDataPoint
+    const product = data.product
+
+    const showQuadrant = mode === 'vibe'
+    const quadrant = showQuadrant ? getQuadrant(product.averageSafety, product.averageTaste) : null
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-card border border-border rounded-lg p-3 shadow-lg max-w-[200px]"
+      >
+        <p className="font-semibold text-sm truncate">{product.name}</p>
+        <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+          {mode === 'vibe' ? (
+            <>
+              <p>{appConfig.dimensions.axis1.label}: {product.averageSafety.toFixed(0)}</p>
+              <p>{appConfig.dimensions.axis2.label}: {product.averageTaste.toFixed(0)}</p>
+            </>
+          ) : (
+            <>
+              <p>{appConfig.valueLens.axis1Label}: {(product.avgPrice || 50).toFixed(0)}</p>
+              <p>{appConfig.valueLens.axis2Label}: {product.averageTaste.toFixed(0)}</p>
+            </>
+          )}
+          <p>Votes: {product.voteCount}</p>
+          {showQuadrant && quadrant && (
+            <p className="text-xs font-medium" style={{ color: getQuadrantColor(quadrant) }}>
+              {QUADRANTS[quadrant]?.name || 'Unknown'}
+            </p>
+          )}
+        </div>
+      </motion.div>
+    )
+  }
+  return null
+}
 
 interface MatrixChartProps {
   products: Product[]
@@ -72,73 +121,32 @@ function jitterOverlapping(points: ChartDataPoint[], threshold = 3, spread = 3):
  * - Value: price (Y) × taste (X) — value-for-money lens
  */
 export function MatrixChart({ products, onProductClick, selectedProduct, mode = 'vibe' }: MatrixChartProps) {
-  // Build raw data points
-  const rawData: ChartDataPoint[] = products.map((product) => ({
-    product,
-    x: product.averageTaste,
-    y: mode === 'vibe' ? product.averageSafety : (product.avgPrice || 50),
-    z: Math.max(product.voteCount, 5),
-  }))
+  // Build raw data points — memoized to avoid recomputing on every render
+  const rawData = useMemo<ChartDataPoint[]>(() => 
+    products.map((product) => ({
+      product,
+      x: product.averageTaste,
+      y: mode === 'vibe' ? product.averageSafety : (product.avgPrice || 50),
+      z: Math.max(product.voteCount, 5),
+    })),
+    [products, mode]
+  )
 
   // Jitter overlapping dots so they don't stack
-  const data = jitterOverlapping(rawData)
+  const data = useMemo(() => jitterOverlapping(rawData), [rawData])
   
-  const yAxisLabel = mode === 'vibe' 
+  const yAxisLabel = useMemo(() => mode === 'vibe' 
     ? appConfig.dimensions.axis1.label
-    : appConfig.valueLens.axis1Label
-  const xAxisLabel = mode === 'vibe'
+    : appConfig.valueLens.axis1Label, [mode])
+  const xAxisLabel = useMemo(() => mode === 'vibe'
     ? appConfig.dimensions.axis2.label
-    : appConfig.valueLens.axis2Label
+    : appConfig.valueLens.axis2Label, [mode])
   
-  const quadrantConfig = mode === 'vibe' 
+  const quadrantConfig = useMemo(() => mode === 'vibe' 
     ? appConfig.quadrants 
-    : appConfig.valueLens.quadrants
+    : appConfig.valueLens.quadrants, [mode])
 
-  interface TooltipPayload {
-    payload: ChartDataPoint
-  }
-
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: TooltipPayload[] }) => {
-    if (active && payload && payload.length > 0) {
-      const firstPayload = payload[0]
-      if (!firstPayload) return null
-      const data = firstPayload.payload as ChartDataPoint
-      const product = data.product
-      
-      const showQuadrant = mode === 'vibe'
-      const quadrant = showQuadrant ? getQuadrant(product.averageSafety, product.averageTaste) : null
-
-      return (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-card border border-border rounded-lg p-3 shadow-lg max-w-[200px]"
-        >
-          <p className="font-semibold text-sm truncate">{product.name}</p>
-          <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-            {mode === 'vibe' ? (
-              <>
-                <p>{appConfig.dimensions.axis1.label}: {product.averageSafety.toFixed(0)}</p>
-                <p>{appConfig.dimensions.axis2.label}: {product.averageTaste.toFixed(0)}</p>
-              </>
-            ) : (
-              <>
-                <p>{appConfig.valueLens.axis1Label}: {(product.avgPrice || 50).toFixed(0)}</p>
-                <p>{appConfig.valueLens.axis2Label}: {product.averageTaste.toFixed(0)}</p>
-              </>
-            )}
-            <p>Votes: {product.voteCount}</p>
-            {showQuadrant && quadrant && (
-              <p className="text-xs font-medium" style={{ color: getQuadrantColor(quadrant) }}>
-                {QUADRANTS[quadrant]?.name || 'Unknown'}
-              </p>
-            )}
-          </div>
-        </motion.div>
-      )
-    }
-    return null
-  }
+  const tooltipContent = useMemo(() => <CustomTooltip mode={mode} />, [mode])
 
   // Defer chart rendering until container has non-zero dimensions
   const containerRef = useRef<HTMLDivElement>(null)
@@ -228,7 +236,7 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
               width={28}
             />
             <ZAxis type="number" dataKey="z" range={[40, 300]} />
-            <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
+            <Tooltip content={tooltipContent} cursor={{ strokeDasharray: '3 3' }} />
 
             <Scatter data={data} onClick={(data) => onProductClick?.(data.product)}>
               {data.map((entry, index) => {

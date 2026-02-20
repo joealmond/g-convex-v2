@@ -1,4 +1,4 @@
-import { publicMutation } from './lib/customFunctions'
+import { internalMutation } from './lib/customFunctions'
 /**
  * Seed script to populate initial gluten-free products for demo/testing
  * Run with: npx convex run seed:seedProducts
@@ -6,7 +6,7 @@ import { publicMutation } from './lib/customFunctions'
 
 ;
 
-export const seedProducts = publicMutation({
+export const seedProducts = internalMutation({
   args: {},
   handler: async (ctx) => {
     // Check if products already exist

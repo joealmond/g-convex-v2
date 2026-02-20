@@ -1,4 +1,4 @@
-import { publicQuery, publicMutation } from './lib/customFunctions'
+import { internalQuery, internalMutation } from './lib/customFunctions'
 /**
  * Push Notification Token Management (DEPRECATED)
  *
@@ -6,8 +6,9 @@ import { publicQuery, publicMutation } from './lib/customFunctions'
  * OneSignal manages device tokens internally — no manual token storage needed.
  *
  * The `deviceTokens` table remains in the schema for backward compatibility
- * but is no longer written to. These mutations/queries are kept to avoid
- * breaking any existing references but can be removed in a future cleanup.
+ * but is no longer written to. These mutations/queries are kept as internal
+ * functions to avoid breaking any scheduled references but can be removed
+ * in a future cleanup.
  *
  * New push architecture:
  * - Client: OneSignal SDK handles token registration (src/lib/onesignal.ts)
@@ -22,7 +23,7 @@ import { v } from 'convex/values'
  * Register a device token for push notifications.
  * Upserts: if the token already exists for this user, updates lastUsedAt.
  */
-export const registerToken = publicMutation({
+export const registerToken = internalMutation({
   args: {
     userId: v.string(),
     token: v.string(),
@@ -59,7 +60,7 @@ export const registerToken = publicMutation({
 /**
  * Remove a device token (e.g., on sign-out or permission revoke).
  */
-export const removeToken = publicMutation({
+export const removeToken = internalMutation({
   args: {
     token: v.string(),
   },
@@ -78,7 +79,7 @@ export const removeToken = publicMutation({
 /**
  * Get all device tokens for a user (admin use / debugging).
  */
-export const getTokensByUser = publicQuery({
+export const getTokensByUser = internalQuery({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
     return await ctx.db

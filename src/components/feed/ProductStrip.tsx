@@ -1,10 +1,9 @@
-'use client'
-
 import { Link } from '@tanstack/react-router'
 import { type Product, getQuadrant, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import { MapPin } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
+import { formatDistance } from '@/lib/format-distance'
 
 interface ProductStripProps {
   product: Product
@@ -112,7 +111,7 @@ export function ProductStrip({ product, distanceKm, highlight }: ProductStripPro
             </span>
             {distanceKm !== undefined && (
               <span className="text-[10px] text-muted-foreground">
-                · {distanceKm < 1 ? `${(distanceKm * 1000).toFixed(0)}m` : `${distanceKm.toFixed(1)}km`}
+                · {formatDistance(distanceKm, t)}
               </span>
             )}
           </div>

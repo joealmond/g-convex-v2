@@ -64,6 +64,8 @@ export default defineConfig(({ mode: _mode }) => {
             'tanstack-vendor': ['@tanstack/react-router', '@tanstack/react-query'],
             'convex-vendor': ['convex/react'],
             'recharts-vendor': ['recharts'],
+            'leaflet-vendor': ['leaflet', 'react-leaflet'],
+            'motion-vendor': ['framer-motion'],
           },
         },
       },

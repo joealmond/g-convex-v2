@@ -1,5 +1,3 @@
-'use client'
-
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { logger } from '@/lib/logger'

@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import type { Id } from '@convex/_generated/dataModel'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface Vote {
   _id: Id<'votes'>
@@ -49,17 +50,18 @@ export function VoterList({ votes, onImpersonate }: VoterListProps) {
   const [deletingVoteId, setDeletingVoteId] = useState<Id<'votes'> | null>(
     null
   )
+  const { t } = useTranslation()
   const deleteVote = useMutation(api.votes.deleteVote)
 
   const handleDeleteVote = async (voteId: Id<'votes'>) => {
     try {
       await deleteVote({ voteId })
-      toast.success('Vote deleted')
+      toast.success(t('voting.voteDeleted'))
       setDeletingVoteId(null)
     } catch (error: unknown) {
-      toast.error('Failed to delete vote', {
+      toast.error(t('voting.deleteVoteFailed'), {
         description:
-          error instanceof Error ? error.message : 'Please try again',
+          error instanceof Error ? error.message : t('errors.tryAgain'),
       })
     }
   }
@@ -68,8 +70,8 @@ export function VoterList({ votes, onImpersonate }: VoterListProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Voter List</CardTitle>
-          <CardDescription>No votes yet</CardDescription>
+          <CardTitle>{t('voting.voterList')}</CardTitle>
+          <CardDescription>{t('voting.noVotesYet')}</CardDescription>
         </CardHeader>
       </Card>
     )
@@ -85,10 +87,9 @@ export function VoterList({ votes, onImpersonate }: VoterListProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Voter List</CardTitle>
+              <CardTitle>{t('voting.voterList')}</CardTitle>
               <CardDescription>
-                {votes.length} votes ({registered} registered, {anonymous}{' '}
-                anonymous)
+                {t('voting.votesCountDesc', { total: votes.length, registered, anonymous })}
               </CardDescription>
             </div>
           </div>
@@ -106,12 +107,12 @@ export function VoterList({ votes, onImpersonate }: VoterListProps) {
                     {vote.isAnonymous ? (
                       <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">
                         <User className="h-3 w-3 mr-0.5" />
-                        Anon
+                        {t('voting.anon')}
                       </Badge>
                     ) : (
                       <Badge variant="default" className="text-[10px] px-1.5 py-0 h-5">
                         <User className="h-3 w-3 mr-0.5" />
-                        Reg
+                        {t('voting.reg')}
                       </Badge>
                     )}
                     <span className="text-xs text-muted-foreground truncate">
@@ -149,7 +150,7 @@ export function VoterList({ votes, onImpersonate }: VoterListProps) {
                       size="icon"
                       className="h-8 w-8"
                       onClick={() => onImpersonate(vote.userId!)}
-                      title="Impersonate this user"
+                      title={t('voting.impersonateUser')}
                     >
                       <Eye className="h-3.5 w-3.5" />
                     </Button>
@@ -159,7 +160,7 @@ export function VoterList({ votes, onImpersonate }: VoterListProps) {
                     size="icon"
                     className="h-8 w-8 text-destructive hover:text-destructive"
                     onClick={() => setDeletingVoteId(vote._id)}
-                    title="Delete this vote"
+                      title={t('voting.deleteThisVote')}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -177,21 +178,20 @@ export function VoterList({ votes, onImpersonate }: VoterListProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Vote?</AlertDialogTitle>
+            <AlertDialogTitle>{t('voting.deleteVoteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this vote and recalculate product
-              averages. This action cannot be undone.
+              {t('voting.deleteVoteDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() =>
                 deletingVoteId && handleDeleteVote(deletingVoteId)
               }
               className="bg-destructive hover:bg-destructive/90"
             >
-              Delete
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

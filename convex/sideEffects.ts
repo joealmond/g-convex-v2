@@ -1,7 +1,7 @@
 import { internalMutation } from './lib/customFunctions'
 
 import { v } from 'convex/values'
-import { internal, api } from './_generated/api'
+import { internal } from './_generated/api'
 import { POINTS } from './lib/gamification'
 
 export const onVoteCast = internalMutation({
@@ -81,7 +81,7 @@ export const onVoteCast = internalMutation({
       })
       
       // Async: check badges
-      await ctx.scheduler.runAfter(0, api.profiles.checkBadges, {
+      await ctx.scheduler.runAfter(0, internal.profiles.checkBadges, {
         userId: args.userId,
       })
 
@@ -110,27 +110,4 @@ export const onVoteCast = internalMutation({
       }
     }
   },
-})
-
-export const onProductCreated = internalMutation({
-  args: {
-    productId: v.id('products'),
-    creatorId: v.optional(v.string()),
-  },
-  handler: async (_ctx, _args) => {
-    // Trigger any async logic for new product
-    // e.g. Notify admins, AI categorizations, etc.
-  },
-})
-
-export const onVoteDeleted = internalMutation({
-  args: {
-    productId: v.id('products'),
-  },
-  handler: async (ctx, args) => {
-    // 1. Recalculate Product Averages
-    await ctx.scheduler.runAfter(0, internal.votes.recalculateProduct, {
-      productId: args.productId,
-    })
-  }
 })

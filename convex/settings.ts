@@ -1,4 +1,4 @@
-import { publicQuery, publicMutation } from './lib/customFunctions'
+import { publicQuery, adminMutation } from './lib/customFunctions'
 /**
  * Admin Settings Management
  * 
@@ -53,27 +53,12 @@ export const getAllSettings = publicQuery({
 /**
  * Update a setting (admin only)
  */
-export const updateSetting = publicMutation({
+export const updateSetting = adminMutation({
   args: {
     key: v.string(),
     value: v.union(v.string(), v.number(), v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) {
-      throw new Error('Must be logged in')
-    }
-
-    // Check admin permission
-    const profile = await ctx.db
-      .query('profiles')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
-      .first()
-    
-    if (profile?.role !== 'admin') {
-      throw new Error('Admin permission required')
-    }
-
     const existing = await ctx.db
       .query('settings')
       .withIndex('by_key', (q) => q.eq('key', args.key))
@@ -84,7 +69,7 @@ export const updateSetting = publicMutation({
     if (existing) {
       await ctx.db.patch(existing._id, {
         value: args.value,
-        updatedBy: identity.subject,
+        updatedBy: ctx.userId,
         updatedAt: now,
       })
       return existing._id
@@ -92,7 +77,7 @@ export const updateSetting = publicMutation({
       return await ctx.db.insert('settings', {
         key: args.key,
         value: args.value,
-        updatedBy: identity.subject,
+        updatedBy: ctx.userId,
         updatedAt: now,
       })
     }
@@ -102,7 +87,7 @@ export const updateSetting = publicMutation({
 /**
  * Batch update settings (admin only)
  */
-export const updateSettings = publicMutation({
+export const updateSettings = adminMutation({
   args: {
     settings: v.array(v.object({
       key: v.string(),
@@ -110,21 +95,6 @@ export const updateSettings = publicMutation({
     })),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) {
-      throw new Error('Must be logged in')
-    }
-
-    // Check admin permission
-    const profile = await ctx.db
-      .query('profiles')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject))
-      .first()
-    
-    if (profile?.role !== 'admin') {
-      throw new Error('Admin permission required')
-    }
-
     const now = Date.now()
     
     for (const setting of args.settings) {
@@ -136,14 +106,14 @@ export const updateSettings = publicMutation({
       if (existing) {
         await ctx.db.patch(existing._id, {
           value: setting.value,
-          updatedBy: identity.subject,
+          updatedBy: ctx.userId,
           updatedAt: now,
         })
       } else {
         await ctx.db.insert('settings', {
           key: setting.key,
           value: setting.value,
-          updatedBy: identity.subject,
+          updatedBy: ctx.userId,
           updatedAt: now,
         })
       }

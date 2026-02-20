@@ -28,8 +28,8 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
     return (
       <div className="aspect-square w-full flex items-center justify-center text-muted-foreground">
         <div className="text-center">
-          <p className="mb-2">No votes yet</p>
-          <p className="text-sm">Be the first to vote!</p>
+          <p className="mb-2">{t('chart.noVotesYet')}</p>
+          <p className="text-sm">{t('chart.beFirstToVote')}</p>
         </div>
       </div>
     )
@@ -74,7 +74,7 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
           <XAxis
             type="number"
             dataKey="safety"
-            name="Safety"
+            name={t('voting.safety')}
             unit="%"
             domain={[0, 100]}
             ticks={[0, 25, 50, 75, 100]}
@@ -90,7 +90,7 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
           <YAxis
             type="number"
             dataKey="taste"
-            name="Taste"
+            name={t('voting.taste')}
             unit="%"
             domain={[0, 100]}
             ticks={[0, 25, 50, 75, 100]}
@@ -126,16 +126,16 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
               return (
                 <div className="bg-card p-3 rounded-lg shadow-lg border border-border">
                   <p className="font-semibold mb-1">
-                    {vote.isRegistered ? 'Registered User' : 'Anonymous'}
+                    {vote.isRegistered ? t('chart.registeredUser') : t('chart.anonymous')}
                   </p>
                   <p className="text-sm">
-                    Safety: {vote.safety}
+                    {t('voting.safety')}: {vote.safety}
                   </p>
                   <p className="text-sm">
-                    Taste: {vote.taste}
+                    {t('voting.taste')}: {vote.taste}
                   </p>
                   {vote.price && (
-                    <p className="text-sm">Price: {vote.price}/5</p>
+                    <p className="text-sm">{t('voting.price')}: {vote.price}/5</p>
                   )}
                   {vote.storeName && (
                     <p className="text-sm text-muted-foreground">
@@ -165,16 +165,16 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
       <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
           <div className="h-3 w-3 rounded-full bg-[#27AE60]" />
-          <span>Registered</span>
+          <span>{t('chart.registered')}</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="h-3 w-3 rounded-full bg-[#95A5A6]" />
-          <span>Anonymous</span>
+          <span>{t('chart.anonymous')}</span>
         </div>
         {data.some((v) => v.isImpersonated) && (
           <div className="flex items-center gap-1">
             <div className="h-3 w-3 rounded-full bg-[#F1C40F]" />
-            <span>Impersonated</span>
+            <span>{t('chart.impersonated')}</span>
           </div>
         )}
       </div>
