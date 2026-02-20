@@ -72,10 +72,10 @@
   --gold: #F1C40F;
 
   /* G-Matrix Quadrant Colors */
-  --holy-grail: 142 76% 36%;      /* Green */
-  --survivor-food: 48 96% 53%;    /* Yellow */
-  --russian-roulette: 25 95% 53%; /* Orange */
-  --the-bin: 0 84% 60%;           /* Red */
+  --holy-grail: #16A34A;           /* Green */
+  --survivor-food: #EAB308;        /* Yellow */
+  --russian-roulette: #EA580C;     /* Orange */
+  --the-bin: #EF4444;              /* Red */
   
   /* Navigation specific */
   --nav-bg: #7CB342;              /* Sage Green for bottom nav */
@@ -224,10 +224,10 @@ input, textarea, [contenteditable], .selectable {
   --gold: #FBBF24;
 
   /* G-Matrix Quadrant Colors (dark mode) */
-  --holy-grail: 142 76% 36%;
-  --survivor-food: 48 96% 53%;
-  --russian-roulette: 25 95% 53%;
-  --the-bin: 0 84% 60%;
+  --holy-grail: #16A34A;
+  --survivor-food: #EAB308;
+  --russian-roulette: #EA580C;
+  --the-bin: #EF4444;
   
   /* Navigation specific (dark mode) */
   --nav-bg: #1E293B;              /* Slate for bottom nav */

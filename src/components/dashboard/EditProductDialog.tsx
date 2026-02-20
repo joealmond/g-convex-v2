@@ -79,13 +79,13 @@ export function EditProductDialog({ product, open, onOpenChange }: EditProductDi
         imageUrl: data.imageUrl || undefined,
       })
 
-      toast.success('Product updated!', {
-        description: `${data.name} has been updated.`,
+      toast.success(t('editProduct.updated'), {
+        description: t('editProduct.updatedDesc', { name: data.name }),
       })
 
       onOpenChange(false)
     } catch (error: unknown) {
-      toast.error('Failed to update product', {
+      toast.error(t('editProduct.updateFailed'), {
         description: error instanceof Error ? error.message : 'Please try again.',
       })
     }

@@ -49,14 +49,14 @@ export function DeleteProductButton({
     try {
       await deleteProduct({ id: product._id as Id<'products'> })
 
-      toast.success('Product deleted', {
-        description: `${product.name} and all its votes have been removed.`,
+      toast.success(t('deleteProduct.deleted'), {
+        description: t('deleteProduct.deletedDesc', { name: product.name }),
       })
 
       setOpen(false)
       onDeleted?.()
     } catch (error: unknown) {
-      toast.error('Failed to delete product', {
+      toast.error(t('deleteProduct.deleteFailed'), {
         description: error instanceof Error ? error.message : 'Please try again.',
       })
     } finally {

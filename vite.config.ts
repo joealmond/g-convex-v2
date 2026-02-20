@@ -46,6 +46,9 @@ export default defineConfig(({ mode: _mode }) => {
       port: 3000,
     },
     build: {
+      // Hidden source maps: generated for Sentry error reporting but not served to users.
+      // When @sentry/vite-plugin is added, it will automatically upload these during build.
+      sourcemap: 'hidden',
       minify: 'terser',
       terserOptions: {
         compress: {

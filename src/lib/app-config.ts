@@ -307,3 +307,21 @@ export function getStoreDefaults(locale: string = "en"): readonly string[] {
   const localeKey = locale.split("-")[0] as keyof typeof appConfig.storeDefaults;
   return appConfig.storeDefaults[localeKey] || appConfig.storeDefaults.en;
 }
+
+/**
+ * Centralized color palette for charts and maps.
+ * Use these instead of hardcoding hex values in chart components.
+ */
+export const chartColors = {
+  primary: "#7CB342",       // Sage Green
+  primaryDark: "#558B2F",   // Forest Green (hover/stroke)
+  safetyHigh: "#27AE60",    // Green — scores ≥ 60
+  safetyMid: "#F39C12",     // Amber — scores 40-59
+  safetyLow: "#E74C3C",     // Red — scores < 40
+  gold: "#F1C40F",          // Points, badges, impersonated votes
+  anonymous: "#95A5A6",     // Gray — anonymous votes
+  userDot: "#3B82F6",       // Blue — user location dot
+  axisLabel: "#666666",     // Axis tick labels
+  gridStroke: "#E0E0E0",    // Chart grid lines
+  white: "#FFFFFF",         // Borders, text on colored bg
+} as const;

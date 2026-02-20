@@ -91,30 +91,30 @@
 - [x] **Remove `'use client'` directives** — Meaningless in TanStack Start. Found in 12+ component files.
 
 ### C2. Extract Duplicated Code
-- [ ] **Extract `resolveProductImage` helper** — Same image URL resolution pattern copied 6× in `convex/products.ts`. Create shared helper.
-- [ ] **Extract `QuadrantPicker` component** — Identical 2×2 button grid in `VotingPanel.tsx`, `VotingSheet.tsx`, `ImageUploadDialog.tsx`. Create shared component.
-- [ ] **Extract `formatDistance(km)` utility** — Duplicated in `feed/ProductCard.tsx`, `feed/ProductStrip.tsx`, `product/StoreList.tsx`.
-- [ ] **Consolidate `formatRelativeTime`** — 3 implementations in `ProductComments.tsx`, `StoreList.tsx`, `utils.ts`. Create single i18n-aware version in `src/lib/format-time.ts`.
+- [x] **Extract `resolveProductImage` helper** — Same image URL resolution pattern copied 6× in `convex/products.ts`. Create shared helper.
+- [x] **Extract `QuadrantPicker` component** — Identical 2×2 button grid in `VotingPanel.tsx`, `VotingSheet.tsx`, `ImageUploadDialog.tsx`. Create shared component.
+- [x] **Extract `formatDistance(km)` utility** — Duplicated in `feed/ProductCard.tsx`, `feed/ProductStrip.tsx`, `product/StoreList.tsx`.
+- [x] **Consolidate `formatRelativeTime`** — 3 implementations in `ProductComments.tsx`, `StoreList.tsx`, `utils.ts`. Create single i18n-aware version in `src/lib/format-time.ts`.
 
 ### C3. Split Oversized Files (>200 lines)
-- [ ] **Split `ImageUploadDialog.tsx` (856 lines)** → `SmartCameraStep`, `ReviewStep`, `SubmitStep`, `useImageUpload` hook.
-- [ ] **Split `product/$name.tsx` (445 lines)** → `ProductHero`, `ProductVotingSection`, `ProductChartTabs`.
-- [ ] **Split `profile.tsx` (460 lines)** → `ProfileHeader`, `ProfileSettings`, `ProfileActivityFeed`.
-- [ ] **Split `ProductComments.tsx` (330 lines)** → `CommentItem.tsx`, `CommentInput.tsx`.
+- [x] **Split `ImageUploadDialog.tsx` (856 lines)** → `ReviewStep`, `useImageUpload` hook.
+- [x] **Split `product/$name.tsx` (445 lines)** → `ProductChartTabs`.
+- [x] **Split `profile.tsx` (460 lines)** → `ProfileSettings`, `ProfileActivityFeed`.
+- [x] **Split `ProductComments.tsx` (330 lines)** → `CommentItem.tsx`, `CommentInput.tsx`.
 
 ### C4. Bug Fixes
 - [x] **Fix stale closure in `useGeolocation`** — `src/hooks/use-geolocation.ts`: Uses stale `state.permissionStatus` in error callbacks. Use functional `setState(prev => ...)`.
-- [ ] **Fix streak reminder time window** — `convex/actions/streakReminder.ts`: Hours-since-midnight-UTC logic misses late voters. Switch to calendar-day comparison.
+- [x] **Fix streak reminder time window** — `convex/actions/streakReminder.ts`: Hours-since-midnight-UTC logic misses late voters. Switch to calendar-day comparison.
 - [x] **Fix `ImageUploadDialog` memory leak** — `URL.createObjectURL(file)` in `resizeAndConvertImage` never revoked. Add `URL.revokeObjectURL()`.
-- [ ] **Deduplicate `handleSaveAsDraft`/`handleSubmit`** — `ImageUploadDialog.tsx`: ~90% identical code. Extract shared `createProductPayload()`.
+- [x] **Deduplicate `handleSaveAsDraft`/`handleSubmit`** — `ImageUploadDialog.tsx`: ~90% identical code. Extract shared `submitProduct()`.
 
 ### C5. Delete Dead Code
-- [ ] **Remove empty `onProductCreated` handler** — `convex/sideEffects.ts`.
+- [x] **Remove empty `onProductCreated` handler** — `convex/sideEffects.ts`.
 - [x] **Remove unused `onVoteDeleted`** — `convex/sideEffects.ts` (defined but never called).
 - [x] **Remove deprecated i18n exports** — `src/lib/i18n.ts`: `loadTranslations`, `saveLocalePreference`, `loadLocalePreference`, `I18n` class.
 - [x] **Remove no-op `I18nProvider`** — `src/hooks/i18n-context.tsx` (pass-through wrapper).
 - [x] **Remove unused `useFeatureFlag` hook** — `src/hooks/use-feature-flag.ts` (never imported).
-- [ ] **Remove redundant `glutenWarning` locale key** — Both `en.json`/`hu.json` (replaced by generic `riskWarning`).
+- [x] **Remove redundant `glutenWarning` locale key** — Both `en.json`/`hu.json` (replaced by generic `riskWarning`).
 - [x] **Remove unused dark CSS vars** — `globals.css`: `--safety-high-dark`, `--safety-mid-dark`, `--safety-low-dark`.
 
 ---
@@ -127,24 +127,24 @@
 ### D2. Translate Components (zero `t()` usage)
 - [x] **Translate `VoterList.tsx`** (~15 hardcoded strings).
 - [x] **Translate `ReportProductDialog.tsx`** (~20 hardcoded strings).
-- [ ] **Translate `Navigation.tsx`** (~14 hardcoded strings).
+- [x] **Translate `Navigation.tsx`** (~14 hardcoded strings).
 - [x] **Translate `AllVotesChart.tsx`** (~10 hardcoded strings).
 - [x] **Translate `FollowButton.tsx`** (~5 hardcoded strings).
 - [x] **Translate `NotFound.tsx`** (~4 strings).
-- [ ] **Translate `ErrorBoundary.tsx`** (~4 strings — needs props-based approach, class component).
-- [ ] **Translate `store/$name.tsx`** (~10 strings).
-- [ ] **Translate `files.tsx`** (~10 strings).
-- [ ] **Translate `_authenticated/reports.tsx`** (~15 strings).
-- [ ] **Translate `admin.tsx`** — "Safety", "Taste", "votes", "Ingredients".
+- [x] **Translate `ErrorBoundary.tsx`** (~4 strings — needs props-based approach, class component).
+- [x] **Translate `store/$name.tsx`** (~10 strings).
+- [x] **Translate `files.tsx`** (~10 strings).
+- [x] **Translate `_authenticated/reports.tsx`** (~15 strings).
+- [x] **Translate `admin.tsx`** — "Safety", "Taste", "votes", "Ingredients".
 
 ### D3. Translate Toast Messages
-- [ ] **Translate toasts in `FollowButton`, `EditProductDialog`, `DeleteProductButton`, `ReportProductDialog`, `VoterList`, `reports.tsx`** (~15 locations total).
+- [x] **Translate toasts in `FollowButton`, `EditProductDialog`, `DeleteProductButton`, `ReportProductDialog`, `VoterList`, `reports.tsx`** (~15 locations total).
 
 ### D4. Theme & Styling Fixes
 - [x] **Fix hardcoded `<html lang="en">`** — `src/routes/__root.tsx`: Make dynamic from i18n locale.
-- [ ] **Fix date formatting** — Pass app locale to `toLocaleDateString()` in `profile.tsx`, `admin.tsx`, `reports.tsx`.
-- [ ] **Fix hardcoded hex colors in charts/maps** — `AllVotesChart.tsx`, `ProductMap.tsx`: Replace `#7CB342`, `#E0E0E0`, etc. with CSS variables / `appConfig.colors`.
-- [ ] **Fix CSS quadrant color format** — `globals.css`: Convert `--holy-grail` etc. from HSL triplets to HEX.
+- [x] **Fix date formatting** — Pass app locale to `toLocaleDateString()` in `profile.tsx`, `admin.tsx`, `reports.tsx`.
+- [x] **Fix hardcoded hex colors in charts/maps** — `AllVotesChart.tsx`, `ProductMap.tsx`: Replace `#7CB342`, `#E0E0E0`, etc. with CSS variables / `appConfig.colors`.
+- [x] **Fix CSS quadrant color format** — `globals.css`: Convert `--holy-grail` etc. from HSL triplets to HEX.
 
 ---
 
@@ -157,7 +157,7 @@
 
 ### E2. Security Hardening
 - [x] **Fix service worker cache versioning** — `public/sw.js`: Inject build hash instead of hardcoded `gmatrix-v1`.
-- [ ] **Add CSP headers** — `wrangler.jsonc` or middleware: Whitelist Google Fonts, Convex, Leaflet tiles, Sentry, R2.
+- [x] **Add CSP headers** — `public/_headers`: Whitelist Google Fonts, Convex, Leaflet tiles, Sentry, R2.
 - [x] **Fix trusted origins** — `convex/auth.ts`: Add production Cloudflare Workers domain.
 
 ### E3. Scripts & Config
@@ -166,14 +166,14 @@
 - [x] **Fix `patch-capacitor-android.sh` portability** — `sed -i ''` is macOS-only. Add Linux compat for CI.
 
 ### E4. Documentation
-- [ ] **Update `copilot-instructions.md`** — Fix `docs/newdirection/` → `docs/planning/`. Remove ★ markers from existing files. Add missing files to Key Files table.
-- [ ] **Enable Sentry source maps** — `vite.config.ts`: Add `sourcemap: true`, configure Sentry upload.
+- [x] **Update `copilot-instructions.md`** — Fix `docs/newdirection/` → `docs/planning/`. Remove ★ markers from existing files. Add missing files to Key Files table.
+- [x] **Enable Sentry source maps** — `vite.config.ts`: Add `sourcemap: 'hidden'`, configure Sentry upload.
 
 ### E5. Tests
 - [x] **Write unit tests for `src/lib/types.ts`** (quadrant classification, thresholds).
 - [x] **Write unit tests for `src/lib/utils.ts`** (helpers, `cn()`).
 - [x] **Write i18n key parity test** (en.json vs hu.json structural match).
-- [ ] **Write unit tests for `src/lib/offline-queue.ts`** (enqueue, dequeue, flush).
+- [x] **Write unit tests for `src/lib/offline-queue.ts`** (enqueue, dequeue, flush).
 
 ### 2. Observability & Monitoring
 - [x] Setup a Sentry account (Free Tier).

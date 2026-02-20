@@ -259,8 +259,12 @@
     "title": "Termék Törlése?",
     "confirm": "Biztosan törölni szeretnéd: {name}?",
     "warning": "Ez véglegesen törli a terméket és az összes {count} szavazatot. Ez a művelet nem vonható vissza.",
-    "deleteProduct": "Termék Törlése"
+    "deleteProduct": "Termék Törlése",
+    "deleted": "Termék törölve",
+    "deletedDesc": "{name} és az összes szavazata eltávolítva.",
+    "deleteFailed": "Termék törlése sikertelen"
   },
+  "actionFailed": "Művelet Sikertelen",
   "editProduct": {
     "title": "Termék Szerkesztése",
     "description": "Termékadatok frissítése. A meglévő szavazatokat nem érinti.",
@@ -273,7 +277,10 @@
     "updateProduct": "Termék Frissítése",
     "nameRequired": "A termék neve kötelező",
     "nameTooLong": "Túl hosszú név",
-    "mustBeValidUrl": "Érvényes URL-nek kell lennie"
+    "mustBeValidUrl": "Érvényes URL-nek kell lennie",
+    "updated": "Termék frissítve!",
+    "updatedDesc": "{name} frissítve lett.",
+    "updateFailed": "Termék frissítése sikertelen"
   },
   "adminToolbar": {
     "viewingAsUser": "Felhasználóként nézed",

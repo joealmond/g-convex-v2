@@ -5,6 +5,7 @@ import { type Product, getQuadrant, QUADRANTS } from '@/lib/types'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { Link } from '@tanstack/react-router'
+import { chartColors } from '@/lib/app-config'
 
 // Fix for default marker icon issue in Leaflet with bundlers
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,8 +62,8 @@ export function ProductMap({ products, center = [47.497, 19.040], zoom = 12, use
           center={userLocation}
           radius={5000}
           pathOptions={{
-            color: '#3B82F6',
-            fillColor: '#3B82F6',
+            color: chartColors.userDot,
+            fillColor: chartColors.userDot,
             fillOpacity: 0.08,
             weight: 2,
             dashArray: '6 4',
@@ -76,8 +77,8 @@ export function ProductMap({ products, center = [47.497, 19.040], zoom = 12, use
           center={userLocation}
           radius={80}
           pathOptions={{
-            color: '#FFFFFF',
-            fillColor: '#3B82F6',
+            color: chartColors.white,
+            fillColor: chartColors.userDot,
             fillOpacity: 0.9,
             weight: 3,
           }}
@@ -99,7 +100,7 @@ export function ProductMap({ products, center = [47.497, 19.040], zoom = 12, use
 
           return L.divIcon({
             html: `<div style="
-              background: #7CB342;
+              background: ${chartColors.primary};
               color: white;
               border-radius: 50%;
               width: ${diameter}px;
@@ -167,7 +168,7 @@ function ProductMarker({
     className: 'custom-marker',
     html: `
       <div style="
-        background-color: ${quadrantInfo?.color || '#7CB342'};
+        background-color: ${quadrantInfo?.color || chartColors.primary};
         width: 32px;
         height: 32px;
         border-radius: 50% 50% 50% 0;

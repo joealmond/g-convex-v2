@@ -259,8 +259,12 @@
     "title": "Delete Product?",
     "confirm": "Are you sure you want to delete {name}?",
     "warning": "This will permanently remove the product and all {count} votes associated with it. This action cannot be undone.",
-    "deleteProduct": "Delete Product"
+    "deleteProduct": "Delete Product",
+    "deleted": "Product deleted",
+    "deletedDesc": "{name} and all its votes have been removed.",
+    "deleteFailed": "Failed to delete product"
   },
+  "actionFailed": "Action Failed",
   "editProduct": {
     "title": "Edit Product",
     "description": "Update product information. This will not affect existing votes.",
@@ -273,7 +277,10 @@
     "updateProduct": "Update Product",
     "nameRequired": "Product name is required",
     "nameTooLong": "Name too long",
-    "mustBeValidUrl": "Must be a valid URL"
+    "mustBeValidUrl": "Must be a valid URL",
+    "updated": "Product updated!",
+    "updatedDesc": "{name} has been updated.",
+    "updateFailed": "Failed to update product"
   },
   "adminToolbar": {
     "viewingAsUser": "Viewing as User",

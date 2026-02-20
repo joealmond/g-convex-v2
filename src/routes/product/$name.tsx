@@ -5,16 +5,13 @@ import { Suspense, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { RatingBars } from '@/components/product/RatingBars'
 import { StoreList } from '@/components/product/StoreList'
 import { VotingSheet } from '@/components/product/VotingSheet'
 import { ReportProductDialog } from '@/components/product/ReportProductDialog'
 import { ShareButton } from '@/components/product/ShareButton'
-import { AllVotesChart } from '@/components/product/AllVotesChart'
-import { PriceHistoryChart } from '@/components/product/PriceHistoryChart'
+import { ProductChartTabs } from '@/components/product/ProductChartTabs'
 import { StoreTagInput } from '@/components/dashboard/StoreTagInput'
-import { CoordinateGrid } from '@/components/dashboard/CoordinateGrid'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
 import { EditProductDialog } from '@/components/dashboard/EditProductDialog'
 import { ProductComments } from '@/components/product/ProductComments'
@@ -358,92 +355,14 @@ function ProductDetailContent() {
             <CardTitle className="text-lg">{t('product.positionOnMatrix')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="average" className="w-full">
-              <TabsList className={`grid w-full mb-4 ${product.avgPrice ? 'grid-cols-4' : 'grid-cols-3'}`}>
-                <TabsTrigger value="average">{t('product.average')}</TabsTrigger>
-                <TabsTrigger value="my-vote" disabled={!myVote}>
-                  {t('product.myVote')}
-                </TabsTrigger>
-                <TabsTrigger value="all-votes">{t('product.allVotes')}</TabsTrigger>
-                {product.avgPrice && (
-                  <TabsTrigger value="price-history">Price</TabsTrigger>
-                )}
-              </TabsList>
-
-              {/* Average View */}
-              <TabsContent value="average">
-                <div className="aspect-square max-w-sm mx-auto">
-                  <CoordinateGrid
-                    initialSafety={product.averageSafety}
-                    initialTaste={product.averageTaste}
-                    onVote={(safety: number, taste: number) =>
-                      handleVote(safety, taste)
-                    }
-                    disabled={isVoting}
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground text-center mt-4">
-                  {t('voting.communityAverage')}
-                </p>
-              </TabsContent>
-
-              {/* My Vote View */}
-              <TabsContent value="my-vote">
-                {myVote ? (
-                  <>
-                    <div className="aspect-square max-w-sm mx-auto">
-                      <CoordinateGrid
-                        initialSafety={myVote.safety}
-                        initialTaste={myVote.taste}
-                        onVote={(safety: number, taste: number) =>
-                          handleVote(safety, taste)
-                        }
-                        disabled={isVoting}
-                      />
-                    </div>
-                    <p className="text-sm text-muted-foreground text-center mt-4">
-                      {t('voting.yourVote', { safety: myVote.safety, taste: myVote.taste })}
-                      {myVote.price && t('voting.yourVotePrice', { price: myVote.price })}
-                    </p>
-                  </>
-                ) : (
-                  <div className="text-center py-12">
-                    <p className="text-muted-foreground mb-4">
-                      {t('voting.notVotedYet')}
-                    </p>
-                    <Button
-                      onClick={() =>
-                        document
-                          .querySelector('[data-voting-section]')
-                          ?.scrollIntoView({ behavior: 'smooth' })
-                      }
-                    >
-                      {t('voting.castYourVote')}
-                    </Button>
-                  </div>
-                )}
-              </TabsContent>
-
-              {/* All Votes View */}
-              <TabsContent value="all-votes">
-                <div className="max-w-sm mx-auto">
-                  <AllVotesChart
-                    productId={product._id}
-                    highlightVoteId={myVote?._id}
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground text-center mt-4">
-                  {allVotes?.length || 0} {(allVotes?.length || 0) === 1 ? t('voting.individualVote') : t('voting.individualVotes')}
-                </p>
-              </TabsContent>
-
-              {/* Price History View */}
-              {product.avgPrice && (
-                <TabsContent value="price-history">
-                  <PriceHistoryChart productId={product._id} />
-                </TabsContent>
-              )}
-            </Tabs>
+            <ProductChartTabs
+              product={product}
+              myVote={myVote}
+              allVotesCount={allVotes?.length || 0}
+              onVote={(safety: number, taste: number) => handleVote(safety, taste)}
+              isVoting={isVoting}
+              t={t}
+            />
           </CardContent>
         </Card>
 

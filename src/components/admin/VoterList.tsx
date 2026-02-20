@@ -50,7 +50,7 @@ export function VoterList({ votes, onImpersonate }: VoterListProps) {
   const [deletingVoteId, setDeletingVoteId] = useState<Id<'votes'> | null>(
     null
   )
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const deleteVote = useMutation(api.votes.deleteVote)
 
   const handleDeleteVote = async (voteId: Id<'votes'>) => {
@@ -123,7 +123,7 @@ export function VoterList({ votes, onImpersonate }: VoterListProps) {
                           : '?'}
                     </span>
                     <span className="text-[10px] text-muted-foreground ml-auto">
-                      {new Date(vote.createdAt).toLocaleDateString()}
+                      {new Date(vote.createdAt).toLocaleDateString(locale)}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs">

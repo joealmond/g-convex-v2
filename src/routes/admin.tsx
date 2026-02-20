@@ -45,7 +45,7 @@ function AdminPage() {
 
 function AdminPageContent() {
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const adminStatus = useAdmin()
   const user = useQuery(api.users.current)
   const products = useQuery(api.products.listAll)
@@ -213,17 +213,17 @@ function AdminPageContent() {
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>
-                            Safety: {product.averageSafety.toFixed(0)} • Taste:{' '}
+                            {t('voting.safety')}: {product.averageSafety.toFixed(0)} • {t('voting.taste')}:{' '}
                             {product.averageTaste.toFixed(0)}
                           </span>
                           <span>•</span>
-                          <span>{product.voteCount} votes</span>
+                          <span>{product.voteCount} {t('common.votes')}</span>
                           <span>•</span>
-                          <span>{new Date(product.createdAt).toLocaleDateString()}</span>
+                          <span>{new Date(product.createdAt).toLocaleDateString(locale)}</span>
                         </div>
                         {product.ingredients && Array.isArray(product.ingredients) && (
                           <div className="text-xs text-muted-foreground mt-1">
-                            Ingredients: {product.ingredients.join(', ')}
+                            {t('products.ingredients')}: {product.ingredients.join(', ')}
                           </div>
                         )}
                       </div>

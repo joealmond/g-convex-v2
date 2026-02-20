@@ -1,6 +1,6 @@
 # G-Matrix: AI Agent Guidelines
 
-> **Note:** This document describes the **post-redesign target architecture**. Files and folders marked with ★ may not exist yet — they are part of the planned redesign (see `docs/newdirection/REDESIGN_PLAN.md`). When a ★ file doesn't exist, check the current codebase for the equivalent existing implementation.
+> **Note:** This document describes the **current architecture**. See `docs/planning/ACTION_PLAN.md` for the work backlog.
 
 ## What Is This App?
 
@@ -56,9 +56,9 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 
 | File | Purpose |
 |------|---------|
-| `src/lib/app-config.ts` | ★ Central niche configuration — start here to understand the app's identity |
+| `src/lib/app-config.ts` | Central niche configuration — start here to understand the app's identity |
 | `src/lib/types.ts` | TypeScript types, quadrant logic — references app-config for labels |
-| `src/lib/platform.ts` | ★ Platform detection: isNative(), isIOS(), isAndroid(), isWeb() |
+| `src/lib/platform.ts` | Platform detection: isNative(), isIOS(), isAndroid(), isWeb() |
 | `src/lib/auth-client.ts` | Better Auth client — uses `VITE_CONVEX_SITE_URL` as baseURL on native, relative origin on web |
 | `capacitor.config.ts` | Capacitor config — webDir, schemes, hostname |
 | `convex/schema.ts` | Database schema: products, votes, profiles, files, comments, commentLikes tables |
@@ -70,11 +70,14 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | `convex/lib/config.ts` | Admin emails, roles |
 | `src/routes/` | One file per screen/page |
 | `src/routes/community.tsx` | Community feed page — activity stream + following filter |
-| `src/components/layout/` | ★ Navigation shell: BottomTabs, TopBar, PageShell |
-| `src/components/feed/` | ★ Home feed: ProductCard, FilterChips (with nearby range dropdown), FeedGrid |
-| `src/components/product/` | Product detail: RatingBars★, StoreList★, VotingSheet★, ImageUploadDialog, ProductComments |
-| `src/components/map/` | ★ Leaflet map: ProductMap, ProductPin |
+| `src/components/layout/` | Navigation shell: BottomTabs, TopBar, PageShell |
+| `src/components/feed/` | Home feed: ProductCard, FilterChips (with nearby range dropdown), FeedGrid |
+| `src/components/product/` | Product detail: RatingBars, StoreList, VotingSheet, ImageUploadDialog, ProductComments |
+| `src/components/map/` | Leaflet map: ProductMap, ProductPin |
 | `src/components/dashboard/` | Chart views: MatrixChart, CoordinateGrid, StatsCard, BadgeDisplay, Leaderboard, DeleteProductButton |
+| `src/components/QuadrantPicker.tsx` | Reusable 2×2 quadrant button grid used in VotingSheet, VotingPanel, ImageUploadDialog |
+| `src/lib/format-distance.ts` | `formatDistance(km, t)` — shared i18n-aware distance formatter |
+| `src/lib/format-time.ts` | `formatRelativeTimeI18n(timestamp, t)` — shared i18n-aware relative time formatter |
 | `src/hooks/` | Custom hooks: useAdmin, useGeolocation, useTranslation, useAnonymousId, useVoteMigration, useImpersonate, useTheme, useOnlineStatus |
 | `src/hooks/use-product-filter.ts` | Product filter logic — default "nearby" with auto-fallback to "recent"; configurable range via `getNearbyRange`/`setNearbyRange` (localStorage) |
 | `src/hooks/use-online-status.ts` | `useOnlineStatus()` — SSR-safe online/offline detection; `useServiceWorker()` — registers `/sw.js` |
@@ -514,11 +517,12 @@ User comes online → SyncManager flushes queue via Convex mutations
 
 | File | Purpose |
 |------|---------|
-| `docs/newdirection/REDESIGN_PLAN.md` | Full redesign direction, architecture, decisions |
-| `docs/newdirection/PRIORITY_LIST.md` | **Single source of truth** — complete priority list with checkboxes for progress |
+| `docs/planning/ACTION_PLAN.md` | Work backlog with checkboxes for progress |
+| `docs/planning/FINISHED_TASKS.md` | Completed tasks archive |
+| `docs/planning/FUTURE_PLANS.md` | Long-term planning and ideas |
 | `docs/FEATURE_GAP_ANALYSIS.md` | Feature comparison vs. previous app versions (g-matrix, g-convex) |
-| `docs/newdirection/MOBILE_APPROACH_DECISION.md` | Decision record: Capacitor chosen over Replit+Expo |
-| `docs/newdirection/Kimi_Agent_Gluten-Free App UI Plan/` | Kimi design reference (mockup images + design system spec) |
+| `docs/MOBILE_DEPLOYMENT.md` | Mobile deployment guide for iOS and Android |
+| `docs/planning/references/` | Design reference materials |
 
 ## Legacy Codebases (Local Reference)
 

@@ -16,6 +16,7 @@ import { useAdmin } from '@/hooks/use-admin'
 import { Flag, CheckCircle, XCircle, Clock, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { type Id } from '@convex/_generated/dataModel'
+import { useTranslation } from '@/hooks/use-translation'
 
 export const Route = createFileRoute('/_authenticated/reports')({
   component: ReportsPage,
@@ -45,11 +46,11 @@ function ReportsPage() {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'all', label: 'All Reports' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'reviewed', label: 'Reviewed' },
-  { value: 'resolved', label: 'Resolved' },
-  { value: 'dismissed', label: 'Dismissed' },
+  { value: 'all', labelKey: 'reports.allReports' },
+  { value: 'pending', labelKey: 'reports.pending' },
+  { value: 'reviewed', labelKey: 'reports.reviewed' },
+  { value: 'resolved', labelKey: 'reports.resolved' },
+  { value: 'dismissed', labelKey: 'reports.dismissed' },
 ] as const
 
 const STATUS_ICONS = {
@@ -71,6 +72,7 @@ type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed'
 function ReportsContent() {
   const [statusFilter, setStatusFilter] = useState<ReportStatus | 'all'>('pending')
   const adminStatus = useAdmin()
+  const { t, locale } = useTranslation()
 
   const reports = useQuery(
     api.reports.list,
@@ -85,9 +87,9 @@ function ReportsContent() {
   ) => {
     try {
       await updateStatus({ reportId, status: newStatus })
-      toast.success('Report status updated')
+      toast.success(t('reports.statusUpdated'))
     } catch (error: unknown) {
-      toast.error('Failed to update status', {
+      toast.error(t('reports.statusUpdateFailed'), {
         description:
           error instanceof Error ? error.message : 'Please try again',
       })
@@ -98,14 +100,14 @@ function ReportsContent() {
     return (
       <div className="flex-1 px-4 py-8">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+          <h1 className="text-2xl font-bold mb-4">{t('reports.accessDenied')}</h1>
           <p className="text-muted-foreground mb-6">
-            You need admin privileges to view reports.
+            {t('reports.accessDeniedDesc')}
           </p>
           <Button asChild>
             <Link to="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
+              {t('nav.backToHome')}
             </Link>
           </Button>
         </div>
@@ -124,18 +126,18 @@ function ReportsContent() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Product Reports
+              {t('reports.title')}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {reports.length} {statusFilter === 'all' ? 'total' : statusFilter}{' '}
-              {reports.length === 1 ? 'report' : 'reports'}
+              {reports.length} {statusFilter === 'all' ? t('reports.allReports').toLowerCase() : t(`reports.${statusFilter}` as const).toLowerCase()}{' '}
+              {reports.length === 1 ? t('reports.totalReport') : t('reports.totalReports')}
             </p>
           </div>
 
           <Button variant="outline" size="sm" asChild>
             <Link to="/admin">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Admin Panel
+              {t('nav.adminPanel')}
             </Link>
           </Button>
         </div>
@@ -144,7 +146,7 @@ function ReportsContent() {
         <Card className="border-0 shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <label className="text-sm font-medium">Filter by status:</label>
+              <label className="text-sm font-medium">{t('reports.filterByStatus')}</label>
               <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ReportStatus | 'all')}>
                 <SelectTrigger className="w-48">
                   <SelectValue />
@@ -152,7 +154,7 @@ function ReportsContent() {
                 <SelectContent>
                   {STATUS_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                      {t(option.labelKey)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -167,12 +169,12 @@ function ReportsContent() {
             <CardContent className="py-12 text-center">
               <Flag className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-lg font-medium text-foreground mb-2">
-                No reports found
+                {t('reports.noReports')}
               </p>
               <p className="text-sm text-muted-foreground">
                 {statusFilter === 'all'
-                  ? 'No reports have been submitted yet'
-                  : `No ${statusFilter} reports`}
+                  ? t('reports.noReportsYet')
+                  : t('reports.noStatusReports', { status: t(`reports.${statusFilter}` as const).toLowerCase() })}
               </p>
             </CardContent>
           </Card>
@@ -185,7 +187,7 @@ function ReportsContent() {
                     <div className="flex-1">
                       <CardTitle className="text-lg mb-2 flex items-center gap-2">
                         <Flag className="h-5 w-5 text-destructive" />
-                        {report.product?.name || 'Unknown Product'}
+                        {report.product?.name || t('reports.unknownProduct')}
                       </CardTitle>
                       
                       <div className="flex flex-wrap gap-2 mb-2">
@@ -207,11 +209,11 @@ function ReportsContent() {
                       <p className="text-sm text-muted-foreground">
                         Reported by:{' '}
                         {report.isAnonymous
-                          ? 'Anonymous'
-                          : (report.reporter?.id ?? 'Unknown')}
+                          ? t('reports.anonymous')
+                          : (report.reporter?.id ?? t('reports.unknown'))}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(report.createdAt).toLocaleString()}
+                        {new Date(report.createdAt).toLocaleString(locale)}
                       </p>
                     </div>
 
@@ -226,7 +228,7 @@ function ReportsContent() {
                           }
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />
-                          Resolve
+                          {t('reports.resolve')}
                         </Button>
                         <Button
                           size="sm"
@@ -236,7 +238,7 @@ function ReportsContent() {
                           }
                         >
                           <XCircle className="h-4 w-4 mr-1" />
-                          Dismiss
+                          {t('reports.dismiss')}
                         </Button>
                       </div>
                     )}
@@ -246,7 +248,7 @@ function ReportsContent() {
                 {report.details && (
                   <CardContent>
                     <div className="bg-muted p-4 rounded-lg">
-                      <p className="text-sm font-medium mb-1">Details:</p>
+                      <p className="text-sm font-medium mb-1">{t('reports.details')}</p>
                       <p className="text-sm text-muted-foreground">
                         {report.details}
                       </p>
@@ -263,16 +265,16 @@ function ReportsContent() {
                           to="/product/$name"
                           params={{ name: report.product.name }}
                         >
-                          View Product →
+                          {t('reports.viewProduct')}
                         </Link>
                       </Button>
                     )}
 
                     {report.reviewedBy && report.reviewer && (
                       <p className="text-xs text-muted-foreground mt-2">
-                        Reviewed by {report.reviewer?.id ?? 'Admin'} on{' '}
+                        Reviewed by {report.reviewer?.id ?? t('reports.adminFallback')} on{' '}
                         {report.reviewedAt &&
-                          new Date(report.reviewedAt).toLocaleString()}
+                          new Date(report.reviewedAt).toLocaleString(locale)}
                       </p>
                     )}
                   </CardContent>

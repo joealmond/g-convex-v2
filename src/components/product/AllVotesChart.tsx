@@ -13,6 +13,7 @@ import {
 } from 'recharts'
 import type { Id } from '@convex/_generated/dataModel'
 import { useTranslation } from '@/hooks/use-translation'
+import { chartColors } from '@/lib/app-config'
 
 interface AllVotesChartProps {
   productId: Id<'products'>
@@ -52,15 +53,15 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
   // Color mapping
   const getVoteColor = (vote: (typeof data)[0]) => {
     if (highlightVoteId && vote.id === highlightVoteId) {
-      return '#7CB342' // Highlight color (primary green)
+      return chartColors.primary // Highlight color (primary green)
     }
     if (vote.isImpersonated) {
-      return '#F1C40F' // Gold for impersonated
+      return chartColors.gold // Gold for impersonated
     }
     if (vote.isRegistered) {
-      return '#27AE60' // Green for registered users
+      return chartColors.safetyHigh // Green for registered users
     }
-    return '#95A5A6' // Gray for anonymous
+    return chartColors.anonymous // Gray for anonymous
   }
 
   return (
@@ -69,7 +70,7 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
         <ScatterChart
           margin={{ top: 20, right: 20, bottom: 40, left: 40 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartColors.gridStroke} />
           
           <XAxis
             type="number"
@@ -82,9 +83,9 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
               value: t('dimensions.axis1.label'),
               position: 'insideBottom',
               offset: -10,
-              style: { fontSize: 14, fill: '#666' },
+              style: { fontSize: 14, fill: chartColors.axisLabel },
             }}
-            stroke="#666"
+            stroke={chartColors.axisLabel}
           />
           
           <YAxis
@@ -99,21 +100,21 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
               angle: -90,
               position: 'insideLeft',
               offset: 0,
-              style: { fontSize: 14, fill: '#666' },
+              style: { fontSize: 14, fill: chartColors.axisLabel },
             }}
-            stroke="#666"
+            stroke={chartColors.axisLabel}
           />
           
           {/* Reference lines for quadrants */}
           <ReferenceLine
             x={50}
-            stroke="#999"
+            stroke={chartColors.anonymous}
             strokeDasharray="5 5"
             strokeWidth={1}
           />
           <ReferenceLine
             y={50}
-            stroke="#999"
+            stroke={chartColors.anonymous}
             strokeDasharray="5 5"
             strokeWidth={1}
           />
@@ -147,13 +148,13 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
             }}
           />
           
-          <Scatter data={data} fill="#27AE60">
+          <Scatter data={data} fill={chartColors.safetyHigh}>
             {data.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
                 fill={getVoteColor(entry)}
                 r={highlightVoteId === entry.id ? 8 : 6}
-                stroke={highlightVoteId === entry.id ? '#558B2F' : 'none'}
+                stroke={highlightVoteId === entry.id ? chartColors.primaryDark : 'none'}
                 strokeWidth={highlightVoteId === entry.id ? 2 : 0}
               />
             ))}
@@ -164,16 +165,16 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
       {/* Legend */}
       <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
-          <div className="h-3 w-3 rounded-full bg-[#27AE60]" />
+          <div className="h-3 w-3 rounded-full" style={{ background: chartColors.safetyHigh }} />
           <span>{t('chart.registered')}</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="h-3 w-3 rounded-full bg-[#95A5A6]" />
+          <div className="h-3 w-3 rounded-full" style={{ background: chartColors.anonymous }} />
           <span>{t('chart.anonymous')}</span>
         </div>
         {data.some((v) => v.isImpersonated) && (
           <div className="flex items-center gap-1">
-            <div className="h-3 w-3 rounded-full bg-[#F1C40F]" />
+            <div className="h-3 w-3 rounded-full" style={{ background: chartColors.gold }} />
             <span>{t('chart.impersonated')}</span>
           </div>
         )}
