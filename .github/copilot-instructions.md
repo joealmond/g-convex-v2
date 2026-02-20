@@ -290,6 +290,8 @@ The `cap sync` output shows:
 
 **Solution**: `onesignal-cordova-plugin` was **removed** from the project (Feb 2026). The existing push notification code (`src/lib/onesignal.ts`, `src/components/PushNotificationManager.tsx`, `convex/actions/sendPush.ts`) is preserved but dormant — all functions gracefully no-op since the SDK import fails.
 
+**Upstream status**: [OneSignal/OneSignal-Cordova-SDK#1069](https://github.com/OneSignal/OneSignal-Cordova-SDK/issues/1069) — open feature request, assigned to `fadi-george` (Jan 2026), but Flutter SDK was prioritized first. No ETA for SPM support.
+
 **Recommended replacement options** (when push notifications are needed):
 
 | Option | Package | SPM | Notes |
@@ -299,10 +301,19 @@ The `cap sync` output shows:
 | **Custom APNs + FCM** | `@capacitor/push-notifications` | ✅ | Capacitor's official push plugin, requires manual token management |
 | **OneSignal Capacitor SDK** | `onesignal-cordova-plugin` | ❌ | Wait for SPM-compatible release or migrate to `@capacitor-firebase/messaging` |
 
+**Workarounds to keep OneSignal** (from issue #1069, if push is urgently needed before SPM support lands):
+
+| Workaround | How | Trade-offs |
+|-----------|-----|------------|
+| **CocoaPods fallback** | Re-init iOS: `npx cap add ios --packagemanager CocoaPods` | Loses native customizations in `ios/`; CocoaPods entering maintenance mode |
+| **Community SPM plugin** | [AppPresser-Apps/capacitor-onesignal](https://github.com/AppPresser-Apps/capacitor-onesignal) | Third-party, less battle-tested |
+| **Manual Xcode SPM** | Add `https://github.com/OneSignal/OneSignal-iOS-SDK.git` via Xcode → File → Add Packages | Bypasses Cordova plugin; requires manual bridge code |
+
 **Migration path**: The server-side delivery code in `convex/actions/sendPush.ts` uses the OneSignal REST API and is independent of the client SDK. It will continue to work with any client that registers via `OneSignal.login(userId)`. When re-adding push, either:
-1. Wait for an SPM-compatible OneSignal SDK
+1. Wait for an SPM-compatible OneSignal SDK (track [#1069](https://github.com/OneSignal/OneSignal-Cordova-SDK/issues/1069))
 2. Switch to `@capacitor-firebase/messaging` + FCM REST API (replace `sendPush.ts`)
 3. Use `@capacitor/push-notifications` + direct APNs/FCM (requires token management)
+4. Use CocoaPods fallback or community plugin as a stopgap
 
 #### Capacitor Android ProGuard Compatibility (AGP 9.x+)
 **Problem**: Capacitor v8 plugins (`@capacitor/camera`, `@capacitor/geolocation`, `@capacitor/share`, `@capacitor/haptics`, `better-auth-capacitor`, `capacitor-camera-view`) use the deprecated `proguard-android.txt` file, which causes build failures with Android Gradle Plugin 9.x+:

@@ -7,6 +7,8 @@
 > The client-side push code is dormant (all functions gracefully no-op).
 > Server-side delivery via OneSignal REST API still works independently.
 >
+> **Upstream issue**: [OneSignal/OneSignal-Cordova-SDK#1069](https://github.com/OneSignal/OneSignal-Cordova-SDK/issues/1069) — assigned but no ETA (Flutter SDK prioritized first).
+>
 > **To re-enable push notifications**, choose one of these SPM-compatible alternatives:
 >
 > | Option | Package | SPM | Effort | Notes |
@@ -14,6 +16,14 @@
 > | **Firebase Cloud Messaging** | `@capacitor-firebase/messaging` | ✅ | Medium | Best free option, full SPM support, rich analytics |
 > | **Capacitor Push** | `@capacitor/push-notifications` | ✅ | High | Official Capacitor plugin, requires manual APNs/FCM token management |
 > | **OneSignal (future)** | TBD | ❌ | Low | Re-add when OneSignal releases an SPM-compatible SDK |
+>
+> **Workarounds to keep OneSignal** (from issue #1069):
+>
+> | Workaround | How | Trade-offs |
+> |-----------|-----|------------|
+> | **CocoaPods fallback** | `npx cap add ios --packagemanager CocoaPods` | Loses native customizations in `ios/`; CocoaPods entering maintenance mode |
+> | **Community SPM plugin** | [AppPresser-Apps/capacitor-onesignal](https://github.com/AppPresser-Apps/capacitor-onesignal) | Third-party, less battle-tested |
+> | **Manual Xcode SPM** | Add `https://github.com/OneSignal/OneSignal-iOS-SDK.git` via File → Add Packages | Bypasses Cordova plugin; requires manual bridge code |
 
 Push notifications were previously delivered via [OneSignal](https://onesignal.com/). The architecture below describes the original setup for reference.
 
