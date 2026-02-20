@@ -1,13 +1,28 @@
 # Push Notifications Setup Guide (OneSignal)
 
-Push notifications are delivered via [OneSignal](https://onesignal.com/). The client-side SDK handles device registration automatically. Server-side delivery uses the OneSignal REST API from Convex actions.
+> **⚠️ STATUS (Feb 2026)**: `onesignal-cordova-plugin` has been **removed** from the project.
+> It is a Cordova-era plugin with no Swift Package Manager (SPM) support, which causes
+> Capacitor 8 iOS builds to fail (`Missing package product 'CapApp-SPM'`).
+>
+> The client-side push code is dormant (all functions gracefully no-op).
+> Server-side delivery via OneSignal REST API still works independently.
+>
+> **To re-enable push notifications**, choose one of these SPM-compatible alternatives:
+>
+> | Option | Package | SPM | Effort | Notes |
+> |--------|---------|-----|--------|-------|
+> | **Firebase Cloud Messaging** | `@capacitor-firebase/messaging` | ✅ | Medium | Best free option, full SPM support, rich analytics |
+> | **Capacitor Push** | `@capacitor/push-notifications` | ✅ | High | Official Capacitor plugin, requires manual APNs/FCM token management |
+> | **OneSignal (future)** | TBD | ❌ | Low | Re-add when OneSignal releases an SPM-compatible SDK |
 
-## Architecture Overview
+Push notifications were previously delivered via [OneSignal](https://onesignal.com/). The architecture below describes the original setup for reference.
+
+## Architecture Overview (Original — OneSignal)
 
 ```
 ┌─────────────────────────────────┐
 │  Mobile App (Capacitor)         │
-│  onesignal-cordova-plugin       │
+│  onesignal-cordova-plugin       │  ← REMOVED (no SPM support)
 │  ┌───────────────────────────┐  │
 │  │ OneSignal.initialize(ID)  │  │  ← App startup
 │  │ OneSignal.login(userId)   │  │  ← After auth
@@ -25,7 +40,7 @@ Push notifications are delivered via [OneSignal](https://onesignal.com/). The cl
             │ POST /notifications
 ┌───────────┴─────────────────────┐
 │  Convex Actions                 │
-│  convex/actions/sendPush.ts     │
+│  convex/actions/sendPush.ts     │  ← Still functional
 │  Targets users by external_id   │
 └─────────────────────────────────┘
 ```
@@ -170,15 +185,31 @@ No manual token storage needed — OneSignal maps external_id to device tokens a
 | No notifications on Android | Verify `google-services.json` in `android/app/`, FCM key set in OneSignal dashboard |
 | User not receiving targeted push | Verify `OneSignal.login(userId)` is called after auth — check console for `[OneSignal] Logged in user:` |
 
-## Migration Notes (from FCM direct)
+## Migration Notes
 
-The previous implementation used:
+### From FCM direct → OneSignal (historical)
 - `@capacitor/push-notifications` (removed) — replaced by `onesignal-cordova-plugin`
 - `convex/notifications.ts` (deprecated) — token CRUD, no longer needed
 - `deviceTokens` table (deprecated) — kept in schema for backward compat
 - `FCM_SERVER_KEY` env var (removed) — replaced by `ONESIGNAL_REST_API_KEY`
 
+### From OneSignal → TBD (current, Feb 2026)
+- `onesignal-cordova-plugin` (removed) — incompatible with Capacitor 8 SPM
+- `src/lib/onesignal.ts` — code preserved but dormant (dynamic import fails gracefully)
+- `src/hooks/use-push-notifications.ts` — hook preserved, no-ops without SDK
+- `src/components/PushNotificationManager.tsx` — component preserved, no-ops without SDK
+- `convex/actions/sendPush.ts` — **still functional** via OneSignal REST API
+
+**When re-adding push**, the recommended migration path is:
+1. Install `@capacitor-firebase/messaging` (SPM-compatible, free tier)
+2. Replace `src/lib/onesignal.ts` with Firebase messaging init + token registration
+3. Replace `convex/actions/sendPush.ts` with FCM HTTP v1 API calls
+4. Store device tokens in Convex (re-enable `convex/notifications.ts` or similar)
+5. Run `npx cap sync` — Firebase plugin has proper `Package.swift`
+
 References:
-- [OneSignal Cordova/Capacitor SDK](https://github.com/nicefiction/onesignal-cordova-plugin)
+- [OneSignal Cordova/Capacitor SDK](https://github.com/OneSignal/OneSignal-Cordova-SDK) (no SPM yet)
 - [OneSignal REST API — Create Notification](https://documentation.onesignal.com/reference/create-notification)
-- [OneSignal Mobile SDK Reference](https://documentation.onesignal.com/docs/mobile-sdk-reference)
+- [@capacitor-firebase/messaging](https://github.com/nicefiction/capacitor-firebase/tree/main/packages/messaging) (recommended replacement)
+- [@capacitor/push-notifications](https://capacitorjs.com/docs/apis/push-notifications) (official Capacitor plugin)
+- [Firebase Cloud Messaging REST API](https://firebase.google.com/docs/cloud-messaging/send-message)

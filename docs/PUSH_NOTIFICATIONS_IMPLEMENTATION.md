@@ -2,10 +2,18 @@
 
 This document describes the push notification features implemented in G-Matrix.
 
-> **⚠️ Updated Feb 2026**: Push delivery has been migrated from direct FCM to **OneSignal**.
-> The `onesignal-cordova-plugin` SDK handles client-side token registration.
-> Server-side delivery uses the OneSignal REST API (see `convex/actions/sendPush.ts`).
-> See `docs/PUSH_NOTIFICATIONS_SETUP.md` for setup instructions.
+> **⚠️ Updated Feb 2026**: `onesignal-cordova-plugin` has been **removed** because it is
+> incompatible with Capacitor 8's Swift Package Manager (SPM) — it has no `Package.swift`,
+> causing iOS Xcode build failures (`Missing package product 'CapApp-SPM'`).
+>
+> **Current status**: Client-side push code is dormant (graceful no-op). Server-side delivery
+> via OneSignal REST API (`convex/actions/sendPush.ts`) still works independently.
+>
+> **Recommended replacements**: `@capacitor-firebase/messaging` (SPM ✅, free),
+> `@capacitor/push-notifications` (SPM ✅, manual token management), or wait for an
+> SPM-compatible OneSignal Capacitor SDK.
+>
+> See `docs/PUSH_NOTIFICATIONS_SETUP.md` for migration options.
 
 ## Overview
 

@@ -1,151 +1,42 @@
 /**
- * OneSignal Push Notification SDK Integration
+ * OneSignal Push Notification SDK — STUB
  *
- * Initializes OneSignal on native platforms (iOS/Android via Capacitor).
- * Links device to authenticated user via external_id for targeted push delivery.
+ * ⚠️  DEPRECATED (Feb 2026): `onesignal-cordova-plugin` has been REMOVED from the project
+ * because it is not compatible with Capacitor 8's Swift Package Manager (SPM).
+ * The plugin has no Package.swift, causing Xcode build failures on iOS.
  *
- * @see https://documentation.onesignal.com/docs/cordova-sdk-setup
- * @see https://github.com/nicefiction/onesignal-cordova-plugin
+ * All functions in this file are no-ops. Replace with a compatible push SDK when needed:
+ * - @capacitor-firebase/messaging (recommended, SPM ✅)
+ * - @capacitor/push-notifications (official Capacitor, SPM ✅)
  *
- * ⚠️  SETUP REQUIRED:
- * - Set VITE_ONESIGNAL_APP_ID in .env (client-side initialization)
- * - Set ONESIGNAL_APP_ID + ONESIGNAL_REST_API_KEY in Convex env vars (server-side delivery)
- * - Configure iOS APNs certificate and Android FCM key in OneSignal dashboard
+ * Server-side delivery (convex/actions/sendPush.ts) is independent and still works
+ * with the OneSignal REST API if a compatible client SDK is re-added.
  *
- * See docs/PUSH_NOTIFICATIONS_SETUP.md for full configuration.
+ * See docs/PUSH_NOTIFICATIONS_SETUP.md for details and migration options.
  */
-import { isNative } from '@/lib/platform'
-import { logger } from '@/lib/logger'
 
-let initialized = false
+/** Initialize push notifications. Currently a no-op — SDK removed. */
+export async function initOneSignal(): Promise<void> {}
 
-/**
- * Initialize the OneSignal SDK. Call once at app startup (client-side, native only).
- * On web, this is a no-op.
- */
-export async function initOneSignal(): Promise<void> {
-  if (!isNative() || initialized) return
+/** Login user for targeted push. Currently a no-op — SDK removed. */
+export async function oneSignalLogin(_userId: string): Promise<void> {}
 
-  const appId = import.meta.env.VITE_ONESIGNAL_APP_ID
-  if (!appId) {
-    console.warn('[OneSignal] VITE_ONESIGNAL_APP_ID not set, skipping initialization')
-    return
-  }
+/** Logout from push service. Currently a no-op — SDK removed. */
+export async function oneSignalLogout(): Promise<void> {}
 
-  try {
-    const { default: OneSignal } = await import('onesignal-cordova-plugin')
-
-    OneSignal.initialize(appId)
-
-    // Log push subscription changes in dev
-    if (import.meta.env.DEV) {
-      OneSignal.Debug.setLogLevel(6) // VERBOSE in dev
-    }
-
-    initialized = true
-    console.log('[OneSignal] Initialized with app ID:', appId.substring(0, 8) + '...')
-  } catch (error) {
-    logger.error('[OneSignal] Initialization failed:', error)
-  }
+/** Request push permission. Currently returns false — SDK removed. */
+export async function requestPushPermission(_fallbackToSettings = false): Promise<boolean> {
+  return false
 }
 
-/**
- * Login the user to OneSignal. This links the device to the user via external_id,
- * enabling targeted push delivery from Convex actions via REST API.
- *
- * Call this after the user authenticates (Better Auth session established).
- *
- * @param userId - The Better Auth user._id (string UUID)
- */
-export async function oneSignalLogin(userId: string): Promise<void> {
-  if (!isNative() || !initialized) return
-
-  try {
-    const { default: OneSignal } = await import('onesignal-cordova-plugin')
-    OneSignal.login(userId)
-    console.log('[OneSignal] Logged in user:', userId.substring(0, 8) + '...')
-  } catch (error) {
-    logger.error('[OneSignal] Login failed:', error)
-  }
-}
-
-/**
- * Logout from OneSignal. Dissociates the device from the current user.
- * Call on sign-out.
- */
-export async function oneSignalLogout(): Promise<void> {
-  if (!isNative() || !initialized) return
-
-  try {
-    const { default: OneSignal } = await import('onesignal-cordova-plugin')
-    OneSignal.logout()
-    console.log('[OneSignal] Logged out')
-  } catch (error) {
-    logger.error('[OneSignal] Logout failed:', error)
-  }
-}
-
-/**
- * Request push notification permission from the user.
- * Returns true if permission was granted.
- *
- * On iOS, this shows the native permission dialog.
- * On Android 13+, this shows the runtime permission dialog.
- *
- * @param fallbackToSettings - If true and permission was previously denied,
- *   prompts user to open device settings. Default: false.
- */
-export async function requestPushPermission(fallbackToSettings = false): Promise<boolean> {
-  if (!isNative() || !initialized) return false
-
-  try {
-    const { default: OneSignal } = await import('onesignal-cordova-plugin')
-    const granted = await OneSignal.Notifications.requestPermission(fallbackToSettings)
-    console.log('[OneSignal] Permission:', granted ? 'granted' : 'denied')
-    return granted
-  } catch (error) {
-    logger.error('[OneSignal] Permission request failed:', error)
-    return false
-  }
-}
-
-/**
- * Check if push notification permission has been granted.
- */
+/** Check push permission. Currently returns false — SDK removed. */
 export async function hasPushPermission(): Promise<boolean> {
-  if (!isNative() || !initialized) return false
-
-  try {
-    const { default: OneSignal } = await import('onesignal-cordova-plugin')
-    return await OneSignal.Notifications.getPermissionAsync()
-  } catch {
-    return false
-  }
+  return false
 }
 
-/**
- * Add a notification click listener.
- * Useful for deep-linking when user taps a notification.
- *
- * @param handler - Callback receiving the notification click event
- * @returns cleanup function to remove the listener
- */
+/** Add notification click listener. Currently returns empty cleanup — SDK removed. */
 export async function onNotificationClick(
-  handler: (notification: { title?: string; body?: string; data?: Record<string, unknown> }) => void
+  _handler: (notification: { title?: string; body?: string; data?: Record<string, unknown> }) => void
 ): Promise<() => void> {
-  if (!isNative() || !initialized) return () => {}
-
-  const { default: OneSignal } = await import('onesignal-cordova-plugin')
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- OneSignal NotificationClickEvent type uses `object` for additionalData
-  const listener = (event: any) => {
-    handler({
-      title: event.notification?.title,
-      body: event.notification?.body,
-      data: event.notification?.additionalData,
-    })
-  }
-
-  OneSignal.Notifications.addEventListener('click', listener)
-  return () => OneSignal.Notifications.removeEventListener('click', listener)
+  return () => {}
 }

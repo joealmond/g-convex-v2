@@ -276,6 +276,34 @@ export const getCurrentUser = publicQuery({ ... })
 
 **How to detect**: Run `npx convex dev --once`. If you see `"X is not a function"` pointing at `auth.ts`, check for circular imports between `auth.ts` and `customFunctions.ts`.
 
+#### OneSignal Cordova Plugin Incompatible with Capacitor 8 SPM (Removed)
+**Problem**: `onesignal-cordova-plugin` is a Cordova-era plugin with no Swift Package Manager (SPM) support. Capacitor 8 uses SPM for iOS dependency management. When the plugin is installed, `cap sync ios` generates a broken `Package.swift` reference to a non-existent `OnesignalCordovaPlugin` directory, causing:
+```
+Missing package product 'CapApp-SPM'
+Package resolution errors must be fixed before building
+```
+The `cap sync` output shows:
+```
+[fatal] ENOENT: no such file or directory, .../OnesignalCordovaPlugin/Package.swift
+[warn] Some installed packages are not compatible with SPM
+```
+
+**Solution**: `onesignal-cordova-plugin` was **removed** from the project (Feb 2026). The existing push notification code (`src/lib/onesignal.ts`, `src/components/PushNotificationManager.tsx`, `convex/actions/sendPush.ts`) is preserved but dormant — all functions gracefully no-op since the SDK import fails.
+
+**Recommended replacement options** (when push notifications are needed):
+
+| Option | Package | SPM | Notes |
+|--------|---------|-----|-------|
+| **Firebase Cloud Messaging** | `@capacitor-firebase/messaging` | ✅ | Full SPM support, free tier, direct FCM integration |
+| **Capacitor Local Notifications** | `@capacitor/local-notifications` | ✅ | For local-only notifications (no server push) |
+| **Custom APNs + FCM** | `@capacitor/push-notifications` | ✅ | Capacitor's official push plugin, requires manual token management |
+| **OneSignal Capacitor SDK** | `onesignal-cordova-plugin` | ❌ | Wait for SPM-compatible release or migrate to `@capacitor-firebase/messaging` |
+
+**Migration path**: The server-side delivery code in `convex/actions/sendPush.ts` uses the OneSignal REST API and is independent of the client SDK. It will continue to work with any client that registers via `OneSignal.login(userId)`. When re-adding push, either:
+1. Wait for an SPM-compatible OneSignal SDK
+2. Switch to `@capacitor-firebase/messaging` + FCM REST API (replace `sendPush.ts`)
+3. Use `@capacitor/push-notifications` + direct APNs/FCM (requires token management)
+
 #### Capacitor Android ProGuard Compatibility (AGP 9.x+)
 **Problem**: Capacitor v8 plugins (`@capacitor/camera`, `@capacitor/geolocation`, `@capacitor/share`, `@capacitor/haptics`, `better-auth-capacitor`, `capacitor-camera-view`) use the deprecated `proguard-android.txt` file, which causes build failures with Android Gradle Plugin 9.x+:
 ```
