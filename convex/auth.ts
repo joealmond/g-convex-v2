@@ -1,4 +1,3 @@
-import { publicQuery } from './lib/customFunctions'
 import { betterAuth } from 'better-auth/minimal'
 import { createClient } from '@convex-dev/better-auth'
 import { convex } from '@convex-dev/better-auth/plugins'
@@ -85,10 +84,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
   })
 }
 
-// Query to get the current authenticated user
-export const getCurrentUser = publicQuery({
-  args: {},
-  handler: async (ctx) => {
-    return await authComponent.getAuthUser(ctx)
-  },
-})
+// NOTE: getCurrentUser was removed from this file to break a circular dependency.
+// auth.ts → customFunctions.ts → authHelpers.ts → auth.ts caused "CA is not a function"
+// during Convex push. If a getCurrentUser query is needed, define it in a separate
+// file (e.g., convex/users.ts) that imports both publicQuery and authComponent.

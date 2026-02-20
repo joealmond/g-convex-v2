@@ -246,8 +246,35 @@ Standard shadcn/ui tokens (`bg-background`, `bg-card`, `bg-primary`, `text-foreg
 - **Z-Index**: Be careful with stacking contexts. Toast/Dialogs > Dropdowns > Sticky Headers > Content.
 - **Button Content**: When overriding button children (e.g. for icon-only buttons), You MUST provide the visible Icon element. Passing only `sr-only` text will result in a blank button. Always verify the button renders with visible content.
 - **i18n**: Never hardcode user-facing English strings. Always use `t('key')` from `useTranslation()`. If you add a new string, add it to BOTH `en.json` and `hu.json` before using it. Missing keys silently return the key path as fallback text.
+- **Circular imports in `convex/`**: `auth.ts` must NOT import from `customFunctions.ts` — it creates a circular dependency (`auth.ts` → `customFunctions.ts` → `authHelpers.ts` → `auth.ts`) that crashes Convex push with `"X is not a function"`. See Known Issues section.
 
 ### Known Issues & Workarounds
+
+#### Circular Dependency in `convex/auth.ts` (Convex Push Failure)
+**Problem**: If `convex/auth.ts` imports from `convex/lib/customFunctions.ts` (e.g., `publicQuery`), it creates a **circular dependency** chain:
+```
+auth.ts → customFunctions.ts → authHelpers.ts → auth.ts
+```
+Convex uses esbuild to bundle functions. Circular imports cause module-scope variables (like `publicQuery`) to be `undefined` when the importing module evaluates, resulting in:
+```
+Uncaught Failed to analyze actions/nearbyProduct.js: CA is not a function
+    at <anonymous> (../../../convex/auth.ts:89:9)
+```
+The minified `CA` corresponds to `publicQuery` — it hasn't been initialized yet due to the import cycle.
+
+**Solution**: **Never import from `customFunctions.ts` in `auth.ts`.** The `auth.ts` file should only export `authComponent` and `createAuth`. If you need a query like `getCurrentUser` that uses both `publicQuery` and `authComponent`, define it in a separate file (e.g., `convex/users.ts`) that breaks the cycle:
+```ts
+// ✅ OK — convex/users.ts (no cycle)
+import { publicQuery } from './lib/customFunctions'
+import { authComponent } from './auth'
+export const getCurrentUser = publicQuery({ ... })
+
+// ❌ BAD — convex/auth.ts (creates cycle)
+import { publicQuery } from './lib/customFunctions'  // cycle!
+export const getCurrentUser = publicQuery({ ... })
+```
+
+**How to detect**: Run `npx convex dev --once`. If you see `"X is not a function"` pointing at `auth.ts`, check for circular imports between `auth.ts` and `customFunctions.ts`.
 
 #### Capacitor Android ProGuard Compatibility (AGP 9.x+)
 **Problem**: Capacitor v8 plugins (`@capacitor/camera`, `@capacitor/geolocation`, `@capacitor/share`, `@capacitor/haptics`, `better-auth-capacitor`, `capacitor-camera-view`) use the deprecated `proguard-android.txt` file, which causes build failures with Android Gradle Plugin 9.x+:
