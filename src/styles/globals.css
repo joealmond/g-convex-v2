@@ -296,3 +296,26 @@ input, textarea, [contenteditable], .selectable {
     display: none !important;
   }
 }
+
+/**
+ * Camera preview transparency for capacitor-camera-view.
+ * The native camera renders BEHIND the WebView, so we must make
+ * all layers transparent when the camera is active.
+ * Only the SmartCamera overlay (.camera-overlay) stays visible.
+ * See: node_modules/capacitor-camera-view/README.md
+ */
+html:has(body.camera-running),
+body.camera-running {
+  background: transparent !important;
+  background-color: transparent !important;
+  --background: transparent;
+}
+
+body.camera-running > *:not(script) {
+  visibility: hidden;
+}
+
+/* Keep the camera overlay visible above the transparent WebView */
+body.camera-running .camera-overlay {
+  visibility: visible;
+}

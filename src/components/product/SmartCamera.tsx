@@ -106,7 +106,7 @@ export function SmartCamera({ onBarcodeScan, onPhotoCapture, onCancel }: SmartCa
   // ─── Native Camera Overlay ───
   if (isNative) {
     return (
-      <div className="fixed inset-0 z-50">
+      <div className="fixed inset-0 z-50 camera-overlay">
         {/* Barcode flash overlay */}
         <AnimatePresence>
           {barcodeFlash && (
