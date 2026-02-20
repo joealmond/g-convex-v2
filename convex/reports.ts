@@ -1,5 +1,6 @@
+import { publicQuery, publicMutation } from './lib/customFunctions'
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+
 import { components } from './_generated/api'
 import { RateLimiter } from '@convex-dev/rate-limiter'
 import { getAuthUser, requireAdmin } from './lib/authHelpers'
@@ -9,7 +10,7 @@ const rateLimiter = new RateLimiter(components.rateLimiter, {
 })
 
 // Create a new report
-export const create = mutation({
+export const create = publicMutation({
   args: {
     productId: v.id('products'),
     reason: v.union(
@@ -81,7 +82,7 @@ export const create = mutation({
 })
 
 // List all reports (admin only)
-export const list = query({
+export const list = publicQuery({
   args: {
     status: v.optional(v.union(
       v.literal('pending'),
@@ -137,7 +138,7 @@ export const list = query({
 })
 
 // Update report status (admin only)
-export const updateStatus = mutation({
+export const updateStatus = publicMutation({
   args: {
     reportId: v.id('reports'),
     status: v.union(
@@ -160,7 +161,7 @@ export const updateStatus = mutation({
 })
 
 // Get reports for a specific product (admin only)
-export const getByProduct = query({
+export const getByProduct = publicQuery({
   args: {
     productId: v.id('products'),
   },
@@ -178,7 +179,7 @@ export const getByProduct = query({
 
 // Get report count for a product (public)
 // Optimized: uses take() with a cap instead of collect()
-export const getReportCount = query({
+export const getReportCount = publicQuery({
   args: {
     productId: v.id('products'),
   },

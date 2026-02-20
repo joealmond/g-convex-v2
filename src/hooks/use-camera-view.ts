@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Capacitor } from '@capacitor/core'
+import { logger } from '@/lib/logger'
 
 /**
  * Hook wrapping `capacitor-camera-view` for the Unified Smart Camera.
@@ -88,7 +89,7 @@ export function useCameraView() {
 
       return true
     } catch (error) {
-      console.error('Failed to start camera:', error)
+      logger.error('Failed to start camera:', error)
       setIsRunning(false)
       return false
     }
@@ -115,7 +116,7 @@ export function useCameraView() {
       await CameraView.stop()
       setIsRunning(false)
     } catch (error) {
-      console.error('Failed to stop camera:', error)
+      logger.error('Failed to stop camera:', error)
     }
   }, [isNative])
 
@@ -143,7 +144,7 @@ export function useCameraView() {
       const blob = new Blob([ab], { type: 'image/jpeg' })
       return new File([blob], 'capture.jpg', { type: 'image/jpeg' })
     } catch (error) {
-      console.error('Failed to capture photo:', error)
+      logger.error('Failed to capture photo:', error)
       return null
     }
   }, [isNative, isRunning])

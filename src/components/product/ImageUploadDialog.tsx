@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useMutation, useAction } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
+import type { Id } from '../../../convex/_generated/dataModel'
 import { appConfig } from '@/lib/app-config'
 import { Button } from '../ui/button'
 import {
@@ -23,6 +24,7 @@ import { useGeolocation } from '../../hooks/use-geolocation'
 import { ChevronDown, ChevronUp, Sliders, Bookmark, ScanBarcode, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 import { toast } from 'sonner'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { useHaptics } from '@/hooks/use-haptics'
@@ -78,8 +80,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
 
   // Convex mutations
   const generateR2UploadUrl = useAction(api.files.generateR2UploadUrl)
-  // Note: api.ai.analyzeImage is an action - will be available after convex push
-  const analyzeImage = useAction(api.ai.analyzeImage as any)
+  const analyzeImage = useAction(api.ai.analyzeImage)
   const createProductAndVote = useMutation(api.votes.createProductAndVote)
   const lookupBarcode = useAction(api.barcode.lookupBarcode)
 
@@ -172,7 +173,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       setError(null)
       setStep('upload') // Return to upload step with preview ready
     } catch (err) {
-      console.error('Image processing error:', err)
+      logger.error('Image processing error:', err)
       setError(err instanceof Error && err.message.includes('too small')
         ? t('imageUpload.imageTooSmall')
         : t('imageUpload.processingFailed'))
@@ -204,7 +205,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       setImagePreview(URL.createObjectURL(resizedFile))
       setError(null)
     } catch (err) {
-      console.error('Image processing error:', err)
+      logger.error('Image processing error:', err)
       setError(err instanceof Error && err.message.includes('too small')
         ? t('imageUpload.imageTooSmall')
         : t('imageUpload.processingFailed'))
@@ -250,7 +251,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       setImagePreview(URL.createObjectURL(resizedFile))
       setError(null)
     } catch (err) {
-      console.error('Image processing error:', err)
+      logger.error('Image processing error:', err)
       setError('Failed to process image. Please try another file.')
     }
   }, [resizeAndConvertImage])
@@ -284,7 +285,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       setRealImageUrl(publicUrl)
       // Set storageId to a dummy value to pass any lingering falsy checks during refactor
       // We will rely on realImageUrl for the actual product creation
-      setStorageId('r2_upload' as any)
+      setStorageId('r2_upload')
 
       // 3. Run AI analysis using the public URL
       const result = await analyzeImage({ imageUrl: publicUrl })
@@ -305,15 +306,18 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       }
 
       // 4. Pre-fill form with AI results and store real image URL
-      setAnalysis(result.analysis)
-      setProductName(result.analysis.productName)
-      setSafety(result.analysis.safety)
-      setTaste(result.analysis.taste)
-      setRealImageUrl(result.imageUrl)
+      if (result.analysis) {
+        setAnalysis(result.analysis)
+        setProductName(result.analysis.productName)
+        setSafety(result.analysis.safety)
+        setTaste(result.analysis.taste)
+      }
+      setRealImageUrl(result.imageUrl || null)
 
       setStep('review')
-    } catch (err: any) {
-      setError(err.message || 'Failed to upload image')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to upload image'
+      setError(errorMessage)
       setStep('upload')
     }
   }, [imageFile, generateR2UploadUrl, analyzeImage])
@@ -347,7 +351,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
     try {
       const result = await lookupBarcode({ barcode })
 
-      if (result.found && 'existingProduct' in result && result.existingProduct) {
+      if (result.found && result.source === 'local') {
         // Product already exists in our DB — navigate to it
         toast.info(t('smartCamera.existingProduct'), {
           description: result.existingProduct.name,
@@ -356,7 +360,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
             onClick: () => {
               setOpen(false)
               resetDialog()
-              window.location.href = `/product/${encodeURIComponent(result.existingProduct!.name)}`
+              window.location.href = `/product/${encodeURIComponent(result.existingProduct.name)}`
             },
           },
         })
@@ -364,7 +368,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
         return
       }
 
-      if (result.found && 'productData' in result && result.productData) {
+      if (result.found && result.source === 'openfoodfacts') {
         // Found on Open Food Facts — pre-fill form
         impact('medium')
         toast.success(t('smartCamera.barcodeFound'))
@@ -381,7 +385,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       toast.warning(t('smartCamera.barcodeNotFound'))
       setStep('upload')
     } catch (error) {
-      console.error('Barcode lookup failed:', error)
+      logger.error('Barcode lookup failed', error)
       toast.error(t('smartCamera.scanError'))
       setStep('upload')
     }
@@ -406,7 +410,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       const result = await createProductAndVote({
         name: productName.trim(),
         imageUrl,
-        imageStorageId: storageId === 'r2_upload' ? undefined : (storageId as any) ?? undefined,
+        imageStorageId: storageId === 'r2_upload' ? undefined : (storageId as Id<'_storage'> ?? undefined),
         anonymousId: anonId ?? undefined,
         safety,
         taste,
@@ -424,10 +428,11 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
         description: t('imageUpload.draftHint'),
       })
       resetDialog()
-    } catch (err: any) {
-      const msg = err.message?.includes('already exists')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : ''
+      const msg = errorMessage.includes('already exists')
         ? t('imageUpload.productAlreadyExists')
-        : (err.message || t('imageUpload.failedToDraft'))
+        : (errorMessage || t('imageUpload.failedToDraft'))
       setError(msg)
       setStep('review')
     }
@@ -450,7 +455,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       const result = await createProductAndVote({
         name: productName.trim(),
         imageUrl,
-        imageStorageId: storageId === 'r2_upload' ? undefined : (storageId as any) ?? undefined,
+        imageStorageId: storageId === 'r2_upload' ? undefined : (storageId as Id<'_storage'> ?? undefined),
         anonymousId: anonId ?? undefined,
         safety,
         taste,
@@ -478,10 +483,11 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       setPrice(undefined)
       setStoreName('')
       setFineTuneOpen(false)
-    } catch (err: any) {
-      const msg = err.message?.includes('already exists')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : ''
+      const msg = errorMessage.includes('already exists')
         ? t('imageUpload.productAlreadyExists')
-        : (err.message || t('imageUpload.failedToCreate'))
+        : (errorMessage || t('imageUpload.failedToCreate'))
       setError(msg)
       setStep('review')
     }

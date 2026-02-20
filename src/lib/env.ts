@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 // Environment schema - validates all required env vars
 const envSchema = z.object({
@@ -19,7 +20,7 @@ function getEnv(): Env {
   })
 
   if (!parsed.success) {
-    console.error('❌ Invalid environment variables:', parsed.error.flatten().fieldErrors)
+    logger.error('❌ Invalid environment variables:', parsed.error.flatten().fieldErrors)
     throw new Error('Invalid environment configuration')
   }
 

@@ -1,4 +1,5 @@
-import { internalMutation } from './_generated/server'
+import { internalMutation } from './lib/customFunctions'
+
 import { v } from 'convex/values'
 import { internal, api } from './_generated/api'
 import { POINTS } from './lib/gamification'

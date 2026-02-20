@@ -1,3 +1,4 @@
+import { publicQuery } from './lib/customFunctions'
 /**
  * Community Feed — aggregated activity stream
  *
@@ -10,7 +11,7 @@
  * and merge results sorted by timestamp.
  */
 import { v } from 'convex/values'
-import { query } from './_generated/server'
+
 
 type FeedItem =
   | { type: 'vote'; userId: string; productId: string; productName: string; productImage?: string; safety: number; taste: number; timestamp: number }
@@ -21,7 +22,7 @@ type FeedItem =
  * Get unified community activity feed.
  * Merges recent votes, new products, and comments.
  */
-export const getCommunityFeed = query({
+export const getCommunityFeed = publicQuery({
   args: {
     limit: v.optional(v.number()),
     /** Only show activity from users I follow */

@@ -1,5 +1,6 @@
+import { publicQuery, publicMutation } from './lib/customFunctions'
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+
 import { components } from './_generated/api'
 import { RateLimiter } from '@convex-dev/rate-limiter'
 import { getAuthUser } from './lib/authHelpers'
@@ -10,7 +11,7 @@ const rateLimiter = new RateLimiter(components.rateLimiter, {
 })
 
 // Follow a user
-export const follow = mutation({
+export const follow = publicMutation({
   args: {
     followingId: v.string(),
   },
@@ -63,7 +64,7 @@ export const follow = mutation({
 })
 
 // Unfollow a user
-export const unfollow = mutation({
+export const unfollow = publicMutation({
   args: {
     followingId: v.string(),
   },
@@ -96,7 +97,7 @@ export const unfollow = mutation({
 })
 
 // Check if current user is following a specific user
-export const isFollowing = query({
+export const isFollowing = publicQuery({
   args: {
     followingId: v.string(),
   },
@@ -118,7 +119,7 @@ export const isFollowing = query({
 })
 
 // Get users that a specific user is following
-export const getFollowing = query({
+export const getFollowing = publicQuery({
   args: {
     userId: v.string(),
   },
@@ -133,7 +134,7 @@ export const getFollowing = query({
 })
 
 // Get followers of a specific user
-export const getFollowers = query({
+export const getFollowers = publicQuery({
   args: {
     userId: v.string(),
   },
@@ -149,7 +150,7 @@ export const getFollowers = query({
 
 // Get follower/following counts for a user
 // Optimized: uses indexed queries with early termination limit
-export const getCounts = query({
+export const getCounts = publicQuery({
   args: {
     userId: v.string(),
   },

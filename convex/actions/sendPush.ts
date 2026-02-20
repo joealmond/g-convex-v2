@@ -1,3 +1,5 @@
+"use node";
+import { publicAction, internalAction } from '../lib/customFunctions'
 /**
  * Push Notification Delivery via OneSignal REST API
  *
@@ -12,9 +14,10 @@
  * @see https://documentation.onesignal.com/reference/create-notification
  * @see docs/PUSH_NOTIFICATIONS_SETUP.md for full configuration instructions.
  */
-"use node";
-import { action } from '../_generated/server'
+
+import { internal } from '../_generated/api'
 import { v } from 'convex/values'
+import { retrier } from '../retrier'
 
 const ONESIGNAL_API_URL = 'https://api.onesignal.com/notifications'
 
@@ -27,7 +30,21 @@ const ONESIGNAL_API_URL = 'https://api.onesignal.com/notifications'
  * @param body - Notification body text
  * @param data - Optional custom data payload (delivered to app on tap)
  */
-export const sendPushToUser = action({
+export const sendPushToUser = publicAction({
+  args: {
+    userId: v.string(),
+    title: v.string(),
+    body: v.string(),
+    data: v.optional(v.any()),
+  },
+  handler: async (ctx, args) => {
+    // Dispatch to the retrier component in the background unconditionally.
+    await retrier.run(ctx, internal.actions.sendPush.sendPushToUserInternal, args);
+    return { success: true };
+  },
+})
+
+export const sendPushToUserInternal = internalAction({
   args: {
     userId: v.string(),
     title: v.string(),
@@ -76,16 +93,12 @@ export const sendPushToUser = action({
       } else {
         // OneSignal returns errors in result.errors array
         console.error('[Push] OneSignal error:', JSON.stringify(result.errors || result))
-        return {
-          success: false,
-          sent: 0,
-          failed: 1,
-          reason: result.errors?.[0] || 'Unknown OneSignal error',
-        }
+        // Throw so the action retrier picks it up and retries over time.
+        throw new Error(`OneSignal error: ${JSON.stringify(result.errors || result)}`);
       }
     } catch (error) {
       console.error('[Push] Send failed:', error)
-      return { success: false, sent: 0, failed: 1, reason: String(error) }
+      throw error;
     }
   },
 })
@@ -102,7 +115,21 @@ export const sendPushToUser = action({
  * @param body - Notification body text
  * @param data - Optional data payload
  */
-export const sendPushToUsers = action({
+export const sendPushToUsers = publicAction({
+  args: {
+    userIds: v.array(v.string()),
+    title: v.string(),
+    body: v.string(),
+    data: v.optional(v.any()),
+  },
+  handler: async (ctx, args) => {
+    // Schedule via retrier
+    await retrier.run(ctx, internal.actions.sendPush.sendPushToUsersInternal, args);
+    return { success: true };
+  }
+})
+
+export const sendPushToUsersInternal = internalAction({
   args: {
     userIds: v.array(v.string()),
     title: v.string(),
@@ -159,10 +186,12 @@ export const sendPushToUsers = action({
         } else {
           totalFailed += chunk.length
           console.error('[Push] Batch error:', JSON.stringify(result.errors || result))
+          throw new Error(`OneSignal batch error: ${JSON.stringify(result.errors || result)}`)
         }
       } catch (error) {
         totalFailed += chunk.length
         console.error('[Push] Batch send failed:', error)
+        throw error;
       }
     }
 

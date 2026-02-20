@@ -1,5 +1,6 @@
+import { publicAction } from './lib/customFunctions'
 import { v } from 'convex/values'
-import { action } from './_generated/server'
+
 
 const MAX_RETRIES = 3
 const BASE_RETRY_DELAY_MS = 2000
@@ -25,7 +26,7 @@ async function callGeminiWithRetry(
       const errorText = await response.text()
       const errJson = JSON.parse(errorText)
       const retryDetail = errJson?.error?.details?.find(
-        (d: any) => d['@type']?.includes('RetryInfo')
+        (d: { ['@type']?: string }) => d['@type']?.includes('RetryInfo')
       )
       if (retryDetail?.retryDelay) {
         const parsed = parseInt(retryDetail.retryDelay, 10)
@@ -49,7 +50,7 @@ async function callGeminiWithRetry(
  * Analyze a product image using Google Gemini AI
  * Returns product name, safety/taste scores, and ingredient tags
  */
-export const analyzeImage = action({
+export const analyzeImage = publicAction({
   args: {
     storageId: v.optional(v.id('_storage')),
     imageUrl: v.optional(v.string()),
@@ -177,7 +178,7 @@ Only return valid JSON, no markdown formatting.`,
         },
         imageUrl,
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('AI analysis error:', error)
       return {
         success: false,

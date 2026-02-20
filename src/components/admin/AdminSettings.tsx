@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { toast } from 'sonner'
 import { Settings, Zap, DollarSign, Trophy } from 'lucide-react'
+import { logger } from '@/lib/logger'
 
 export function AdminSettings() {
   const { t } = useTranslation()
@@ -56,7 +57,7 @@ export function AdminSettings() {
       })
       toast.success(t('admin.settingsSaved'))
     } catch (error) {
-      console.error('Failed to save settings:', error)
+      logger.error('Failed to save settings:', error)
       toast.error(t('admin.settingsFailed'))
     } finally {
       setIsSaving(false)

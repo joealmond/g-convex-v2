@@ -1,11 +1,14 @@
 import { createRouter } from '@tanstack/react-router'
-import { QueryClient, MutationCache } from '@tanstack/react-query'
+import { QueryClient, MutationCache, QueryCache } from '@tanstack/react-query'
 import { ConvexQueryClient } from '@convex-dev/react-query'
 import { ConvexReactClient } from 'convex/react'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
+import { toast } from 'sonner'
 import { routeTree } from './routeTree.gen'
 import { env } from './lib/env'
 import { NotFound } from './components/NotFound'
+
+import { logger } from './lib/logger'
 
 // Fallback component for lazy-loaded routes
 function RouteLoadingFallback() {
@@ -36,9 +39,24 @@ export function getRouter() {
         gcTime: 1000 * 60 * 10, // 10 minutes
       },
     },
+    queryCache: new QueryCache({
+      onError: (error, query) => {
+        logger.error('Global Query Error', error, { queryKey: query.queryKey })
+        // Don't show toast for every background refetch error to avoid spam,
+        // but log them for debugging
+      },
+    }),
     mutationCache: new MutationCache({
-      onError: (error) => {
-        console.error('Mutation error:', error)
+      onError: (error, variables, _context, mutation) => {
+        logger.error('Global Mutation Error', error, { mutationKey: mutation.options.mutationKey, variables })
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
+        
+        // Only show toast if window is defined (client-side)
+        if (typeof window !== 'undefined') {
+          toast.error('Action Failed', {
+            description: errorMessage
+          })
+        }
       },
     }),
   })

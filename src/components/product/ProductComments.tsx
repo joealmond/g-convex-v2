@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import type { Id } from '@convex/_generated/dataModel'
+import type { Id, Doc } from '@convex/_generated/dataModel'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,8 +22,7 @@ export function ProductComments({ productId }: ProductCommentsProps) {
   const user = useQuery(api.users.current)
   const adminStatus = useAdmin()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- generated API may not reflect new tables yet
-  const comments = useQuery((api as any).comments?.getByProduct, {
+  const comments = useQuery(api.comments?.getByProduct, {
     productId,
     userId: user?._id,
   })
@@ -70,12 +69,12 @@ export function ProductComments({ productId }: ProductCommentsProps) {
           <div className="space-y-1">
             {/* Top-level comments */}
             {comments
-              .filter((c: any) => !c.parentId)
-              .map((comment: any) => (
+              .filter((c) => !c.parentId)
+              .map((comment) => (
                 <CommentItem
                   key={comment._id}
                   comment={comment}
-                  replies={comments.filter((c: any) => c.parentId === comment._id)}
+                  replies={comments.filter((c) => c.parentId === comment._id)}
                   currentUserId={user?._id}
                   isAdmin={!!adminStatus?.isAdmin}
                   productId={productId}
@@ -115,8 +114,8 @@ function CommentInput({
   const [text, setText] = useState('')
   const [posting, setPosting] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const postComment = useMutation((api as any).comments?.post)
+  
+  const postComment = useMutation(api.comments?.post)
 
   const handleSubmit = async () => {
     const trimmed = text.trim()
@@ -197,6 +196,11 @@ function CommentInput({
 /**
  * Single comment + its replies
  */
+type CommentWithLikes = Doc<'comments'> & {
+  likesCount: number
+  liked?: boolean
+}
+
 function CommentItem({
   comment,
   replies,
@@ -205,8 +209,8 @@ function CommentItem({
   productId,
   t,
 }: {
-  comment: any
-  replies: any[]
+  comment: CommentWithLikes
+  replies: CommentWithLikes[]
   currentUserId?: string
   isAdmin: boolean
   productId: Id<'products'>
@@ -215,12 +219,10 @@ function CommentItem({
   const [replying, setReplying] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editText, setEditText] = useState(comment.text)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const toggleLike = useMutation((api as any).comments?.toggleLike)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const removeComment = useMutation((api as any).comments?.remove)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const editComment = useMutation((api as any).comments?.edit)
+  
+  const toggleLike = useMutation(api.comments?.toggleLike)
+  const removeComment = useMutation(api.comments?.remove)
+  const editComment = useMutation(api.comments?.edit)
 
   const isOwner = currentUserId && comment.userId === currentUserId
   const userLabel = `User #${comment.userId?.slice(-6) || '???'}`
@@ -371,7 +373,7 @@ function CommentItem({
           {/* Replies */}
           {replies.length > 0 && (
             <div className="mt-2 ml-2 pl-3 border-l-2 border-border space-y-1">
-              {replies.map((reply: any) => (
+              {replies.map((reply) => (
                 <CommentItem
                   key={reply._id}
                   comment={reply}

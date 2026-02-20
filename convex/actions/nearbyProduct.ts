@@ -1,11 +1,12 @@
+"use node";
+import { internalAction } from '../lib/customFunctions'
 /**
  * New Product Nearby Notifications
  *
  * Sends push notifications to users when a new product is created near their location.
  * Uses vote GPS coordinates to find nearby users.
  */
-"use node";
-import { internalAction } from '../_generated/server'
+
 import { api, internal } from '../_generated/api'
 import { v } from 'convex/values'
 
@@ -113,7 +114,7 @@ export const notifyNearbyProduct = internalAction({
     console.log(`[Nearby Product] Sending to ${nearbyUserIds.length} nearby users`)
 
     // Send push notifications
-    const result: any = await ctx.runAction(api.actions.sendPush.sendPushToUsers, {
+    await ctx.runAction(api.actions.sendPush.sendPushToUsers, {
       userIds: nearbyUserIds,
       title: '📍 New product near you!',
       body: `${productName} was just added nearby. Be the first to rate it!`,
@@ -124,11 +125,11 @@ export const notifyNearbyProduct = internalAction({
       },
     })
 
-    console.log(`[Nearby Product] Sent ${result.sent} notifications, ${result.failed} failed`)
+    console.log(`[Nearby Product] Scheduled ${nearbyUserIds.length} notifications via retrier`)
 
     return {
-      sent: result.sent,
-      failed: result.failed,
+      sent: nearbyUserIds.length,
+      failed: 0,
       total: nearbyUserIds.length,
     }
   },

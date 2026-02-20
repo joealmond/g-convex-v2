@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Camera, X, ScanBarcode, Upload, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 
 interface SmartCameraProps {
   onBarcodeScan: (barcode: string) => void
@@ -78,7 +79,7 @@ export function SmartCamera({ onBarcodeScan, onPhotoCapture, onCancel }: SmartCa
         onPhotoCapture(file)
       }
     } catch (error) {
-      console.error('Capture failed:', error)
+      logger.error('Capture failed:', error)
     } finally {
       setIsCapturing(false)
     }

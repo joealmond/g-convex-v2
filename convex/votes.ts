@@ -1,9 +1,9 @@
 import { v } from 'convex/values'
-import { query, mutation, internalMutation, internalQuery } from './_generated/server'
+
 import { internal, components } from './_generated/api'
 import { RateLimiter } from '@convex-dev/rate-limiter'
 import { isAdmin } from './lib/authHelpers'
-import { authMutation } from './lib/customFunctions'
+import { authMutation, publicQuery, publicMutation, internalQuery, internalMutation } from './lib/customFunctions'
 import { votesByProduct } from './aggregates'
 import type { Id } from './_generated/dataModel'
 
@@ -15,7 +15,7 @@ const rateLimiter = new RateLimiter(components.rateLimiter, {
 /**
  * Get all votes for a product
  */
-export const getByProduct = query({
+export const getByProduct = publicQuery({
   args: { productId: v.id('products') },
   handler: async (ctx, { productId }) => {
     return await ctx.db
@@ -29,7 +29,7 @@ export const getByProduct = query({
  * Get all votes by a user
  * Note: userId is a string because Better Auth uses string UUIDs, not Convex IDs
  */
-export const getByUser = query({
+export const getByUser = publicQuery({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
     return await ctx.db
@@ -42,7 +42,7 @@ export const getByUser = query({
 /**
  * Get votes by anonymous ID
  */
-export const getByAnonymous = query({
+export const getByAnonymous = publicQuery({
   args: { anonymousId: v.string() },
   handler: async (ctx, { anonymousId }) => {
     return await ctx.db
@@ -55,7 +55,7 @@ export const getByAnonymous = query({
 /**
  * Cast a vote for a product
  */
-export const cast = mutation({
+export const cast = publicMutation({
   args: {
     productId: v.id('products'),
     anonymousId: v.optional(v.string()),
@@ -175,7 +175,7 @@ export const cast = mutation({
  * Create a new product and cast the initial vote atomically
  * Awards bonus points for discovering a new product
  */
-export const createProductAndVote = mutation({
+export const createProductAndVote = publicMutation({
   args: {
     name: v.string(),
     imageUrl: v.optional(v.string()),

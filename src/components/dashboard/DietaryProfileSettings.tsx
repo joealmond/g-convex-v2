@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 interface DietaryCondition {
   type: string
@@ -62,7 +63,7 @@ export function DietaryProfileSettings() {
       await updateProfile({ conditions })
       toast.success(t('dietaryProfile.saved'))
     } catch (error) {
-      console.error('Failed to save dietary profile:', error)
+      logger.error('Failed to save dietary profile:', error)
       toast.error(t('dietaryProfile.saveFailed'))
     } finally {
       setIsSaving(false)

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { useAnonymousId } from './use-anonymous-id'
+import { logger } from '@/lib/logger'
 
 /**
  * Hook to automatically migrate anonymous votes to registered user after sign-in
@@ -26,7 +27,7 @@ export function useVoteMigration(userId: string | null | undefined) {
           }
         })
         .catch((error) => {
-          console.error('Failed to migrate anonymous votes:', error)
+          logger.error('Failed to migrate anonymous votes:', error)
           // Reset flag to allow retry
           hasMigrated.current = false
         })

@@ -1,10 +1,11 @@
+import { publicQuery } from './lib/customFunctions'
 import { betterAuth } from 'better-auth/minimal'
 import { createClient } from '@convex-dev/better-auth'
 import { convex } from '@convex-dev/better-auth/plugins'
 import { capacitor } from 'better-auth-capacitor'
 import authConfig from './auth.config'
 import { components } from './_generated/api'
-import { query } from './_generated/server'
+
 import type { GenericCtx } from '@convex-dev/better-auth'
 import type { DataModel } from './_generated/dataModel'
 
@@ -83,7 +84,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 }
 
 // Query to get the current authenticated user
-export const getCurrentUser = query({
+export const getCurrentUser = publicQuery({
   args: {},
   handler: async (ctx) => {
     return await authComponent.getAuthUser(ctx)

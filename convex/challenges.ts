@@ -6,15 +6,15 @@
  */
 
 import { v } from 'convex/values'
-import { internalMutation, query } from './_generated/server'
+
 import { getAuthUser } from './lib/authHelpers'
-import { authMutation, adminMutation } from './lib/customFunctions'
+import { authMutation, adminMutation, publicQuery, internalMutation } from './lib/customFunctions'
 import { internal } from './_generated/api'
 
 /**
  * Get all active challenges
  */
-export const getActiveChallenges = query({
+export const getActiveChallenges = publicQuery({
   args: {},
   handler: async (ctx) => {
     const now = Date.now()
@@ -35,7 +35,7 @@ export const getActiveChallenges = query({
 /**
  * Get user's progress on a specific challenge
  */
-export const getUserChallengeProgress = query({
+export const getUserChallengeProgress = publicQuery({
   args: { challengeId: v.id('challenges') },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx)
@@ -55,7 +55,7 @@ export const getUserChallengeProgress = query({
 /**
  * Get all user's challenge progress
  */
-export const getUserChallenges = query({
+export const getUserChallenges = publicQuery({
   args: {},
   handler: async (ctx) => {
     const user = await getAuthUser(ctx)

@@ -1,3 +1,4 @@
+import { publicQuery, publicMutation } from './lib/customFunctions'
 /**
  * Comments — product reviews/discussions
  *
@@ -5,7 +6,7 @@
  * and like/unlike comments. Supports threaded replies (1 level deep).
  */
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+
 
 const MAX_COMMENT_LENGTH = 500
 const MAX_COMMENTS_PER_PAGE = 30
@@ -13,7 +14,7 @@ const MAX_COMMENTS_PER_PAGE = 30
 /**
  * Post a new comment (or reply) on a product.
  */
-export const post = mutation({
+export const post = publicMutation({
   args: {
     productId: v.id('products'),
     userId: v.string(),
@@ -53,7 +54,7 @@ export const post = mutation({
 /**
  * Edit an existing comment (only by original author).
  */
-export const edit = mutation({
+export const edit = publicMutation({
   args: {
     commentId: v.id('comments'),
     userId: v.string(),
@@ -81,7 +82,7 @@ export const edit = mutation({
 /**
  * Soft-delete a comment (by author or admin).
  */
-export const remove = mutation({
+export const remove = publicMutation({
   args: {
     commentId: v.id('comments'),
     userId: v.string(),
@@ -103,7 +104,7 @@ export const remove = mutation({
 /**
  * Toggle like/unlike on a comment.
  */
-export const toggleLike = mutation({
+export const toggleLike = publicMutation({
   args: {
     commentId: v.id('comments'),
     userId: v.string(),
@@ -143,7 +144,7 @@ export const toggleLike = mutation({
 /**
  * Get comments for a product (newest first), with user like status.
  */
-export const getByProduct = query({
+export const getByProduct = publicQuery({
   args: {
     productId: v.id('products'),
     userId: v.optional(v.string()),
@@ -182,7 +183,7 @@ export const getByProduct = query({
  * Get recent comments across all products (for the community feed).
  * Joins product name for display.
  */
-export const getRecentFeed = query({
+export const getRecentFeed = publicQuery({
   args: {
     userId: v.optional(v.string()),
     limit: v.optional(v.number()),

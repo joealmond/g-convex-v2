@@ -1,5 +1,6 @@
+import { publicQuery, publicMutation, internalQuery, internalMutation } from './lib/customFunctions'
 import { v } from 'convex/values'
-import { query, mutation, internalMutation, internalQuery } from './_generated/server'
+
 import { BADGES, shouldAwardBadge } from './lib/gamification'
 import { requireAdmin } from './lib/authHelpers'
 import { profilesAggregate } from './aggregates'
@@ -7,7 +8,7 @@ import { profilesAggregate } from './aggregates'
 /**
  * Get user profile by userId
  */
-export const get = query({
+export const get = publicQuery({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
     return await ctx.db
@@ -20,7 +21,7 @@ export const get = query({
 /**
  * Get current user's profile (read-only, returns null if doesn't exist)
  */
-export const getCurrent = query({
+export const getCurrent = publicQuery({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) return null
@@ -37,7 +38,7 @@ export const getCurrent = query({
 /**
  * Ensure current user has a profile (creates if doesn't exist)
  */
-export const ensureProfile = mutation({
+export const ensureProfile = publicMutation({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) return null
@@ -70,7 +71,7 @@ export const ensureProfile = mutation({
  * Get leaderboard (top users by points)
  * Supports cursor-based pagination for large user bases
  */
-export const leaderboard = query({
+export const leaderboard = publicQuery({
   args: {
     limit: v.optional(v.number()),
     cursor: v.optional(v.union(v.string(), v.null())),
@@ -98,7 +99,7 @@ export const leaderboard = query({
  * Check and award badges for a user
  * Note: userId is a string because Better Auth uses string UUIDs, not Convex IDs
  */
-export const checkBadges = mutation({
+export const checkBadges = publicMutation({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
     const profile = await ctx.db
@@ -153,7 +154,7 @@ export const checkBadges = mutation({
  * Manually add points to a user (admin only)
  * Note: userId is a string because Better Auth uses string UUIDs, not Convex IDs
  */
-export const addPoints = mutation({
+export const addPoints = publicMutation({
   args: {
     userId: v.string(),
     points: v.number(),
@@ -180,7 +181,7 @@ export const addPoints = mutation({
  * Reset user streak (for testing)
  * Note: userId is a string because Better Auth uses string UUIDs, not Convex IDs
  */
-export const resetStreak = mutation({
+export const resetStreak = publicMutation({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
     await requireAdmin(ctx)

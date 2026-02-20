@@ -1,11 +1,12 @@
+"use node";
+import { internalAction } from '../lib/customFunctions'
 /**
  * Streak Reminders
  *
  * Checks for users whose voting streak is about to expire and sends push notifications.
  * A streak expires if the user doesn't vote within 24 hours of their last vote.
  */
-"use node";
-import { internalAction } from '../_generated/server'
+
 import { api, internal } from '../_generated/api'
 
 /**
@@ -53,18 +54,18 @@ export const checkStreakExpiry = internalAction({
     // Send push notifications
     console.log(`[Streak Reminder] Sending to ${usersToRemind.length} users`)
 
-    const result: any = await ctx.runAction(api.actions.sendPush.sendPushToUsers, {
+    await ctx.runAction(api.actions.sendPush.sendPushToUsers, {
       userIds: usersToRemind,
       title: '🔥 Your streak is about to expire!',
       body: "Don't lose your streak! Vote today to keep it alive.",
       data: { type: 'streak_reminder' },
     })
 
-    console.log(`[Streak Reminder] Sent ${result.sent} notifications, ${result.failed} failed`)
+    console.log(`[Streak Reminder] Scheduled ${usersToRemind.length} notifications via retrier`)
 
     return {
-      sent: result.sent,
-      failed: result.failed,
+      sent: usersToRemind.length,
+      failed: 0,
       total: usersToRemind.length,
     }
   },

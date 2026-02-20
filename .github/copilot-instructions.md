@@ -479,6 +479,7 @@ Cards: `bg-card text-card-foreground rounded-2xl shadow-sm border border-border`
 - ❌ Don't import from `convex/` directly in components — use the generated `api` object
 - ❌ Don't add user-facing strings without adding them to both `src/locales/en.json` and `src/locales/hu.json`
 - ❌ Don't use hardcoded English text in JSX — always use `t('section.key')` from `useTranslation()`
+- ❌ Don't manually upload environment variables to Convex one-by-one — always add them to your local `.env` and run `npm run env:upload` (or `node scripts/upload-env.js`) to sync them with Convex.
 - ❌ Don't open OAuth in the Capacitor WebView — Google blocks it. Use system browser via `better-auth-capacitor`
 - ❌ Don't hardcode padding/margins for notch/home indicator — use `env(safe-area-inset-*)` CSS variables
 - ❌ Don't use `<a>` tags for OAuth — on native, use `signIn.social()` with `better-auth-capacitor` which routes through system browser

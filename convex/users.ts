@@ -1,3 +1,4 @@
+import { publicQuery } from './lib/customFunctions'
 /**
  * User Queries & Mutations
  * ========================
@@ -26,7 +27,7 @@
  * Option 2: Use Better Auth's admin plugin (requires additional setup)
  */
 
-import { query, type QueryCtx } from './_generated/server'
+import { type QueryCtx } from './_generated/server'
 import { authComponent } from './auth'
 import { ADMIN_EMAILS, ROLES } from './lib/config'
 import { getAuthUser } from './lib/authHelpers'
@@ -50,7 +51,7 @@ async function getAuthUserSafe(ctx: QueryCtx): Promise<Awaited<ReturnType<typeof
  *
  * @returns The user object or null if not authenticated
  */
-export const current = query({
+export const current = publicQuery({
   args: {},
   handler: async (ctx) => {
     return await getAuthUserSafe(ctx)
@@ -67,7 +68,7 @@ export const current = query({
  *
  * @returns true if user is an admin, false otherwise
  */
-export const isAdmin = query({
+export const isAdmin = publicQuery({
   args: {},
   handler: async (ctx) => {
     const user = await getAuthUserSafe(ctx)

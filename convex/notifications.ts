@@ -1,3 +1,4 @@
+import { publicQuery, publicMutation } from './lib/customFunctions'
 /**
  * Push Notification Token Management (DEPRECATED)
  *
@@ -15,13 +16,13 @@
  * @deprecated Use OneSignal SDK instead. See docs/PUSH_NOTIFICATIONS_SETUP.md.
  */
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+
 
 /**
  * Register a device token for push notifications.
  * Upserts: if the token already exists for this user, updates lastUsedAt.
  */
-export const registerToken = mutation({
+export const registerToken = publicMutation({
   args: {
     userId: v.string(),
     token: v.string(),
@@ -58,7 +59,7 @@ export const registerToken = mutation({
 /**
  * Remove a device token (e.g., on sign-out or permission revoke).
  */
-export const removeToken = mutation({
+export const removeToken = publicMutation({
   args: {
     token: v.string(),
   },
@@ -77,7 +78,7 @@ export const removeToken = mutation({
 /**
  * Get all device tokens for a user (admin use / debugging).
  */
-export const getTokensByUser = query({
+export const getTokensByUser = publicQuery({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
     return await ctx.db

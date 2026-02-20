@@ -1,10 +1,10 @@
 import { v } from 'convex/values'
-import { query, mutation, internalMutation } from './_generated/server'
+
 import { components } from './_generated/api'
 import { internal } from './_generated/api'
 import { productsGeo } from './geospatial'
 import { RateLimiter } from '@convex-dev/rate-limiter'
-import { authMutation, adminMutation } from './lib/customFunctions'
+import { authMutation, adminMutation, publicQuery, publicMutation, internalMutation } from './lib/customFunctions'
 import { productsAggregate, votesByProduct } from './aggregates'
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
@@ -15,7 +15,7 @@ const rateLimiter = new RateLimiter(components.rateLimiter, {
  * List all products with cursor-based pagination
  * Sorted by most recently created
  */
-export const list = query({
+export const list = publicQuery({
   args: {
     paginationOpts: v.optional(v.object({
       cursor: v.optional(v.union(v.string(), v.null())),
@@ -49,7 +49,7 @@ export const list = query({
  * List all products (no pagination, for backward compat)
  * @deprecated Use list() with paginationOpts instead
  */
-export const listAll = query({
+export const listAll = publicQuery({
   handler: async (ctx) => {
     const products = await ctx.db.query('products').order('desc').collect()
     return await Promise.all(products.map(async (p) => {
@@ -64,7 +64,7 @@ export const listAll = query({
 /**
  * Get a single product by ID
  */
-export const get = query({
+export const get = publicQuery({
   args: { id: v.id('products') },
   handler: async (ctx, { id }) => {
     const product = await ctx.db.get(id)
@@ -79,7 +79,7 @@ export const get = query({
 /**
  * Get a product by name
  */
-export const getByName = query({
+export const getByName = publicQuery({
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
     const product = await ctx.db
@@ -99,7 +99,7 @@ export const getByName = query({
  * Search products by name using Convex search index
  * Falls back to listing all products when query is empty
  */
-export const search = query({
+export const search = publicQuery({
   args: { query: v.string() },
   handler: async (ctx, { query: searchQuery }) => {
     let products
@@ -124,7 +124,7 @@ export const search = query({
 /**
  * Create a new product
  */
-export const create = mutation({
+export const create = publicMutation({
   args: {
     name: v.string(),
     imageUrl: v.optional(v.string()),
@@ -304,7 +304,7 @@ export const capturePriceSnapshots = internalMutation({
 /**
  * Get price history for a product
  */
-export const getPriceHistory = query({
+export const getPriceHistory = publicQuery({
   args: { 
     productId: v.id('products'),
     days: v.optional(v.number()), // Default 90 days
@@ -327,7 +327,7 @@ export const getPriceHistory = query({
 /**
  * Get nearby products using the Geospatial Index
  */
-export const getNearbyProducts = query({
+export const getNearbyProducts = publicQuery({
   args: {
     latitude: v.number(),
     longitude: v.number(),

@@ -10,6 +10,7 @@ import { Share2, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/hooks/use-translation'
 import { isNative } from '@/lib/platform'
+import { logger } from '@/lib/logger'
 
 interface ShareButtonProps {
   productName: string
@@ -51,7 +52,7 @@ export function ShareButton({
         return
       } catch (error: unknown) {
         if (error instanceof Error && error.message?.includes('cancel')) return
-        console.error('Native share error:', error)
+        logger.error('Native share error:', error)
       }
     }
 
@@ -63,7 +64,7 @@ export function ShareButton({
         return
       } catch (error: unknown) {
         if (error instanceof Error && error.name === 'AbortError') return
-        console.error('Web share error:', error)
+        logger.error('Web share error:', error)
       }
     }
 

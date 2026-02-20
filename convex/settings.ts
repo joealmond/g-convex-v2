@@ -1,3 +1,4 @@
+import { publicQuery, publicMutation } from './lib/customFunctions'
 /**
  * Admin Settings Management
  * 
@@ -5,12 +6,12 @@
  */
 
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+
 
 /**
  * Get a single setting by key
  */
-export const getSetting = query({
+export const getSetting = publicQuery({
   args: { key: v.string() },
   handler: async (ctx, args) => {
     const setting = await ctx.db
@@ -25,7 +26,7 @@ export const getSetting = query({
 /**
  * Get all settings
  */
-export const getAllSettings = query({
+export const getAllSettings = publicQuery({
   args: {},
   handler: async (ctx) => {
     const settings = await ctx.db.query('settings').collect()
@@ -52,7 +53,7 @@ export const getAllSettings = query({
 /**
  * Update a setting (admin only)
  */
-export const updateSetting = mutation({
+export const updateSetting = publicMutation({
   args: {
     key: v.string(),
     value: v.union(v.string(), v.number(), v.boolean()),
@@ -101,7 +102,7 @@ export const updateSetting = mutation({
 /**
  * Batch update settings (admin only)
  */
-export const updateSettings = mutation({
+export const updateSettings = publicMutation({
   args: {
     settings: v.array(v.object({
       key: v.string(),

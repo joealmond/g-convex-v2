@@ -20,6 +20,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run --passWithNoTests",
+    "test:e2e": "playwright test",
+    "env:upload": "node scripts/upload-env.js",
     "test:watch": "vitest --passWithNoTests",
     "generate:routes": "npx @tanstack/router-cli generate",
     "convex:push": "npx convex dev --once",

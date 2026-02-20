@@ -14,6 +14,7 @@ import {
   Download
 } from 'lucide-react'
 import { Suspense, useState, useRef } from 'react'
+import { logger } from '@/lib/logger'
 
 export const Route = createFileRoute('/files')({
   component: FilesPage,
@@ -106,7 +107,7 @@ function FilesPageContent() {
 
       setUploadProgress('')
     } catch (error) {
-      console.error('Upload failed:', error)
+      logger.error('Upload failed:', error)
       setUploadProgress('Upload failed!')
     } finally {
       setIsUploading(false)
@@ -122,7 +123,7 @@ function FilesPageContent() {
     try {
       await deleteFile({ id: id as any })
     } catch (error) {
-      console.error('Delete failed:', error)
+      logger.error('Delete failed:', error)
     }
   }
 

@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 
 import { PageShell } from '@/components/layout/PageShell'
+import { logger } from '@/lib/logger'
 
 export const Route = createFileRoute('/debug-native')({
   component: DebugNativePage,
@@ -103,7 +104,7 @@ function DebugNativePage() {
       // Stop camera
       await stopCamera()
     } catch (error: any) {
-      console.error('Capture test failed:', error)
+      logger.error('Capture test failed:', error)
       setUploadError(error.message || 'Capture failed')
       await stopCamera()
     } finally {
@@ -150,7 +151,7 @@ function DebugNativePage() {
       })
       console.log('[Upload Test] ✅ Success!')
     } catch (error: any) {
-      console.error('[Upload Test] ❌ Error:', error)
+      logger.error('[Upload Test] ❌ Error:', error)
       setUploadError(error.message || 'Upload failed')
     } finally {
       setUploadLoading(false)

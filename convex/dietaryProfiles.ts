@@ -6,9 +6,9 @@
  */
 
 import { v } from 'convex/values'
-import { query } from './_generated/server'
+
 import { requireAuth } from './lib/authHelpers'
-import { authQuery, authMutation } from './lib/customFunctions'
+import { authQuery, authMutation, publicQuery } from './lib/customFunctions'
 
 /**
  * Get user's dietary profile
@@ -79,7 +79,7 @@ export const updateProfile = authMutation({
  * 4 (High-Moderate): 70
  * 5 (Severe): 80
  */
-export const getSafetyThreshold = query({
+export const getSafetyThreshold = publicQuery({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const userId = args.userId || (await requireAuth(ctx))._id

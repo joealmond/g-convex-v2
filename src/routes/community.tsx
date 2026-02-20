@@ -2,7 +2,6 @@
 
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
-import { api } from '@convex/_generated/api'
 import { Suspense, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -12,6 +11,12 @@ import { useTranslation } from '@/hooks/use-translation'
 import { getQuadrant, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import { cn } from '@/lib/utils'
+
+// Infer the feed item type directly from the query return signature for strong typing.
+import type { FunctionReturnType } from 'convex/server'
+import { api } from '@convex/_generated/api'
+type FeedQueryType = FunctionReturnType<typeof api.community.getCommunityFeed>
+type FeedItem = NonNullable<FeedQueryType>[number]
 
 export const Route = createFileRoute('/community')({
   component: CommunityPage,
@@ -131,7 +136,7 @@ function CommunityContent() {
           </div>
         ) : feed && feed.length > 0 ? (
           <div className="space-y-3">
-            {feed.map((item: any, idx: number) => (
+            {feed.map((item: FeedItem, idx: number) => (
               <FeedCard key={`${item.type}-${item.timestamp}-${idx}`} item={item} t={t} />
             ))}
           </div>
@@ -153,7 +158,7 @@ function CommunityContent() {
 /**
  * Individual feed card — renders differently based on activity type.
  */
-function FeedCard({ item, t }: { item: any; t: (key: string, params?: Record<string, string | number>) => string }) {
+function FeedCard({ item, t }: { item: FeedItem; t: (key: string, params?: Record<string, string | number>) => string }) {
   const userInitial = item.userId?.charAt(0)?.toUpperCase() || '?'
   const userLabel = `User #${item.userId?.slice(-6) || '???'}`
 

@@ -14,6 +14,7 @@ import { useTranslation } from '@/hooks/use-translation'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { Trophy, Calendar, Target } from 'lucide-react'
+import { logger } from '@/lib/logger'
 
 interface ChallengeCardProps {
   challenge: {
@@ -61,7 +62,7 @@ export function ChallengeCard({ challenge, userProgress }: ChallengeCardProps) {
       )
     } catch (error) {
       toast.error(t('challenges.claimFailed'))
-      console.error('Failed to claim reward:', error)
+      logger.error('Failed to claim reward:', error)
     }
   }
 

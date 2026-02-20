@@ -178,7 +178,7 @@ function ReportsContent() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {reports.map((report: any) => (
+            {reports.map((report) => (
               <Card key={report._id} className="border-0 shadow-sm">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-4">
@@ -208,7 +208,7 @@ function ReportsContent() {
                         Reported by:{' '}
                         {report.isAnonymous
                           ? 'Anonymous'
-                          : report.reporter?.name || 'Unknown'}
+                          : ("name" in (report.reporter || {}) ? (report.reporter as any).name : 'Unknown')}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(report.createdAt).toLocaleString()}
@@ -270,7 +270,7 @@ function ReportsContent() {
 
                     {report.reviewedBy && report.reviewer && (
                       <p className="text-xs text-muted-foreground mt-2">
-                        Reviewed by {report.reviewer.name} on{' '}
+                        Reviewed by {"name" in report.reviewer ? (report.reviewer as any).name : 'Admin'} on{' '}
                         {report.reviewedAt &&
                           new Date(report.reviewedAt).toLocaleString()}
                       </p>

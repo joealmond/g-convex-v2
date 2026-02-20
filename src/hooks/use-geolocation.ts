@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
+import { logger } from '@/lib/logger'
 
 interface Coordinates {
   latitude: number
@@ -45,7 +46,7 @@ export function useGeolocation() {
         setState(prev => ({ ...prev, permissionStatus: status }))
         return status
       } catch (error) {
-        console.error('Failed to check permissions:', error)
+        logger.error('Failed to check permissions:', error)
         return 'denied'
       }
     } else {
@@ -67,7 +68,7 @@ export function useGeolocation() {
       setState(prev => ({ ...prev, permissionStatus: status }))
       return status
     } catch (error) {
-      console.error('Failed to request permissions:', error)
+      logger.error('Failed to request permissions:', error)
       setState(prev => ({ ...prev, permissionStatus: 'denied' }))
       return 'denied'
     }
@@ -117,7 +118,7 @@ export function useGeolocation() {
           permissionStatus: 'granted',
         })
       } catch (error: any) {
-        console.error('Geolocation error:', error)
+        logger.error('Geolocation error:', error)
         let errorMessage = 'Failed to get location'
         
         if (error.message?.includes('permission')) {

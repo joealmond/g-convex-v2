@@ -1,5 +1,6 @@
+import { publicAction, internalQuery } from './lib/customFunctions'
 import { v } from 'convex/values'
-import { action, internalQuery } from './_generated/server'
+
 import { internal } from './_generated/api'
 import { Doc } from './_generated/dataModel'
 
@@ -39,7 +40,7 @@ type BarcodeResult =
  * Look up a product by barcode using the Open Food Facts API.
  * Also checks if the product already exists in our database.
  */
-export const lookupBarcode = action({
+export const lookupBarcode = publicAction({
   args: {
     barcode: v.string(),
   },

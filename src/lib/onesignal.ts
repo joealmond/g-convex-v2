@@ -15,6 +15,7 @@
  * See docs/PUSH_NOTIFICATIONS_SETUP.md for full configuration.
  */
 import { isNative } from '@/lib/platform'
+import { logger } from '@/lib/logger'
 
 let initialized = false
 
@@ -44,7 +45,7 @@ export async function initOneSignal(): Promise<void> {
     initialized = true
     console.log('[OneSignal] Initialized with app ID:', appId.substring(0, 8) + '...')
   } catch (error) {
-    console.error('[OneSignal] Initialization failed:', error)
+    logger.error('[OneSignal] Initialization failed:', error)
   }
 }
 
@@ -64,7 +65,7 @@ export async function oneSignalLogin(userId: string): Promise<void> {
     OneSignal.login(userId)
     console.log('[OneSignal] Logged in user:', userId.substring(0, 8) + '...')
   } catch (error) {
-    console.error('[OneSignal] Login failed:', error)
+    logger.error('[OneSignal] Login failed:', error)
   }
 }
 
@@ -80,7 +81,7 @@ export async function oneSignalLogout(): Promise<void> {
     OneSignal.logout()
     console.log('[OneSignal] Logged out')
   } catch (error) {
-    console.error('[OneSignal] Logout failed:', error)
+    logger.error('[OneSignal] Logout failed:', error)
   }
 }
 
@@ -103,7 +104,7 @@ export async function requestPushPermission(fallbackToSettings = false): Promise
     console.log('[OneSignal] Permission:', granted ? 'granted' : 'denied')
     return granted
   } catch (error) {
-    console.error('[OneSignal] Permission request failed:', error)
+    logger.error('[OneSignal] Permission request failed:', error)
     return false
   }
 }

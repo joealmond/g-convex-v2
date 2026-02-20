@@ -1,9 +1,10 @@
-import { query, mutation, action } from './_generated/server'
+import { publicQuery, publicMutation, publicAction } from './lib/customFunctions'
+
 import { v } from 'convex/values'
 
 // Generate an upload URL for file uploads
 // Allows both authenticated and anonymous users (for product image uploads)
-export const generateUploadUrl = mutation({
+export const generateUploadUrl = publicMutation({
   args: {},
   handler: async (ctx) => {
     // Generate a secure, pre-signed upload URL for Convex Storage
@@ -12,7 +13,7 @@ export const generateUploadUrl = mutation({
 })
 
 // Generate an upload URL for Cloudflare R2
-export const generateR2UploadUrl = action({
+export const generateR2UploadUrl = publicAction({
   args: {
     contentType: v.string(),
   },
@@ -61,7 +62,7 @@ export const generateR2UploadUrl = action({
 })
 
 // Save file metadata after upload
-export const saveFile = mutation({
+export const saveFile = publicMutation({
   args: {
     storageId: v.id('_storage'),
     name: v.string(),
@@ -86,7 +87,7 @@ export const saveFile = mutation({
 })
 
 // List user's files
-export const listMyFiles = query({
+export const listMyFiles = publicQuery({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity()
@@ -110,7 +111,7 @@ export const listMyFiles = query({
 })
 
 // Delete a file
-export const deleteFile = mutation({
+export const deleteFile = publicMutation({
   args: {
     id: v.id('files'),
   },

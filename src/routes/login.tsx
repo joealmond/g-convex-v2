@@ -7,6 +7,7 @@ import { isNative } from '@/lib/platform'
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
+import { logger } from '@/lib/logger'
 
 export const Route = createFileRoute('/login')({
   component: Login,
@@ -49,11 +50,11 @@ function Login() {
       // plugin handles the OAuth flow via system browser + deep link callback.
       // Session is stored in Capacitor Preferences and picked up automatically.
       if (result.error) {
-        console.error('Login failed:', result.error)
+        logger.error('Login failed:', result.error)
         setIsLoading(false)
       }
     } catch (error: unknown) {
-      console.error('Login failed:', error)
+      logger.error('Login failed:', error)
       setIsLoading(false)
     }
   }
