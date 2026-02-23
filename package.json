@@ -31,7 +31,9 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "cap:sync": "npx cap sync",
     "cap:ios": "npx cap open ios",
-    "cap:android": "npx cap open android"
+    "cap:android": "npx cap open android",
+    "ios:dev": "npm run convex:push && npm run build && npx cap sync ios && npm run cap:ios",
+    "android:dev": "npm run convex:push && npm run build && npx cap sync android && bash scripts/patch-capacitor-android.sh && npm run cap:android"
   },
   "dependencies": {
     "@better-auth/core": "^1.4.18",
