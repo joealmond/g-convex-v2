@@ -61,7 +61,7 @@ function Login() {
 
   if (session) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-[100dvh] flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle>{t('login.alreadyLoggedIn')}</CardTitle>
@@ -73,7 +73,7 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+    <div className="min-[100dvh] flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md rounded-2xl shadow-sm">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-3xl font-bold text-foreground">{t('login.welcomeTo', { appName: appConfig.appName })}</CardTitle>

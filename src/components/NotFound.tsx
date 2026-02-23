@@ -8,7 +8,7 @@ import { useTranslation } from '@/hooks/use-translation'
 export function NotFound() {
   const { t } = useTranslation()
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-[100dvh] flex items-center justify-center bg-background">
       <div className="text-center space-y-6 p-8 max-w-md">
         {/* 404 Text */}
         <div className="space-y-2">

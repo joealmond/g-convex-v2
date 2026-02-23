@@ -9,22 +9,36 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icons/icon-192.svg",
-      "type": "image/svg+xml",
+      "src": "/icons/icon-192.png",
+      "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.svg",
-      "type": "image/svg+xml",
+      "src": "/icons/icon-512.png",
+      "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-maskable-512.svg",
-      "type": "image/svg+xml",
+      "src": "/icons/icon-maskable-512.png",
+      "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile.png",
+      "type": "image/png",
+      "sizes": "390x844",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/wide.png",
+      "type": "image/png",
+      "sizes": "1280x800",
+      "form_factor": "wide"
     }
   ],
   "categories": ["food", "health", "lifestyle"],

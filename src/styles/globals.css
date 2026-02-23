@@ -108,9 +108,6 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   /* Prevent tap highlight on iOS */
   -webkit-tap-highlight-color: transparent;
-  /* Prevent user select on native (feels more native) */
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 /* Re-enable text selection where needed */

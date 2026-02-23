@@ -118,7 +118,7 @@ function RootComponent() {
         <head>
           <HeadContent />
         </head>
-        <body className="min-h-screen bg-background antialiased">
+        <body className="min-[100dvh] bg-background antialiased">
           <ImpersonateProvider>
             <OfflineBanner />
             <TopBar />

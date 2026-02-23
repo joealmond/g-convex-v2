@@ -73,7 +73,7 @@ function DefaultErrorFallback({ error, onRetry }: { error: Error | null; onRetry
   const { t } = useTranslation()
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-[100dvh] flex items-center justify-center bg-background">
       <div className="max-w-md p-8 rounded-lg border border-border bg-card text-center">
         <div className="text-4xl mb-4">⚠️</div>
         <h2 className="text-xl font-semibold mb-2">{t('errors.generic')}</h2>

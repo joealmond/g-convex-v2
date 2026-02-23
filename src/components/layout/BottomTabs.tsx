@@ -31,7 +31,7 @@ export function BottomTabs() {
   return (
     <>
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 flex flex-col border-t border-white/20 dark:border-border"
+        className="fixed bottom-0 left-0 right-0 z-50 flex flex-col border-t border-white/20 dark:border-border md:hidden"
         style={{ backgroundColor: 'var(--nav-bg)' }}
       >
         <div className="h-16 flex items-center justify-around relative">
