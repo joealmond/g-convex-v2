@@ -2,6 +2,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { MapPin, Radar, Languages, LogOut } from 'lucide-react'
 import { NEARBY_RANGE_OPTIONS } from '@/hooks/use-product-filter'
 import type { LucideIcon } from 'lucide-react'
+import type { Locale } from '@/lib/i18n'
 
 interface ProfileSettingsProps {
   coords: { latitude: number; longitude: number } | null
@@ -10,7 +11,7 @@ interface ProfileSettingsProps {
   nearbyRangeKm: number
   onNearbyRangeChange: (km: number) => void
   locale: string
-  setLocale: (locale: string) => void
+  setLocale: (locale: Locale) => void
   cycleTheme: () => void
   themeLabel: string
   ThemeIcon: LucideIcon

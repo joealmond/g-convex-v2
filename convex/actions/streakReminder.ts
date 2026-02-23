@@ -30,7 +30,6 @@ export const checkStreakExpiry = internalAction({
     }
 
     const now = Date.now()
-    const todayStr = new Date(now).toISOString().split('T')[0]!
     const yesterdayStr = new Date(now - 86_400_000).toISOString().split('T')[0]!
 
     const usersToRemind: string[] = []

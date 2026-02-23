@@ -66,6 +66,9 @@ export const onVoteCast = internalMutation({
         newStreak = 1 // First vote
       }
 
+      // Award streak bonus for 3+ day streaks
+      if (newStreak >= 3) pointsEarned += POINTS.STREAK_BONUS
+
       const todayStr = now.toISOString().split('T')[0]
 
       const newProductVotes = args.isNewProduct ? (profile.newProductVotes ?? 0) + 1 : (profile.newProductVotes ?? 0)

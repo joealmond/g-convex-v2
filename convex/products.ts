@@ -1,7 +1,6 @@
 import { v } from 'convex/values'
 
 import { components } from './_generated/api'
-import { internal } from './_generated/api'
 import { productsGeo } from './geospatial'
 import { RateLimiter } from '@convex-dev/rate-limiter'
 import { authMutation, adminMutation, publicQuery, internalMutation } from './lib/customFunctions'
@@ -9,6 +8,7 @@ import { productsAggregate, votesByProduct } from './aggregates'
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
   productUpdate: { kind: 'token bucket', rate: 10, period: 60000, capacity: 15 },
+  productCreate: { kind: 'token bucket', rate: 5, period: 3600000, capacity: 10 },
 })
 
 /**
@@ -151,6 +151,8 @@ export const search = publicQuery({
   },
 })
 
+const MAX_PRODUCT_NAME_LENGTH = 100
+
 /**
  * Create a new product
  */
@@ -164,11 +166,30 @@ export const create = authMutation({
   },
   handler: async (ctx, args) => {
     const userId = ctx.userId
+
+    // Input validation
+    const trimmedName = args.name.trim()
+    if (!trimmedName) {
+      throw new Error('Product name cannot be empty')
+    }
+    if (trimmedName.length > MAX_PRODUCT_NAME_LENGTH) {
+      throw new Error(`Product name too long (max ${MAX_PRODUCT_NAME_LENGTH} chars)`)
+    }
+
+    // Rate limiting
+    const { ok, retryAfter } = await rateLimiter.limit(ctx, 'productCreate', {
+      key: userId,
+    })
+    if (!ok) {
+      throw new Error(
+        `Rate limit exceeded. Please try again in ${Math.ceil(retryAfter / 1000)} seconds.`
+      )
+    }
     
     // Check if product already exists
     const existing = await ctx.db
       .query('products')
-      .withIndex('by_name', (q) => q.eq('name', args.name))
+      .withIndex('by_name', (q) => q.eq('name', trimmedName))
       .first()
     
     if (existing) {
@@ -176,7 +197,7 @@ export const create = authMutation({
     }
 
     const productId = await ctx.db.insert('products', {
-      name: args.name,
+      name: trimmedName,
       imageUrl: args.imageUrl,
       ingredients: args.ingredients,
       averageSafety: args.initialSafety ?? 50,

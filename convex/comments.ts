@@ -7,7 +7,12 @@ import { publicQuery, authMutation } from './lib/customFunctions'
  */
 import { v } from 'convex/values'
 import { requireAdmin } from './lib/authHelpers'
+import { components } from './_generated/api'
+import { RateLimiter } from '@convex-dev/rate-limiter'
 
+const rateLimiter = new RateLimiter(components.rateLimiter, {
+  commentPost: { kind: 'token bucket', rate: 10, period: 60000, capacity: 15 },
+})
 
 const MAX_COMMENT_LENGTH = 500
 const MAX_COMMENTS_PER_PAGE = 30
@@ -23,6 +28,17 @@ export const post = authMutation({
   },
   handler: async (ctx, { productId, text, parentId }) => {
     const userId = ctx.userId
+
+    // Rate limiting
+    const { ok, retryAfter } = await rateLimiter.limit(ctx, 'commentPost', {
+      key: userId,
+    })
+    if (!ok) {
+      throw new Error(
+        `Rate limit exceeded. Please try again in ${Math.ceil(retryAfter / 1000)} seconds.`
+      )
+    }
+
     const trimmed = text.trim()
     if (!trimmed) throw new Error('Comment cannot be empty')
     if (trimmed.length > MAX_COMMENT_LENGTH) {

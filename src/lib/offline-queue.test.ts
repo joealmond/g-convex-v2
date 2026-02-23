@@ -104,9 +104,9 @@ describe('offline-queue', () => {
 
       const actions = await getAll()
       expect(actions).toHaveLength(3)
-      expect(actions[0].id).toBe(a3.id) // 09:00 — oldest
-      expect(actions[1].id).toBe(a1.id) // 10:00
-      expect(actions[2].id).toBe(a2.id) // 11:00 — newest
+      expect(actions[0]!.id).toBe(a3.id) // 09:00 — oldest
+      expect(actions[1]!.id).toBe(a1.id) // 10:00
+      expect(actions[2]!.id).toBe(a2.id) // 11:00 — newest
     })
 
     it('ignores non-queue keys in IndexedDB', async () => {
@@ -140,7 +140,7 @@ describe('offline-queue', () => {
       await incrementRetry(action.id)
 
       const actions = await getAll()
-      expect(actions[0].retryCount).toBe(1)
+      expect(actions[0]!.retryCount).toBe(1)
     })
 
     it('handles non-existent action gracefully', async () => {
@@ -164,7 +164,7 @@ describe('offline-queue', () => {
     })
 
     it('increments retry on executor failure and reports as failed', async () => {
-      const action = await enqueue('vote', { fail: true })
+      await enqueue('vote', { fail: true })
 
       const executor = vi.fn().mockRejectedValue(new Error('Network error'))
       const result = await flush(executor)
@@ -175,7 +175,7 @@ describe('offline-queue', () => {
 
       // Retry count should have been incremented
       const actions = await getAll()
-      expect(actions[0].retryCount).toBe(1)
+      expect(actions[0]!.retryCount).toBe(1)
     })
 
     it('skips actions that have exceeded MAX_RETRIES (3)', async () => {

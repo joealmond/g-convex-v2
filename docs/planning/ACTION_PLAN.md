@@ -175,12 +175,71 @@
 - [x] **Write i18n key parity test** (en.json vs hu.json structural match).
 - [x] **Write unit tests for `src/lib/offline-queue.ts`** (enqueue, dequeue, flush).
 
-### 2. Observability & Monitoring
-- [x] Setup a Sentry account (Free Tier).
-- [x] Install `@sentry/react` and `@sentry/capacitor`.
-- [x] Initialize Sentry inside `src/router.tsx` to automatically catch global errors.
+---
 
-### 3. App Store Flexibility
-- [x] Generate 3 temporary App Store screenshots via `shots.so` to begin listing drafts early (Developer Manual Step).
-- [x] Create a public Notion page for Privacy Policy / Terms of Service to avoid hardcoding links inside the binary (Developer Manual Step).
-- [x] (Optional) Add a basic Convex `config` table query to feature-flag potentially sensitive UI elements before App Store review.
+## 🟢 Phase F — Pre-Release Checklist
+
+### F1. Manual QA on Physical Devices
+> Follow `docs/QA_TEST_PLAN.md` and `docs/NATIVE_TESTING_GUIDE.md` on **both iOS and Android** physical devices.
+
+- [ ] Core Navigation & UI Shell — launch, dark mode, bottom tab routing, no spinners
+- [ ] Smart Camera Pipeline — permissions → barcode scan → AI analysis → R2 upload → GPS on map
+- [ ] Voting & Offline Sync — standard vote, airplane mode vote + sync, anonymous → registered migration
+- [ ] Social & Community — nearby filter, comments/likes, follow system, community feed
+- [ ] Error Handling (Sentry) — force crash, verify toast (no white screen), check Sentry dashboard
+- [ ] Gamification Flow — vote → "+10 Points!" toast → badge unlock → leaderboard → streak tracking
+- [ ] Challenges — view active, progress increments on vote, claim reward
+- [ ] Admin Dashboard — product CRUD, reports review, settings, analytics
+- [ ] Auth Edge Cases — fresh login, session expiry, logout + re-login, native OAuth deep link
+
+### F2. UI Fine-Tuning
+- [ ] Responsive breakpoints — iPhone SE (375px), iPhone 15 (393px), Pro Max (430px), Pixel 7 (412px)
+- [ ] Safe area insets — content doesn't clip behind notch/dynamic island/home indicator
+- [ ] Keyboard handling — forms aren't hidden behind keyboard (voting, comments, product creation)
+- [ ] Loading states — every query has skeleton/spinner (no blank screens)
+- [ ] Empty states — friendly messages for "No products", "No votes", "No comments"
+- [ ] Dark mode audit — every screen readable (contrast, borders, chart colors)
+- [ ] Touch targets — all interactive elements ≥ 44×44pt / 48×48dp
+- [ ] Image loading — product images have blur placeholder or skeleton, no broken images
+- [ ] Scroll performance — product list, community feed, leaderboard scroll smoothly
+
+### F3. Gamification Logic Verification
+- [x] **Fix streak bonus** — `sideEffects.ts` now awards `POINTS.STREAK_BONUS` (+15) for 3+ day streaks
+- [ ] Badge thresholds — manually test each badge triggers at correct count
+- [ ] Streak logic — vote today → vote tomorrow → streak=2; miss a day → resets to 1
+- [ ] Vote weight — registered=2x, anonymous=1x in average calculations
+- [ ] Challenge completion — vote 10x → challenge completes → claim reward → no double-claim
+
+### F4. Database & Schema Review
+- [ ] Remove deprecated `deviceTokens` table (OneSignal manages tokens)
+- [ ] Verify `voteCount` = `registeredVotes + anonymousVotes` consistency
+- [ ] Spot-check hot queries for full table scans (Convex dashboard → slow queries)
+
+### F5. Security Hardening (Final Pass)
+- [x] **Input validation** — product name max 100 chars, trimmed, non-empty
+- [x] **Rate limiting** — `products.create` (5/hr), `comments.post` (10/min) added
+- [ ] Verify `ADMIN_EMAILS` env var is set in production Convex dashboard
+- [ ] Verify `public/_headers` CSP file is deployed on Cloudflare
+- [ ] Confirm `sw.js` uses build hash, not hardcoded `gmatrix-v1`
+- [ ] Review `handleServerError` — ensure no stack traces leak to client in production
+
+### F6. Observability & Monitoring
+- [ ] Verify `VITE_SENTRY_DSN` is set in `.env.local` and production
+- [ ] Add `@sentry/vite-plugin` for source map upload on build
+- [ ] Verify `GET /api/health` returns `200` on production Convex deployment
+- [ ] Run `npx convex logs` during QA to watch for errors
+- [ ] Verify console stripping — production builds drop `console.log`
+
+### F7. CSS & Accessibility Polish
+- [ ] Replace `100vh` with `100dvh` for full-screen layouts (mobile browser chrome)
+- [ ] Honor `prefers-reduced-motion` — audit Framer Motion animations
+- [ ] Replace `px` text sizes with `rem` for accessibility
+- [ ] Onboarding flow — first-time user tutorial: "Scan your first product" CTA, gamification intro
+
+### F8. App Store & Production Deploy
+- [ ] **Cloudflare R2** — set up production bucket, configure env vars (see `WAVE_1_SETUP_REQUIRED.md`)
+- [ ] **Convex production deploy** — `npx convex deploy` with production env vars
+- [ ] **Cloudflare Workers deploy** — ensure SSR deployment succeeds
+- [ ] iOS App Store Connect — screenshots, description, keywords, privacy policy, terms of service
+- [ ] Google Play Console — store listing, screenshots, content rating
+
