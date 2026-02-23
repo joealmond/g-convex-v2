@@ -67,7 +67,7 @@ export interface AuthUser {
  * @returns The authenticated user or null
  */
 export async function getAuthUser(ctx: AuthContext): Promise<AuthUser | null> {
-  const user = await authComponent.getAuthUser(ctx)
+  const user = await authComponent.safeGetAuthUser(ctx)
   return user as AuthUser | null
 }
 

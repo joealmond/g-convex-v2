@@ -33,17 +33,8 @@ import { ADMIN_EMAILS, ROLES } from './lib/config'
 import { type AuthUser } from './lib/authHelpers'
 import { profilesAggregate } from './aggregates'
 
-/**
- * Safely get the authenticated user, returning null if unauthenticated.
- * This prevents throwing during SSR when no session exists.
- */
 async function getAuthUserSafe(ctx: QueryCtx): Promise<AuthUser | null> {
-  try {
-    return (await authComponent.getAuthUser(ctx)) as AuthUser | null
-  } catch {
-    // Unauthenticated - return null instead of throwing
-    return null
-  }
+  return (await authComponent.safeGetAuthUser(ctx)) as AuthUser | null
 }
 
 /**
