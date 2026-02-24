@@ -22,6 +22,10 @@ interface ProductMapProps {
   zoom?: number
   /** User's current location — renders a blue circle with ~5km radius */
   userLocation?: [number, number]
+  /** Nearby range in meters to visualize */
+  nearbyRange?: number
+  /** Whether to show the range circle visually */
+  showRangeCircle?: boolean
 }
 
 /**
@@ -31,7 +35,7 @@ interface ProductMapProps {
  * - Popup shows product info
  * - Optional blue circle showing user's approximate area (~5km)
  */
-export function ProductMap({ products, center = [47.497, 19.040], zoom = 12, userLocation }: ProductMapProps) {
+export function ProductMap({ products, center = [47.497, 19.040], zoom = 12, userLocation, nearbyRange = 5000, showRangeCircle = false }: ProductMapProps) {
   // Filter products that have at least one store with GPS coordinates
   const productsWithLocations = products.filter(
     (product) => product.stores && product.stores.some((store) => store.geoPoint)
@@ -57,10 +61,10 @@ export function ProductMap({ products, center = [47.497, 19.040], zoom = 12, use
       <RecenterMap center={center} />
 
       {/* User location: blue translucent circle (~5km radius) */}
-      {userLocation && (
+      {userLocation && showRangeCircle && (
         <Circle
           center={userLocation}
-          radius={5000}
+          radius={nearbyRange}
           pathOptions={{
             color: chartColors.userDot,
             fillColor: chartColors.userDot,

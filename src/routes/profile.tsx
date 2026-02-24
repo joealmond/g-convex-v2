@@ -19,7 +19,7 @@ import { useGeolocation, useTheme } from '@/hooks'
 import { useConvexAuth } from '@convex-dev/react-query'
 import { authClient } from '@/lib/auth-client'
 import { isNative } from '@/lib/platform'
-import { getNearbyRange, setNearbyRange } from '@/hooks/use-product-filter'
+import { getNearbyRange } from '@/hooks/use-product-filter'
 
 
 export const Route = createFileRoute('/profile')({
@@ -221,7 +221,7 @@ function ProfileContent() {
     api.follows.getCounts,
     user ? { userId: user._id } : 'skip'
   )
-  const { coords, loading: geoLoading, requestLocation } = useGeolocation()
+  const { coords, loading: geoLoading, requestLocation, permissionStatus } = useGeolocation()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const { isLoading: isAuthLoading } = useConvexAuth()
 
@@ -412,8 +412,9 @@ function ProfileContent() {
                 coords={coords}
                 geoLoading={geoLoading}
                 requestLocation={requestLocation}
+                permissionStatus={permissionStatus}
                 nearbyRangeKm={nearbyRangeKm}
-                onNearbyRangeChange={(km) => { setNearbyRange(km); setNearbyRangeKm(km) }}
+                onNearbyRangeChange={setNearbyRangeKm}
                 locale={locale}
                 setLocale={setLocale}
                 cycleTheme={cycleTheme}

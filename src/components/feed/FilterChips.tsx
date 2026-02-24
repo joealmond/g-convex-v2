@@ -2,7 +2,7 @@ import { type ReactNode, useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/use-translation'
-import { NEARBY_RANGE_OPTIONS, setNearbyRange } from '@/hooks/use-product-filter'
+import { NEARBY_RANGE_OPTIONS } from '@/hooks/use-product-filter'
 import { ChevronDown } from 'lucide-react'
 
 export type FilterType = 'all' | 'recent' | 'nearby' | 'trending'
@@ -12,6 +12,8 @@ interface FilterChipsProps {
   onChange: (filter: FilterType) => void
   /** Current nearby range in km */
   nearbyRange?: number
+  /** Callback when range is changed via dropdown */
+  onRangeChange?: (km: number) => void
   /** Compact mode for map overlay — smaller pills, no min-height */
   compact?: boolean
 }
@@ -24,7 +26,7 @@ interface FilterChipsProps {
  * - Nearby: filter to products within configurable range
  * - Trending: sort by voteCount desc
  */
-export function FilterChips({ value, onChange, nearbyRange, compact = false }: FilterChipsProps) {
+export function FilterChips({ value, onChange, nearbyRange, onRangeChange, compact = false }: FilterChipsProps) {
   const { t } = useTranslation()
   const [showRangeDropdown, setShowRangeDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -102,7 +104,7 @@ export function FilterChips({ value, onChange, nearbyRange, compact = false }: F
                     <button
                       key={km}
                       onClick={() => {
-                        setNearbyRange(km)
+                        onRangeChange?.(km)
                         setShowRangeDropdown(false)
                         if (value !== 'nearby') onChange('nearby')
                       }}

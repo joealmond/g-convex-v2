@@ -62,7 +62,7 @@ function extractSessionToken(setCookie: string): string | null {
   // Match: ...session_token=VALUE; or ...session_token=VALUE (end of string)
   const match = setCookie.match(/session_token=([^;]+)/)
   if (!match) return null
-  const cookieValue = decodeURIComponent(match[1])
+  const cookieValue = decodeURIComponent(match?.[1] ?? '')
   // Cookie value is "token.signature" — we only need the token part
   const dotIndex = cookieValue.indexOf('.')
   return dotIndex > 0 ? cookieValue.substring(0, dotIndex) : cookieValue

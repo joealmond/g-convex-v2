@@ -8,7 +8,7 @@
 import { v } from 'convex/values'
 
 import { requireAuth } from './lib/authHelpers'
-import { authQuery, authMutation, publicQuery } from './lib/customFunctions'
+import { authMutation, publicQuery } from './lib/customFunctions'
 
 /**
  * Get user's dietary profile

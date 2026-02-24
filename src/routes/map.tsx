@@ -4,6 +4,7 @@ import { api } from '@convex/_generated/api'
 import { Suspense, useState, useMemo, useEffect, lazy } from 'react'
 import { FilterChips, type FilterType } from '@/components/feed/FilterChips'
 import { useGeolocation } from '@/hooks/use-geolocation'
+import { getNearbyRange } from '@/hooks/use-product-filter'
 import { Loader2 } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useTranslation } from '@/hooks/use-translation'
@@ -47,6 +48,23 @@ function MapPageContent() {
   }, [requestLocation])
 
   const isLoading = products === undefined
+  const [nearbyRange, setNearbyRange] = useState(10) // Will sync on mount
+  const [showRangeCircle, setShowRangeCircle] = useState(false)
+
+  // Initialize range from user's default setting
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setNearbyRange(getNearbyRange())
+    // Note: We don't listen to 'g-matrix-default-nearby-range-change' here
+    // because changing the default in Profile shouldn't instantly affect an
+    // active Map session (or at least, the session range has detached).
+  }, [])
+
+  const handleRangeChange = (km: number) => {
+    setNearbyRange(km)
+    setShowRangeCircle(true)
+    setTimeout(() => setShowRangeCircle(false), 3000)
+  }
 
   // Determine map center (user location or Budapest fallback)
   const mapCenter: [number, number] = useMemo(() => {
@@ -98,7 +116,7 @@ function MapPageContent() {
         if (coords?.latitude && coords?.longitude) {
           result = result.filter((p) => {
             const distance = getProductDistance(p)
-            return distance !== undefined && distance <= 10 // 10km radius
+            return distance !== undefined && distance <= nearbyRange
           })
           result.sort(
             (a, b) =>
@@ -119,7 +137,7 @@ function MapPageContent() {
     }
 
     return result
-  }, [products, filterType, coords])
+  }, [products, filterType, coords, nearbyRange])
 
   // Count total map markers (each store with a geoPoint = 1 marker)
   const markerCount = useMemo(() => {
@@ -141,7 +159,12 @@ function MapPageContent() {
     <div className="absolute inset-0 top-0 md:top-12" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
       {/* Filter Chips — floating over the map */}
       <div className="absolute top-[calc(env(safe-area-inset-top,0px)+0.5rem)] md:top-2 left-2 right-2 z-[400] flex items-center gap-2">
-        <FilterChips value={filterType} onChange={setFilterType} />
+        <FilterChips 
+          value={filterType} 
+          onChange={setFilterType} 
+          nearbyRange={nearbyRange}
+          onRangeChange={handleRangeChange}
+        />
         {geoLoading && (
           <span className="text-[10px] text-muted-foreground whitespace-nowrap bg-background/80 rounded-full px-2 py-0.5">
             {t('location.locating')}
@@ -161,6 +184,8 @@ function MapPageContent() {
             center={mapCenter}
             zoom={13}
             userLocation={userLocation}
+            nearbyRange={nearbyRange * 1000} // ProductMap expects meters
+            showRangeCircle={showRangeCircle}
           />
           {filteredProducts.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

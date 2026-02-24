@@ -3,7 +3,7 @@ import type { FilterType } from '@/components/feed/FilterChips'
 import type { Product } from '@/lib/types'
 
 /** Default nearby range in km, overridden by localStorage "g-matrix-nearby-range" */
-const DEFAULT_NEARBY_RANGE_KM = 5
+const DEFAULT_NEARBY_RANGE_KM = 1
 
 /** Read user's preferred nearby range from localStorage (SSR-safe) */
 export function getNearbyRange(): number {
@@ -16,11 +16,11 @@ export function getNearbyRange(): number {
   return DEFAULT_NEARBY_RANGE_KM
 }
 
-/** Persist the user's preferred nearby range */
-export function setNearbyRange(km: number) {
+/** Persist the user's preferred default nearby range */
+export function setDefaultNearbyRange(km: number) {
   localStorage.setItem('g-matrix-nearby-range', String(km))
-  // Dispatch event so listening hooks re-render
-  window.dispatchEvent(new CustomEvent('g-matrix-nearby-range-change'))
+  // Dispatch event so profile settings re-render
+  window.dispatchEvent(new CustomEvent('g-matrix-default-nearby-range-change'))
 }
 
 /** Available range presets (km) */
@@ -78,13 +78,13 @@ export function useProductFilter({ products, nearbyProducts, latitude, longitude
   const [searchQuery, setSearchQuery] = useState('')
   const [nearbyRange, setNearbyRangeState] = useState(DEFAULT_NEARBY_RANGE_KM)
 
-  // Sync range from localStorage + listen for changes
+  // Initialize session range from default preferred range
   useEffect(() => {
     if (typeof window === 'undefined') return
     setNearbyRangeState(getNearbyRange())
-    const handler = () => setNearbyRangeState(getNearbyRange())
-    window.addEventListener('g-matrix-nearby-range-change', handler)
-    return () => window.removeEventListener('g-matrix-nearby-range-change', handler)
+    // We intentionally don't listen to the global event here anymore.
+    // The session range (Map/Feed) should be independent of the default
+    // profile setting until the page reloads.
   }, [])
 
   const handleSearchChange = useCallback((value: string) => {
@@ -105,6 +105,10 @@ export function useProductFilter({ products, nearbyProducts, latitude, longitude
     },
     []
   )
+
+  const handleNearbyRangeChange = useCallback((km: number) => {
+    setNearbyRangeState(km)
+  }, [])
 
   const getDistance = useCallback(
     (product: Product) => getProductDistance(product, latitude, longitude),
@@ -172,6 +176,7 @@ export function useProductFilter({ products, nearbyProducts, latitude, longitude
     handleSearchChange,
     clearSearch,
     handleFilterChange,
+    handleNearbyRangeChange,
     getDistance,
   }
 }

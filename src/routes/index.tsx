@@ -83,6 +83,7 @@ function HomePageContent() {
     handleSearchChange,
     clearSearch,
     handleFilterChange,
+    handleNearbyRangeChange,
     getDistance,
   } = useProductFilter({ products, nearbyProducts, latitude, longitude })
 
@@ -175,7 +176,12 @@ function HomePageContent() {
 
         {/* Filter Chips — sticky under search, visible in both views */}
         <div className="pt-3">
-          <FilterChips value={filterType} onChange={handleFilterChange} nearbyRange={nearbyRange} />
+          <FilterChips 
+            value={filterType} 
+            onChange={handleFilterChange} 
+            nearbyRange={nearbyRange} 
+            onRangeChange={handleNearbyRangeChange} 
+          />
         </div>
       </div>
 
