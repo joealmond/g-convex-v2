@@ -42,14 +42,17 @@ export const Route = createFileRoute('/api/auth/$')({
 > picked up by the standard file-based route generator.
 
 #### 2. Auth Client (`src/lib/auth-client.ts`)
-Remove `baseURL` - let the `convexClient()` plugin handle routing:
+Remove `baseURL` on web — let the proxy handle routing:
 ```typescript
 import { createAuthClient } from 'better-auth/react'
-import { convexClient } from '@convex-dev/better-auth/client/plugins'
+import { convexClient, crossDomainClient } from '@convex-dev/better-auth/client/plugins'
 
 export const authClient = createAuthClient({
-  // NO baseURL - plugin handles routing to /api/auth/*
-  plugins: [convexClient()],
+  // NO baseURL on web - proxy handles routing to /api/auth/*
+  plugins: [
+    convexClient(),
+    crossDomainClient(), // Handles cross-domain session via localStorage + Better-Auth-Cookie header
+  ],
 })
 ```
 
@@ -148,6 +151,55 @@ function RootComponent() {
 4. **Hydration**: `initialToken` passed to client prevents auth flash
 5. **Environment variables**: `import.meta.env` works in Cloudflare Workers SSR context (process.env doesn't)
 
+## Cross-Domain OAuth (OTT Flow)
+
+### The Problem
+Google OAuth callback goes directly to `convex.site/api/auth/callback/google` —
+not through the app's proxy. The session cookie is set on `convex.site`, but the
+app runs on `localhost:3000` (or Cloudflare Workers domain). Different domains
+mean the cookie is never sent to the proxy, so `getSession()` returns `null`.
+
+### The Solution: One-Time Token (OTT)
+Three components work together:
+
+1. **Server plugin** (`convex/auth.ts`): `crossDomain({ siteUrl: process.env.SITE_URL })`
+   - Rewrites relative `callbackURL: '/'` to absolute app URL
+   - Auto-sets `skipStateCookieCheck: true`
+
+2. **HTTP bridge** (`convex/http.ts`): Post-processes 302 redirects
+   - Extracts session token from `set-cookie` (token part before `.`)
+   - Generates a random OTT, stores it in the verification table
+   - Appends `?ott=TOKEN` to the redirect URL
+   - This is necessary because Better Auth's after-hooks DON'T execute
+     in the Convex runtime (the 302 is thrown as an `APIError` which
+     bypasses them)
+
+3. **Client plugin** (`src/lib/auth-client.ts`): `crossDomainClient()`
+   - Stores cookies in `localStorage` (not browser cookies)
+   - Sends them via `Better-Auth-Cookie` header
+   - `ConvexBetterAuthProvider` checks for `?ott=` on page load, verifies
+     it, and establishes the session
+
+### Flow Diagram
+```
+Client → /api/auth/signin/social (proxy) → Convex → Google
+Google → convex.site/api/auth/callback/google (direct, NOT proxy)
+Convex → 302 + set-cookie → HTTP bridge adds ?ott=TOKEN
+Browser → localhost:3000/?ott=TOKEN
+ConvexBetterAuthProvider → POST /api/auth/cross-domain/one-time-token/verify
+Session established ✓
+```
+
+### Convex Runtime Limitation
+Better Auth plugins use `after` hooks to post-process responses. In the Convex
+runtime, OAuth callbacks throw `APIError` (status 302) to redirect. This bypasses
+all after-hooks. The `convex/http.ts` HTTP bridge intercepts the final Response
+and applies the same logic at the HTTP layer.
+
+This affects both:
+- **Native**: Cookie injection for Capacitor deep links (`?cookie=` param)
+- **Web**: OTT generation for cross-domain auth (`?ott=` param)
+
 ## Required Environment Variables
 
 Create `.env.local`:
@@ -217,3 +269,26 @@ npm run dev     # Terminal 2
 - Ensure auth-client.ts has NO `baseURL` property
 - Verify API route exists at `src/routes/api/auth/$.ts`
 - Check `convexClient()` plugin is registered
+
+### OAuth redirects to `convex.site` instead of app
+- Ensure `SITE_URL` is set in Convex env: `npx convex env set SITE_URL "http://localhost:3000"`
+- Check `crossDomain({ siteUrl })` plugin is in `convex/auth.ts`
+- Verify `callbackURL` in `signIn.social()` is relative (`'/'`), not absolute
+
+### "Session not found" after OAuth
+- Check `convex/http.ts` OTT bridge is extracting just the token (before `.`)
+- Verify `crossDomainClient()` is in the auth client plugins
+- Check Convex logs for `[OAuth Bridge] OTT generated` message
+
+### "Rendered fewer hooks" crash on sign-out
+- All React hooks must be called before any early returns in a component
+- Move `useMemo`, `useEffect`, `useState` before `if (user === null) return`
+- Auth-required queries (`authQuery`) will throw during sign-out transition;
+  wrap with error boundary or use `publicQuery` with optional auth
+
+## Convex Logging & Observability
+
+- **Dev**: `npx convex dev` prints all `console.log/warn/error` from Convex functions
+- **Dashboard**: Convex Dashboard → Logs tab provides real-time, filterable logs
+- **Convex `[ERROR]` on 302**: This is expected — Convex logs all non-2xx HTTP responses as errors, including successful OAuth 302 redirects
+- **External logging** (Splunk, Datadog, Axiom): Not built-in. Forward logs via a Convex scheduled action that POSTs to your logging provider's HTTP endpoint

@@ -12,13 +12,18 @@ import { authQuery, authMutation, publicQuery } from './lib/customFunctions'
 
 /**
  * Get user's dietary profile
+ * Uses publicQuery instead of authQuery so it returns null during sign-out
+ * rather than throwing "Authentication required"
  */
-export const getUserProfile = authQuery({
+export const getUserProfile = publicQuery({
   args: {},
   handler: async (ctx) => {
+    const user = await requireAuth(ctx).catch(() => null)
+    if (!user) return null
+
     const profile = await ctx.db
       .query('dietaryProfiles')
-      .withIndex('by_user', (q) => q.eq('userId', ctx.userId))
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
       .first()
     
     return profile || null

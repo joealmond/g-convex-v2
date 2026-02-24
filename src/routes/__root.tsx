@@ -43,7 +43,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { title: `${appConfig.appName} - ${appConfig.tagline}` },
       { name: 'description', content: `Community-driven ratings for ${appConfig.categoryTerm}` },
       /* PWA Meta Tags */
-      { name: 'apple-mobile-web-app-capable', content: 'yes' },
+      { name: 'mobile-web-app-capable', content: 'yes' },
       { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
       { name: 'theme-color', content: '#7CB342' },
     ],

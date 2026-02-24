@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth/minimal'
 import { createClient } from '@convex-dev/better-auth'
-import { convex } from '@convex-dev/better-auth/plugins'
+import { convex, crossDomain } from '@convex-dev/better-auth/plugins'
 import { capacitor } from 'better-auth-capacitor'
 import authConfig from './auth.config'
 import { components } from './_generated/api'
@@ -78,6 +78,14 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     plugins: [
       // Required for Convex compatibility
       convex({ authConfig }),
+      // Cross-domain session propagation:
+      // OAuth callback lands on convex.site, but the app runs on localhost:3000.
+      // This plugin generates a one-time token (OTT) appended to the redirect URL
+      // (?ott=TOKEN), which ConvexBetterAuthProvider verifies client-side to
+      // establish the session. Also auto-sets skipStateCookieCheck.
+      crossDomain({
+        siteUrl: process.env.SITE_URL || 'http://localhost:3000',
+      }),
       // Required for Capacitor native app OAuth (system browser + deep links)
       capacitor(),
     ],

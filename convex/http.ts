@@ -26,23 +26,49 @@ http.route({
 })
 
 // =============================================================================
-// Native OAuth Cookie Bridge
+// OAuth Bridge: Native Cookie Injection + Web OTT (One-Time Token)
 // =============================================================================
-// The better-auth-capacitor server plugin's after-hook is supposed to read
-// `set-cookie` from ctx.context.responseHeaders and append it as a `?cookie=`
-// query param on the redirect URL (e.g. gmatrix://auth/callback?cookie=...).
+// Better Auth's OAuth callback throws an APIError (302) to redirect.
+// This bypasses all after-hooks in the Convex runtime, so plugins like
+// `capacitor` and `crossDomain` can't post-process the response.
 //
-// In the Convex runtime, Better Auth's OAuth callback throws an APIError (302)
-// to redirect. The plugin's after-hook never executes (the error bypasses it),
-// so the cookie is never injected into the redirect URL.
+// Fix: Wrap auth.handler() at the HTTP layer and post-process 302 redirects:
 //
-// Fix: Wrap auth.handler() at the HTTP layer. After Better Auth produces the
-// final Response (which correctly has set-cookie and location headers), we
-// post-process 302 redirects to non-HTTP schemes by injecting the set-cookie
-// value as a query param. This runs after all internal auth processing.
+// 1. Native deep links (gmatrix://): inject set-cookie as ?cookie= param
+//    (for better-auth-capacitor to pick up the session)
+//
+// 2. Web redirects (http/https): extract session token from set-cookie,
+//    generate a one-time token (OTT), store it in the verification table,
+//    and append ?ott=TOKEN to the URL. ConvexBetterAuthProvider on the
+//    client verifies the OTT and establishes the session.
 // =============================================================================
 
-const createAuthWithNativeBridge = (ctx: GenericCtx<DataModel>) => {
+/**
+ * Generate a cryptographically random string (alphanumeric)
+ */
+function generateRandomString(length: number): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const array = new Uint8Array(length)
+  crypto.getRandomValues(array)
+  return Array.from(array, (byte) => chars[byte % chars.length]).join('')
+}
+
+/**
+ * Extract the raw session token from a set-cookie header string.
+ * Cookie format: `__Secure-better-auth.session_token=TOKEN.SIGNATURE; ...`
+ * The DB stores just TOKEN, so we split on '.' and return the first part.
+ */
+function extractSessionToken(setCookie: string): string | null {
+  // Match: ...session_token=VALUE; or ...session_token=VALUE (end of string)
+  const match = setCookie.match(/session_token=([^;]+)/)
+  if (!match) return null
+  const cookieValue = decodeURIComponent(match[1])
+  // Cookie value is "token.signature" — we only need the token part
+  const dotIndex = cookieValue.indexOf('.')
+  return dotIndex > 0 ? cookieValue.substring(0, dotIndex) : cookieValue
+}
+
+const createAuthWithBridge = (ctx: GenericCtx<DataModel>) => {
   const auth = createAuth(ctx)
 
   // Use Proxy to preserve all properties (including $context getter used by
@@ -64,22 +90,45 @@ const createAuthWithNativeBridge = (ctx: GenericCtx<DataModel>) => {
           try {
             const url = new URL(location)
 
-            // Only inject for non-HTTP schemes (native app deep links)
-            if (url.protocol === 'http:' || url.protocol === 'https:') {
+            // --- Native deep links (non-HTTP schemes like gmatrix://) ---
+            if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+              if (!url.searchParams.has('cookie')) {
+                url.searchParams.set('cookie', setCookie)
+                const newHeaders = new Headers(response.headers)
+                newHeaders.set('location', url.toString())
+                return new Response(null, { status: 302, headers: newHeaders })
+              }
               return response
             }
 
+            // --- Web redirects (HTTP/HTTPS) ---
+            // Extract session token and generate OTT for cross-domain auth
+            const sessionToken = extractSessionToken(setCookie)
+            if (!sessionToken) return response
+
             // Don't double-inject
-            if (url.searchParams.has('cookie')) return response
+            if (url.searchParams.has('ott')) return response
 
-            // Inject set-cookie into the redirect URL
-            url.searchParams.set('cookie', setCookie)
+            // Generate OTT and store in verification table
+            const ott = generateRandomString(32)
+            const expiresAt = new Date(Date.now() + 3 * 60 * 1000) // 3 minutes
 
+            const authContext = await auth.$context
+            await authContext.internalAdapter.createVerificationValue({
+              value: sessionToken,
+              identifier: `one-time-token:${ott}`,
+              expiresAt,
+            })
+
+            url.searchParams.set('ott', ott)
             const newHeaders = new Headers(response.headers)
             newHeaders.set('location', url.toString())
 
+            console.log('[OAuth Bridge] OTT generated for web redirect:', url.origin)
+
             return new Response(null, { status: 302, headers: newHeaders })
-          } catch {
+          } catch (e) {
+            console.error('[OAuth Bridge] Error processing redirect:', e)
             return response
           }
         }
@@ -92,13 +141,14 @@ const createAuthWithNativeBridge = (ctx: GenericCtx<DataModel>) => {
 // Register Better Auth routes with CORS support
 // Capacitor WebView (capacitor://localhost) makes cross-origin requests
 // to the Convex backend, so CORS preflight (OPTIONS) must be handled.
-authComponent.registerRoutes(http, createAuthWithNativeBridge, {
+authComponent.registerRoutes(http, createAuthWithBridge, {
   cors: {
-    // Headers sent by better-auth-capacitor client plugin
-    allowedHeaders: ['capacitor-origin', 'x-skip-oauth-proxy'],
-    // Headers the capacitor client reads from responses
-    exposedHeaders: ['set-auth-token'],
+    // Headers sent by better-auth-capacitor client plugin + cross-domain plugin
+    allowedHeaders: ['capacitor-origin', 'x-skip-oauth-proxy', 'better-auth-cookie'],
+    // Headers the capacitor/cross-domain client reads from responses
+    exposedHeaders: ['set-auth-token', 'set-better-auth-cookie'],
   },
 })
 
 export default http
+

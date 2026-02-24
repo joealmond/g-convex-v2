@@ -1,10 +1,6 @@
-/**
- * Dietary Profile Settings Component
- * Multi-condition dietary restrictions with per-condition severity
- */
-
 import { useState, useEffect } from 'react'
 import { useMutation, useQuery } from 'convex/react'
+import { useConvexAuth } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { appConfig } from '@/lib/app-config'
 import { useTranslation } from '@/hooks/use-translation'
@@ -23,7 +19,8 @@ interface DietaryCondition {
 
 export function DietaryProfileSettings() {
   const { t } = useTranslation()
-  const profile = useQuery(api.dietaryProfiles.getUserProfile)
+  const { isAuthenticated } = useConvexAuth()
+  const profile = useQuery(api.dietaryProfiles.getUserProfile, isAuthenticated ? {} : 'skip')
   const updateProfile = useMutation(api.dietaryProfiles.updateProfile)
   
   const [selectedConditions, setSelectedConditions] = useState<Map<string, number>>(

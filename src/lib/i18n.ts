@@ -14,7 +14,7 @@ export interface Translations {
   [key: string]: string | Translations
 }
 
-const LOCALE_KEY = 'g-matrix-locale'
+const LOCALE_KEY = 'g-matrix-lang'
 const LOCALE_EVENT = 'g-matrix-locale-change'
 
 // Both locale files are statically imported — no async needed
@@ -102,9 +102,8 @@ export function useLocale(): Locale {
   const [locale, setLocaleState] = useState<Locale>('en')
 
   useEffect(() => {
-    // Read the real locale from storage (or browser default)
-    const stored = getStoredLocale()
-    const initial = stored || getBrowserLocale()
+    // Default to English unless user has explicitly chosen a locale
+    const initial = getStoredLocale()
     setLocaleState(initial)
 
     const handleChange = (e: Event) => {

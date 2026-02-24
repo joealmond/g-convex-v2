@@ -224,7 +224,8 @@
     "locationOff": "Érintsd meg az engedélyezéshez",
     "signOutButton": "Kijelentkezés",
     "nearbyRange": "Közelség hatótáv",
-    "leaderboardSection": "Ranglista"
+    "leaderboardSection": "Ranglista",
+    "guestSubtitle": "Állítsd be a beállításaidat alább"
   },
   "login": {
     "alreadyLoggedIn": "Már bejelentkeztél",
@@ -238,7 +239,8 @@
     "signingIn": "Bejelentkezés...",
     "continueGoogle": "Folytatás Google-lal",
     "continueGuest": "Folytatás vendégként",
-    "guestNote": "Vendégként is szavazhatsz, de a szavazatod kisebb súllyal számít"
+    "guestNote": "Vendégként is szavazhatsz, de a szavazatod kisebb súllyal számít",
+    "signInPrompt": "Jelentkezz be az összes funkció eléréséhez"
   },
   "adminPanel": {
     "title": "Admin Panel",

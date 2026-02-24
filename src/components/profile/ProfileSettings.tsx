@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { MapPin, Radar, Languages, LogOut } from 'lucide-react'
+import { LanguageSelector } from '@/components/profile/LanguageSelector'
 import { NEARBY_RANGE_OPTIONS } from '@/hooks/use-product-filter'
 import type { LucideIcon } from 'lucide-react'
 import type { Locale } from '@/lib/i18n'
@@ -80,20 +81,7 @@ export function ProfileSettings({
             <Languages className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm font-medium text-foreground">{t('profile.language')}</span>
           </div>
-          <div className="flex gap-1">
-            <button
-              onClick={() => setLocale('en')}
-              className={`px-3 py-1 text-xs rounded-full transition-colors ${locale === 'en' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-            >
-              🇬🇧 EN
-            </button>
-            <button
-              onClick={() => setLocale('hu')}
-              className={`px-3 py-1 text-xs rounded-full transition-colors ${locale === 'hu' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-            >
-              🇭🇺 HU
-            </button>
-          </div>
+          <LanguageSelector locale={locale} setLocale={setLocale} />
         </div>
 
         {/* Theme */}

@@ -224,7 +224,8 @@
     "locationOff": "Tap to enable",
     "signOutButton": "Sign Out",
     "nearbyRange": "Nearby Range",
-    "leaderboardSection": "Leaderboard"
+    "leaderboardSection": "Leaderboard",
+    "guestSubtitle": "Adjust your preferences below"
   },
   "login": {
     "alreadyLoggedIn": "Already Logged In",
@@ -238,7 +239,8 @@
     "signingIn": "Signing in...",
     "continueGoogle": "Continue with Google",
     "continueGuest": "Continue as guest",
-    "guestNote": "You can still vote anonymously, but your votes will have less weight"
+    "guestNote": "You can still vote anonymously, but your votes will have less weight",
+    "signInPrompt": "Sign in to unlock all features"
   },
   "adminPanel": {
     "title": "Admin Panel",

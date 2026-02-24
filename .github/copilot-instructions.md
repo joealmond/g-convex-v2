@@ -443,18 +443,36 @@ const authClient = createAuthClient(withCapacitor({
   scheme: 'gmatrix',
   storagePrefix: 'better-auth',
 }))
+// Web-only:
+export const authClient = createAuthClient({
+  plugins: [convexClient(), crossDomainClient()],
+})
 ```
 
-**HTTP layer — Convex Cookie Bridge** (`convex/http.ts`):
-The `capacitor()` plugin's after-hook reads `set-cookie` from `responseHeaders` to append session cookies to the native redirect URL. In Convex runtime, this hook **never executes** because Better Auth throws an `APIError` (302) which bypasses after-hooks. The fix wraps `auth.handler()` with a Proxy at the HTTP layer that post-processes 302 redirects to non-HTTP schemes (like `gmatrix://`), injecting the `set-cookie` value as a `?cookie=` query param on the redirect URL. See `convex/http.ts` for the implementation.
+**HTTP layer — OAuth Bridge** (`convex/http.ts`):
+Better Auth's after-hooks **don't execute** in Convex runtime (302 APIError bypasses them).
+The `convex/http.ts` bridge wraps `auth.handler()` to post-process 302 redirects:
+- **Native** (non-HTTP schemes like `gmatrix://`): injects `set-cookie` as `?cookie=` query param
+- **Web** (HTTP/HTTPS): extracts session token from cookie, generates a one-time token (OTT), stores it in the verification table, appends `?ott=TOKEN` to the redirect URL. `ConvexBetterAuthProvider` verifies the OTT client-side to establish the session.
+
+**Server auth plugins** (`convex/auth.ts`):
+```ts
+import { convex, crossDomain } from '@convex-dev/better-auth/plugins'
+plugins: [
+  convex({ authConfig }),
+  crossDomain({ siteUrl: process.env.SITE_URL || 'http://localhost:3000' }),
+  capacitor(),
+]
+```
+The `crossDomain` plugin auto-rewrites relative `callbackURL` to absolute app URL and sets `skipStateCookieCheck: true`.
 
 **CORS** (`convex/http.ts`):
-`registerRoutes()` must be called with `cors` option to enable OPTIONS preflight for Capacitor WebView cross-origin requests:
+`registerRoutes()` must be called with `cors` option to enable OPTIONS preflight for Capacitor WebView cross-origin requests and cross-domain auth headers:
 ```ts
-authComponent.registerRoutes(http, createAuthWithNativeBridge, {
+authComponent.registerRoutes(http, createAuthWithBridge, {
   cors: {
-    allowedHeaders: ['capacitor-origin', 'x-skip-oauth-proxy'],
-    exposedHeaders: ['set-auth-token'],
+    allowedHeaders: ['capacitor-origin', 'x-skip-oauth-proxy', 'better-auth-cookie'],
+    exposedHeaders: ['set-auth-token', 'set-better-auth-cookie'],
   },
 })
 ```

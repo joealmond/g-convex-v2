@@ -1,5 +1,5 @@
 import { createAuthClient } from 'better-auth/react'
-import { convexClient } from '@convex-dev/better-auth/client/plugins'
+import { convexClient, crossDomainClient } from '@convex-dev/better-auth/client/plugins'
 import { withCapacitor } from 'better-auth-capacitor/client'
 import { isNative } from './platform'
 
@@ -27,7 +27,7 @@ const authConfig = isNative()
     )
   : {
       baseURL,
-      plugins: [convexClient()],
+      plugins: [convexClient(), crossDomainClient()],
     }
 
 export const authClient = createAuthClient(authConfig)
