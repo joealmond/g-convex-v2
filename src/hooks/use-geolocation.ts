@@ -50,8 +50,20 @@ export function useGeolocation() {
         return 'denied'
       }
     } else {
-      // Web doesn't have permission status API
-      return navigator.geolocation ? 'granted' : 'denied'
+      // Web: Use Permissions API to check actual browser permission state
+      if (navigator.permissions) {
+        try {
+          const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
+          const status = result.state === 'granted' ? 'granted' :
+                         result.state === 'denied' ? 'denied' : 'prompt'
+          setState(prev => ({ ...prev, permissionStatus: status }))
+          return status
+        } catch {
+          // Permissions API not supported for geolocation in some browsers
+        }
+      }
+      // Fallback: we know the API exists but don't know permission state
+      return navigator.geolocation ? 'prompt' : 'denied'
     }
   }, [isNative])
 
@@ -205,10 +217,36 @@ export function useGeolocation() {
     })
   }, [])
 
-  // Check permissions on mount
+  // Check permissions on mount and auto-request if already granted
   useEffect(() => {
-    checkPermissions()
-  }, [checkPermissions])
+    checkPermissions().then(status => {
+      // If permission is already granted, auto-request coordinates
+      // (no prompt will be shown — just fetches location silently)
+      if (status === 'granted') {
+        requestLocation()
+      }
+    })
+
+    // Listen for permission changes (e.g. user revokes in browser settings)
+    if (!isNative && navigator.permissions) {
+      let cleanup: (() => void) | undefined
+      navigator.permissions.query({ name: 'geolocation' as PermissionName }).then(permStatus => {
+        const handler = () => {
+          const newStatus = permStatus.state === 'granted' ? 'granted' :
+                           permStatus.state === 'denied' ? 'denied' : 'prompt'
+          setState(prev => ({ ...prev, permissionStatus: newStatus }))
+          // Auto-request if just granted
+          if (newStatus === 'granted') requestLocation()
+          // Clear coords if revoked
+          if (newStatus === 'denied') setState(prev => ({ ...prev, coords: null }))
+        }
+        permStatus.addEventListener('change', handler)
+        cleanup = () => permStatus.removeEventListener('change', handler)
+      }).catch(() => { /* Permissions API not available */ })
+      return () => cleanup?.()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return {
     coords: state.coords,

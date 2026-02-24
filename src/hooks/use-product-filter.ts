@@ -77,7 +77,6 @@ export function useProductFilter({ products, nearbyProducts, latitude, longitude
   const [filterType, setFilterType] = useState<FilterType>('nearby')
   const [searchQuery, setSearchQuery] = useState('')
   const [nearbyRange, setNearbyRangeState] = useState(DEFAULT_NEARBY_RANGE_KM)
-  const [hasAutoFallback, setHasAutoFallback] = useState(false)
 
   // Sync range from localStorage + listen for changes
   useEffect(() => {
@@ -128,11 +127,12 @@ export function useProductFilter({ products, nearbyProducts, latitude, longitude
         result.sort((a, b) => b.createdAt - a.createdAt)
         break
       case 'nearby':
-        // If server returned results via nearbyProducts (which already applied distance limits),
-        // we use them directly. If undefined, we fallback to client-side math.
-        if (nearbyProducts !== undefined) {
+        // Use geospatial results if available and non-empty, otherwise fall back
+        // to client-side distance filtering using product store coordinates.
+        if (nearbyProducts && nearbyProducts.length > 0) {
           result = nearbyProducts as Product[]
-        } else {
+        } else if (latitude && longitude) {
+          // Client-side fallback: filter by store geoPoint distance
           result = result.filter((p) => {
             const distance = getDistance(p)
             return distance !== undefined && distance <= nearbyRange
@@ -140,6 +140,9 @@ export function useProductFilter({ products, nearbyProducts, latitude, longitude
           result.sort(
             (a, b) => (getDistance(a) || Infinity) - (getDistance(b) || Infinity)
           )
+        } else {
+          // No location available — show all products sorted by recency
+          result.sort((a, b) => b.createdAt - a.createdAt)
         }
         break
       case 'trending':
@@ -152,16 +155,10 @@ export function useProductFilter({ products, nearbyProducts, latitude, longitude
     }
 
     return result
-  }, [products, filterType, searchQuery, getDistance, nearbyRange])
+  }, [products, filterType, searchQuery, getDistance, nearbyRange, nearbyProducts, latitude, longitude])
 
-  // Auto-fallback: if "nearby" returns 0 results (no GPS or no products within range),
-  // automatically switch to "recent"
-  useEffect(() => {
-    if (filterType === 'nearby' && products && products.length > 0 && filteredProducts.length === 0 && !hasAutoFallback) {
-      setHasAutoFallback(true)
-      setFilterType('recent')
-    }
-  }, [filterType, products, filteredProducts.length, hasAutoFallback])
+  // Note: auto-fallback from 'nearby' to 'recent' was removed — the nearby filter
+  // now always shows products (sorted by distance when possible, by recency otherwise).
 
   /** Whether current filter uses card grid layout (recent, trending, nearby) vs strip list (all) */
   const useCardLayout = filterType !== 'all'
