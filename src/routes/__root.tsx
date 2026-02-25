@@ -49,7 +49,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     ],
     links: [
       { rel: 'icon', href: '/favicon.ico' },
-      { rel: 'manifest', href: '/manifest.json' },
+      { rel: 'manifest', href: '/api/manifest/json' },
       /* Inter Font from Google Fonts */
       { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
       { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },

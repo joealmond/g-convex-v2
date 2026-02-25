@@ -24,6 +24,7 @@ import { Route as StoreNameRouteImport } from './routes/store/$name'
 import { Route as ProductNameRouteImport } from './routes/product/$name'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as ApiManifestJsonRouteImport } from './routes/api/manifest.json'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const ProfileRoute = ProfileRouteImport.update({
@@ -100,6 +101,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiManifestJsonRoute = ApiManifestJsonRouteImport.update({
+  id: '/api/manifest/json',
+  path: '/api/manifest/json',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/product/$name': typeof ProductNameRoute
   '/store/$name': typeof StoreNameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/manifest/json': typeof ApiManifestJsonRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/product/$name': typeof ProductNameRoute
   '/store/$name': typeof StoreNameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/manifest/json': typeof ApiManifestJsonRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/product/$name': typeof ProductNameRoute
   '/store/$name': typeof StoreNameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/manifest/json': typeof ApiManifestJsonRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/product/$name'
     | '/store/$name'
     | '/api/auth/$'
+    | '/api/manifest/json'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/product/$name'
     | '/store/$name'
     | '/api/auth/$'
+    | '/api/manifest/json'
   id:
     | '__root__'
     | '/'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/product/$name'
     | '/store/$name'
     | '/api/auth/$'
+    | '/api/manifest/json'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -229,6 +241,7 @@ export interface RootRouteChildren {
   ProductNameRoute: typeof ProductNameRoute
   StoreNameRoute: typeof StoreNameRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiManifestJsonRoute: typeof ApiManifestJsonRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/manifest/json': {
+      id: '/api/manifest/json'
+      path: '/api/manifest/json'
+      fullPath: '/api/manifest/json'
+      preLoaderRoute: typeof ApiManifestJsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -377,6 +397,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductNameRoute: ProductNameRoute,
   StoreNameRoute: StoreNameRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiManifestJsonRoute: ApiManifestJsonRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
