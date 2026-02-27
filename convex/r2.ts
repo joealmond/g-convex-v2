@@ -1,7 +1,6 @@
-"use node";
-
 import { v } from 'convex/values'
 import { action } from './_generated/server'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 
 /**
  * Upload a file to Cloudflare R2 (server-side, Node.js runtime)
@@ -17,7 +16,6 @@ export const uploadToR2 = action({
     contentType: v.string(),
   },
   handler: async (_ctx, args) => {
-    const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3')
 
     const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID
     const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID
