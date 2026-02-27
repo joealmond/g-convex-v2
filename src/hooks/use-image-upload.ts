@@ -234,17 +234,32 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     setError(null)
 
     try {
-      const { uploadUrl, publicUrl } = await generateR2UploadUrl({
-        contentType: imageFile.type,
-      })
+      // Step 1: Get signed upload URL from Convex
+      let uploadUrl: string
+      let publicUrl: string
+      try {
+        const result = await generateR2UploadUrl({
+          contentType: imageFile.type,
+        })
+        uploadUrl = result.uploadUrl
+        publicUrl = result.publicUrl
+      } catch (err) {
+        logger.error('Step 1 failed — generateR2UploadUrl:', err)
+        throw new Error('Failed to generate upload URL. Check R2 configuration.')
+      }
 
-      const response = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': imageFile.type },
-        body: imageFile,
-      })
-
-      if (!response.ok) throw new Error('Failed to upload image to CDN')
+      // Step 2: Upload file directly to R2 via signed URL
+      try {
+        const response = await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': imageFile.type },
+          body: imageFile,
+        })
+        if (!response.ok) throw new Error(`R2 PUT failed: ${response.status} ${response.statusText}`)
+      } catch (err) {
+        logger.error('Step 2 failed — PUT to R2:', err)
+        throw new Error('Failed to upload image. Check R2 CORS settings.')
+      }
 
       setRealImageUrl(publicUrl)
       setStorageId('r2_upload')
