@@ -28,9 +28,14 @@ export const uploadToR2 = action({
       throw new Error("Missing Cloudflare R2 configuration")
     }
 
+    // 1. Initialize S3 client just for signing the URL
+    // We do NOT use s3.send(PutObjectCommand) because the AWS SDK's XML parser 
+    // crashes in Convex Edge runtime (missing DOMParser).
+    const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner')
     const s3 = new S3Client({
       region: 'auto',
       endpoint: R2_ENDPOINT ?? `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      forcePathStyle: true,
       credentials: {
         accessKeyId: R2_ACCESS_KEY_ID,
         secretAccessKey: R2_SECRET_ACCESS_KEY,
@@ -48,14 +53,41 @@ export const uploadToR2 = action({
       binaryData[i] = binaryString.charCodeAt(i)
     }
 
+    // 2. Generate a Pre-signed URL
     const command = new PutObjectCommand({
       Bucket: R2_BUCKET_NAME,
       Key: fileName,
       ContentType: args.contentType,
-      Body: binaryData,
+    })
+    
+    const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 })
+
+    // 3. Perform the actual PUT request from the Convex Server using native fetch.
+    // Ensure the signedUrl is strictly Path-Style (R2 requires this, and AWS SDK sometimes
+    // ignores forcePathStyle depending on the endpoint format).
+    let finalFetchUrl = signedUrl;
+    const urlObj = new URL(signedUrl);
+    
+    // If AWS SDK generated a Virtual Hosted-Style URL (e.g. bucket.account.r2.cloudflarestorage.com)
+    // we need to rewrite it to Path-Style (account.r2.cloudflarestorage.com/bucket)
+    if (urlObj.hostname.startsWith(`${R2_BUCKET_NAME}.`)) {
+        urlObj.hostname = urlObj.hostname.replace(`${R2_BUCKET_NAME}.`, '');
+        urlObj.pathname = `/${R2_BUCKET_NAME}${urlObj.pathname}`;
+        finalFetchUrl = urlObj.toString();
+    }
+
+    const response = await fetch(finalFetchUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": args.contentType,
+      },
+      body: binaryData,
     })
 
-    await s3.send(command)
+    if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Failed to upload to R2 via fetch: ${response.status} ${response.statusText}. Details: ${errorText}. URL: ${signedUrl}`)
+    }
 
     const publicUrl = `${R2_PUBLIC_URL.replace(/\/$/, '')}/${fileName}`
     return { publicUrl }
