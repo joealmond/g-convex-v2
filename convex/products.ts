@@ -266,6 +266,18 @@ export const update = authMutation({
 })
 
 /**
+ * Run an aggregate index operation, swallowing errors when the index is out of sync.
+ * DB records are the source of truth; aggregate cleanup is best-effort.
+ */
+async function safeAggregate(label: string, fn: () => Promise<void>) {
+  try {
+    await fn()
+  } catch (e) {
+    console.warn(`[deleteProduct] ${label}:`, e)
+  }
+}
+
+/**
  * Delete a product (admin only)
  */
 export const deleteProduct = adminMutation({
@@ -279,14 +291,14 @@ export const deleteProduct = adminMutation({
     
     for (const vote of votes) {
       await ctx.db.delete(vote._id)
-      await votesByProduct.delete(ctx, vote)
+      await safeAggregate(`vote ${vote._id}`, () => votesByProduct.delete(ctx, vote))
     }
 
     const docToDelete = await ctx.db.get(id)
     await ctx.db.delete(id)
     if (docToDelete) {
-      await productsAggregate.delete(ctx, docToDelete)
-      await productsGeo.remove(ctx, id)
+      await safeAggregate(`product ${id}`, () => productsAggregate.delete(ctx, docToDelete))
+      await safeAggregate(`geo ${id}`, () => productsGeo.remove(ctx, id))
     }
   },
 })
