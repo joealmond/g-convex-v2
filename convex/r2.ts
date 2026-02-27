@@ -41,8 +41,12 @@ export const uploadToR2 = action({
     const fileExtension = args.contentType.split('/')[1] || 'bin'
     const fileName = `${crypto.randomUUID()}.${fileExtension}`
 
-    // Decode base64 to binary (Node.js Buffer available with "use node")
-    const binaryData = Buffer.from(args.base64Data, 'base64')
+    // Decode base64 to binary (using web APIs, not Node.js Buffer)
+    const binaryString = atob(args.base64Data)
+    const binaryData = new Uint8Array(binaryString.length)
+    for (let i = 0; i < binaryString.length; i++) {
+      binaryData[i] = binaryString.charCodeAt(i)
+    }
 
     const command = new PutObjectCommand({
       Bucket: R2_BUCKET_NAME,
