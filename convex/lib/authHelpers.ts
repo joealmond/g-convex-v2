@@ -42,6 +42,7 @@
 
 import { authComponent } from '../auth'
 import { ADMIN_EMAILS } from './config'
+import { profilesAggregate } from '../aggregates'
 import type { QueryCtx, MutationCtx } from '../_generated/server'
 
 /** Context type for queries and mutations */
@@ -93,6 +94,9 @@ export async function requireAuth(ctx: AuthContext): Promise<AuthUser> {
  * 1. Email whitelist (ADMIN_EMAILS in config.ts)
  * 2. Role field on user record (role === 'admin')
  *
+ * Note: This does NOT include the first-user auto-admin check.
+ * Use requireAdmin() which includes that logic via profilesAggregate.
+ *
  * @param user - The user to check
  * @returns true if user is an admin
  */
@@ -108,14 +112,28 @@ export function isAdmin(user: AuthUser): boolean {
 /**
  * Require admin role. Throws if not an admin.
  *
+ * Checks (in order):
+ * 1. Email whitelist (ADMIN_EMAILS)
+ * 2. First-user auto-admin (profileCount <= 1)
+ * 3. Role field on user record (role === 'admin')
+ *
  * @param ctx - Convex query or mutation context
  * @returns The authenticated admin user
  * @throws Error if user is not authenticated or not an admin
  */
 export async function requireAdmin(ctx: AuthContext): Promise<AuthUser> {
   const user = await requireAuth(ctx)
-  if (!isAdmin(user)) {
-    throw new Error('Admin access required')
+
+  // Fast path: email whitelist or role field
+  if (isAdmin(user)) {
+    return user
   }
-  return user
+
+  // Auto-admin for first user (matches users.isAdmin query logic)
+  const profileCount = await profilesAggregate.count(ctx)
+  if (profileCount <= 1) {
+    return user
+  }
+
+  throw new Error('Admin access required')
 }
