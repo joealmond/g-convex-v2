@@ -269,7 +269,7 @@ export const update = authMutation({
  * Run an aggregate index operation, swallowing errors when the index is out of sync.
  * DB records are the source of truth; aggregate cleanup is best-effort.
  */
-async function safeAggregate(label: string, fn: () => Promise<void>) {
+async function safeAggregate(label: string, fn: () => Promise<unknown>) {
   try {
     await fn()
   } catch (e) {
