@@ -12,57 +12,6 @@ export const generateUploadUrl = authMutation({
   },
 })
 
-// Generate an upload URL for Cloudflare R2
-export const generateR2UploadUrl = publicAction({
-  args: {
-    contentType: v.string(),
-  },
-  handler: async (_ctx, args) => {
-    const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3')
-    const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner')
-
-    const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID
-    const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID
-    const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY
-    const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME
-    const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL
-    // Optional: override the S3 endpoint for regional buckets (e.g. EU jurisdiction)
-    // Set to e.g. "https://ACCOUNT_ID.eu.r2.cloudflarestorage.com"
-    const R2_ENDPOINT = process.env.R2_ENDPOINT
-
-    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET_NAME || !R2_PUBLIC_URL) {
-      throw new Error("Missing Cloudflare R2 configuration")
-    }
-
-    const s3 = new S3Client({
-      region: 'auto',
-      endpoint: R2_ENDPOINT ?? `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      credentials: {
-        accessKeyId: R2_ACCESS_KEY_ID,
-        secretAccessKey: R2_SECRET_ACCESS_KEY,
-      },
-    })
-
-    // Generate a unique filename using crypto.randomUUID()
-    const fileExtension = args.contentType.split('/')[1] || 'bin'
-    const fileName = `${crypto.randomUUID()}.${fileExtension}`
-
-    const command = new PutObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: fileName,
-      ContentType: args.contentType,
-    })
-
-    // URL expires in 1 hour
-    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 })
-    
-    // The public URL the file will have once uploaded
-    // Use the custom domain if configured (R2_PUBLIC_URL), otherwise default
-    const publicUrl = `${R2_PUBLIC_URL.replace(/\/$/, '')}/${fileName}`
-
-    return { uploadUrl, publicUrl }
-  },
-})
 
 // Save file metadata after upload
 export const saveFile = publicMutation({

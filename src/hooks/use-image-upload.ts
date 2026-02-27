@@ -72,7 +72,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
   }, [imagePreview])
 
   // Convex mutations / actions
-  const generateR2UploadUrl = useAction(api.files.generateR2UploadUrl)
+  const uploadToR2 = useAction(api.r2.uploadToR2)
   const analyzeImage = useAction(api.ai.analyzeImage)
   const createProductAndVote = useMutation(api.votes.createProductAndVote)
   const lookupBarcode = useAction(api.barcode.lookupBarcode)
@@ -234,32 +234,25 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     setError(null)
 
     try {
-      // Step 1: Get signed upload URL from Convex
-      let uploadUrl: string
-      let publicUrl: string
-      try {
-        const result = await generateR2UploadUrl({
-          contentType: imageFile.type,
-        })
-        uploadUrl = result.uploadUrl
-        publicUrl = result.publicUrl
-      } catch (err) {
-        logger.error('Step 1 failed — generateR2UploadUrl:', err)
-        throw new Error('Failed to generate upload URL. Check R2 configuration.')
-      }
+      // Convert file to base64 for server-side upload (bypasses iOS CORS issues)
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const result = reader.result as string
+          // Strip the data URL prefix (e.g. "data:image/webp;base64,")
+          const base64 = result.split(',')[1]
+          if (!base64) reject(new Error('Failed to convert image to base64'))
+          else resolve(base64)
+        }
+        reader.onerror = () => reject(new Error('Failed to read image file'))
+        reader.readAsDataURL(imageFile)
+      })
 
-      // Step 2: Upload file directly to R2 via signed URL
-      try {
-        const response = await fetch(uploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': imageFile.type },
-          body: imageFile,
-        })
-        if (!response.ok) throw new Error(`R2 PUT failed: ${response.status} ${response.statusText}`)
-      } catch (err) {
-        logger.error('Step 2 failed — PUT to R2:', err)
-        throw new Error('Failed to upload image. Check R2 CORS settings.')
-      }
+      // Upload to R2 via server-side Convex action (no CORS needed)
+      const { publicUrl } = await uploadToR2({
+        base64Data,
+        contentType: imageFile.type,
+      })
 
       setRealImageUrl(publicUrl)
       setStorageId('r2_upload')
@@ -290,7 +283,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
       setError(errorMessage)
       setStep('upload')
     }
-  }, [imageFile, generateR2UploadUrl, analyzeImage])
+  }, [imageFile, uploadToR2, analyzeImage])
 
   const resetDialog = useCallback(() => {
     if (imagePreview?.startsWith('blob:')) {
