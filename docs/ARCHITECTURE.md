@@ -105,3 +105,17 @@ Both are added to `trustedOrigins` in `convex/auth.ts` to allow auth from native
 3. **Offline-capable shell** — Mobile loads instantly from bundled assets
 4. **Real-time everywhere** — Convex WebSocket push works identically on web and mobile
 5. **No separate API** — Convex functions serve as both the API and the database layer
+
+## Architecture Edge Cases
+
+### Cloudflare R2 Integration on Capacitor
+When uploading to Cloudflare R2, mobile apps on Capacitor face strict CORS blocks because `WKWebView` uses the `capacitor://localhost` scheme.
+To solve this, uploads must be proxied through the server. Since Convex runs on Edge computing, the official `@aws-sdk/client-s3` package crashes (`DOMParser is not defined`).
+**The Architectural Pattern:**
+1. Action generates a presigned URL using `@aws-sdk/s3-request-presigner` (edge-safe).
+2. Action decodes base64 payload to binary.
+3. Action performs the HTTP `fetch` `PUT` request locally to bypass CORS and Edge SDK limitations.
+
+### Safe Aggregate Deletions
+Convex Aggregates (`@convex-dev/aggregate`) are highly scalable but can fall out of sync if records are manually deleted via the dashboard. If the app tries to delete a record that the aggregate already dropped, it throws `DELETE_MISSING_KEY`, crashing the transaction.
+**The Architectural Pattern:** Always wrap `aggregate.delete` calls in a utility function (`safeAggregateDelete`) that specifically catches and ignores `DELETE_MISSING_KEY` errors, ensuring the primary DB delete succeeds.

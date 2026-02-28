@@ -456,7 +456,15 @@ const { mutate } = useMutation(api.votes.cast, {
 
 ---
 
-## 🚨 Known Limitations
+## 🚨 Known Limitations & Workarounds
+
+### Cloudflare R2 Mobile (iOS Capacitor)
+**Problem**: Direct R2 uploads from Capacitor iOS fail due to CORS (`capacitor://localhost`). Server-side uploads crash with `DOMParser is not defined` when using `@aws-sdk/client-s3` in Convex Edge.
+**Solution**: Use a server-side proxy pattern. Send base64 images to a Convex action. Generate a presigned URL using *only* `@aws-sdk/s3-request-presigner` (which has no DOM dependencies), then use native server-side `fetch` to push the binary to R2 (`forcePathStyle: true` required).
+
+### Safe Aggregate Deletions (`DELETE_MISSING_KEY`)
+**Problem**: Deleting records via `aggregate.delete` can randomly throw `DELETE_MISSING_KEY` if indexes desync, crashing the whole mutation.
+**Solution**: Wrap `aggregate.delete` in a try/catch that specifically swallows `DELETE_MISSING_KEY` errors, allowing the primary record deletion to succeed.
 
 1. **Cloudflare Workers**: No Node.js APIs (use Web APIs)
 2. **Convex Actions**: For external API calls only (rate limited)

@@ -250,6 +250,14 @@ Standard shadcn/ui tokens (`bg-background`, `bg-card`, `bg-primary`, `text-foreg
 
 ### Known Issues & Workarounds
 
+#### Safe Aggregate Deletions (`DELETE_MISSING_KEY`)
+**Problem**: Delete mutations can randomly fail with `DELETE_MISSING_KEY` errors if an aggregate index is briefly out of sync or if a record was manually deleted from the dashboard.
+**Solution**: Never call `aggregate.delete(ctx, doc)` directly. Wrap it in a `try/catch` and safely suppress `DELETE_MISSING_KEY` errors so the primary mutation (e.g. deleting a product) succeeds regardless of aggregate sync state. Example implementation: `safeAggregateDelete` utility helper.
+
+#### Cloudflare R2 Uploads on iOS (Capacitor CORS)
+**Problem**: Direct client-side uploads to Cloudflare R2 using AWS SDK or presigned URLs fail on iOS due to CORS (WKWebView uses `capacitor://localhost`). Additionally, using `@aws-sdk/client-s3` inside a Convex Edge function crashes with `DOMParser is not defined`.
+**Solution**: Create a server-side `fetch` proxy in a Convex Edge action (`uploadToR2`). Use `@aws-sdk/s3-request-presigner` (which has no DOM dependencies) to generate a presigned URL server-side, then use native `fetch()` on the server to upload the base64 binary payload directly to R2. Ensure `forcePathStyle: true` is set, and manual URL pathname rewrites are done to prevent Cloudflare 404s.
+
 #### Circular Dependency in `convex/auth.ts` (Convex Push Failure)
 **Problem**: If `convex/auth.ts` imports from `convex/lib/customFunctions.ts` (e.g., `publicQuery`), it creates a **circular dependency** chain:
 ```
