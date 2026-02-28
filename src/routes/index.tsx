@@ -93,11 +93,29 @@ function HomePageContent() {
   const [sensitivityInitialized, setSensitivityInitialized] = useState(false)
 
   // Initialize sensitivity filters from user's dietary profile (once)
+  // Handles both new `avoidedAllergens` field and legacy `conditions` field
   useEffect(() => {
     if (sensitivityInitialized) return
     if (dietaryProfile === undefined) return // still loading
-    if (dietaryProfile?.avoidedAllergens) {
-      setActiveSensitivities(new Set(dietaryProfile.avoidedAllergens))
+    if (dietaryProfile) {
+      const allergenIds = new Set<string>()
+      // New field: avoidedAllergens = ['gluten', 'milk', ...]
+      if (dietaryProfile.avoidedAllergens && dietaryProfile.avoidedAllergens.length > 0) {
+        for (const a of dietaryProfile.avoidedAllergens) allergenIds.add(a)
+      }
+      // Legacy field: conditions = [{ type: 'celiac', severity: 3 }, ...]
+      // Map condition types → allergen IDs using same logic as backend migration
+      if (dietaryProfile.conditions && dietaryProfile.conditions.length > 0) {
+        const conditionMap: Record<string, string> = {
+          celiac: 'gluten', 'gluten-sensitive': 'gluten',
+          lactose: 'milk', soy: 'soy', nut: 'nuts',
+        }
+        for (const c of dietaryProfile.conditions) {
+          const mapped = conditionMap[c.type]
+          if (mapped) allergenIds.add(mapped)
+        }
+      }
+      if (allergenIds.size > 0) setActiveSensitivities(allergenIds)
     }
     setSensitivityInitialized(true)
   }, [dietaryProfile, sensitivityInitialized])
@@ -254,10 +272,10 @@ function HomePageContent() {
   }
 
   return (
-    <main className="flex-1 mx-auto px-2 sm:px-4 py-4 sm:py-6 max-w-7xl w-full">
-      {/* Search Bar + View Toggle — sticky at top on mobile, tighter spacing to sit just below notch */}
-      <div className="sticky top-[calc(env(safe-area-inset-top,0px))] md:top-[calc(env(safe-area-inset-top,0px)+3.5rem)] z-[40] bg-background -mx-2 px-2 sm:-mx-4 sm:px-4 pb-3">
-        <div className="flex items-center gap-2 pt-0.5">
+    <main className="flex-1 mx-auto px-2 sm:px-4 pb-4 sm:pb-6 max-w-7xl w-full">
+      {/* Search Bar + View Toggle — sticky, sits directly under the notch safe area */}
+      <div className="sticky top-0 md:top-[3.5rem] z-[40] bg-background -mx-2 px-2 sm:-mx-4 sm:px-4 pb-3">
+        <div className="flex items-center gap-2 pt-1">
           {/* Search Input */}
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
