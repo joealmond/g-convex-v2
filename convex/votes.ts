@@ -5,6 +5,7 @@ import { RateLimiter } from '@convex-dev/rate-limiter'
 import { isAdmin } from './lib/authHelpers'
 import { authMutation, publicQuery, publicMutation, internalQuery, internalMutation } from './lib/customFunctions'
 import { votesByProduct } from './aggregates'
+import { productsGeo } from './geospatial'
 import type { Id } from './_generated/dataModel'
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
@@ -156,8 +157,21 @@ export const cast = publicMutation({
     })
 
     // Trigger "new product near you" notifications if GPS provided
-    // This isn't strictly gamification, so it stays separate or can be moved to sideEffects later
+    // Also index the product geospatially if it doesn't have coordinates yet
     if (args.latitude !== undefined && args.longitude !== undefined && !existingVote) {
+      // Update product's geospatial index if it lacks coordinates
+      const product = await ctx.db.get(args.productId)
+      if (product && (product.latitude === undefined || product.longitude === undefined)) {
+        await ctx.db.patch(args.productId, {
+          latitude: args.latitude,
+          longitude: args.longitude,
+        })
+        await productsGeo.insert(ctx, args.productId, {
+          latitude: args.latitude,
+          longitude: args.longitude,
+        }, {})
+      }
+
       await ctx.scheduler.runAfter(0, internal.actions.nearbyProduct.notifyNearbyProduct, {
         productId: args.productId.toString(),
         productName: 'A product',
@@ -308,8 +322,19 @@ export const createProductAndVote = publicMutation({
       isEdit: false,
     })
 
-    // Trigger "new product near you" notifications if GPS provided
+    // Index product in geospatial index if GPS coordinates are provided
     if (args.latitude !== undefined && args.longitude !== undefined) {
+      // Also store lat/lng on the product document itself
+      await ctx.db.patch(productId, {
+        latitude: args.latitude,
+        longitude: args.longitude,
+      })
+      await productsGeo.insert(ctx, productId, {
+        latitude: args.latitude,
+        longitude: args.longitude,
+      }, {})
+
+      // Trigger "new product near you" notifications
       await ctx.scheduler.runAfter(0, internal.actions.nearbyProduct.notifyNearbyProduct, {
         productId: productId.toString(),
         productName: args.name,

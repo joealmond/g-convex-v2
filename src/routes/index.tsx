@@ -87,13 +87,15 @@ function HomePageContent() {
     if (typeof window !== 'undefined') setNearbyRange(getNearbyRange())
   }, [])
 
-  // ── Sensitivity filter state (defaults from user's dietary profile) ──
+  // ── Sensitivity filter state ──
+  // Default: the niche's primary allergen (gluten) is always ON.
+  // If user has a dietary profile, override with their saved preferences.
+  const nicheDefault = useMemo(() => new Set([appConfig.riskConcept]), [])
   const dietaryProfile = useQuery(api.dietaryProfiles.getUserProfile)
-  const [activeSensitivities, setActiveSensitivities] = useState<Set<string>>(new Set())
+  const [activeSensitivities, setActiveSensitivities] = useState<Set<string>>(nicheDefault)
   const [sensitivityInitialized, setSensitivityInitialized] = useState(false)
 
-  // Initialize sensitivity filters from user's dietary profile (once)
-  // Handles both new `avoidedAllergens` field and legacy `conditions` field
+  // Once dietary profile loads, override defaults with user's saved preferences
   useEffect(() => {
     if (sensitivityInitialized) return
     if (dietaryProfile === undefined) return // still loading
@@ -104,7 +106,6 @@ function HomePageContent() {
         for (const a of dietaryProfile.avoidedAllergens) allergenIds.add(a)
       }
       // Legacy field: conditions = [{ type: 'celiac', severity: 3 }, ...]
-      // Map condition types → allergen IDs using same logic as backend migration
       if (dietaryProfile.conditions && dietaryProfile.conditions.length > 0) {
         const conditionMap: Record<string, string> = {
           celiac: 'gluten', 'gluten-sensitive': 'gluten',
@@ -116,7 +117,9 @@ function HomePageContent() {
         }
       }
       if (allergenIds.size > 0) setActiveSensitivities(allergenIds)
+      // If profile exists but has no allergens, keep the niche default
     }
+    // null = user not logged in OR no dietary profile → keep nicheDefault
     setSensitivityInitialized(true)
   }, [dietaryProfile, sensitivityInitialized])
 

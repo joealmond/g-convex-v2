@@ -499,6 +499,73 @@ export const getPriceHistory = publicQuery({
 })
 
 /**
+ * One-time backfill: populate product latitude/longitude from votes or stores,
+ * and insert into the geospatial index.
+ * Safe to re-run — skips products that already have coordinates indexed.
+ * Run via: npx convex run products:backfillGeo
+ */
+export const backfillGeo = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query('products').collect()
+    let updated = 0
+
+    for (const product of products) {
+      // Skip products that already have coordinates
+      if (product.latitude !== undefined && product.longitude !== undefined) {
+        // Ensure they're in the geo index too
+        try {
+          await productsGeo.insert(ctx, product._id, {
+            latitude: product.latitude,
+            longitude: product.longitude,
+          }, {})
+        } catch {
+          // Already indexed — ignore
+        }
+        continue
+      }
+
+      // Try to get coordinates from store geoPoints
+      let lat: number | undefined
+      let lng: number | undefined
+
+      if (product.stores && product.stores.length > 0) {
+        for (const store of product.stores) {
+          if (store.geoPoint) {
+            lat = store.geoPoint.lat
+            lng = store.geoPoint.lng
+            break
+          }
+        }
+      }
+
+      // Fallback: check votes for this product
+      if (lat === undefined || lng === undefined) {
+        const vote = await ctx.db
+          .query('votes')
+          .withIndex('by_product', (q) => q.eq('productId', product._id))
+          .first()
+        if (vote?.latitude !== undefined && vote?.longitude !== undefined) {
+          lat = vote.latitude
+          lng = vote.longitude
+        }
+      }
+
+      if (lat !== undefined && lng !== undefined) {
+        await ctx.db.patch(product._id, { latitude: lat, longitude: lng })
+        await productsGeo.insert(ctx, product._id, {
+          latitude: lat,
+          longitude: lng,
+        }, {})
+        updated++
+      }
+    }
+
+    return { total: products.length, updated }
+  },
+})
+
+/**
  * Get nearby products using the Geospatial Index
  */
 export const getNearbyProducts = publicQuery({
