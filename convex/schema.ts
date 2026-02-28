@@ -139,13 +139,10 @@ export default defineSchema({
     .index('by_following', ['followingId'])
     .index('by_relationship', ['followerId', 'followingId']),
 
-  // Dietary Profiles - user dietary restrictions with severity levels
+  // Dietary Profiles - boolean allergen avoidance
   dietaryProfiles: defineTable({
     userId: v.string(), // Better Auth user._id is a string
-    conditions: v.array(v.object({
-      type: v.string(), // "celiac", "lactose", "gluten-sensitive", etc.
-      severity: v.number(), // 1-5 (1=mild, 5=severe)
-    })),
+    avoidedAllergens: v.array(v.string()), // e.g. ['gluten', 'milk', 'nuts']
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index('by_user', ['userId']),

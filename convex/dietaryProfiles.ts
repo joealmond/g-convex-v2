@@ -1,8 +1,9 @@
 /**
- * Dietary Profiles
+ * Dietary Profiles — Boolean Allergen Avoidance
  * 
- * Multi-condition dietary restrictions with per-condition severity levels.
- * Examples: Celiac-Severe (5), Lactose-Moderate (3)
+ * Users select which allergens they want to avoid (e.g., gluten, milk, nuts).
+ * Products declare which allergens they contain.
+ * Matching is a deterministic set intersection.
  */
 
 import { v } from 'convex/values'
@@ -11,8 +12,8 @@ import { requireAuth } from './lib/authHelpers'
 import { authMutation, publicQuery } from './lib/customFunctions'
 
 /**
- * Get user's dietary profile
- * Uses publicQuery instead of authQuery so it returns null during sign-out
+ * Get user's dietary profile (avoided allergens list)
+ * Uses publicQuery so it returns null during sign-out
  * rather than throwing "Authentication required"
  */
 export const getUserProfile = publicQuery({
@@ -31,23 +32,16 @@ export const getUserProfile = publicQuery({
 })
 
 /**
- * Update user's dietary profile
+ * Update user's dietary profile — set which allergens to avoid.
+ * Accepts a flat array of allergen IDs from appConfig.allergens.
  */
 export const updateProfile = authMutation({
   args: {
-    conditions: v.array(v.object({
-      type: v.string(),
-      severity: v.number(), // 1-5
-    })),
+    avoidedAllergens: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    
-    // Validate severity levels
-    for (const condition of args.conditions) {
-      if (condition.severity < 1 || condition.severity > 5) {
-        throw new Error('Severity must be between 1 and 5')
-      }
-    }
+    // Deduplicate and lowercase for consistency
+    const allergens = [...new Set(args.avoidedAllergens.map(a => a.toLowerCase()))]
     
     const existing = await ctx.db
       .query('dietaryProfiles')
@@ -58,14 +52,14 @@ export const updateProfile = authMutation({
     
     if (existing) {
       await ctx.db.patch(existing._id, {
-        conditions: args.conditions,
+        avoidedAllergens: allergens,
         updatedAt: now,
       })
       return existing._id
     } else {
       return await ctx.db.insert('dietaryProfiles', {
         userId: ctx.userId,
-        conditions: args.conditions,
+        avoidedAllergens: allergens,
         createdAt: now,
         updatedAt: now,
       })
@@ -74,42 +68,37 @@ export const updateProfile = authMutation({
 })
 
 /**
- * Get safety threshold for a user based on their dietary profile
- * Returns minimum safety score products must meet
- * 
- * Thresholds by severity:
- * 1 (Mild): 40
- * 2 (Low-Moderate): 50
- * 3 (Moderate): 60
- * 4 (High-Moderate): 70
- * 5 (Severe): 80
+ * Get user's avoided allergens list.
+ * Returns string[] — empty if no profile or not authenticated.
  */
-export const getSafetyThreshold = publicQuery({
-  args: { userId: v.optional(v.string()) },
-  handler: async (ctx, args) => {
-    const userId = args.userId || (await requireAuth(ctx))._id
-    
+export const getAvoidedAllergens = publicQuery({
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireAuth(ctx).catch(() => null)
+    if (!user) return []
+
     const profile = await ctx.db
       .query('dietaryProfiles')
-      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
       .first()
     
-    if (!profile || profile.conditions.length === 0) {
-      return 0 // No filtering
-    }
-    
-    // Use the highest severity (most restrictive)
-    const maxSeverity = Math.max(...profile.conditions.map(c => c.severity))
-    
-    // Map severity to threshold
-    const thresholds: Record<number, number> = {
-      1: 40,
-      2: 50,
-      3: 60,
-      4: 70,
-      5: 80,
-    }
-    
-    return thresholds[maxSeverity] || 0
+    return profile?.avoidedAllergens ?? []
   },
 })
+
+/**
+ * Pure utility: check if a product's allergens conflict with a user's avoided allergens.
+ * Returns the list of conflicting allergen IDs.
+ * 
+ * This is exported for use in tests and other modules.
+ */
+export function findAllergenConflicts(
+  productAllergens: string[] | undefined,
+  avoidedAllergens: string[],
+): string[] {
+  if (!productAllergens || productAllergens.length === 0) return []
+  if (avoidedAllergens.length === 0) return []
+  
+  const avoidedSet = new Set(avoidedAllergens.map(a => a.toLowerCase()))
+  return productAllergens.filter(a => avoidedSet.has(a.toLowerCase()))
+}

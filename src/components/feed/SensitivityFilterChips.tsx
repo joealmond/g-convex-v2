@@ -4,15 +4,15 @@ import { appConfig } from '@/lib/app-config'
 import { useTranslation } from '@/hooks/use-translation'
 
 interface SensitivityFilterChipsProps {
-  /** Set of active dietary restriction IDs (e.g. 'celiac', 'nut') */
+  /** Set of active allergen IDs to exclude (e.g. 'gluten', 'nuts') */
   activeFilters: Set<string>
-  /** Toggle a sensitivity filter on/off */
+  /** Toggle an allergen filter on/off */
   onToggle: (id: string) => void
 }
 
 /**
- * Multi-select emoji-based sensitivity filter chips.
- * One chip per dietary restriction defined in appConfig.
+ * Multi-select emoji-based allergen filter chips.
+ * One chip per allergen defined in appConfig.allergens.
  * Wraps to multiple lines on narrow screens.
  */
 export function SensitivityFilterChips({ activeFilters, onToggle }: SensitivityFilterChipsProps) {
@@ -20,12 +20,12 @@ export function SensitivityFilterChips({ activeFilters, onToggle }: SensitivityF
 
   return (
     <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('feed.sensitivityFilters')}>
-      {appConfig.dietaryRestrictions.map((restriction) => {
-        const isActive = activeFilters.has(restriction.id)
+      {appConfig.allergens.map((allergen) => {
+        const isActive = activeFilters.has(allergen.id)
         return (
           <motion.button
-            key={restriction.id}
-            onClick={() => onToggle(restriction.id)}
+            key={allergen.id}
+            onClick={() => onToggle(allergen.id)}
             className={cn(
               'rounded-full font-medium flex items-center justify-center',
               'min-h-[36px] min-w-[36px] px-2 text-lg',
@@ -35,11 +35,11 @@ export function SensitivityFilterChips({ activeFilters, onToggle }: SensitivityF
             )}
             whileTap={{ scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            aria-label={restriction.label}
+            aria-label={allergen.label}
             aria-pressed={isActive}
-            title={restriction.label}
+            title={allergen.label}
           >
-            <span className="leading-none">{restriction.emoji}</span>
+            <span className="leading-none">{allergen.emoji}</span>
           </motion.button>
         )
       })}

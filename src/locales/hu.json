@@ -313,19 +313,15 @@
   },
   "dietaryProfile": {
     "title": "Étrendi Preferenciák",
-    "description": "Állítsd be az étrendi korlátozásaidat és súlyosságukat a személyre szabott termékajánlásokhoz",
-    "selectConditions": "Válaszd ki az étrendi korlátozásaidat",
-    "severity": {
-      "label": "Súlyosság",
-      "mild": "Enyhe",
-      "lowModerate": "Kissé Mérsékelt",
-      "moderate": "Mérsékelt",
-      "highModerate": "Erősen Mérsékelt",
-      "severe": "Súlyos"
-    },
-    "threshold": "Minimális biztonsági pontszám",
-    "saved": "Étrendi preferenciák sikeresen mentve!",
+    "description": "Válaszd ki a kerülendő allergéneket. Az ezeket tartalmazó termékek meg lesznek jelölve.",
+    "saved": "Étrendi preferenciák mentve!",
     "saveFailed": "Étrendi preferenciák mentése sikertelen"
+  },
+  "allergens": {
+    "title": "Allergének",
+    "warningContains": "Ez a termék kerülendő allergéneket tartalmaz!",
+    "conflict": "Kerülendő allergéneket tartalmaz",
+    "none": "Nincs elérhető allergén információ"
   },
   "priceHistory": {
     "title": "Ártörténet",
@@ -652,25 +648,25 @@
     }
   },
   "dietary": {
-    "celiac": {
-      "label": "Cöliákia",
-      "description": "Súlyos gluténérzékenység, szigorú elkerülést igényel"
+    "gluten": {
+      "label": "Glutén",
+      "description": "Búza, árpa, rozs és származékaik"
     },
-    "gluten-sensitive": {
-      "label": "Gluténérzékeny",
-      "description": "Nem cöliákiás gluténérzékenység"
-    },
-    "lactose": {
-      "label": "Laktózérzékeny",
-      "description": "Tejtermékek emésztési nehézsége"
+    "milk": {
+      "label": "Tej",
+      "description": "Tehéntej és tejtermékek"
     },
     "soy": {
-      "label": "Szójaallergia",
-      "description": "Allergiás reakció szójatermékekre"
+      "label": "Szója",
+      "description": "Szójabab és szója alapú termékek"
     },
-    "nut": {
-      "label": "Dióféle allergia",
-      "description": "Allergiás reakció diófélékre"
+    "nuts": {
+      "label": "Diófélék",
+      "description": "Mandula, kesudió, dió stb."
+    },
+    "eggs": {
+      "label": "Tojás",
+      "description": "Csirketojás és származékai"
     }
   }
 }

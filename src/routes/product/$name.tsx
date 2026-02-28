@@ -26,7 +26,8 @@ import { useOnlineStatus } from '@/hooks/use-online-status'
 import { useHaptics } from '@/hooks/use-haptics'
 import { enqueue } from '@/lib/offline-queue'
 import { calculateVotePoints } from '@convex/lib/gamification'
-import { ArrowLeft, Edit, Flag } from 'lucide-react'
+import { findAllergenConflicts } from '@convex/dietaryProfiles'
+import { ArrowLeft, Edit, Flag, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 
 export const Route = createFileRoute('/product/$name')({
@@ -69,6 +70,12 @@ function ProductDetailContent() {
   const product = useQuery(api.products.getByName, { name: decodeURIComponent(name) })
   const user = useQuery(api.users.current)
   const castVote = useMutation(api.votes.cast)
+  const avoidedAllergens = useQuery(api.dietaryProfiles.getAvoidedAllergens) ?? []
+  
+  // Check allergen conflicts for this product
+  const allergenConflicts = product?.allergens
+    ? findAllergenConflicts(product.allergens, avoidedAllergens)
+    : []
   
   // Get all votes for this product (for All Votes tab)
   const allVotes = useQuery(
@@ -317,6 +324,42 @@ function ProductDetailContent() {
                     {ingredient}
                   </Badge>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Allergens */}
+        {product.allergens && product.allergens.length > 0 && (
+          <Card className={`shadow-card ${allergenConflicts.length > 0 ? 'border-safety-low' : ''}`}>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                {allergenConflicts.length > 0 && (
+                  <AlertTriangle className="h-5 w-5 text-safety-low" />
+                )}
+                {t('allergens.title')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {allergenConflicts.length > 0 && (
+                <p className="text-sm text-safety-low font-medium mb-3">
+                  {t('allergens.warningContains')}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {product.allergens.map((allergenId) => {
+                  const allergen = appConfig.allergens.find(a => a.id === allergenId)
+                  const isConflict = allergenConflicts.includes(allergenId)
+                  return (
+                    <Badge
+                      key={allergenId}
+                      variant={isConflict ? 'destructive' : 'secondary'}
+                      className="px-3 py-1 text-xs font-medium"
+                    >
+                      {allergen ? `${allergen.emoji} ${allergen.label}` : allergenId}
+                    </Badge>
+                  )
+                })}
               </div>
             </CardContent>
           </Card>

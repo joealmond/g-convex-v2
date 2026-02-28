@@ -160,53 +160,47 @@ export const appConfig = {
   certificationName: "celiac-safe",
   
   //////////////////////////////////////////////////////////////////////////////
-  // DIETARY RESTRICTIONS (Multi-condition profiles)
+  // ALLERGENS (Boolean avoidance list)
   //////////////////////////////////////////////////////////////////////////////
   
   /**
-   * Dietary restrictions with severity-based thresholds
-   * Each restriction has 5 thresholds (1=mild, 5=severe) mapping to minimum safety scores
+   * Allergen catalog — users toggle which ones they avoid.
+   * Products declare which allergens they contain.
+   * Matching is a simple set intersection: if product.allergens ∩ user.avoidedAllergens ≠ ∅ → warn/hide.
+   *
+   * Based on EU Annex II (14 mandatory allergens) and FDA Big 9.
+   * Starting minimal for gluten-free niche; extend by adding entries here.
    */
-  dietaryRestrictions: [
+  allergens: [
     {
-      id: "celiac",
-      label: "Celiac Disease",
+      id: "gluten",
+      label: "Gluten",
       emoji: "🌾",
-      description: "Severe gluten intolerance requiring strict avoidance",
-      thresholds: [40, 50, 60, 70, 80], // Severity 1-5
-      allergenKeywords: ["gluten"],
+      description: "Cereals containing gluten (wheat, rye, barley, oats)",
     },
     {
-      id: "gluten-sensitive",
-      label: "Gluten Sensitive",
-      emoji: "🍞",
-      description: "Non-celiac gluten sensitivity",
-      thresholds: [20, 35, 50, 65, 75], // Severity 1-5
-      allergenKeywords: ["gluten", "wheat"],
-    },
-    {
-      id: "lactose",
-      label: "Lactose Intolerant",
+      id: "milk",
+      label: "Milk & Dairy",
       emoji: "🥛",
-      description: "Difficulty digesting dairy products",
-      thresholds: [30, 45, 60, 75, 85], // Severity 1-5
-      allergenKeywords: ["milk", "lactose", "dairy"],
+      description: "Milk and products thereof, including lactose",
     },
     {
       id: "soy",
-      label: "Soy Allergy",
+      label: "Soy",
       emoji: "🫘",
-      description: "Allergic reaction to soy products",
-      thresholds: [40, 55, 65, 75, 85], // Severity 1-5
-      allergenKeywords: ["soy", "soybeans"],
+      description: "Soybeans and products thereof",
     },
     {
-      id: "nut",
-      label: "Nut Allergy",
+      id: "nuts",
+      label: "Nuts",
       emoji: "🥜",
-      description: "Allergic reaction to nuts",
-      thresholds: [50, 60, 70, 80, 90], // Severity 1-5 (high stakes)
-      allergenKeywords: ["nuts", "peanuts", "tree-nuts", "almonds", "cashews", "walnuts"],
+      description: "Tree nuts and peanuts",
+    },
+    {
+      id: "eggs",
+      label: "Eggs",
+      emoji: "🥚",
+      description: "Eggs and products thereof",
     },
   ],
   

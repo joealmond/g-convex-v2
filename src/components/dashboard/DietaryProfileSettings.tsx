@@ -7,15 +7,9 @@ import { useTranslation } from '@/hooks/use-translation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Slider } from '@/components/ui/slider'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
-
-interface DietaryCondition {
-  type: string
-  severity: number
-}
 
 interface DietaryProfileSettingsProps {
   /** Hide the Card wrapper and header (when embedded in a CollapsibleSection) */
@@ -28,41 +22,32 @@ export function DietaryProfileSettings({ hideHeader = false }: DietaryProfileSet
   const profile = useQuery(api.dietaryProfiles.getUserProfile, isAuthenticated ? {} : 'skip')
   const updateProfile = useMutation(api.dietaryProfiles.updateProfile)
   
-  const [selectedConditions, setSelectedConditions] = useState<Map<string, number>>(
-    new Map(profile?.conditions?.map(c => [c.type, c.severity]) ?? [])
-  )
+  const [avoidedAllergens, setAvoidedAllergens] = useState<Set<string>>(new Set())
   const [isSaving, setIsSaving] = useState(false)
 
   // Sync with server data when it loads
   useEffect(() => {
-    if (profile?.conditions) {
-      setSelectedConditions(new Map(profile.conditions.map(c => [c.type, c.severity])))
+    if (profile?.avoidedAllergens) {
+      setAvoidedAllergens(new Set(profile.avoidedAllergens))
     }
   }, [profile])
 
-  const handleToggleCondition = (conditionId: string) => {
-    const newMap = new Map(selectedConditions)
-    if (newMap.has(conditionId)) {
-      newMap.delete(conditionId)
-    } else {
-      newMap.set(conditionId, 3) // Default severity: moderate
-    }
-    setSelectedConditions(newMap)
-  }
-
-  const handleSeverityChange = (conditionId: string, severity: number) => {
-    const newMap = new Map(selectedConditions)
-    newMap.set(conditionId, severity)
-    setSelectedConditions(newMap)
+  const handleToggleAllergen = (allergenId: string) => {
+    setAvoidedAllergens(prev => {
+      const next = new Set(prev)
+      if (next.has(allergenId)) {
+        next.delete(allergenId)
+      } else {
+        next.add(allergenId)
+      }
+      return next
+    })
   }
 
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const conditions: DietaryCondition[] = Array.from(selectedConditions.entries())
-        .map(([type, severity]) => ({ type, severity }))
-      
-      await updateProfile({ conditions })
+      await updateProfile({ avoidedAllergens: [...avoidedAllergens] })
       toast.success(t('dietaryProfile.saved'))
     } catch (error) {
       logger.error('Failed to save dietary profile:', error)
@@ -72,65 +57,31 @@ export function DietaryProfileSettings({ hideHeader = false }: DietaryProfileSet
     }
   }
 
-  const severityLabels = [
-    t('dietaryProfile.severity.mild'), // 1
-    t('dietaryProfile.severity.lowModerate'), // 2
-    t('dietaryProfile.severity.moderate'), // 3
-    t('dietaryProfile.severity.highModerate'), // 4
-    t('dietaryProfile.severity.severe'), // 5
-  ]
-
   const content = (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {!hideHeader && (
         <p className="text-sm text-muted-foreground">{t('dietaryProfile.description')}</p>
       )}
-      {appConfig.dietaryRestrictions.map((restriction) => {
-        const isSelected = selectedConditions.has(restriction.id)
-        const severity = selectedConditions.get(restriction.id) ?? 3
+      {appConfig.allergens.map((allergen) => {
+        const isSelected = avoidedAllergens.has(allergen.id)
 
         return (
-          <div key={restriction.id} className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Checkbox
-                  id={restriction.id}
-                  checked={isSelected}
-                  onCheckedChange={() => handleToggleCondition(restriction.id)}
-                />
-                <Label htmlFor={restriction.id} className="flex items-center gap-2 cursor-pointer">
-                  <span className="text-2xl">{restriction.emoji}</span>
-                  <div>
-                    <div className="font-medium">{t(`dietary.${restriction.id}.label`)}</div>
-                    <div className="text-sm text-muted-foreground">{t(`dietary.${restriction.id}.description`)}</div>
-                  </div>
-                </Label>
+          <div key={allergen.id} className="flex items-center space-x-3">
+            <Checkbox
+              id={`allergen-${allergen.id}`}
+              checked={isSelected}
+              onCheckedChange={() => handleToggleAllergen(allergen.id)}
+            />
+            <Label
+              htmlFor={`allergen-${allergen.id}`}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <span className="text-2xl">{allergen.emoji}</span>
+              <div>
+                <div className="font-medium">{allergen.label}</div>
+                <div className="text-sm text-muted-foreground">{allergen.description}</div>
               </div>
-            </div>
-
-            {isSelected && (
-              <div className="ml-11 space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{t('dietaryProfile.severity.label')}</span>
-                  <span className="font-medium">{severityLabels[severity - 1]}</span>
-                </div>
-                <Slider
-                  value={[severity]}
-                  onValueChange={([value]) => value !== undefined && handleSeverityChange(restriction.id, value)}
-                  min={1}
-                  max={5}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{severityLabels[0]}</span>
-                  <span>{severityLabels[4]}</span>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {t('dietaryProfile.threshold')}: {restriction.thresholds[severity - 1]}+
-                </div>
-              </div>
-            )}
+            </Label>
           </div>
         )
       })}

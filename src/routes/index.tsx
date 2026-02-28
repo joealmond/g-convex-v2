@@ -15,7 +15,6 @@ import { useGeolocation } from '@/hooks/use-geolocation'
 import { useAdmin } from '@/hooks/use-admin'
 import { useTranslation } from '@/hooks/use-translation'
 import { getNearbyRange } from '@/hooks/use-product-filter'
-import { appConfig } from '@/lib/app-config'
 import { Loader2, Trophy, Flame, TrendingUp, Star, BarChart3, Grid3X3, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/types'
@@ -53,21 +52,11 @@ function HomePage() {
 }
 
 /**
- * Build the excludeAllergens array from active sensitivity filter IDs.
- * Maps each dietary restriction ID → its allergenKeywords from appConfig.
+ * With boolean allergens, the active sensitivity IDs are directly the allergen IDs.
+ * No mapping needed — just return them as an array.
  */
 function buildExcludeAllergens(activeSensitivities: Set<string>): string[] {
-  if (activeSensitivities.size === 0) return []
-  const allergens = new Set<string>()
-  for (const id of activeSensitivities) {
-    const restriction = appConfig.dietaryRestrictions.find((r) => r.id === id)
-    if (restriction?.allergenKeywords) {
-      for (const kw of restriction.allergenKeywords) {
-        allergens.add(kw.toLowerCase())
-      }
-    }
-  }
-  return Array.from(allergens)
+  return Array.from(activeSensitivities)
 }
 
 function HomePageContent() {
@@ -107,8 +96,8 @@ function HomePageContent() {
   useEffect(() => {
     if (sensitivityInitialized) return
     if (dietaryProfile === undefined) return // still loading
-    if (dietaryProfile?.conditions) {
-      setActiveSensitivities(new Set(dietaryProfile.conditions.map((c) => c.type)))
+    if (dietaryProfile?.avoidedAllergens) {
+      setActiveSensitivities(new Set(dietaryProfile.avoidedAllergens))
     }
     setSensitivityInitialized(true)
   }, [dietaryProfile, sensitivityInitialized])
@@ -380,6 +369,7 @@ function HomePageContent() {
                     product={product}
                     distanceKm={isNearbyMode ? getDistance(product) : undefined}
                     isAdmin={isAdmin}
+                    avoidedAllergens={excludeAllergens}
                   />
                 </div>
               ))}

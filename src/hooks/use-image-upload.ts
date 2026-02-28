@@ -50,6 +50,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
   const [taste, setTaste] = useState(50)
   const [price, setPrice] = useState<number | undefined>(undefined)
   const [storeName, setStoreName] = useState('')
+  const [allergens, setAllergens] = useState<string[]>([])
   const [fineTuneOpen, setFineTuneOpen] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -275,6 +276,10 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
         setProductName(result.analysis.productName)
         setSafety(result.analysis.safety)
         setTaste(result.analysis.taste)
+        // Extract allergens from AI analysis
+        if (result.analysis.containsGluten) {
+          setAllergens(prev => [...new Set([...prev, 'gluten'])])
+        }
       }
       setRealImageUrl(result.imageUrl || null)
       setStep('review')
@@ -300,6 +305,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     setTaste(50)
     setPrice(undefined)
     setStoreName('')
+    setAllergens([])
     setFineTuneOpen(false)
     setError(null)
   }, [imagePreview])
@@ -333,6 +339,10 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
         if (result.productData.imageUrl) {
           setRealImageUrl(result.productData.imageUrl)
           setImagePreview(result.productData.imageUrl)
+        }
+        // Store allergens from barcode lookup
+        if (result.productData.allergens?.length) {
+          setAllergens(result.productData.allergens.map((a: string) => a.toLowerCase()))
         }
         setStep('review')
         return
@@ -370,6 +380,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
         latitude: coords?.latitude,
         longitude: coords?.longitude,
         ingredients: analysis?.tags,
+        allergens: allergens.length > 0 ? allergens : undefined,
         aiAnalysis: analysis ?? undefined,
       })
 
@@ -391,7 +402,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
       setError(msg)
       setStep('review')
     }
-  }, [storageId, productName, anonId, safety, taste, price, storeName, analysis, realImageUrl, coords, createProductAndVote, onSuccess, resetDialog, t])
+  }, [storageId, productName, anonId, safety, taste, price, storeName, allergens, analysis, realImageUrl, coords, createProductAndVote, onSuccess, resetDialog, t])
 
   const handleSaveAsDraft = useCallback(() => submitProduct({ isDraft: true }), [submitProduct])
   const handleSubmit = useCallback(() => submitProduct({ isDraft: false }), [submitProduct])

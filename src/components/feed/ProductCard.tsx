@@ -3,14 +3,17 @@ import { motion } from 'framer-motion'
 import { type Product, getQuadrant, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
-import { MapPin, Trash2 } from 'lucide-react'
+import { MapPin, Trash2, AlertTriangle } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
 import { formatDistance } from '@/lib/format-distance'
+import { findAllergenConflicts } from '@convex/dietaryProfiles'
 
 interface ProductCardProps {
   product: Product
   distanceKm?: number
   isAdmin?: boolean
+  /** User's avoided allergen IDs — used to show warning indicator */
+  avoidedAllergens?: string[]
 }
 
 /**
@@ -22,8 +25,12 @@ interface ProductCardProps {
  * - Quadrant badge
  * - Tappable to product detail
  */
-export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) {
+export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [] }: ProductCardProps) {
   const { t } = useTranslation()
+  
+  // Check for allergen conflicts
+  const allergenConflicts = findAllergenConflicts(product.allergens, avoidedAllergens)
+  
   // Determine safety score color
   const getSafetyColor = (score: number) => {
     if (score >= 60) return 'bg-safety-high' // Green
@@ -107,6 +114,16 @@ export function ProductCard({ product, distanceKm, isAdmin }: ProductCardProps) 
               title="Has location data"
             >
               <MapPin className="h-3 w-3" />
+            </div>
+          )}
+
+          {/* Allergen Warning (bottom-right) */}
+          {allergenConflicts.length > 0 && (
+            <div 
+              className="absolute bottom-2 right-2 z-10 bg-safety-low text-white p-1 rounded-full shadow-sm"
+              title={t('allergens.conflict')}
+            >
+              <AlertTriangle className="h-3 w-3" />
             </div>
           )}
         </div>

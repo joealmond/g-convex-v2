@@ -313,19 +313,15 @@
   },
   "dietaryProfile": {
     "title": "Dietary Preferences",
-    "description": "Set your dietary restrictions and severity levels to get personalized product recommendations",
-    "selectConditions": "Select your dietary restrictions",
-    "severity": {
-      "label": "Severity",
-      "mild": "Mild",
-      "lowModerate": "Low-Moderate",
-      "moderate": "Moderate",
-      "highModerate": "High-Moderate",
-      "severe": "Severe"
-    },
-    "threshold": "Minimum safety score",
-    "saved": "Dietary preferences saved successfully!",
+    "description": "Select allergens you want to avoid. Products containing these will be flagged.",
+    "saved": "Dietary preferences saved!",
     "saveFailed": "Failed to save dietary preferences"
+  },
+  "allergens": {
+    "title": "Allergens",
+    "warningContains": "This product contains allergens you avoid!",
+    "conflict": "Contains allergens you avoid",
+    "none": "No allergen information available"
   },
   "priceHistory": {
     "title": "Price History",
@@ -652,25 +648,25 @@
     }
   },
   "dietary": {
-    "celiac": {
-      "label": "Celiac Disease",
-      "description": "Severe gluten intolerance requiring strict avoidance"
+    "gluten": {
+      "label": "Gluten",
+      "description": "Wheat, barley, rye, and derivatives"
     },
-    "gluten-sensitive": {
-      "label": "Gluten Sensitive",
-      "description": "Non-celiac gluten sensitivity"
-    },
-    "lactose": {
-      "label": "Lactose Intolerant",
-      "description": "Difficulty digesting dairy products"
+    "milk": {
+      "label": "Milk",
+      "description": "Cow's milk and dairy products"
     },
     "soy": {
-      "label": "Soy Allergy",
-      "description": "Allergic reaction to soy products"
+      "label": "Soy",
+      "description": "Soybeans and soy-derived products"
     },
-    "nut": {
-      "label": "Nut Allergy",
-      "description": "Allergic reaction to nuts"
+    "nuts": {
+      "label": "Tree Nuts",
+      "description": "Almonds, cashews, walnuts, etc."
+    },
+    "eggs": {
+      "label": "Eggs",
+      "description": "Chicken eggs and derivatives"
     }
   }
 }

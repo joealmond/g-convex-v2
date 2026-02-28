@@ -191,6 +191,8 @@ export const createProductAndVote = publicMutation({
     longitude: v.optional(v.number()),
     currency: v.optional(v.string()),
     purchaseLocation: v.optional(v.string()),
+    // Allergens detected from barcode or AI
+    allergens: v.optional(v.array(v.string())),
     // AI analysis data (optional)
     aiAnalysis: v.optional(v.object({
       productName: v.string(),
@@ -239,6 +241,15 @@ export const createProductAndVote = publicMutation({
 
     const now = Date.now()
 
+    // Merge allergens from barcode/user input + AI analysis
+    const mergedAllergens = new Set<string>(
+      (args.allergens ?? []).map(a => a.toLowerCase())
+    )
+    if (args.aiAnalysis?.containsGluten) {
+      mergedAllergens.add('gluten')
+    }
+    const allergens = mergedAllergens.size > 0 ? [...mergedAllergens] : undefined
+
     // Create the product
     const productId = await ctx.db.insert('products', {
       name: args.name,
@@ -246,6 +257,7 @@ export const createProductAndVote = publicMutation({
       imageStorageId: args.imageStorageId,
       backImageUrl: args.backImageUrl,
       ingredients: args.ingredients ?? args.aiAnalysis?.tags,
+      allergens,
       averageSafety: args.safety,
       averageTaste: args.taste,
       avgPrice: args.price,

@@ -456,13 +456,13 @@ function ProfileContent() {
           title={t('dietaryProfile.title')}
           icon={<UtensilsCrossed className="h-4 w-4 text-primary" />}
           preview={
-            dietaryProfile?.conditions && dietaryProfile.conditions.length > 0 ? (
+            dietaryProfile?.avoidedAllergens && dietaryProfile.avoidedAllergens.length > 0 ? (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                {dietaryProfile.conditions.map((c) => {
-                  const restriction = appConfig.dietaryRestrictions.find(r => r.id === c.type)
-                  return restriction ? (
-                    <span key={c.type} className="flex items-center gap-0.5" title={restriction.label}>
-                      <span>{restriction.emoji}</span>
+                {dietaryProfile.avoidedAllergens.map((allergenId) => {
+                  const allergen = appConfig.allergens.find(a => a.id === allergenId)
+                  return allergen ? (
+                    <span key={allergenId} className="flex items-center gap-0.5" title={allergen.label}>
+                      <span>{allergen.emoji}</span>
                     </span>
                   ) : null
                 })}
