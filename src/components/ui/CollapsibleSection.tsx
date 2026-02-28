@@ -1,4 +1,4 @@
-import { type ReactNode, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -23,19 +23,22 @@ export function CollapsibleSection({
 }: CollapsibleSectionProps) {
   const [open, setOpen] = useState(defaultOpen)
   const containerRef = useRef<HTMLDivElement>(null)
+  const shouldScrollRef = useRef(false)
 
   const handleToggle = () => {
     setOpen((prev) => {
-      const willOpen = !prev
-      if (willOpen) {
-        // Scroll the section header to top after the animation starts
-        requestAnimationFrame(() => {
-          containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        })
-      }
-      return willOpen
+      if (!prev) shouldScrollRef.current = true
+      return !prev
     })
   }
+
+  /** Called by Framer Motion when the expand animation finishes */
+  const handleAnimationComplete = useCallback(() => {
+    if (shouldScrollRef.current) {
+      shouldScrollRef.current = false
+      containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [])
 
   return (
     <div ref={containerRef} className={cn('border border-border rounded-2xl overflow-hidden scroll-mt-3', className)}>
@@ -71,6 +74,7 @@ export function CollapsibleSection({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
+            onAnimationComplete={handleAnimationComplete}
             className="overflow-hidden"
           >
             <div className="border-t border-border">
