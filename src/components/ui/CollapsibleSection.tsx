@@ -23,25 +23,54 @@ export function CollapsibleSection({
 }: CollapsibleSectionProps) {
   const [open, setOpen] = useState(defaultOpen)
   const containerRef = useRef<HTMLDivElement>(null)
-  const shouldScrollRef = useRef(false)
+  const bodyRef = useRef<HTMLDivElement>(null)
+  // Track which scroll action to perform after animation: 'open' | 'close' | null
+  const scrollActionRef = useRef<'open' | 'close' | null>(null)
+  const collapsedHeightRef = useRef(0)
 
   const handleToggle = () => {
     setOpen((prev) => {
-      if (!prev) shouldScrollRef.current = true
+      if (!prev) {
+        // Opening
+        scrollActionRef.current = 'open'
+      } else {
+        // Closing — capture body height before animation starts
+        if (bodyRef.current) {
+          collapsedHeightRef.current = bodyRef.current.offsetHeight
+        }
+        scrollActionRef.current = 'close'
+      }
       return !prev
     })
   }
 
-  /** Called by Framer Motion when the expand animation finishes */
+  /** Called by Framer Motion when expand/collapse animation finishes */
   const handleAnimationComplete = useCallback(() => {
-    if (shouldScrollRef.current) {
-      shouldScrollRef.current = false
+    const action = scrollActionRef.current
+    if (!action) return
+    scrollActionRef.current = null
+
+    if (action === 'open') {
       containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } else if (action === 'close') {
+      // The body shrank during the animation — scroll up to compensate
+      // so the sections below don't appear to jump.
+      // Cap at usable viewport height (minus ~120px for safe areas + bottom tabs).
+      const removed = collapsedHeightRef.current
+      if (removed > 0) {
+        const usable = window.innerHeight - 120
+        const amount = Math.min(removed, usable)
+        window.scrollBy({ top: -amount, behavior: 'smooth' })
+      }
     }
   }, [])
 
   return (
-    <div ref={containerRef} className={cn('border border-border rounded-2xl overflow-hidden scroll-mt-3', className)}>
+    <div
+      ref={containerRef}
+      className={cn('border border-border rounded-2xl overflow-hidden', className)}
+      style={{ scrollMarginTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
+    >
       {/* Header — always visible, toggles open/closed */}
       <button
         type="button"
@@ -70,6 +99,7 @@ export function CollapsibleSection({
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
+            ref={bodyRef}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}

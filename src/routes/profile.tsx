@@ -306,7 +306,7 @@ function ProfileContent() {
   return (
     <div className="flex-1 flex flex-col bg-background">
       {/* Mobile-first profile layout */}
-      <div className="max-w-3xl mx-auto w-full px-4 py-3 space-y-4">
+      <div className="max-w-3xl mx-auto w-full px-4 py-3 pb-[60vh] space-y-4">
 
         {/* User Header Card */}
         <Card className="rounded-2xl shadow-sm">
