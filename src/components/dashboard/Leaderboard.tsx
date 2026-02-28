@@ -11,13 +11,15 @@ import { useTranslation } from '@/hooks/use-translation'
 interface LeaderboardProps {
   limit?: number
   showFullRanks?: boolean
+  /** Hide the Card wrapper and header (when embedded in a CollapsibleSection) */
+  hideHeader?: boolean
 }
 
 /**
  * Leaderboard component showing top contributors
  * Can be embedded or shown as full page
  */
-export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardProps) {
+export function Leaderboard({ limit = 10, showFullRanks = false, hideHeader = false }: LeaderboardProps) {
   const { t } = useTranslation()
   const leaderboardResult = useQuery(api.profiles.leaderboard, { limit })
   const currentUser = useQuery(api.users.current)
@@ -28,18 +30,20 @@ export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardPr
     : undefined
 
   if (!leaderboard || leaderboard.length === 0) {
+    const emptyContent = (
+      <div className="text-center py-8 text-muted-foreground">
+        <Trophy className="h-12 w-12 mx-auto mb-3 opacity-50" />
+        <p>{t('leaderboard.noRankings')}</p>
+      </div>
+    )
+    if (hideHeader) return emptyContent
     return (
       <Card>
         <CardHeader>
           <CardTitle>{t('leaderboard.title')}</CardTitle>
           <CardDescription>{t('leaderboard.topContributors')}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <Trophy className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>{t('leaderboard.noRankings')}</p>
-          </div>
-        </CardContent>
+        <CardContent>{emptyContent}</CardContent>
       </Card>
     )
   }
@@ -63,17 +67,10 @@ export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardPr
     return 'outline'
   }
 
-  return (
-    <Card>
-      <CardHeader className="pb-2 sm:pb-4">
-        <CardTitle className="text-base sm:text-lg">{t('leaderboard.title')}</CardTitle>
-        <CardDescription className="text-xs sm:text-sm">
-          {t('leaderboard.topNContributors', { count: limit })}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="px-3 sm:px-6">
-        <div className="space-y-2 sm:space-y-3">
-          {leaderboard.map((entry, index) => {
+  const listContent = (
+    <>
+      <div className="space-y-2 sm:space-y-3">
+        {leaderboard.map((entry, index) => {
             const rank = index + 1
             const isTopThree = rank <= 3
 
@@ -156,7 +153,22 @@ export function Leaderboard({ limit = 10, showFullRanks = false }: LeaderboardPr
             </Link>
           </div>
         )}
-      </CardContent>
+    </>
+  )
+
+  if (hideHeader) {
+    return listContent
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-2 sm:pb-4">
+        <CardTitle className="text-base sm:text-lg">{t('leaderboard.title')}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
+          {t('leaderboard.topNContributors', { count: limit })}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="px-3 sm:px-6">{listContent}</CardContent>
     </Card>
   )
 }

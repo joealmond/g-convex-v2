@@ -5,21 +5,24 @@ import { Suspense, useEffect, useMemo, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Trophy, Flame, Star, Users, TrendingUp, Moon, Sun, Monitor, Settings, Languages, Loader2 } from 'lucide-react'
+import { Trophy, Flame, Star, Users, TrendingUp, Moon, Sun, Monitor, Settings, Languages, Loader2, Clock, UtensilsCrossed, MapPin, Radar, Award } from 'lucide-react'
 import { LanguageSelector } from '@/components/profile/LanguageSelector'
 import { getUserLevel, appConfig } from '@/lib/app-config'
+import { BADGES } from '@convex/lib/gamification'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { BadgeDisplay } from '@/components/dashboard/BadgeDisplay'
 import { DietaryProfileSettings } from '@/components/dashboard/DietaryProfileSettings'
 import { Leaderboard } from '@/components/dashboard/Leaderboard'
 import { ProfileSettings } from '@/components/profile/ProfileSettings'
 import { ProfileActivityFeed } from '@/components/profile/ProfileActivityFeed'
+import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
 import { useTranslation } from '@/hooks/use-translation'
 import { useGeolocation, useTheme } from '@/hooks'
 import { useConvexAuth } from '@convex-dev/react-query'
 import { authClient } from '@/lib/auth-client'
 import { isNative } from '@/lib/platform'
 import { getNearbyRange } from '@/hooks/use-product-filter'
+import { formatRelativeTimeI18n } from '@/lib/format-time'
 
 
 export const Route = createFileRoute('/profile')({
@@ -221,6 +224,8 @@ function ProfileContent() {
     api.follows.getCounts,
     user ? { userId: user._id } : 'skip'
   )
+  const leaderboardResult = useQuery(api.profiles.leaderboard, { limit: 3 })
+  const dietaryProfile = useQuery(api.dietaryProfiles.getUserProfile, {})
   const { coords, loading: geoLoading, requestLocation, permissionStatus } = useGeolocation()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const { isLoading: isAuthLoading } = useConvexAuth()
@@ -346,97 +351,224 @@ function ProfileContent() {
           </CardContent>
         </Card>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <StatsCard
-            title={t('gamification.points')}
-            value={points}
-            icon={<Trophy className="h-5 w-5 text-amber-500" />}
-          />
-          <StatsCard
-            title={t('gamification.streak')}
-            value={`${currentStreak}d`}
-            icon={<Flame className="h-5 w-5 text-orange-500" />}
-          />
-          <StatsCard
-            title={t('common.votes')}
-            value={totalVotes}
-            icon={<TrendingUp className="h-5 w-5 text-primary" />}
-          />
-          <StatsCard
-            title={t('profile.products')}
-            value={myProductsList.length}
-            icon={<Star className="h-5 w-5 text-primary" />}
-          />
-          <StatsCard
-            title={t('profile.followers')}
-            value={followCounts?.followers ?? 0}
-            icon={<Users className="h-5 w-5 text-primary" />}
-          />
-          <StatsCard
-            title={t('profile.following')}
-            value={followCounts?.following ?? 0}
-            icon={<Users className="h-5 w-5 text-primary" />}
-          />
-        </div>
-
-        {/* Badges Section */}
-        <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3">{t('gamification.badges')}</h2>
-          <BadgeDisplay earnedBadgeIds={earnedBadges} />
-        </div>
-
-        {/* Leaderboard Section (moved from dedicated tab) */}
-        <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-amber-500" />
-            {t('profile.leaderboardSection')}
-          </h2>
-          <Leaderboard />
-        </div>
-
-        {/* Dietary Preferences Section */}
-        <div>
-          <DietaryProfileSettings />
-        </div>
-
-        {/* Settings Section — contains functionality from TopBar (hidden on mobile) */}
-        <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Settings className="h-5 w-5 text-muted-foreground" />
-            {t('profile.settings')}
-          </h2>
-          <Card className="rounded-2xl shadow-sm">
-            <CardContent className="p-0 divide-y divide-border">
-              <ProfileSettings
-                coords={coords}
-                geoLoading={geoLoading}
-                requestLocation={requestLocation}
-                permissionStatus={permissionStatus}
-                nearbyRangeKm={nearbyRangeKm}
-                onNearbyRangeChange={setNearbyRangeKm}
-                locale={locale}
-                setLocale={setLocale}
-                cycleTheme={cycleTheme}
-                themeLabel={themeLabel}
-                ThemeIcon={ThemeIcon}
-                onSignOut={handleSignOut}
-                t={t}
+        {/* 1. My Stats */}
+        <CollapsibleSection
+          title={t('profile.myStats')}
+          icon={<TrendingUp className="h-4 w-4 text-primary" />}
+          preview={
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Trophy className="h-3.5 w-3.5 text-amber-500" />
+                <span className="font-medium text-foreground">{points}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <Flame className="h-3.5 w-3.5 text-orange-500" />
+                <span className="font-medium text-foreground">{currentStreak}d</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                <span className="font-medium text-foreground">{totalVotes}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <Star className="h-3.5 w-3.5 text-primary" />
+                <span className="font-medium text-foreground">{myProductsList.length}</span>
+              </span>
+            </div>
+          }
+        >
+          <div className="p-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <StatsCard
+                title={t('gamification.points')}
+                value={points}
+                icon={<Trophy className="h-5 w-5 text-amber-500" />}
               />
-            </CardContent>
-          </Card>
-        </div>
+              <StatsCard
+                title={t('gamification.streak')}
+                value={`${currentStreak}d`}
+                icon={<Flame className="h-5 w-5 text-orange-500" />}
+              />
+              <StatsCard
+                title={t('common.votes')}
+                value={totalVotes}
+                icon={<TrendingUp className="h-5 w-5 text-primary" />}
+              />
+              <StatsCard
+                title={t('profile.products')}
+                value={myProductsList.length}
+                icon={<Star className="h-5 w-5 text-primary" />}
+              />
+              <StatsCard
+                title={t('profile.followers')}
+                value={followCounts?.followers ?? 0}
+                icon={<Users className="h-5 w-5 text-primary" />}
+              />
+              <StatsCard
+                title={t('profile.following')}
+                value={followCounts?.following ?? 0}
+                icon={<Users className="h-5 w-5 text-primary" />}
+              />
+            </div>
+          </div>
+        </CollapsibleSection>
 
-        {/* Contributions Feed */}
-        <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3">{t('profile.recentActivity')}</h2>
-          <ProfileActivityFeed
-            activities={activities}
-            products={myProductsList}
-            locale={locale}
-            t={t}
-          />
-        </div>
+        {/* 2. Recent Activity */}
+        <CollapsibleSection
+          title={t('profile.recentActivity')}
+          icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+          preview={(() => {
+            const latest = activities[0]
+            if (!latest) return undefined
+            const productName = latest.type === 'product'
+              ? (latest.data as { name?: string }).name
+              : myProductsList.find(p => p._id === latest.productId)?.name
+            return (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
+                {latest.type === 'vote' ? (
+                  <TrendingUp className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                ) : (
+                  <Star className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                )}
+                <span className="truncate">
+                  {latest.type === 'vote'
+                    ? `${t('profile.votedOn')} ${productName ?? '...'}`
+                    : `${t('profile.added')} ${productName ?? '...'}`}
+                </span>
+                <span className="flex-shrink-0">· {formatRelativeTimeI18n(latest.timestamp, t)}</span>
+              </div>
+            )
+          })()}
+        >
+          <div className="p-3">
+            <ProfileActivityFeed
+              activities={activities}
+              products={myProductsList}
+              locale={locale}
+              t={t}
+            />
+          </div>
+        </CollapsibleSection>
+
+        {/* 3. Dietary Preferences */}
+        <CollapsibleSection
+          title={t('dietaryProfile.title')}
+          icon={<UtensilsCrossed className="h-4 w-4 text-primary" />}
+          preview={
+            dietaryProfile?.conditions && dietaryProfile.conditions.length > 0 ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                {dietaryProfile.conditions.map((c) => {
+                  const restriction = appConfig.dietaryRestrictions.find(r => r.id === c.type)
+                  return restriction ? (
+                    <span key={c.type} className="flex items-center gap-0.5" title={restriction.label}>
+                      <span>{restriction.emoji}</span>
+                    </span>
+                  ) : null
+                })}
+              </div>
+            ) : undefined
+          }
+        >
+          <div className="p-3">
+            <DietaryProfileSettings hideHeader />
+          </div>
+        </CollapsibleSection>
+
+        {/* 4. Settings */}
+        <CollapsibleSection
+          title={t('profile.settings')}
+          icon={<Settings className="h-4 w-4 text-muted-foreground" />}
+          preview={
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              {coords ? (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3.5 w-3.5 text-blue-500" />
+                  <span className="font-medium text-foreground">{t('profile.locationOn')}</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>{t('profile.locationOff')}</span>
+                </span>
+              )}
+              <span className="flex items-center gap-1">
+                <Radar className="h-3.5 w-3.5 text-primary" />
+                <span className="font-medium text-foreground">{nearbyRangeKm} km</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <ThemeIcon className="h-3.5 w-3.5" />
+                <span>{themeLabel}</span>
+              </span>
+            </div>
+          }
+        >
+          <div className="divide-y divide-border">
+            <ProfileSettings
+              coords={coords}
+              geoLoading={geoLoading}
+              requestLocation={requestLocation}
+              permissionStatus={permissionStatus}
+              nearbyRangeKm={nearbyRangeKm}
+              onNearbyRangeChange={setNearbyRangeKm}
+              locale={locale}
+              setLocale={setLocale}
+              cycleTheme={cycleTheme}
+              themeLabel={themeLabel}
+              ThemeIcon={ThemeIcon}
+              onSignOut={handleSignOut}
+              t={t}
+            />
+          </div>
+        </CollapsibleSection>
+
+        {/* 5. Leaderboard */}
+        <CollapsibleSection
+          title={t('profile.leaderboardSection')}
+          icon={<Trophy className="h-4 w-4 text-amber-500" />}
+          preview={(() => {
+            const lb = leaderboardResult
+              ? Array.isArray(leaderboardResult) ? leaderboardResult : leaderboardResult.page
+              : undefined
+            const top = lb?.[0]
+            return top ? (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Award className="h-3.5 w-3.5 text-yellow-500 flex-shrink-0" />
+                <span className="truncate font-medium text-foreground">
+                  User #{top.userId.slice(-6)}
+                </span>
+                <span>· {top.points} {t('common.points')}</span>
+              </div>
+            ) : undefined
+          })()}
+        >
+          <div className="p-3">
+            <Leaderboard hideHeader />
+          </div>
+        </CollapsibleSection>
+
+        {/* 6. Badges */}
+        <CollapsibleSection
+          title={t('gamification.badges')}
+          icon={<Star className="h-4 w-4 text-primary" />}
+          preview={
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">
+                {earnedBadges.length}/{BADGES.length}
+              </span>
+              {earnedBadges.length > 0 && (
+                <span className="flex items-center gap-0.5">
+                  {earnedBadges.slice(0, 4).map((badgeId) => {
+                    const badge = BADGES.find(b => b.id === badgeId)
+                    return badge ? <span key={badgeId}>{badge.icon}</span> : null
+                  })}
+                </span>
+              )}
+            </div>
+          }
+        >
+          <div className="p-3">
+            <BadgeDisplay earnedBadgeIds={earnedBadges} hideHeader />
+          </div>
+        </CollapsibleSection>
       </div>
     </div>
   )

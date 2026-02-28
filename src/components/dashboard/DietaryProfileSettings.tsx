@@ -17,7 +17,12 @@ interface DietaryCondition {
   severity: number
 }
 
-export function DietaryProfileSettings() {
+interface DietaryProfileSettingsProps {
+  /** Hide the Card wrapper and header (when embedded in a CollapsibleSection) */
+  hideHeader?: boolean
+}
+
+export function DietaryProfileSettings({ hideHeader = false }: DietaryProfileSettingsProps) {
   const { t } = useTranslation()
   const { isAuthenticated } = useConvexAuth()
   const profile = useQuery(api.dietaryProfiles.getUserProfile, isAuthenticated ? {} : 'skip')
@@ -75,69 +80,80 @@ export function DietaryProfileSettings() {
     t('dietaryProfile.severity.severe'), // 5
   ]
 
+  const content = (
+    <div className="space-y-6">
+      {!hideHeader && (
+        <p className="text-sm text-muted-foreground">{t('dietaryProfile.description')}</p>
+      )}
+      {appConfig.dietaryRestrictions.map((restriction) => {
+        const isSelected = selectedConditions.has(restriction.id)
+        const severity = selectedConditions.get(restriction.id) ?? 3
+
+        return (
+          <div key={restriction.id} className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id={restriction.id}
+                  checked={isSelected}
+                  onCheckedChange={() => handleToggleCondition(restriction.id)}
+                />
+                <Label htmlFor={restriction.id} className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-2xl">{restriction.emoji}</span>
+                  <div>
+                    <div className="font-medium">{restriction.label}</div>
+                    <div className="text-sm text-muted-foreground">{restriction.description}</div>
+                  </div>
+                </Label>
+              </div>
+            </div>
+
+            {isSelected && (
+              <div className="ml-11 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{t('dietaryProfile.severity.label')}</span>
+                  <span className="font-medium">{severityLabels[severity - 1]}</span>
+                </div>
+                <Slider
+                  value={[severity]}
+                  onValueChange={([value]) => value !== undefined && handleSeverityChange(restriction.id, value)}
+                  min={1}
+                  max={5}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{severityLabels[0]}</span>
+                  <span>{severityLabels[4]}</span>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {t('dietaryProfile.threshold')}: {restriction.thresholds[severity - 1]}+
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      <div className="pt-4">
+        <Button onClick={handleSave} disabled={isSaving} className="w-full">
+          {isSaving ? t('common.saving') : t('common.save')}
+        </Button>
+      </div>
+    </div>
+  )
+
+  if (hideHeader) {
+    return content
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>{t('dietaryProfile.title')}</CardTitle>
         <CardDescription>{t('dietaryProfile.description')}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {appConfig.dietaryRestrictions.map((restriction) => {
-          const isSelected = selectedConditions.has(restriction.id)
-          const severity = selectedConditions.get(restriction.id) ?? 3
-
-          return (
-            <div key={restriction.id} className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Checkbox
-                    id={restriction.id}
-                    checked={isSelected}
-                    onCheckedChange={() => handleToggleCondition(restriction.id)}
-                  />
-                  <Label htmlFor={restriction.id} className="flex items-center gap-2 cursor-pointer">
-                    <span className="text-2xl">{restriction.emoji}</span>
-                    <div>
-                      <div className="font-medium">{restriction.label}</div>
-                      <div className="text-sm text-muted-foreground">{restriction.description}</div>
-                    </div>
-                  </Label>
-                </div>
-              </div>
-
-              {isSelected && (
-                <div className="ml-11 space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{t('dietaryProfile.severity.label')}</span>
-                    <span className="font-medium">{severityLabels[severity - 1]}</span>
-                  </div>
-                  <Slider
-                    value={[severity]}
-                    onValueChange={([value]) => value !== undefined && handleSeverityChange(restriction.id, value)}
-                    min={1}
-                    max={5}
-                    step={1}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{severityLabels[0]}</span>
-                    <span>{severityLabels[4]}</span>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {t('dietaryProfile.threshold')}: {restriction.thresholds[severity - 1]}+
-                  </div>
-                </div>
-              )}
-            </div>
-          )
-        })}
-
-        <div className="pt-4">
-          <Button onClick={handleSave} disabled={isSaving} className="w-full">
-            {isSaving ? t('common.saving') : t('common.save')}
-          </Button>
-        </div>
-      </CardContent>
+      <CardContent>{content}</CardContent>
     </Card>
   )
 }
