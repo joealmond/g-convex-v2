@@ -615,5 +615,57 @@
     "wrongInfo": "Wrong information",
     "spam": "Spam",
     "other": "Other"
+  },
+  "badges": {
+    "first_scout": {
+      "name": "First Scout",
+      "description": "Cast your first vote"
+    },
+    "trailblazer": {
+      "name": "Trailblazer",
+      "description": "Cast 10 votes"
+    },
+    "century_scout": {
+      "name": "Century Scout",
+      "description": "Cast 100 votes"
+    },
+    "location_pro": {
+      "name": "Location Pro",
+      "description": "Add GPS location to 10 votes"
+    },
+    "store_hunter": {
+      "name": "Store Hunter",
+      "description": "Tag 5 different stores"
+    },
+    "streak_master": {
+      "name": "Streak Master",
+      "description": "Maintain a 7-day voting streak"
+    },
+    "product_pioneer": {
+      "name": "Product Pioneer",
+      "description": "Add 5 new products"
+    }
+  },
+  "dietary": {
+    "celiac": {
+      "label": "Celiac Disease",
+      "description": "Severe gluten intolerance requiring strict avoidance"
+    },
+    "gluten-sensitive": {
+      "label": "Gluten Sensitive",
+      "description": "Non-celiac gluten sensitivity"
+    },
+    "lactose": {
+      "label": "Lactose Intolerant",
+      "description": "Difficulty digesting dairy products"
+    },
+    "soy": {
+      "label": "Soy Allergy",
+      "description": "Allergic reaction to soy products"
+    },
+    "nut": {
+      "label": "Nut Allergy",
+      "description": "Allergic reaction to nuts"
+    }
   }
 }

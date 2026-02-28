@@ -101,8 +101,8 @@ export function DietaryProfileSettings({ hideHeader = false }: DietaryProfileSet
                 <Label htmlFor={restriction.id} className="flex items-center gap-2 cursor-pointer">
                   <span className="text-2xl">{restriction.emoji}</span>
                   <div>
-                    <div className="font-medium">{restriction.label}</div>
-                    <div className="text-sm text-muted-foreground">{restriction.description}</div>
+                    <div className="font-medium">{t(`dietary.${restriction.id}.label`)}</div>
+                    <div className="text-sm text-muted-foreground">{t(`dietary.${restriction.id}.description`)}</div>
                   </div>
                 </Label>
               </div>

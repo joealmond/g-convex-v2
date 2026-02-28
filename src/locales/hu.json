@@ -615,5 +615,57 @@
     "wrongInfo": "Téves információ",
     "spam": "Spam",
     "other": "Egyéb"
+  },
+  "badges": {
+    "first_scout": {
+      "name": "Első Felderítő",
+      "description": "Add le az első szavazatod"
+    },
+    "trailblazer": {
+      "name": "Úttörő",
+      "description": "Adj le 10 szavazatot"
+    },
+    "century_scout": {
+      "name": "Százados Felderítő",
+      "description": "Adj le 100 szavazatot"
+    },
+    "location_pro": {
+      "name": "Helyszín Profi",
+      "description": "Adj GPS helyszínt 10 szavazathoz"
+    },
+    "store_hunter": {
+      "name": "Boltvadász",
+      "description": "Jelölj meg 5 különböző boltot"
+    },
+    "streak_master": {
+      "name": "Sorozat Mester",
+      "description": "Tarts fenn 7 napos szavazási sorozatot"
+    },
+    "product_pioneer": {
+      "name": "Termék Úttörő",
+      "description": "Adj hozzá 5 új terméket"
+    }
+  },
+  "dietary": {
+    "celiac": {
+      "label": "Cöliákia",
+      "description": "Súlyos gluténérzékenység, szigorú elkerülést igényel"
+    },
+    "gluten-sensitive": {
+      "label": "Gluténérzékeny",
+      "description": "Nem cöliákiás gluténérzékenység"
+    },
+    "lactose": {
+      "label": "Laktózérzékeny",
+      "description": "Tejtermékek emésztési nehézsége"
+    },
+    "soy": {
+      "label": "Szójaallergia",
+      "description": "Allergiás reakció szójatermékekre"
+    },
+    "nut": {
+      "label": "Dióféle allergia",
+      "description": "Allergiás reakció diófélékre"
+    }
   }
 }

@@ -36,10 +36,10 @@ export function BadgeDisplay({
             <div
               key={badge.id}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20"
-              title={badge.description}
+              title={t(`badges.${badge.id}.description`)}
             >
               <span className="text-lg">{badge.icon}</span>
-              <span className="text-sm font-medium">{badge.name}</span>
+              <span className="text-sm font-medium">{t(`badges.${badge.id}.name`)}</span>
             </div>
           ))
         ) : (
@@ -61,9 +61,9 @@ export function BadgeDisplay({
           >
             <div className="text-center">
               <div className="text-4xl mb-2">{badge.icon}</div>
-              <div className="font-semibold text-sm mb-1">{badge.name}</div>
+              <div className="font-semibold text-sm mb-1">{t(`badges.${badge.id}.name`)}</div>
               <div className="text-xs text-muted-foreground mb-2">
-                {badge.description}
+                {t(`badges.${badge.id}.description`)}
               </div>
               <Badge variant="secondary" className="text-xs">
                 {t('badge.earned')}
@@ -81,9 +81,9 @@ export function BadgeDisplay({
             >
               <div className="text-center">
                 <div className="text-4xl mb-2 grayscale">{badge.icon}</div>
-                <div className="font-semibold text-sm mb-1">{badge.name}</div>
+                <div className="font-semibold text-sm mb-1">{t(`badges.${badge.id}.name`)}</div>
                 <div className="text-xs text-muted-foreground mb-2">
-                  {badge.description}
+                  {t(`badges.${badge.id}.description`)}
                 </div>
                 <Badge variant="outline" className="text-xs">
                   {t('badge.locked')}
