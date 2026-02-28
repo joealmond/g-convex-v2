@@ -78,8 +78,8 @@ export function DietaryProfileSettings({ hideHeader = false }: DietaryProfileSet
             >
               <span className="text-2xl">{allergen.emoji}</span>
               <div>
-                <div className="font-medium">{allergen.label}</div>
-                <div className="text-sm text-muted-foreground">{allergen.description}</div>
+                <div className="font-medium">{t(`dietary.${allergen.id}.label`)}</div>
+                <div className="text-sm text-muted-foreground">{t(`dietary.${allergen.id}.description`)}</div>
               </div>
             </Label>
           </div>

@@ -461,7 +461,7 @@ function ProfileContent() {
                 {dietaryProfile.avoidedAllergens.map((allergenId) => {
                   const allergen = appConfig.allergens.find(a => a.id === allergenId)
                   return allergen ? (
-                    <span key={allergenId} className="flex items-center gap-0.5" title={allergen.label}>
+                    <span key={allergenId} className="flex items-center gap-0.5" title={t(`dietary.${allergenId}.label`)}>
                       <span>{allergen.emoji}</span>
                     </span>
                   ) : null

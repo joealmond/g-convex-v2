@@ -650,23 +650,23 @@
   "dietary": {
     "gluten": {
       "label": "Glutén",
-      "description": "Búza, árpa, rozs és származékaik"
+      "description": "Glutént tartalmazó gabonafélék (búza, rozs, árpa, zab)"
     },
     "milk": {
-      "label": "Tej",
-      "description": "Tehéntej és tejtermékek"
+      "label": "Tej és tejtermékek",
+      "description": "Tej és tejtermékek, beleértve a laktózt"
     },
     "soy": {
       "label": "Szója",
-      "description": "Szójabab és szója alapú termékek"
+      "description": "Szójabab és szójatermékek"
     },
     "nuts": {
       "label": "Diófélék",
-      "description": "Mandula, kesudió, dió stb."
+      "description": "Diófélék és mogyoró"
     },
     "eggs": {
       "label": "Tojás",
-      "description": "Csirketojás és származékai"
+      "description": "Tojás és tojástermékek"
     }
   }
 }

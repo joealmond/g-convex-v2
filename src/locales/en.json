@@ -650,23 +650,23 @@
   "dietary": {
     "gluten": {
       "label": "Gluten",
-      "description": "Wheat, barley, rye, and derivatives"
+      "description": "Cereals containing gluten (wheat, rye, barley, oats)"
     },
     "milk": {
-      "label": "Milk",
-      "description": "Cow's milk and dairy products"
+      "label": "Milk & Dairy",
+      "description": "Milk and products thereof, including lactose"
     },
     "soy": {
       "label": "Soy",
-      "description": "Soybeans and soy-derived products"
+      "description": "Soybeans and products thereof"
     },
     "nuts": {
-      "label": "Tree Nuts",
-      "description": "Almonds, cashews, walnuts, etc."
+      "label": "Nuts",
+      "description": "Tree nuts and peanuts"
     },
     "eggs": {
       "label": "Eggs",
-      "description": "Chicken eggs and derivatives"
+      "description": "Eggs and products thereof"
     }
   }
 }
