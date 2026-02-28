@@ -306,7 +306,9 @@ function ProfileContent() {
   return (
     <div className="flex-1 flex flex-col bg-background">
       {/* Mobile-first profile layout */}
-      <div className="max-w-3xl mx-auto w-full px-4 py-3 pb-[60vh] space-y-4">
+      <div className="max-w-3xl mx-auto w-full px-4 py-3 space-y-4 flex flex-col"
+        style={{ minHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))' }}
+      >
 
         {/* User Header Card */}
         <Card className="rounded-2xl shadow-sm">
@@ -569,6 +571,9 @@ function ProfileContent() {
             <BadgeDisplay earnedBadgeIds={earnedBadges} hideHeader />
           </div>
         </CollapsibleSection>
+
+        {/* Spacer — fills remaining viewport so sections can scroll to top */}
+        <div className="flex-grow" aria-hidden="true" />
       </div>
     </div>
   )

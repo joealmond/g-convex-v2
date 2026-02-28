@@ -120,6 +120,16 @@ Any finished task goes here from the planning documents.
 - ✅ Gamification toasts (points earned + badge unlocked after voting)
 - ✅ Image dimension validation (min 200×200, max 1200 with resize)
 
+### Profile Page — iOS UI/UX Complete
+- ✅ Collapsible sections with `CollapsibleSection` reusable component (Framer Motion animated expand/collapse)
+- ✅ Section order: My Stats → Recent Activity → Dietary Preferences → Settings → Leaderboard → Badges
+- ✅ Preview info on each collapsed section (stat badges, recent activity, dietary emojis, location/range, leaderboard #1, badge count)
+- ✅ Scroll-to-top on open (via `onAnimationComplete` callback, safe-area-aware `scrollMarginTop`)
+- ✅ Scroll-up compensation on close (measures body height, caps at usable viewport)
+- ✅ Flexible bottom spacer (flexbox `min-height` approach, no hardcoded padding)
+- ✅ `hideHeader` prop on BadgeDisplay, Leaderboard, DietaryProfileSettings to avoid double Card wrappers
+- ✅ All sections translated (en.json + hu.json)
+
 ### Backend Patterns
 - ✅ Reusable Auth Middlewares (`convex-helpers`)
 - ✅ O(log n) Aggregates (`@convex-dev/aggregate`)
