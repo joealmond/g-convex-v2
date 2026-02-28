@@ -174,6 +174,7 @@ export const appConfig = {
       emoji: "🌾",
       description: "Severe gluten intolerance requiring strict avoidance",
       thresholds: [40, 50, 60, 70, 80], // Severity 1-5
+      allergenKeywords: ["gluten"],
     },
     {
       id: "gluten-sensitive",
@@ -181,6 +182,7 @@ export const appConfig = {
       emoji: "🍞",
       description: "Non-celiac gluten sensitivity",
       thresholds: [20, 35, 50, 65, 75], // Severity 1-5
+      allergenKeywords: ["gluten", "wheat"],
     },
     {
       id: "lactose",
@@ -188,6 +190,7 @@ export const appConfig = {
       emoji: "🥛",
       description: "Difficulty digesting dairy products",
       thresholds: [30, 45, 60, 75, 85], // Severity 1-5
+      allergenKeywords: ["milk", "lactose", "dairy"],
     },
     {
       id: "soy",
@@ -195,6 +198,7 @@ export const appConfig = {
       emoji: "🫘",
       description: "Allergic reaction to soy products",
       thresholds: [40, 55, 65, 75, 85], // Severity 1-5
+      allergenKeywords: ["soy", "soybeans"],
     },
     {
       id: "nut",
@@ -202,6 +206,7 @@ export const appConfig = {
       emoji: "🥜",
       description: "Allergic reaction to nuts",
       thresholds: [50, 60, 70, 80, 90], // Severity 1-5 (high stakes)
+      allergenKeywords: ["nuts", "peanuts", "tree-nuts", "almonds", "cashews", "walnuts"],
     },
   ],
   

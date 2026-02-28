@@ -136,7 +136,10 @@
     "tryDifferentSearch": "Try a different search term",
     "tryAdjustingFilters": "Try adjusting your filters",
     "feedView": "Feed view",
-    "chartView": "Chart view"
+    "chartView": "Chart view",
+    "sensitivityFilters": "Sensitivity filters",
+    "loadMore": "Load more",
+    "loadingMore": "Loading more…"
   },
   "stats": {
     "yourPoints": "Your Points",
@@ -146,7 +149,9 @@
     "keepVoting": "Keep voting daily!",
     "badgesEarned": "Badges Earned",
     "keepContributing": "Keep contributing!",
-    "dayStreak": "Day Streak"
+    "dayStreak": "Day Streak",
+    "products": "Products",
+    "productsAdded": "{count} products added"
   },
   "chart": {
     "gMatrix": "G-Matrix",

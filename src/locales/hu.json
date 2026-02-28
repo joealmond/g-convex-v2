@@ -136,7 +136,10 @@
     "tryDifferentSearch": "Próbálj más keresőkifejezést",
     "tryAdjustingFilters": "Próbáld módosítani a szűrőket",
     "feedView": "Lista nézet",
-    "chartView": "Grafikon nézet"
+    "chartView": "Grafikon nézet",
+    "sensitivityFilters": "Érzékenységi szűrők",
+    "loadMore": "Több betöltése",
+    "loadingMore": "Betöltés…"
   },
   "stats": {
     "yourPoints": "Pontjaid",
@@ -146,7 +149,9 @@
     "keepVoting": "Szavazz minden nap!",
     "badgesEarned": "Szerzett Jelvények",
     "keepContributing": "Folytasd a hozzájárulást!",
-    "dayStreak": "Napi Sorozat"
+    "dayStreak": "Napi Sorozat",
+    "products": "Termékek",
+    "productsAdded": "{count} hozzáadott termék"
   },
   "chart": {
     "gMatrix": "G-Mátrix",

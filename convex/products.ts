@@ -1,8 +1,10 @@
 import { v } from 'convex/values'
+import { paginationOptsValidator } from 'convex/server'
 
 import { components } from './_generated/api'
 import { productsGeo } from './geospatial'
 import { RateLimiter } from '@convex-dev/rate-limiter'
+import { filter } from 'convex-helpers/server/filter'
 import { authMutation, adminMutation, publicQuery, internalMutation } from './lib/customFunctions'
 import { productsAggregate, votesByProduct } from './aggregates'
 
@@ -148,6 +150,119 @@ export const search = publicQuery({
     }
 
     return await Promise.all(products.map((p) => resolveProductImage(ctx, p)))
+  },
+})
+
+/**
+ * Paginated feed query — replaces client-side listAll+filter approach.
+ * Supports recent/trending modes with optional server-side allergen exclusion.
+ * Uses convex-helpers filter() for array-contains checks on allergens.
+ */
+export const listFeed = publicQuery({
+  args: {
+    mode: v.union(v.literal('recent'), v.literal('trending')),
+    excludeAllergens: v.optional(v.array(v.string())),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const { mode, excludeAllergens } = args
+
+    // Build base query with appropriate index/ordering
+    let baseQuery
+    if (mode === 'trending') {
+      baseQuery = ctx.db
+        .query('products')
+        .withIndex('by_vote_count')
+        .order('desc')
+    } else {
+      // 'recent' — default _creationTime descending order
+      baseQuery = ctx.db
+        .query('products')
+        .order('desc')
+    }
+
+    // If allergen exclusions are active, wrap with convex-helpers filter
+    const hasAllergenFilter = excludeAllergens && excludeAllergens.length > 0
+
+    let queryToPage
+    if (hasAllergenFilter) {
+      queryToPage = filter(
+        baseQuery,
+        (product) => {
+          // Products with no allergens data pass through (not penalized for missing data)
+          if (!product.allergens || product.allergens.length === 0) return true
+          // Exclude products that contain ANY of the excluded allergens
+          return !product.allergens.some((a: string) =>
+            excludeAllergens!.includes(a.toLowerCase())
+          )
+        },
+      )
+    } else {
+      queryToPage = baseQuery
+    }
+
+    const result = await queryToPage.paginate(args.paginationOpts)
+
+    const pageWithImages = await Promise.all(
+      result.page.map((p) => resolveProductImage(ctx, p))
+    )
+
+    return {
+      ...result,
+      page: pageWithImages,
+    }
+  },
+})
+
+/**
+ * Search products by name with pagination and optional allergen exclusion.
+ * Uses Convex search index for relevance-ranked results.
+ */
+export const searchPaginated = publicQuery({
+  args: {
+    query: v.string(),
+    excludeAllergens: v.optional(v.array(v.string())),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const { query: searchQuery, excludeAllergens } = args
+
+    let baseQuery
+    if (searchQuery.trim()) {
+      baseQuery = ctx.db
+        .query('products')
+        .withSearchIndex('search_name', (q) => q.search('name', searchQuery))
+    } else {
+      baseQuery = ctx.db.query('products').order('desc')
+    }
+
+    const hasAllergenFilter = excludeAllergens && excludeAllergens.length > 0
+
+    let queryToPage
+    if (hasAllergenFilter) {
+      queryToPage = filter(
+        baseQuery,
+        (product) => {
+          if (!product.allergens || product.allergens.length === 0) return true
+          return !product.allergens.some((a: string) =>
+            excludeAllergens!.includes(a.toLowerCase())
+          )
+        },
+      )
+    } else {
+      queryToPage = baseQuery
+    }
+
+    const result = await queryToPage.paginate(args.paginationOpts)
+
+    const pageWithImages = await Promise.all(
+      result.page.map((p) => resolveProductImage(ctx, p))
+    )
+
+    return {
+      ...result,
+      page: pageWithImages,
+    }
   },
 })
 

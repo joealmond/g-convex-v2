@@ -57,6 +57,7 @@ export default defineSchema({
     .index('by_barcode', ['barcode'])
     .index('by_created', ['createdAt'])
     .index('by_creator', ['createdBy'])
+    .index('by_vote_count', ['voteCount'])
     .searchIndex('search_name', {
       searchField: 'name',
     }),
