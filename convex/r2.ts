@@ -3,6 +3,19 @@ import { action } from './_generated/server'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 
 /**
+ * Forces a Virtual Hosted-Style R2 URL (bucket.endpoint.com) into a Path-Style URL (endpoint.com/bucket).
+ * This prevents Cloudflare 404s, as R2 strictly expects Path-Style routing for EU/Global buckets.
+ */
+export function formatR2Url(signedUrl: string, bucketName: string): string {
+  const urlObj = new URL(signedUrl);
+  if (urlObj.hostname.startsWith(`${bucketName}.`)) {
+    urlObj.hostname = urlObj.hostname.replace(`${bucketName}.`, '');
+    urlObj.pathname = `/${bucketName}${urlObj.pathname}`;
+  }
+  return urlObj.toString();
+}
+
+/**
  * Upload a file to Cloudflare R2 (server-side, Node.js runtime)
  * 
  * The client sends base64-encoded image data, and the server uploads to R2.
@@ -63,18 +76,8 @@ export const uploadToR2 = action({
     const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 })
 
     // 3. Perform the actual PUT request from the Convex Server using native fetch.
-    // Ensure the signedUrl is strictly Path-Style (R2 requires this, and AWS SDK sometimes
-    // ignores forcePathStyle depending on the endpoint format).
-    let finalFetchUrl = signedUrl;
-    const urlObj = new URL(signedUrl);
-    
-    // If AWS SDK generated a Virtual Hosted-Style URL (e.g. bucket.account.r2.cloudflarestorage.com)
-    // we need to rewrite it to Path-Style (account.r2.cloudflarestorage.com/bucket)
-    if (urlObj.hostname.startsWith(`${R2_BUCKET_NAME}.`)) {
-        urlObj.hostname = urlObj.hostname.replace(`${R2_BUCKET_NAME}.`, '');
-        urlObj.pathname = `/${R2_BUCKET_NAME}${urlObj.pathname}`;
-        finalFetchUrl = urlObj.toString();
-    }
+    // AWS SDK ignores forcePathStyle sometimes during presigning. Cloudflare requires Path-Style.
+    const finalFetchUrl = formatR2Url(signedUrl, R2_BUCKET_NAME);
 
     const response = await fetch(finalFetchUrl, {
       method: "PUT",

@@ -211,6 +211,10 @@ Standard shadcn/ui tokens (`bg-background`, `bg-card`, `bg-primary`, `text-foreg
 - Log full error details server-side (`console.error` in Convex functions)
 - Never expose internal error messages to users
 
+### Testing & Regressions
+- **Pin Down Solutions**: Whenever we arrive at a known good, working solution for an edge case or bug (e.g., Cloudflare R2 CORS proxy, `safeAggregateDelete`), we **MUST write a test** to pin down the exact behavior of that solution.
+- **Do Not Modify Existing Tests Without Permission**: Tests serve as our definition of stable functionality. You may NEVER modify, delete, or bypass an existing test without passing explicit intent to the user and **requiring explicit permission from the user**. If a test fails, assume the application code is broken, not the test.
+
 ### Component Patterns
 - **Pages** (in `routes/`): Fetch data via Convex queries, pass to components via props
 - **Components**: Accept data via props, render UI, emit events via callbacks
@@ -583,6 +587,8 @@ Cards: `bg-card text-card-foreground rounded-2xl shadow-sm border border-border`
 - ❌ Don't implement SceneDelegate on iOS — Capacitor v8 is incompatible, use traditional AppDelegate (see Known Issues)
 - ❌ Don't expect MacBook trackpad pinch-to-zoom on Leaflet maps — use scrollWheelZoom + boxZoom instead (enable all zoom methods)
 - ❌ Don't test GPS features in Android emulator without setting mock location — GPS is unavailable by default (see `docs/ANDROID_EMULATOR_LOCATION.md`)
+- ❌ **Don't modify existing tests without a clear description of intent and explicit permission from the user.**
+- ❌ **Don't leave a known working solution undocumented or untested.** Always write tests to pin down the expected behavior.
 
 ### Offline Support Architecture
 
