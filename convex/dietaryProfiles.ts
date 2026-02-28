@@ -10,6 +10,16 @@ import { v } from 'convex/values'
 
 import { requireAuth } from './lib/authHelpers'
 import { authMutation, publicQuery } from './lib/customFunctions'
+import { internalMutation } from './_generated/server'
+
+/** Map old condition types to new allergen IDs */
+const CONDITION_TO_ALLERGEN: Record<string, string> = {
+  celiac: 'gluten',
+  'gluten-sensitive': 'gluten',
+  lactose: 'milk',
+  soy: 'soy',
+  nut: 'nuts',
+}
 
 /**
  * Get user's dietary profile (avoided allergens list)
@@ -53,6 +63,7 @@ export const updateProfile = authMutation({
     if (existing) {
       await ctx.db.patch(existing._id, {
         avoidedAllergens: allergens,
+        conditions: undefined, // clear legacy field
         updatedAt: now,
       })
       return existing._id
@@ -102,3 +113,39 @@ export function findAllergenConflicts(
   const avoidedSet = new Set(avoidedAllergens.map(a => a.toLowerCase()))
   return productAllergens.filter(a => avoidedSet.has(a.toLowerCase()))
 }
+
+/**
+ * Migration: convert old conditions-based profiles to avoidedAllergens.
+ * Run once via dashboard or CLI: npx convex run dietaryProfiles:migrateToAllergens
+ * Safe to re-run — skips already-migrated documents.
+ */
+export const migrateToAllergens = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const profiles = await ctx.db.query('dietaryProfiles').collect()
+    let migrated = 0
+
+    for (const profile of profiles) {
+      // Skip if already migrated
+      if (profile.avoidedAllergens !== undefined) continue
+
+      // Convert old conditions to allergen IDs
+      const conditions = (profile as any).conditions as Array<{ type: string; severity: number }> | undefined
+      const allergenSet = new Set<string>()
+      if (conditions) {
+        for (const c of conditions) {
+          const allergenId = CONDITION_TO_ALLERGEN[c.type]
+          if (allergenId) allergenSet.add(allergenId)
+        }
+      }
+
+      await ctx.db.patch(profile._id, {
+        avoidedAllergens: [...allergenSet],
+        conditions: undefined, // remove legacy field
+      })
+      migrated++
+    }
+
+    return { migrated, total: profiles.length }
+  },
+})

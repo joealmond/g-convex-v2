@@ -142,7 +142,12 @@ export default defineSchema({
   // Dietary Profiles - boolean allergen avoidance
   dietaryProfiles: defineTable({
     userId: v.string(), // Better Auth user._id is a string
-    avoidedAllergens: v.array(v.string()), // e.g. ['gluten', 'milk', 'nuts']
+    avoidedAllergens: v.optional(v.array(v.string())), // e.g. ['gluten', 'milk', 'nuts']
+    // Legacy field kept for migration — old docs have conditions instead of avoidedAllergens
+    conditions: v.optional(v.array(v.object({
+      type: v.string(),
+      severity: v.number(),
+    }))),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index('by_user', ['userId']),
