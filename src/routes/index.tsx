@@ -94,15 +94,15 @@ function HomePageContent() {
   const nicheDefault = useMemo(() => new Set([appConfig.riskConcept]), [])
   const dietaryProfile = useQuery(api.dietaryProfiles.getUserProfile)
   const [activeSensitivities, setActiveSensitivities] = useState<Set<string>>(nicheDefault)
-  const [sensitivityInitialized, setSensitivityInitialized] = useState(false)
+  const [userHasToggled, setUserHasToggled] = useState(false)
 
-  // Once dietary profile loads, override defaults with user's saved preferences
+  // Reactively derive filters from profile whenever it changes.
+  // Stops overriding once the user manually toggles a chip.
   useEffect(() => {
-    if (sensitivityInitialized) return
-    if (dietaryProfile === undefined) return // still loading
+    if (userHasToggled) return // user manually adjusted — respect their choice
+    if (dietaryProfile === undefined) return // still loading (or re-subscribing after auth)
     if (dietaryProfile) {
       const allergenIds = new Set<string>()
-      // New field: avoidedAllergens = ['gluten', 'milk', ...]
       if (dietaryProfile.avoidedAllergens && dietaryProfile.avoidedAllergens.length > 0) {
         for (const a of dietaryProfile.avoidedAllergens) allergenIds.add(a)
       }
@@ -117,14 +117,17 @@ function HomePageContent() {
           if (mapped) allergenIds.add(mapped)
         }
       }
-      if (allergenIds.size > 0) setActiveSensitivities(allergenIds)
-      // If profile exists but has no allergens, keep the niche default
+      if (allergenIds.size > 0) {
+        setActiveSensitivities(allergenIds)
+        return
+      }
     }
-    // null = user not logged in OR no dietary profile → keep nicheDefault
-    setSensitivityInitialized(true)
-  }, [dietaryProfile, sensitivityInitialized])
+    // null (not logged in or no dietary preferences) → niche default
+    setActiveSensitivities(nicheDefault)
+  }, [dietaryProfile, userHasToggled, nicheDefault])
 
   const toggleSensitivity = useCallback((id: string) => {
+    setUserHasToggled(true)
     setActiveSensitivities((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
