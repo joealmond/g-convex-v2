@@ -318,3 +318,30 @@ body.camera-running > *:not(script) {
 body.camera-running .camera-overlay {
   visibility: visible;
 }
+
+/* Hide dialog overlay (dark backdrop) when camera is running */
+body.camera-running [data-slot="dialog-overlay"] {
+  display: none;
+}
+
+/*
+ * Camera-starting: brief black screen while the native camera initialises.
+ * Applied just before camera-running to mask the transparent-to-feed transition
+ * with a natural black instead of white/cream.
+ */
+body.camera-starting {
+  background: #000 !important;
+  background-color: #000 !important;
+}
+body.camera-starting > *:not(script):not(.camera-overlay) {
+  visibility: hidden;
+}
+body.camera-starting [data-slot="dialog-overlay"] {
+  display: none;
+}
+
+/* Camera capture flash animation */
+@keyframes flash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}

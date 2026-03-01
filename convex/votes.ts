@@ -225,6 +225,12 @@ export const createProductAndVote = publicMutation({
       warnings: v.array(v.string()),
       suggestedFreeFrom: v.optional(v.array(v.string())),
     })),
+    // Barcode & product metadata from OpenFoodFacts
+    barcode: v.optional(v.string()),
+    barcodeSource: v.optional(v.string()),
+    brand: v.optional(v.string()),
+    category: v.optional(v.string()),
+    nutritionScore: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
@@ -283,6 +289,11 @@ export const createProductAndVote = publicMutation({
       ingredientsText: args.ingredientsText,
       freeFrom: args.freeFrom,
       allergens,
+      barcode: args.barcode,
+      barcodeSource: args.barcodeSource,
+      brand: args.brand,
+      category: args.category,
+      nutritionScore: args.nutritionScore,
       averageSafety: args.safety,
       averageTaste: args.taste,
       avgPrice: args.price,

@@ -1,7 +1,6 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useMutation, useAction } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import type { Id } from '@convex/_generated/dataModel'
 import { useAnonymousId } from '@/hooks/use-anonymous-id'
 import { useTranslation } from '@/hooks/use-translation'
 import { useGeolocation } from '@/hooks/use-geolocation'
@@ -9,15 +8,9 @@ import { useOnlineStatus } from '@/hooks/use-online-status'
 import { useHaptics } from '@/hooks/use-haptics'
 import { logger } from '@/lib/logger'
 import { toast } from 'sonner'
+import type { CaptureResult } from '@/components/product/CameraWizard'
 
-export type ImageUploadStep =
-  | 'upload'
-  | 'scan'
-  | 'barcode-lookup'
-  | 'analyze'
-  | 'back-scan'
-  | 'review'
-  | 'submitting'
+export type ImageUploadStep = 'wizard' | 'processing' | 'review' | 'submitting'
 
 export interface ImageAnalysis {
   productName: string
@@ -46,13 +39,13 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
   const { isOnline } = useOnlineStatus()
   const { impact } = useHaptics()
   const [open, setOpen] = useState(false)
-  const [step, setStep] = useState<ImageUploadStep>('upload')
-  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [step, setStep] = useState<ImageUploadStep>('wizard')
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [storageId, setStorageId] = useState<string | null>(null)
   const [realImageUrl, setRealImageUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
+
+  // Processing progress (shown during 'processing' step)
+  const [processingStatus, setProcessingStatus] = useState('')
 
   // Front image AI analysis
   const [analysis, setAnalysis] = useState<ImageAnalysis | null>(null)
@@ -63,17 +56,20 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
   const [storeName, setStoreName] = useState('')
   const [allergens, setAllergens] = useState<string[]>([])
 
-  // NEW: Free-from sensitivities (user-reviewed)
+  // Free-from sensitivities (user-reviewed)
   const [freeFrom, setFreeFrom] = useState<Set<string>>(new Set())
 
-  // NEW: Back image scanning
+  // Back image
   const [backImageUrl, setBackImageUrl] = useState<string | null>(null)
-  const [backAnalysis, setBackAnalysis] = useState<BackAnalysis | null>(null)
-  const [backAnalyzing, setBackAnalyzing] = useState(false)
-  const [backError, setBackError] = useState<string | null>(null)
   const [ingredientsText, setIngredientsText] = useState<string>('')
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  // Barcode & OpenFoodFacts metadata
+  const [barcode, setBarcode] = useState<string | null>(null)
+  const [barcodeSource, setBarcodeSource] = useState<string | null>(null)
+  const [brand, setBrand] = useState<string | null>(null)
+  const [category, setCategory] = useState<string | null>(null)
+  const [nutritionScore, setNutritionScore] = useState<string | null>(null)
+
   const { anonId } = useAnonymousId()
   const { t } = useTranslation()
   const {
@@ -85,14 +81,14 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     requestPermissions,
   } = useGeolocation()
 
-  // Auto-request location when entering review step (not on dialog open)
+  // Auto-request location when entering review step
   useEffect(() => {
     if (open && step === 'review') {
       requestLocation()
     }
   }, [open, step, requestLocation])
 
-  // Revoke blob URLs on change / unmount to prevent memory leaks
+  // Revoke blob URLs on change / unmount
   useEffect(() => {
     return () => {
       if (imagePreview?.startsWith('blob:')) {
@@ -176,155 +172,6 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     })
   }, [])
 
-  /** Handle photo capture from SmartCamera */
-  const handleSmartCameraPhoto = useCallback(async (file: File) => {
-    try {
-      const resizedFile = await resizeAndConvertImage(file)
-      setImageFile(resizedFile)
-      setImagePreview(URL.createObjectURL(resizedFile))
-      setError(null)
-      setStep('upload')
-    } catch (err) {
-      logger.error('Image processing error:', err)
-      setError(
-        err instanceof Error && err.message.includes('too small')
-          ? t('imageUpload.imageTooSmall')
-          : t('imageUpload.processingFailed'),
-      )
-      setStep('upload')
-    }
-  }, [resizeAndConvertImage, t])
-
-  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) {
-      setError(t('imageUpload.invalidType'))
-      return
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setError(t('imageUpload.fileTooLarge'))
-      return
-    }
-
-    try {
-      const resizedFile = await resizeAndConvertImage(file)
-      setImageFile(resizedFile)
-      setImagePreview(URL.createObjectURL(resizedFile))
-      setError(null)
-    } catch (err) {
-      logger.error('Image processing error:', err)
-      setError(
-        err instanceof Error && err.message.includes('too small')
-          ? t('imageUpload.imageTooSmall')
-          : t('imageUpload.processingFailed'),
-      )
-    }
-  }, [resizeAndConvertImage, t])
-
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(true)
-  }, [])
-
-  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-  }, [])
-
-  const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-
-    const file = e.dataTransfer.files[0]
-    if (!file) return
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file')
-      return
-    }
-
-    try {
-      const resizedFile = await resizeAndConvertImage(file)
-      setImageFile(resizedFile)
-      setImagePreview(URL.createObjectURL(resizedFile))
-      setError(null)
-    } catch (err) {
-      logger.error('Image processing error:', err)
-      setError('Failed to process image. Please try another file.')
-    }
-  }, [resizeAndConvertImage])
-
-  const handleUploadAndAnalyze = useCallback(async () => {
-    if (!imageFile) return
-
-    setStep('analyze')
-    setError(null)
-
-    try {
-      // Convert file to base64 for server-side upload (bypasses iOS CORS issues)
-      const base64Data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => {
-          const result = reader.result as string
-          const base64 = result.split(',')[1]
-          if (!base64) reject(new Error('Failed to convert image to base64'))
-          else resolve(base64)
-        }
-        reader.onerror = () => reject(new Error('Failed to read image file'))
-        reader.readAsDataURL(imageFile)
-      })
-
-      // Upload to R2 via server-side Convex action
-      const { publicUrl } = await uploadToR2({
-        base64Data,
-        contentType: imageFile.type,
-      })
-
-      setRealImageUrl(publicUrl)
-      setStorageId('r2_upload')
-
-      const result = await analyzeImage({ imageUrl: publicUrl })
-
-      if (!result.success) {
-        console.warn('AI analysis failed:', result.error)
-        setError(result.error || 'AI analysis is currently unavailable. You can fill in the details manually.')
-        if (result.imageUrl) setRealImageUrl(result.imageUrl)
-        setProductName('')
-        setSafety(50)
-        setTaste(50)
-        // Skip to back-scan step (user can still proceed)
-        setStep('back-scan')
-        return
-      }
-
-      if (result.analysis) {
-        setAnalysis(result.analysis)
-        setProductName(result.analysis.productName)
-        setSafety(result.analysis.safety)
-        setTaste(result.analysis.taste)
-        // Extract allergens from AI analysis
-        if (result.analysis.containsGluten) {
-          setAllergens(prev => [...new Set([...prev, 'gluten'])])
-        }
-        // Pre-populate freeFrom from AI suggestions
-        if (result.analysis.suggestedFreeFrom?.length) {
-          setFreeFrom(new Set(result.analysis.suggestedFreeFrom))
-        }
-      }
-      setRealImageUrl(result.imageUrl || null)
-      // Go to back-scan step (NEW step in flow)
-      setStep('back-scan')
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to upload image'
-      setError(errorMessage)
-      setStep('upload')
-    }
-  }, [imageFile, uploadToR2, analyzeImage])
-
   /** Helper to upload an image file to R2 and return the public URL */
   const uploadFileToR2 = useCallback(async (file: File): Promise<string> => {
     const base64Data = await new Promise<string>((resolve, reject) => {
@@ -342,79 +189,9 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     return publicUrl
   }, [uploadToR2])
 
-  /** Handle back-of-package photo capture and ingredient analysis */
-  const handleBackPhotoCapture = useCallback(async (file: File) => {
-    setBackAnalyzing(true)
-    setBackError(null)
-
-    try {
-      // Process and upload the back image
-      const resizedFile = await resizeAndConvertImage(file)
-      const publicUrl = await uploadFileToR2(resizedFile)
-      setBackImageUrl(publicUrl)
-
-      // Analyze ingredients with AI
-      const result = await analyzeIngredients({ imageUrl: publicUrl })
-
-      if (!result.success) {
-        setBackError(result.error || 'Failed to analyze ingredients')
-        setBackAnalyzing(false)
-        return
-      }
-
-      // Store results
-      const backResult: BackAnalysis = {
-        ingredientsText: result.ingredientsText ?? '',
-        detectedAllergens: result.detectedAllergens ?? [],
-        suggestedFreeFrom: result.suggestedFreeFrom ?? [],
-        warnings: result.warnings ?? [],
-        confidence: result.confidence ?? 'medium',
-      }
-      setBackAnalysis(backResult)
-      setIngredientsText(backResult.ingredientsText)
-
-      // Merge freeFrom suggestions (union with front image suggestions)
-      if (backResult.suggestedFreeFrom.length > 0) {
-        setFreeFrom(prev => {
-          const merged = new Set(prev)
-          backResult.suggestedFreeFrom.forEach(id => merged.add(id))
-          return merged
-        })
-      }
-
-      // Also merge detected allergens into the allergens list
-      if (backResult.detectedAllergens.length > 0) {
-        setAllergens(prev => [...new Set([...prev, ...backResult.detectedAllergens])])
-        // Remove detected allergens from freeFrom (they conflict)
-        setFreeFrom(prev => {
-          const updated = new Set(prev)
-          backResult.detectedAllergens.forEach(id => updated.delete(id))
-          return updated
-        })
-      }
-
-      impact('medium')
-    } catch (err) {
-      logger.error('Back photo processing failed:', err)
-      setBackError(err instanceof Error ? err.message : 'Failed to process image')
-    } finally {
-      setBackAnalyzing(false)
-    }
-  }, [resizeAndConvertImage, uploadFileToR2, analyzeIngredients, impact])
-
-  /** Skip back scan and go to review */
-  const handleSkipBackScan = useCallback(() => {
-    setStep('review')
-  }, [])
-
-  /** Proceed from back scan to review */
-  const handleBackScanProceed = useCallback(() => {
-    setStep('review')
-  }, [])
-
   /** Toggle a freeFrom allergen */
   const handleFreeFromToggle = useCallback((id: string) => {
-    setFreeFrom(prev => {
+    setFreeFrom((prev) => {
       const updated = new Set(prev)
       if (updated.has(id)) {
         updated.delete(id)
@@ -429,10 +206,12 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     if (imagePreview?.startsWith('blob:')) {
       URL.revokeObjectURL(imagePreview)
     }
-    setStep('upload')
-    setImageFile(null)
+    // NOTE: Do NOT setStep('wizard') here — resetDialog is called while
+    // the dialog may still be mounted for one frame, and setting step to
+    // 'wizard' would briefly remount CameraWizard, restarting the native
+    // camera. Step is reset to 'wizard' in handleOpenChange when the
+    // dialog actually opens.
     setImagePreview(null)
-    setStorageId(null)
     setRealImageUrl(null)
     setAnalysis(null)
     setProductName('')
@@ -443,60 +222,245 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     setAllergens([])
     setFreeFrom(new Set())
     setBackImageUrl(null)
-    setBackAnalysis(null)
-    setBackAnalyzing(false)
-    setBackError(null)
     setIngredientsText('')
+    setProcessingStatus('')
     setError(null)
+    setBarcode(null)
+    setBarcodeSource(null)
+    setBrand(null)
+    setCategory(null)
+    setNutritionScore(null)
   }, [imagePreview])
 
-  /** Handle barcode scan result from SmartCamera */
-  const handleBarcodeScan = useCallback(async (barcode: string) => {
-    setStep('barcode-lookup')
-    try {
-      const result = await lookupBarcode({ barcode })
+  /**
+   * Handle wizard completion — process all captures in parallel.
+   * Uploads images, runs AI analysis, looks up barcode, then moves to review.
+   */
+  const handleWizardComplete = useCallback(async (captures: CaptureResult) => {
+    setStep('processing')
+    setError(null)
 
-      if (result.found && result.source === 'local') {
+    // Always store the detected barcode (even if OFF lookup fails)
+    if (captures.detectedBarcode) {
+      setBarcode(captures.detectedBarcode)
+      setBarcodeSource('manual') // Will be upgraded to 'openfoodfacts' if found
+    }
+
+    try {
+      // ── 1. Upload front image (required) ──
+      if (!captures.frontImage) {
+        setError(t('imageUpload.provideProductName'))
+        // Go to review (not wizard) — going back to wizard remounts the
+        // camera which was already stopped by finishWizard.
+        setStep('review')
+        return
+      }
+
+      setProcessingStatus(t('cameraWizard.processingFront'))
+
+      const resizedFront = await resizeAndConvertImage(captures.frontImage)
+      const frontPreview = URL.createObjectURL(resizedFront)
+      setImagePreview(frontPreview)
+
+      // Run tasks in parallel where possible
+      const uploadPromise = uploadFileToR2(resizedFront)
+
+      // Also resize + upload back image if provided
+      let backUploadPromise: Promise<string | null> = Promise.resolve(null)
+      if (captures.backImage) {
+        backUploadPromise = resizeAndConvertImage(captures.backImage)
+          .then((resized) => uploadFileToR2(resized))
+          .catch((err) => {
+            logger.error('Back image upload failed:', err)
+            return null
+          })
+      }
+
+      // Wait for front upload, then start AI analysis
+      const frontUrl = await uploadPromise
+      setRealImageUrl(frontUrl)
+
+      // ── 2. Analyze front image with AI ──
+      setProcessingStatus(t('imageUpload.aiAnalyzing'))
+      const aiPromise = analyzeImage({ imageUrl: frontUrl }).catch((err) => {
+        logger.error('AI analysis failed:', err)
+        return { success: false as const, error: 'AI analysis unavailable', imageUrl: frontUrl, analysis: null }
+      })
+
+      // ── 3. Analyze back image (if provided) ──
+      let ingredientsPromise: Promise<{
+        success: boolean
+        ingredientsText?: string
+        detectedAllergens?: string[]
+        suggestedFreeFrom?: string[]
+        warnings?: string[]
+        confidence?: string
+        error?: string
+      } | null> = Promise.resolve(null)
+
+      if (captures.backImage) {
+        setProcessingStatus(t('cameraWizard.processingBack'))
+        ingredientsPromise = backUploadPromise.then(async (backUrl) => {
+          if (!backUrl) return null
+          setBackImageUrl(backUrl)
+          return analyzeIngredients({ imageUrl: backUrl }).catch((err) => {
+            logger.error('Ingredient analysis failed:', err)
+            return null
+          })
+        })
+      }
+
+      // ── 4. Look up barcode (if detected) ──
+      let barcodePromise: Promise<{
+        found: boolean
+        source?: string
+        existingProduct?: { name: string }
+        productData?: { name: string; imageUrl?: string; allergens?: string[] }
+      } | null> = Promise.resolve(null)
+
+      if (captures.detectedBarcode) {
+        setProcessingStatus(t('cameraWizard.processingBarcode'))
+        barcodePromise = lookupBarcode({ barcode: captures.detectedBarcode }).catch((err) => {
+          logger.error('Barcode lookup failed:', err)
+          return null
+        })
+      }
+
+      // ── Wait for all parallel tasks ──
+      const [aiResult, ingredientsResult, barcodeResult] = await Promise.all([
+        aiPromise,
+        ingredientsPromise,
+        barcodePromise,
+      ])
+
+      // ── 5. Check if product already exists via barcode ──
+      if (barcodeResult?.found && barcodeResult.source === 'local' && barcodeResult.existingProduct) {
         toast.info(t('smartCamera.existingProduct'), {
-          description: result.existingProduct.name,
+          description: barcodeResult.existingProduct.name,
           action: {
             label: t('smartCamera.viewProduct'),
             onClick: () => {
               setOpen(false)
               resetDialog()
-              window.location.href = `/product/${encodeURIComponent(result.existingProduct.name)}`
+              window.location.href = `/product/${encodeURIComponent(barcodeResult.existingProduct!.name)}`
             },
           },
         })
-        setStep('upload')
+        // Close the dialog instead of going back to wizard (which would
+        // remount the camera after it was already stopped).
+        setOpen(false)
+        resetDialog()
         return
       }
 
-      if (result.found && result.source === 'openfoodfacts') {
+      // ── 6. Apply AI front analysis results ──
+      if (aiResult && aiResult.success && aiResult.analysis) {
+        setAnalysis(aiResult.analysis)
+        setProductName(aiResult.analysis.productName)
+        setSafety(aiResult.analysis.safety)
+        setTaste(aiResult.analysis.taste)
+        if (aiResult.analysis.containsGluten) {
+          setAllergens((prev) => [...new Set([...prev, 'gluten'])])
+        }
+        if (aiResult.analysis.suggestedFreeFrom?.length) {
+          setFreeFrom(new Set(aiResult.analysis.suggestedFreeFrom))
+        }
+        if (aiResult.imageUrl) setRealImageUrl(aiResult.imageUrl)
+      } else {
+        // AI failed — user can fill in manually
+        if (aiResult?.error) {
+          setError(aiResult.error)
+        }
+        setProductName('')
+        setSafety(50)
+        setTaste(50)
+      }
+
+      // ── 7. Apply barcode lookup data (OpenFoodFacts) ──
+      if (barcodeResult?.found && barcodeResult.source === 'openfoodfacts' && barcodeResult.productData) {
+        const pd = barcodeResult.productData as {
+          name: string; brand?: string; category?: string;
+          ingredients?: string[]; allergens?: string[];
+          nutritionScore?: string; servingSize?: string; imageUrl?: string;
+          barcode?: string
+        }
+        // Store barcode metadata
+        setBarcodeSource('openfoodfacts')
+        if (pd.brand) setBrand(pd.brand)
+        if (pd.category) setCategory(pd.category)
+        if (pd.nutritionScore) setNutritionScore(pd.nutritionScore.toLowerCase())
+
+        // Use barcode product name if AI didn't produce one
+        if (!productName) {
+          setProductName(pd.name)
+        }
+
+        // Map Nutri-Score → safety (only when AI analysis failed)
+        const scoreMap: Record<string, number> = { a: 80, b: 65, c: 50, d: 35, e: 20 }
+        const offSafety = scoreMap[pd.nutritionScore?.toLowerCase() ?? '']
+        if (offSafety && !(aiResult && aiResult.success && aiResult.analysis)) {
+          setSafety(offSafety)
+        }
+
+        // Use OFF image as fallback if front upload returned nothing
+        if (!frontUrl && pd.imageUrl) {
+          setRealImageUrl(pd.imageUrl)
+        }
+
+        // Merge OFF ingredients as tags when AI produced none
+        if (pd.ingredients?.length && !(aiResult?.analysis?.tags?.length)) {
+          setAnalysis((prev) => prev ? { ...prev, tags: pd.ingredients! } : null)
+        }
+
+        if (pd.allergens?.length) {
+          setAllergens((prev) => [
+            ...new Set([...prev, ...pd.allergens!.map((a: string) => a.toLowerCase())]),
+          ])
+        }
         impact('medium')
         toast.success(t('smartCamera.barcodeFound'))
-        setProductName(result.productData.name)
-        if (result.productData.imageUrl) {
-          setRealImageUrl(result.productData.imageUrl)
-          setImagePreview(result.productData.imageUrl)
-        }
-        // Store allergens from barcode lookup
-        if (result.productData.allergens?.length) {
-          setAllergens(result.productData.allergens.map((a: string) => a.toLowerCase()))
-        }
-        // Go to back-scan step (NEW: always offer ingredient scanning)
-        setStep('back-scan')
-        return
       }
 
-      toast.warning(t('smartCamera.barcodeNotFound'))
-      setStep('upload')
-    } catch (error) {
-      logger.error('Barcode lookup failed', error)
-      toast.error(t('smartCamera.scanError'))
-      setStep('upload')
+      // ── 8. Apply back image / ingredients results ──
+      if (ingredientsResult && ingredientsResult.success) {
+        setIngredientsText(ingredientsResult.ingredientsText ?? '')
+        // Merge freeFrom suggestions
+        if (ingredientsResult.suggestedFreeFrom?.length) {
+          setFreeFrom((prev) => {
+            const merged = new Set(prev)
+            ingredientsResult.suggestedFreeFrom!.forEach((id) => merged.add(id))
+            return merged
+          })
+        }
+        // Merge detected allergens
+        if (ingredientsResult.detectedAllergens?.length) {
+          setAllergens((prev) => [...new Set([...prev, ...ingredientsResult.detectedAllergens!])])
+          // Remove detected allergens from freeFrom (they conflict)
+          setFreeFrom((prev) => {
+            const updated = new Set(prev)
+            ingredientsResult.detectedAllergens!.forEach((id) => updated.delete(id))
+            return updated
+          })
+        }
+      }
+
+      impact('medium')
+      setProcessingStatus(t('cameraWizard.processingComplete'))
+
+      // Move to review
+      setStep('review')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Processing failed'
+      logger.error('Wizard processing failed:', err)
+      setError(errorMessage)
+      // Go to review with defaults — going back to wizard would remount
+      // the camera after it was already stopped by finishWizard.
+      setStep('review')
     }
-  }, [lookupBarcode, impact, t, resetDialog])
+  }, [
+    resizeAndConvertImage, uploadFileToR2, analyzeImage, analyzeIngredients,
+    lookupBarcode, impact, t, resetDialog, productName,
+  ])
 
   /** Shared product creation logic for both draft save and full submit */
   const submitProduct = useCallback(async (options: { isDraft: boolean }) => {
@@ -512,7 +476,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
       const result = await createProductAndVote({
         name: productName.trim(),
         imageUrl: realImageUrl || '',
-        imageStorageId: storageId === 'r2_upload' ? undefined : (storageId as Id<'_storage'> ?? undefined),
+        imageStorageId: undefined,
         anonymousId: anonId ?? undefined,
         safety,
         taste,
@@ -526,6 +490,11 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
         ingredientsText: ingredientsText || undefined,
         backImageUrl2: backImageUrl || undefined,
         aiAnalysis: analysis ?? undefined,
+        barcode: barcode || undefined,
+        barcodeSource: barcodeSource || undefined,
+        brand: brand || undefined,
+        category: category || undefined,
+        nutritionScore: nutritionScore || undefined,
       })
 
       setOpen(false)
@@ -546,7 +515,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
       setError(msg)
       setStep('review')
     }
-  }, [storageId, productName, anonId, safety, taste, price, storeName, allergens, freeFrom, ingredientsText, backImageUrl, analysis, realImageUrl, coords, createProductAndVote, onSuccess, resetDialog, t])
+  }, [productName, anonId, safety, taste, price, storeName, allergens, freeFrom, ingredientsText, backImageUrl, analysis, realImageUrl, coords, createProductAndVote, onSuccess, resetDialog, t, barcode, barcodeSource, brand, category, nutritionScore])
 
   const handleSaveAsDraft = useCallback(() => submitProduct({ isDraft: true }), [submitProduct])
   const handleSubmit = useCallback(() => submitProduct({ isDraft: false }), [submitProduct])
@@ -556,7 +525,9 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     open, setOpen,
     step, setStep,
     // Image
-    imageFile, imagePreview, error, isDragging,
+    imagePreview, error,
+    // Processing
+    processingStatus,
     // AI
     analysis,
     // Form
@@ -565,34 +536,19 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     taste, setTaste,
     price, setPrice,
     storeName, setStoreName,
-    // NEW: Free-from sensitivities
+    // Free-from sensitivities
     freeFrom, handleFreeFromToggle,
-    // NEW: Back scan
-    backImageUrl,
-    backAnalysis,
-    backAnalyzing,
-    backError,
+    // Ingredients
     ingredientsText,
-    handleBackPhotoCapture,
-    handleSkipBackScan,
-    handleBackScanProceed,
     // Geo
     geoLoading, coords, geoError, permissionStatus, requestPermissions, requestLocation,
     // Online
     isOnline,
     // Handlers
-    handleFileSelect,
-    handleSmartCameraPhoto,
-    handleBarcodeScan,
-    handleDragOver,
-    handleDragLeave,
-    handleDrop,
-    handleUploadAndAnalyze,
+    handleWizardComplete,
     handleSaveAsDraft,
     handleSubmit,
     resetDialog,
-    // Refs
-    fileInputRef,
     // i18n
     t,
   }

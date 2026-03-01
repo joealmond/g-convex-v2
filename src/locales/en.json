@@ -123,7 +123,8 @@
     "or": "or",
     "price": "Price",
     "sendComment": "Send comment",
-    "changeLanguage": "Change language"
+    "changeLanguage": "Change language",
+    "continue": "Continue"
   },
   "feed": {
     "searchProducts": "Search products…",
@@ -506,6 +507,31 @@
     "lookingUpDescription": "Checking Open Food Facts database...",
     "scanBarcode": "Scan Barcode",
     "scanError": "Barcode lookup failed"
+  },
+  "cameraWizard": {
+    "title": "Add Product",
+    "step1Title": "Front of Product",
+    "step1Hint": "Show the product name and label clearly",
+    "step2Title": "Ingredients List",
+    "step2Hint": "Flip the package and show the ingredients",
+    "step3Title": "Barcode",
+    "step3Hint": "Point at the barcode — or skip if not visible",
+    "stepOf": "Step {current} of {total}",
+    "skip": "Skip",
+    "capture": "Capture",
+    "retake": "Retake",
+    "barcodeDetected": "Barcode detected!",
+    "barcodeAlreadyCaptured": "Barcode already captured",
+    "processing": "Processing your captures...",
+    "processingFront": "Uploading front image...",
+    "processingBack": "Analyzing ingredients...",
+    "processingBarcode": "Looking up barcode...",
+    "uploadFront": "Upload front photo",
+    "uploadIngredients": "Upload ingredients photo",
+    "uploadBarcode": "Upload barcode photo",
+    "enterBarcodeManually": "Enter barcode manually",
+    "done": "Done",
+    "processingComplete": "Processing complete!"
   },
   "push": {
     "streakReminder": "Your streak is about to expire! Vote to keep it going.",

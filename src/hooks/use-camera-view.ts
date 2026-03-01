@@ -19,6 +19,8 @@ export function useCameraView() {
   // Guards against concurrent start/stop and double-stop
   const runningRef = useRef(false)
   const pendingStopRef = useRef<Promise<void> | null>(null)
+  // Cancellation flag: set to true on unmount so an in-flight startCamera aborts
+  const cancelledRef = useRef(false)
 
   const isNative = Capacitor.isNativePlatform()
 
@@ -77,6 +79,9 @@ export function useCameraView() {
     // Already running
     if (runningRef.current) return true
 
+    // If cancelled (component unmounted), don't start
+    if (cancelledRef.current) return false
+
     // Wait for pending stop to fully complete before re-starting
     if (pendingStopRef.current) {
       await pendingStopRef.current
@@ -86,17 +91,39 @@ export function useCameraView() {
     try {
       const { CameraView } = await import('capacitor-camera-view')
 
+      // Check cancellation after each async gap
+      if (cancelledRef.current) return false
+
       // Ensure permissions
       const granted = await requestPermissions()
-      if (!granted) return false
+      if (!granted || cancelledRef.current) return false
 
       // Listen for barcodes
       listenerRef.current = await CameraView.addListener('barcodeDetected', (data) => {
         setLastBarcode({ value: data.value, type: data.type })
       })
 
+      // Final cancellation check before the expensive native start
+      if (cancelledRef.current) {
+        // Cleanup the listener we just added
+        await listenerRef.current.remove().catch(() => {})
+        listenerRef.current = null
+        return false
+      }
+
       // Start camera with barcode detection
       await CameraView.start({ enableBarcodeDetection: true })
+
+      // If cancelled during start, immediately stop
+      if (cancelledRef.current) {
+        await CameraView.stop().catch(() => {})
+        if (listenerRef.current) {
+          await listenerRef.current.remove().catch(() => {})
+          listenerRef.current = null
+        }
+        return false
+      }
+
       runningRef.current = true
       setIsRunning(true)
 
@@ -143,9 +170,16 @@ export function useCameraView() {
         }
 
         await CameraView.stop()
+        // The plugin's stopSession completion fires BEFORE the main-thread
+        // UIKit cleanup (removeFromSuperlayer, webView.isOpaque = true).
+        // Wait a tick so the native preview layer is fully removed before
+        // we proceed with DOM changes.
+        await new Promise((r) => setTimeout(r, 120))
         setIsRunning(false)
       } catch (error) {
         logger.error('Failed to stop camera:', error)
+        // Even on error, wait for native cleanup attempt
+        await new Promise((r) => setTimeout(r, 120))
         setIsRunning(false)
       }
     }
@@ -157,6 +191,9 @@ export function useCameraView() {
 
   /**
    * Capture a photo from the live camera feed.
+   * Uses captureSample() which grabs a frame from the video stream
+   * without triggering the hardware photo pipeline — safe to call
+   * while preview + barcode detection are active.
    * Returns a File object ready for upload.
    */
   const capturePhoto = useCallback(async (): Promise<File | null> => {
@@ -164,7 +201,7 @@ export function useCameraView() {
 
     try {
       const { CameraView } = await import('capacitor-camera-view')
-      const result = await CameraView.capture({ quality: 90 })
+      const result = await CameraView.captureSample({ quality: 90 })
 
       if (!result.photo) return null
 
@@ -191,14 +228,18 @@ export function useCameraView() {
     setLastBarcode(null)
   }, [])
 
-  // Cleanup on unmount — uses refs so closure is always fresh
+  // Cleanup on unmount — set cancellation flag so any in-flight startCamera
+  // aborts, then stop if running.
   useEffect(() => {
+    cancelledRef.current = false // reset on mount
     return () => {
+      cancelledRef.current = true // cancel any in-flight startCamera
       if (runningRef.current) {
         runningRef.current = false
         // Fire-and-forget cleanup
         import('capacitor-camera-view').then(({ CameraView }) => {
           document.body.classList.remove('camera-running')
+          document.body.classList.remove('camera-starting')
           CameraView.stop().catch(() => {})
         }).catch(() => {})
       }

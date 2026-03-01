@@ -123,7 +123,8 @@
     "or": "vagy",
     "price": "Ár",
     "sendComment": "Hozzászólás küldése",
-    "changeLanguage": "Nyelv váltása"
+    "changeLanguage": "Nyelv váltása",
+    "continue": "Tovább"
   },
   "feed": {
     "searchProducts": "Termékek keresése…",
@@ -506,6 +507,31 @@
     "lookingUpDescription": "Open Food Facts adatbázis ellenőrzése...",
     "scanBarcode": "Vonalkód szkennelés",
     "scanError": "Vonalkód keresés sikertelen"
+  },
+  "cameraWizard": {
+    "title": "Termék hozzáadása",
+    "step1Title": "Termék eleje",
+    "step1Hint": "Mutasd a termék nevét és címkéjét tisztán",
+    "step2Title": "Összetevők listája",
+    "step2Hint": "Fordítsd meg a csomagolást és mutasd az összetevőket",
+    "step3Title": "Vonalkód",
+    "step3Hint": "Irányítsd a vonalkódra — vagy hagyd ki, ha nem látható",
+    "stepOf": "{current}. lépés a {total}-ból",
+    "skip": "Kihagyás",
+    "capture": "Fényképezés",
+    "retake": "Újra",
+    "barcodeDetected": "Vonalkód felismerve!",
+    "barcodeAlreadyCaptured": "Vonalkód már rögzítve",
+    "processing": "Felvételek feldolgozása...",
+    "processingFront": "Elülső kép feltöltése...",
+    "processingBack": "Összetevők elemzése...",
+    "processingBarcode": "Vonalkód keresése...",
+    "uploadFront": "Elülső fotó feltöltése",
+    "uploadIngredients": "Összetevők fotó feltöltése",
+    "uploadBarcode": "Vonalkód fotó feltöltése",
+    "enterBarcodeManually": "Vonalkód kézi megadása",
+    "done": "Kész",
+    "processingComplete": "Feldolgozás kész!"
   },
   "push": {
     "streakReminder": "A sorozatod hamarosan lejár! Szavazz, hogy megtartsd.",
