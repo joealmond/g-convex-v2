@@ -199,6 +199,36 @@ adb emu geo fix 19.0402 47.4979  # Budapest
 # Or use Extended Controls UI
 ```
 
+### Camera Wizard — Full Flow Testing
+
+#### Test Flow (Native Only)
+1. Navigate to "Add Product" (➕ tab)
+2. Camera should open with **black screen** briefly, then native camera feed
+3. **Step 1 (Front photo)**: Tap shutter button → flash animation → advances to step 2
+4. **Step 2 (Ingredients)**: Tap shutter → advances to step 3. Or tap "Skip"
+5. **Step 3 (Barcode)**: Aim at barcode → auto-detects and finishes. Or tap "Skip"
+6. Progress indicator shows "Processing..." with AI analysis
+7. Review step shows product name, ratings, barcode data
+8. Submit → product created
+
+#### What to Verify
+| Check | Expected | Notes |
+|-------|----------|-------|
+| Black → camera transition | No white/cream flash | Two-phase CSS: `camera-starting` → `camera-running` |
+| All buttons work | Shutter, Skip, Cancel respond to taps | Radix `modal={false}` on native |
+| Camera stops after wizard | No frozen camera image | `await stopCamera()` with 120ms delay |
+| Camera doesn't restart after submit | Dialog closes cleanly | Step never set back to `'wizard'` |
+| Barcode auto-detection | Barcode scanned on step 3 | `AVCaptureMetadataOutput` listener |
+| Cancel mid-flow | Camera stops, dialog closes | `cancelledRef` abort pattern |
+| `captureSample` works | Photos captured without crash | Not `capture()` — video frame grab |
+
+#### Known Issues
+- **v2.0.0 crash**: `FigCaptureSourceRemote err=-17281` — must use v2.0.2+
+- **Simulator**: No camera hardware — test on physical device only
+- **Reference**: See `docs/CAMERA_WIZARD.md` for full architecture
+
+---
+
 ### Camera Black Screen (iOS)
 **Symptom**: Camera opens but shows black screen, no capture.
 

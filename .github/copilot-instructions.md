@@ -43,6 +43,7 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | Native Auth | `better-auth-capacitor` | OAuth via system browser + deep links on native |
 | Deployment | Cloudflare Workers | Edge SSR for web |
 | Native | Capacitor | iOS/Android WebView — loads SPA shell from bundled assets |
+| Native Camera | `capacitor-camera-view` v2.0.2+ | Native AVFoundation camera overlay behind WebView |
 | Rendering | SSR (web) + SPA shell (mobile) | TanStack Start SPA Mode generates both from one build |
 | UI | shadcn/ui + Tailwind CSS v4 | Component library + utility CSS |
 | Charts | Recharts | Scatter plot visualization |
@@ -72,13 +73,14 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | `src/routes/community.tsx` | Community feed page — activity stream + following filter |
 | `src/components/layout/` | Navigation shell: BottomTabs, TopBar, PageShell |
 | `src/components/feed/` | Home feed: ProductCard, FilterChips (with nearby range dropdown), FeedGrid |
-| `src/components/product/` | Product detail: RatingBars, StoreList, VotingSheet, ImageUploadDialog, ProductComments |
+| `src/components/product/` | Product detail: RatingBars, StoreList, VotingSheet, ImageUploadDialog, CameraWizard, ProductComments |
 | `src/components/map/` | Leaflet map: ProductMap, ProductPin |
 | `src/components/dashboard/` | Chart views: MatrixChart, CoordinateGrid, StatsCard, BadgeDisplay, Leaderboard, DeleteProductButton |
 | `src/components/QuadrantPicker.tsx` | Reusable 2×2 quadrant button grid used in VotingSheet, VotingPanel, ImageUploadDialog |
 | `src/lib/format-distance.ts` | `formatDistance(km, t)` — shared i18n-aware distance formatter |
 | `src/lib/format-time.ts` | `formatRelativeTimeI18n(timestamp, t)` — shared i18n-aware relative time formatter |
-| `src/hooks/` | Custom hooks: useAdmin, useGeolocation, useTranslation, useAnonymousId, useVoteMigration, useImpersonate, useTheme, useOnlineStatus |
+| `src/hooks/` | Custom hooks: useAdmin, useGeolocation, useTranslation, useAnonymousId, useVoteMigration, useImpersonate, useTheme, useOnlineStatus, useCameraView |
+| `src/hooks/use-camera-view.ts` | Native camera lifecycle: start/stop/capture/barcode with cancellation guards |
 | `src/hooks/use-product-filter.ts` | Product filter logic — default "nearby" with auto-fallback to "recent"; configurable range via `getNearbyRange`/`setNearbyRange` (localStorage) |
 | `src/hooks/use-online-status.ts` | `useOnlineStatus()` — SSR-safe online/offline detection; `useServiceWorker()` — registers `/sw.js` |
 | `src/lib/offline-queue.ts` | IndexedDB queue via `idb-keyval`: `enqueue()`, `dequeue()`, `flush()`, `getPendingCount()` |
@@ -251,8 +253,65 @@ Standard shadcn/ui tokens (`bg-background`, `bg-card`, `bg-primary`, `text-foreg
 - **Button Content**: When overriding button children (e.g. for icon-only buttons), You MUST provide the visible Icon element. Passing only `sr-only` text will result in a blank button. Always verify the button renders with visible content.
 - **i18n**: Never hardcode user-facing English strings. Always use `t('key')` from `useTranslation()`. If you add a new string, add it to BOTH `en.json` and `hu.json` before using it. Missing keys silently return the key path as fallback text.
 - **Circular imports in `convex/`**: `auth.ts` must NOT import from `customFunctions.ts` — it creates a circular dependency (`auth.ts` → `customFunctions.ts` → `authHelpers.ts` → `auth.ts`) that crashes Convex push with `"X is not a function"`. See Known Issues section.
+- **Radix Dialog + Portals**: Never portal UI to `document.body` from inside a Radix Dialog while `modal={true}` — Radix adds `inert` to all body siblings, making the portaled content non-interactive. Use `modal={false}` and manually handle scroll lock + dismiss prevention. See Camera Wizard known issue.
+- **Dialog `resetDialog` must not set step to a view that mounts an expensive component** (like `CameraWizard`). Set step to a safe value during close; reset to the initial step only in the open handler. React may batch close + reset in one frame, briefly mounting the component.
+- **Async native camera lifecycle**: Always `await stopCamera()` before proceeding with DOM changes or dialog close. The native `CameraView.stop()` is async — if not awaited, the AVFoundation preview layer stays attached.
 
 ### Known Issues & Workarounds
+
+#### Native Camera Wizard (`capacitor-camera-view`) — Lessons Learned
+
+**Architecture**: The camera wizard is a 3-step guided capture overlay (front photo → ingredients photo → barcode scan) rendered via `createPortal(overlay, document.body)`. The native iOS camera renders *behind* the WebView via AVFoundation's `AVCaptureVideoPreviewLayer`. The WebView is made transparent via CSS classes so the camera feed is visible.
+
+**Key files**:
+| File | Role |
+|------|------|
+| `src/components/product/CameraWizard.tsx` | 3-step capture UI with step indicator, shutter button, barcode detection |
+| `src/hooks/use-camera-view.ts` | Camera lifecycle hook: start/stop/capture/barcode with guards |
+| `src/components/product/ImageUploadDialog.tsx` | Dialog shell — manages modal/non-modal, camera CSS classes |
+| `src/hooks/use-image-upload.ts` | Orchestration: wizard → processing → review → submit |
+| `src/styles/globals.css` | `camera-running` and `camera-starting` CSS classes |
+
+**How the transparency works**:
+```
+body.camera-starting  →  Black background, all content hidden (brief loading state)
+body.camera-running   →  Transparent background, all content hidden EXCEPT .camera-overlay
+                          Native AVFoundation preview layer renders behind the transparent WebView
+.camera-overlay       →  The CameraWizard portal UI — visible via `visibility: visible` override
+```
+
+**Plugin version**: Must use **v2.0.2+** of `capacitor-camera-view`. v2.0.0 had a critical bug where `stopSession()` resolved the JS promise immediately before `captureSession.stopRunning()` completed on the iOS background queue. This caused `FigCaptureSourceRemote err=-17281` crashes. Fixed in v2.0.2 via PR #16 (completion callback).
+
+**Critical patterns (hard-won lessons)**:
+
+1. **`modal={false}` on Dialog during native camera**: Radix Dialog's `modal={true}` adds `inert` attribute to all body siblings. Since CameraWizard is portaled to `document.body`, it becomes a sibling of the Dialog portal and gets `inert` — making all buttons (shutter, X, skip, next) completely unresponsive. Fix: use `modal={false}` for the entire native dialog session, not just wizard step (Radix doesn't support switching `modal` while open).
+
+2. **Prevent Dialog dismiss during camera**: With the overlay portaled outside the Dialog, taps on camera UI register as "interact outside" the DialogContent. Add `onInteractOutside`, `onPointerDownOutside`, `onEscapeKeyDown` handlers that call `e.preventDefault()` when camera is active.
+
+3. **Body scroll lock**: Since `modal={false}` disables Radix's built-in scroll lock, manually set `document.body.style.overflow = 'hidden'` during non-wizard steps (processing, review, submitting) on native.
+
+4. **`await stopCamera()` before any navigation**: `finishWizard()` and `handleCancel()` must `await stopCamera()` before calling `onComplete()` or `onCancel()`. Without await, the native preview layer stays attached — the user sees a frozen camera image with no controls.
+
+5. **120ms delay after `CameraView.stop()`**: The plugin's completion callback fires before the main-thread UIKit cleanup (`videoPreviewLayer.removeFromSuperlayer()`, `webView.isOpaque = true`). A 120ms delay in `stopCamera()` ensures the preview layer is fully removed.
+
+6. **Never `setStep('wizard')` during close**: `resetDialog()` must NOT reset step to `'wizard'`. React may batch the close + step-change in one frame, briefly remounting CameraWizard and restarting the native camera. Set step to `'wizard'` only in the Dialog's open handler (`handleOpenChange`).
+
+7. **Cancellation guard (`cancelledRef`)**: `startCamera()` is async (dynamic import → permissions → addListener → CameraView.start). If the component unmounts mid-start, the in-flight start must self-abort. `cancelledRef` is set to `true` on unmount; `startCamera` checks it after every async gap and cleans up if cancelled.
+
+8. **Two-phase camera start (black → transparent)**: To avoid a white/cream flash when the camera opens, use two CSS classes:
+   - `camera-starting` — applied in `handleOpenChange` *before* the dialog mounts. Shows black screen.
+   - `camera-running` — applied after `startCamera()` resolves. Makes WebView transparent for camera feed.
+   This gives: app → black → camera feed, which feels natural.
+
+9. **`captureSample()` not `capture()`**: Use `CameraView.captureSample({ quality: 90 })` which grabs a frame from the video stream via `AVCaptureVideoDataOutput`. The alternative `capture()` triggers the full hardware photo pipeline (`AVCapturePhotoOutput.capturePhoto`), which is slower and more crash-prone when called repeatedly.
+
+**What NOT to do with the camera**:
+- ❌ Don't stop/restart the camera between captures — keep it running for all 3 steps.
+- ❌ Don't use `modal={true}` with portaled camera overlay — `inert` kills all buttons.
+- ❌ Don't use `capture()` for rapid multi-photo flows — use `captureSample()`.
+- ❌ Don't fire-and-forget `stopCamera()` — always `await` it.
+- ❌ Don't set step back to `'wizard'` in error handlers after camera was stopped.
+- ❌ Don't use `capacitor-camera-view` v2.0.0 or v2.0.1 — session stop bug causes crashes.
 
 #### Safe Aggregate Deletions (`DELETE_MISSING_KEY`)
 **Problem**: Delete mutations can randomly fail with `DELETE_MISSING_KEY` errors if an aggregate index is briefly out of sync or if a record was manually deleted from the dashboard.
@@ -583,6 +642,10 @@ Cards: `bg-card text-card-foreground rounded-2xl shadow-sm border border-border`
 - ❌ Don't hardcode padding/margins for notch/home indicator — use `env(safe-area-inset-*)` CSS variables
 - ❌ Don't use `<a>` tags for OAuth — on native, use `signIn.social()` with `better-auth-capacitor` which routes through system browser
 - ❌ Don't try to create products offline — image upload + AI analysis requires network connectivity. Votes CAN be queued offline.
+- ❌ Don't use `capacitor-camera-view` v2.0.0 — has a critical session stop bug. Must use v2.0.2+. See Camera Wizard known issue.
+- ❌ Don't set `modal={true}` on Dialog when portaling content to `document.body` — `inert` breaks all buttons.
+- ❌ Don't call `stopCamera()` without `await` — native preview layer stays attached (frozen camera image).
+- ❌ Don't set step back to `'wizard'` in `resetDialog()` or error handlers after camera was stopped — remounts CameraWizard.
 - ❌ Don't try to disable iOS Capacitor logs via code — use Release build configuration in Xcode instead (see Known Issues)
 - ❌ Don't implement SceneDelegate on iOS — Capacitor v8 is incompatible, use traditional AppDelegate (see Known Issues)
 - ❌ Don't expect MacBook trackpad pinch-to-zoom on Leaflet maps — use scrollWheelZoom + boxZoom instead (enable all zoom methods)

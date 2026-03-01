@@ -125,6 +125,17 @@ Session token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 **Solution**: Use Release configuration (see Step 4 above).  
 **Cannot be disabled via code** — controlled by Xcode build settings.
 
+#### 🚨 Camera Wizard Issues
+**Symptom**: Camera buttons unresponsive, camera stays open after close, or camera restarts after submit.
+
+**Root Causes & Solutions**:
+1. **Buttons unresponsive**: Radix Dialog `modal={true}` adds `inert` to portaled overlay. Fix: `modal={false}` on native.
+2. **Camera stays open**: `stopCamera()` not awaited. Fix: `await stopCamera()` before dialog close.
+3. **Camera restarts**: `resetDialog()` sets step back to `'wizard'`. Fix: only set step to `'wizard'` in the open handler.
+4. **`FigCaptureSourceRemote err=-17281` crash**: Plugin v2.0.0 bug. Fix: update to `capacitor-camera-view` v2.0.2+.
+
+**Full Reference**: See `docs/CAMERA_WIZARD.md` for complete architecture guide.
+
 #### 🚨 Black Screen on Launch
 **Cause**: SceneDelegate was added to `AppDelegate.swift` or `Info.plist`.  
 **Solution**:

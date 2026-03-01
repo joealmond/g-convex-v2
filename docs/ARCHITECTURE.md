@@ -116,6 +116,18 @@ To solve this, uploads must be proxied through the server. Since Convex runs on 
 2. Action decodes base64 payload to binary.
 3. Action performs the HTTP `fetch` `PUT` request locally to bypass CORS and Edge SDK limitations.
 
+### Native Camera Wizard (Capacitor)
+The camera wizard uses `capacitor-camera-view` v2.0.2+ to render an AVFoundation camera **behind** the WebView. The WebView is made transparent via CSS classes (`camera-starting` → `camera-running`) and a React overlay portaled to `document.body` provides the capture UI.
+
+**The Architectural Pattern:**
+1. Portal CameraWizard overlay to `document.body` (escapes Dialog CSS transform).
+2. Two-phase CSS transparency: black screen (`camera-starting`) → transparent WebView (`camera-running`).
+3. Radix Dialog uses `modal={false}` on native to avoid `inert` attribute blocking portaled buttons.
+4. `cancelledRef` guard on async `startCamera()` to handle unmount during initialization.
+5. `await stopCamera()` with 120ms delay for AVFoundation UIKit cleanup.
+
+**Reference**: See `docs/CAMERA_WIZARD.md` for the full architecture guide and known issues.
+
 ### Safe Aggregate Deletions
 Convex Aggregates (`@convex-dev/aggregate`) are highly scalable but can fall out of sync if records are manually deleted via the dashboard. If the app tries to delete a record that the aggregate already dropped, it throws `DELETE_MISSING_KEY`, crashing the transaction.
 **The Architectural Pattern:** Always wrap `aggregate.delete` calls in a utility function (`safeAggregateDelete`) that specifically catches and ignores `DELETE_MISSING_KEY` errors, ensuring the primary DB delete succeeds.

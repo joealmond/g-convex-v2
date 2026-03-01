@@ -82,6 +82,23 @@ Any finished task goes here from the planning documents.
 - ✅ Implement "new product near you" alert → `convex/actions/nearbyProduct.ts` + triggered on product creation with GPS (2026-02-16)
 - ✅ Integrate OneSignal for push delivery → `onesignal-cordova-plugin` + REST API from Convex actions (2026-02-19)
 
+### Camera Wizard — Native iOS Capture Pipeline
+- ✅ Build 3-step guided capture wizard (front → ingredients → barcode) — `CameraWizard.tsx` with step indicator, shutter button, skip/cancel
+- ✅ Create camera lifecycle hook — `use-camera-view.ts` with start/stop/capture/barcode, cancellation guards (`cancelledRef`)
+- ✅ Integrate with ImageUploadDialog — portal rendering, modal/non-modal management, CSS transparency classes
+- ✅ Create orchestration hook — `use-image-upload.ts` (wizard → processing → review → submit flow)
+- ✅ Fix `FigCaptureSourceRemote err=-17281` crash — update `capacitor-camera-view` from v2.0.0 to v2.0.2+ (stop session completion callback)
+- ✅ Fix camera buttons unresponsive — Radix Dialog `modal={true}` added `inert` to portaled overlay. Changed to `modal={false}` on native
+- ✅ Fix dialog auto-dismiss during camera — taps on portal registered as "interact outside". Added `onInteractOutside`/`onPointerDownOutside` with `preventDefault()`
+- ✅ Fix camera stuck after close — `stopCamera()` not awaited. Made finish/cancel async with `await stopCamera()` + 120ms UIKit delay
+- ✅ Fix white flash on camera open — two-phase CSS: `camera-starting` (black) before dialog → `camera-running` (transparent) after native start
+- ✅ Fix camera restart after submit — `resetDialog()` was setting `setStep('wizard')`. Moved to `handleOpenChange` open handler only
+- ✅ Fix camera restart on error — error paths went to `setStep('wizard')`. Changed to `setStep('review')` or close dialog
+- ✅ Fix orphaned camera on quick cancel — `cancelledRef` pattern in `startCamera()` checks after every async gap, aborts if unmounted
+- ✅ Fix scroll behind camera dialog — `modal={false}` disables Radix scroll lock. Added manual `overflow: hidden` for non-wizard native steps
+- ✅ Use `captureSample()` instead of `capture()` — grabs video frame (fast) vs full hardware pipeline (crash-prone)
+- ✅ Document all lessons learned — `docs/CAMERA_WIZARD.md`, updated ARCHITECTURE.md, MOBILE_DEPLOYMENT.md, NATIVE_TESTING_GUIDE.md, copilot-instructions.md
+
 ### Mobile Native Fixes
 - ✅ Fix image upload on native (file URI handling + CORS) → Verified upload flow works correctly with base64-to-File conversion in `useCameraView` hook (2026-02-16)
 - ✅ Test location permissions flow after fresh install → Implemented robust permission handling via `@capacitor/geolocation` plugin with explicit check/request methods + permission status tracking (2026-02-16)
