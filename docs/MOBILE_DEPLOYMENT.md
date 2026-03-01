@@ -431,6 +431,24 @@ This project has pioneered patterns that could benefit other TanStack Start + Ca
 - **Upstream Value**: Better UX for Leaflet maps in hybrid apps
 - **Target**: react-leaflet documentation, Capacitor examples
 
+### 6. **Radix Dialog + Native Camera Portal Pattern**
+- **Problem**: Radix Dialog's `modal={true}` adds `inert` to `document.body` siblings. If you portal overlay UI (e.g., camera controls) to `document.body`, all buttons become unresponsive. Tapping the portal also triggers "interact outside" auto-dismiss.
+- **Solution**: Use `modal={false}` on native, add `onInteractOutside`/`onPointerDownOutside` with `preventDefault()`, and manually lock body scroll. Never switch `modal` prop while dialog is open (causes re-mount).
+- **Upstream Value**: Generic pattern for any Radix Dialog + portal combo — not just cameras. Applies to any full-screen overlay rendered outside a Dialog (e.g., drawing canvas, AR view, video player).
+- **Target**: Radix UI documentation (inert + portal interaction), Capacitor community guides
+
+### 7. **Native Camera Lifecycle Guard Pattern (`cancelledRef`)**
+- **Problem**: Starting a native camera is a multi-step async chain (dynamic import → permissions → listener → native start). If the component unmounts mid-chain, orphaned native resources leak (camera stays on, preview layer stuck).
+- **Solution**: `cancelledRef` checked after every `await`. Set to `true` on unmount. Each async gap checks and cleans up if cancelled. `stopCamera()` awaited with 120ms post-delay for UIKit cleanup.
+- **Upstream Value**: Reusable pattern for any async native plugin lifecycle (camera, AR, audio recording, video player). Applicable beyond `capacitor-camera-view`.
+- **Target**: Capacitor plugin documentation, React + native bridge guides
+
+### 8. **Two-Phase WebView Transparency for Native Camera**
+- **Problem**: Opening a native camera behind a WebView causes a white/cream flash — the app background is visible for ~100ms before the WebView becomes transparent.
+- **Solution**: Two CSS classes: `camera-starting` (black background, hides everything) applied *before* dialog mounts, then `camera-running` (transparent) applied *after* native camera starts. Gives: app → black → camera feed.
+- **Upstream Value**: Generic pattern for any "native layer behind WebView" rendering (AR, video, map overlays). CSS-only solution, no plugin changes needed.
+- **Target**: Capacitor WebView transparency guides, `capacitor-camera-view` README
+
 ---
 
 ## Questions?
