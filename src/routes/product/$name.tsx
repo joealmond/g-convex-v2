@@ -365,6 +365,44 @@ function ProductDetailContent() {
           </Card>
         )}
 
+        {/* Free From Badges — NEW */}
+        {product.freeFrom && product.freeFrom.length > 0 && (
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="text-lg">{t('imageUpload.freeFrom')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {product.freeFrom.map((allergenId: string) => {
+                  const allergen = appConfig.allergens.find(a => a.id === allergenId)
+                  return (
+                    <Badge
+                      key={allergenId}
+                      className="px-3 py-1 text-xs font-medium bg-safety-high/15 text-safety-high border border-safety-high/30"
+                    >
+                      {allergen ? `${allergen.emoji} ${t(`imageUpload.freeFromAllergen.${allergenId}`)}` : allergenId}
+                    </Badge>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Raw Ingredients Text — NEW (from back scan OCR) */}
+        {product.ingredientsText && (
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="text-lg">{t('imageUpload.ingredientsFromScan')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                {product.ingredientsText}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Voting Section */}
         <Card className="shadow-card" data-voting-section>
           <CardHeader>

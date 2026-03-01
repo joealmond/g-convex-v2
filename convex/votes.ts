@@ -207,6 +207,13 @@ export const createProductAndVote = publicMutation({
     purchaseLocation: v.optional(v.string()),
     // Allergens detected from barcode or AI
     allergens: v.optional(v.array(v.string())),
+    // Sensitivity: what the product is FREE FROM
+    freeFrom: v.optional(v.array(v.string())),
+    // Raw OCR text from back-of-package ingredient label
+    ingredientsText: v.optional(v.string()),
+    // Back image storage reference
+    backImageStorageId: v.optional(v.id('_storage')),
+    backImageUrl2: v.optional(v.string()),
     // AI analysis data (optional)
     aiAnalysis: v.optional(v.object({
       productName: v.string(),
@@ -216,6 +223,7 @@ export const createProductAndVote = publicMutation({
       tags: v.array(v.string()),
       containsGluten: v.boolean(),
       warnings: v.array(v.string()),
+      suggestedFreeFrom: v.optional(v.array(v.string())),
     })),
   },
   handler: async (ctx, args) => {
@@ -269,8 +277,11 @@ export const createProductAndVote = publicMutation({
       name: args.name,
       imageUrl: args.imageUrl,
       imageStorageId: args.imageStorageId,
-      backImageUrl: args.backImageUrl,
+      backImageUrl: args.backImageUrl ?? args.backImageUrl2,
+      backImageStorageId: args.backImageStorageId,
       ingredients: args.ingredients ?? args.aiAnalysis?.tags,
+      ingredientsText: args.ingredientsText,
+      freeFrom: args.freeFrom,
       allergens,
       averageSafety: args.safety,
       averageTaste: args.taste,

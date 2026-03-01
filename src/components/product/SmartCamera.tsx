@@ -13,6 +13,8 @@ interface SmartCameraProps {
   onBarcodeScan: (barcode: string) => void
   onPhotoCapture: (file: File) => void
   onCancel: () => void
+  /** 'full' = barcode scan + photo (default), 'photo-only' = just photo capture */
+  mode?: 'full' | 'photo-only'
 }
 
 /**
@@ -24,7 +26,7 @@ interface SmartCameraProps {
  * 
  * **Web**: File picker + manual barcode text input
  */
-export function SmartCamera({ onBarcodeScan, onPhotoCapture, onCancel }: SmartCameraProps) {
+export function SmartCamera({ onBarcodeScan, onPhotoCapture, onCancel, mode = 'full' }: SmartCameraProps) {
   const { isNative, isRunning, startCamera, stopCamera, capturePhoto, lastBarcode, clearBarcode } = useCameraView()
   const { notification: hapticNotification } = useHaptics()
   const { t } = useTranslation()
@@ -46,8 +48,9 @@ export function SmartCamera({ onBarcodeScan, onPhotoCapture, onCancel }: SmartCa
     }
   }, [isNative, startCamera, stopCamera])
 
-  // Handle barcode detection (native auto-scan)
+  // Handle barcode detection (native auto-scan) — only in full mode
   useEffect(() => {
+    if (mode !== 'full') return
     if (lastBarcode && lastBarcode.value) {
       // Visual feedback: green flash
       setBarcodeFlash(true)
@@ -63,7 +66,7 @@ export function SmartCamera({ onBarcodeScan, onPhotoCapture, onCancel }: SmartCa
 
       clearBarcode()
     }
-  }, [lastBarcode, hapticNotification, stopCamera, onBarcodeScan, clearBarcode])
+  }, [mode, lastBarcode, hapticNotification, stopCamera, onBarcodeScan, clearBarcode])
 
   /**
    * Handle shutter button press — capture photo for AI analysis
@@ -133,32 +136,45 @@ export function SmartCamera({ onBarcodeScan, onPhotoCapture, onCancel }: SmartCa
               <X className="h-6 w-6" />
             </Button>
             <div className="flex items-center gap-2">
-              <ScanBarcode className="h-5 w-5 text-green-400" />
-              <span className="text-white text-sm font-medium">
-                {t('smartCamera.scanning')}
-              </span>
+              {mode === 'full' ? (
+                <>
+                  <ScanBarcode className="h-5 w-5 text-green-400" />
+                  <span className="text-white text-sm font-medium">
+                    {t('smartCamera.scanning')}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Camera className="h-5 w-5 text-white" />
+                  <span className="text-white text-sm font-medium">
+                    {t('smartCamera.takePhoto')}
+                  </span>
+                </>
+              )}
             </div>
             <div className="w-10" /> {/* Spacer for centering */}
           </div>
 
           {/* Viewfinder area */}
           <div className="flex-1 relative">
-            {/* Viewfinder border */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-64 h-64 rounded-2xl border-2 border-white/50">
-                {/* Corner markers */}
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-green-400 rounded-tl-lg" />
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-green-400 rounded-tr-lg" />
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-green-400 rounded-bl-lg" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-green-400 rounded-br-lg" />
+            {mode === 'full' && (
+              /* Viewfinder border — only shown in barcode scan mode */
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-64 h-64 rounded-2xl border-2 border-white/50">
+                  {/* Corner markers */}
+                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-green-400 rounded-tl-lg" />
+                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-green-400 rounded-tr-lg" />
+                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-green-400 rounded-bl-lg" />
+                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-green-400 rounded-br-lg" />
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Bottom controls */}
           <div className="px-4 pb-safe-bottom pt-4 bg-black/60">
             <p className="text-center text-white/70 text-xs mb-4">
-              {t('smartCamera.hint')}
+              {mode === 'full' ? t('smartCamera.hint') : t('imageUpload.scanBackDescription')}
             </p>
 
             <div className="flex items-center justify-center gap-8 pb-4">
@@ -215,40 +231,45 @@ export function SmartCamera({ onBarcodeScan, onPhotoCapture, onCancel }: SmartCa
         />
       </div>
 
-      {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-3 text-muted-foreground">
-            {t('smartCamera.orBarcode')}
-          </span>
-        </div>
-      </div>
+      {/* Barcode entry — only in full mode */}
+      {mode === 'full' && (
+        <>
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-3 text-muted-foreground">
+                {t('smartCamera.orBarcode')}
+              </span>
+            </div>
+          </div>
 
-      {/* Manual barcode entry */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium flex items-center gap-2">
-          <ScanBarcode className="h-4 w-4" />
-          {t('smartCamera.enterBarcode')}
-        </h3>
-        <div className="flex gap-2">
-          <Input
-            value={manualBarcode}
-            onChange={(e) => setManualBarcode(e.target.value)}
-            placeholder="e.g. 3017624010701"
-            inputMode="numeric"
-            onKeyDown={(e) => e.key === 'Enter' && handleManualBarcodeSubmit()}
-          />
-          <Button
-            onClick={handleManualBarcodeSubmit}
-            disabled={manualBarcode.trim().length < 4}
-          >
-            {t('smartCamera.lookup')}
-          </Button>
-        </div>
-      </div>
+          {/* Manual barcode entry */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium flex items-center gap-2">
+              <ScanBarcode className="h-4 w-4" />
+              {t('smartCamera.enterBarcode')}
+            </h3>
+            <div className="flex gap-2">
+              <Input
+                value={manualBarcode}
+                onChange={(e) => setManualBarcode(e.target.value)}
+                placeholder="e.g. 3017624010701"
+                inputMode="numeric"
+                onKeyDown={(e) => e.key === 'Enter' && handleManualBarcodeSubmit()}
+              />
+              <Button
+                onClick={handleManualBarcodeSubmit}
+                disabled={manualBarcode.trim().length < 4}
+              >
+                {t('smartCamera.lookup')}
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

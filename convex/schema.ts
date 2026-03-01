@@ -30,8 +30,11 @@ export default defineSchema({
     imageUrl: v.optional(v.string()),
     imageStorageId: v.optional(v.id('_storage')),
     backImageUrl: v.optional(v.string()), // Back of package image
+    backImageStorageId: v.optional(v.id('_storage')), // Back image storage reference
     // Ingredients & ratings
     ingredients: v.optional(v.array(v.string())),
+    ingredientsText: v.optional(v.string()), // Raw OCR text from ingredient label
+    freeFrom: v.optional(v.array(v.string())), // Allergens product is FREE FROM (e.g. ['gluten', 'milk'])
     averageSafety: v.number(), // 0-100
     averageTaste: v.number(), // 0-100
     avgPrice: v.optional(v.number()), // 1-5

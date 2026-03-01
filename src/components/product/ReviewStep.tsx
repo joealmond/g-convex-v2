@@ -1,11 +1,12 @@
+import { useState } from 'react'
 import { appConfig } from '@/lib/app-config'
-import { QuadrantPicker } from '@/components/QuadrantPicker'
+import { TouchQuadrant } from '@/components/product/TouchQuadrant'
+import { SensitivityPicker } from '@/components/product/SensitivityPicker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Slider } from '@/components/ui/slider'
 import { StoreTagInput } from '@/components/dashboard/StoreTagInput'
-import { ChevronDown, ChevronUp, Sliders, Bookmark } from 'lucide-react'
+import { Bookmark, MapPin, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import type { ImageAnalysis } from '@/hooks/use-image-upload'
@@ -23,11 +24,18 @@ interface ReviewStepProps {
   setPrice: (val: number | undefined) => void
   storeName: string
   setStoreName: (name: string) => void
-  fineTuneOpen: boolean
-  setFineTuneOpen: (open: boolean) => void
+  // NEW: free-from sensitivities
+  freeFrom: Set<string>
+  onFreeFromToggle: (id: string) => void
+  // NEW: ingredients text from back scan
+  ingredientsText: string
+  // Geo — enhanced
   geoLoading: boolean
   coords: { latitude: number; longitude: number } | null
   geoError: string | null
+  permissionStatus: string | null
+  requestLocation: () => void
+  // Online
   isOnline: boolean
   onSaveAsDraft: () => void
   onSubmit: () => void
@@ -48,33 +56,41 @@ export function ReviewStep({
   setPrice,
   storeName,
   setStoreName,
-  fineTuneOpen,
-  setFineTuneOpen,
+  freeFrom,
+  onFreeFromToggle,
+  ingredientsText,
   geoLoading,
   coords,
   geoError,
+  permissionStatus,
+  requestLocation,
   isOnline,
   onSaveAsDraft,
   onSubmit,
   onReset,
   t,
 }: ReviewStepProps) {
+  const [ingredientsExpanded, setIngredientsExpanded] = useState(false)
+
   return (
     <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+      {/* Image Preview */}
       {imagePreview && (
         <img
           src={imagePreview}
           alt="Product"
-          className="mx-auto max-h-[100px] rounded-md object-contain"
+          className="mx-auto max-h-[80px] rounded-md object-contain"
         />
       )}
 
+      {/* Allergen Warning */}
       {analysis?.containsGluten && (
         <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
           ⚠️ {t('imageUpload.riskWarning', { concept: appConfig.riskConcept })}
         </div>
       )}
 
+      {/* Product Name + Draft */}
       <div className="space-y-2">
         <Label htmlFor="productName">{t('imageUpload.productName')}</Label>
         <Input
@@ -83,28 +99,33 @@ export function ReviewStep({
           onChange={(e) => setProductName(e.target.value)}
           placeholder={t('imageUpload.enterProductName')}
         />
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full gap-1.5 text-xs"
-          onClick={onSaveAsDraft}
-          disabled={!productName.trim() || geoLoading || !isOnline}
-        >
-          <Bookmark className="h-3.5 w-3.5" />
-          {t('imageUpload.draft')}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 gap-1.5 text-xs"
+            onClick={onSaveAsDraft}
+            disabled={!productName.trim() || geoLoading || !isOnline}
+          >
+            <Bookmark className="h-3.5 w-3.5" />
+            {t('imageUpload.draft')}
+          </Button>
+        </div>
         {!isOnline && (
           <p className="text-[10px] text-amber-600 dark:text-amber-400 text-center">
             ⚠️ {t('offline.banner')}
           </p>
         )}
-        <p className="text-[10px] text-muted-foreground text-center">{t('imageUpload.draftHint')}</p>
       </div>
 
-      {/* Quick Vote */}
+      {/* Touch Quadrant Rating — replaces QuadrantPicker + Fine Tune */}
       <div>
-        <Label className="mb-2 block">{t('imageUpload.quickRate')}</Label>
-        <QuadrantPicker onSelect={(s, ta) => { setSafety(s); setTaste(ta) }} />
+        <Label className="mb-2 block">{t('imageUpload.rateProduct')}</Label>
+        <TouchQuadrant
+          initialSafety={safety}
+          initialTaste={taste}
+          onValueChange={(s, ta) => { setSafety(s); setTaste(ta) }}
+        />
       </div>
 
       {/* Price Quick Select */}
@@ -137,6 +158,58 @@ export function ReviewStep({
         </div>
       </div>
 
+      {/* Free-From Sensitivity Picker — NEW */}
+      <div>
+        <Label className="mb-2 block">
+          {t('imageUpload.freeFrom')}{' '}
+          <span className="text-xs font-normal text-muted-foreground">
+            ({t('imageUpload.freeFromHint')})
+          </span>
+        </Label>
+        <SensitivityPicker
+          selected={freeFrom}
+          onToggle={onFreeFromToggle}
+        />
+      </div>
+
+      {/* Ingredients Preview — NEW (from back scan) */}
+      {ingredientsText && (
+        <div className="border border-border rounded-xl overflow-hidden">
+          <button
+            type="button"
+            className="w-full flex items-center justify-between p-2.5 bg-muted/50 hover:bg-muted/80 transition-colors"
+            onClick={() => setIngredientsExpanded(!ingredientsExpanded)}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-sm">📋</span>
+              <span className="font-medium text-xs">{t('imageUpload.ingredientsFromScan')}</span>
+            </div>
+            {ingredientsExpanded ? (
+              <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            )}
+          </button>
+          <AnimatePresence>
+            {ingredientsExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="p-2.5 max-h-[100px] overflow-y-auto">
+                  <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                    {ingredientsText}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
       {/* Store */}
       <StoreTagInput
         value={storeName}
@@ -145,62 +218,56 @@ export function ReviewStep({
         disabled={false}
       />
 
-      {/* Fine Tune — collapsible */}
-      <div className="border border-border rounded-xl overflow-hidden">
-        <button
-          type="button"
-          className="w-full flex items-center justify-between p-3 bg-muted hover:bg-muted/80 transition-colors"
-          onClick={() => setFineTuneOpen(!fineTuneOpen)}
-        >
-          <div className="flex items-center gap-2">
-            <Sliders className="h-4 w-4 text-primary" />
-            <span className="font-semibold text-sm">{t('imageUpload.fineTune')}</span>
-          </div>
-          {fineTuneOpen ? (
-            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          )}
-        </button>
-        <AnimatePresence>
-          {fineTuneOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
+      {/* Location Status — Enhanced with enforcement prompts */}
+      <div className="rounded-lg border border-border p-3 space-y-2">
+        <div className="text-xs flex items-center gap-1.5">
+          <MapPin className="h-3.5 w-3.5" />
+          <span className="font-medium">{t('imageUpload.locationTitle')}</span>
+        </div>
+
+        {geoLoading && (
+          <p className="text-xs text-muted-foreground animate-pulse">
+            📍 {t('imageUpload.acquiringLocation')}
+          </p>
+        )}
+
+        {coords && (
+          <p className="text-xs text-safety-high">
+            ✅ {t('imageUpload.locationAcquired')}
+          </p>
+        )}
+
+        {!coords && !geoLoading && (permissionStatus === 'prompt' || !permissionStatus) && (
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">
+              {t('imageUpload.locationHelps')}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-1.5 text-xs"
+              onClick={requestLocation}
             >
-              <div className="p-3 space-y-4">
-                <div className="space-y-2">
-                  <Label>{appConfig.dimensions.axis1.label}: {safety}</Label>
-                  <Slider
-                    value={[safety]}
-                    onValueChange={(v) => v[0] !== undefined && setSafety(v[0])}
-                    min={0} max={100} step={1}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{appConfig.dimensions.axis2.label}: {taste}</Label>
-                  <Slider
-                    value={[taste]}
-                    onValueChange={(v) => v[0] !== undefined && setTaste(v[0])}
-                    min={0} max={100} step={1}
-                  />
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <MapPin className="h-3 w-3" />
+              {t('imageUpload.enableLocation')}
+            </Button>
+          </div>
+        )}
+
+        {!coords && !geoLoading && permissionStatus === 'denied' && (
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            ⚠️ {t('imageUpload.locationDenied')}
+          </p>
+        )}
+
+        {geoError && !coords && permissionStatus !== 'denied' && (
+          <p className="text-xs text-destructive">
+            ❌ {t('imageUpload.locationUnavailable')}
+          </p>
+        )}
       </div>
 
-      {/* Location Status */}
-      <div className="text-xs flex items-center gap-1">
-        {geoLoading && <span className="text-muted-foreground">📍 {t('imageUpload.acquiringLocation')}</span>}
-        {coords && <span className="text-green-600">✅ {t('imageUpload.locationAcquired')}</span>}
-        {geoError && <span className="text-destructive">❌ {t('imageUpload.locationUnavailable')}</span>}
-      </div>
-
+      {/* AI Reasoning */}
       {analysis?.reasoning && (
         <p className="text-xs text-muted-foreground">AI: {analysis.reasoning}</p>
       )}

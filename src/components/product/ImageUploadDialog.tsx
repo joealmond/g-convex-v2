@@ -10,6 +10,7 @@ import {
 import { ScanBarcode, Loader2 } from 'lucide-react'
 import { useImageUpload } from '@/hooks/use-image-upload'
 import { ReviewStep } from './ReviewStep'
+import { BackScanStep } from './BackScanStep'
 import { SmartCamera } from './SmartCamera'
 
 interface ImageUploadDialogProps {
@@ -32,6 +33,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
             {h.step === 'scan' && h.t('smartCamera.scanTitle')}
             {h.step === 'barcode-lookup' && h.t('smartCamera.lookingUp')}
             {h.step === 'analyze' && h.t('imageUpload.analyzingImage')}
+            {h.step === 'back-scan' && h.t('imageUpload.scanBackTitle')}
             {h.step === 'review' && h.t('imageUpload.reviewProduct')}
             {h.step === 'submitting' && h.t('imageUpload.submitting')}
           </DialogTitle>
@@ -40,6 +42,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
             {h.step === 'scan' && h.t('smartCamera.scanDescription')}
             {h.step === 'barcode-lookup' && h.t('smartCamera.lookingUpDescription')}
             {h.step === 'analyze' && h.t('imageUpload.aiAnalyzingDescription')}
+            {h.step === 'back-scan' && h.t('imageUpload.scanBackDescription')}
             {h.step === 'review' && h.t('imageUpload.reviewProductDescription')}
           </DialogDescription>
         </DialogHeader>
@@ -139,6 +142,18 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
           </div>
         )}
 
+        {/* Step: Back Scan — NEW */}
+        {h.step === 'back-scan' && (
+          <BackScanStep
+            onPhotoCapture={h.handleBackPhotoCapture}
+            onSkip={h.handleSkipBackScan}
+            isAnalyzing={h.backAnalyzing}
+            analysisResult={h.backAnalysis}
+            analysisError={h.backError}
+            onProceed={h.handleBackScanProceed}
+          />
+        )}
+
         {/* Step: Review */}
         {h.step === 'review' && (
           <ReviewStep
@@ -154,11 +169,14 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
             setPrice={h.setPrice}
             storeName={h.storeName}
             setStoreName={h.setStoreName}
-            fineTuneOpen={h.fineTuneOpen}
-            setFineTuneOpen={h.setFineTuneOpen}
+            freeFrom={h.freeFrom}
+            onFreeFromToggle={h.handleFreeFromToggle}
+            ingredientsText={h.ingredientsText}
             geoLoading={h.geoLoading}
             coords={h.coords}
             geoError={h.geoError}
+            permissionStatus={h.permissionStatus}
+            requestLocation={h.requestLocation}
             isOnline={h.isOnline}
             onSaveAsDraft={h.handleSaveAsDraft}
             onSubmit={h.handleSubmit}
