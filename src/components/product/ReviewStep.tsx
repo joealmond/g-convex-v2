@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { appConfig } from '@/lib/app-config'
-import { TouchQuadrant } from '@/components/product/TouchQuadrant'
 import { SensitivityPicker } from '@/components/product/SensitivityPicker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { StoreTagInput } from '@/components/dashboard/StoreTagInput'
+import { Badge } from '@/components/ui/badge'
 import { Bookmark, MapPin, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -27,6 +27,8 @@ interface ReviewStepProps {
   // NEW: free-from sensitivities
   freeFrom: Set<string>
   onFreeFromToggle: (id: string) => void
+  /** Detected allergens from AI + barcode analysis */
+  allergens?: string[]
   // NEW: ingredients text from back scan
   ingredientsText: string
   // Geo — enhanced
@@ -48,16 +50,17 @@ export function ReviewStep({
   analysis,
   productName,
   setProductName,
-  safety,
-  setSafety,
-  taste,
-  setTaste,
+  safety: _safety,
+  setSafety: _setSafety,
+  taste: _taste,
+  setTaste: _setTaste,
   price,
   setPrice,
   storeName,
   setStoreName,
   freeFrom,
   onFreeFromToggle,
+  allergens = [],
   ingredientsText,
   geoLoading,
   coords,
@@ -118,14 +121,64 @@ export function ReviewStep({
         )}
       </div>
 
-      {/* Touch Quadrant Rating — replaces QuadrantPicker + Fine Tune */}
+      {/* AI-Detected Allergen Classifications (read-only) */}
       <div>
-        <Label className="mb-2 block">{t('imageUpload.rateProduct')}</Label>
-        <TouchQuadrant
-          initialSafety={safety}
-          initialTaste={taste}
-          onValueChange={(s, ta) => { setSafety(s); setTaste(ta) }}
-        />
+        <Label className="mb-2 block">{t('voting.newProductAI')}</Label>
+        <div className="space-y-2">
+          {/* Detected allergens (contains) */}
+          {allergens.length > 0 && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">{t('voting.contains')}:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {allergens.map(id => {
+                  const a = appConfig.allergens.find(x => x.id === id)
+                  return (
+                    <Badge key={id} variant="destructive" className="text-xs">
+                      {a ? `${a.emoji} ${a.label}` : id}
+                    </Badge>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Free-from allergens */}
+          {freeFrom.size > 0 && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">{t('voting.freeFromLabel')}:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {[...freeFrom].map(id => {
+                  const a = appConfig.allergens.find(x => x.id === id)
+                  return (
+                    <Badge key={id} className="text-xs bg-safety-high/15 text-safety-high border border-safety-high/30">
+                      {a ? `${a.emoji} ${a.label}` : id}
+                    </Badge>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Unknown allergens */}
+          {(() => {
+            const knownIds = new Set([...allergens, ...freeFrom])
+            const unknowns = appConfig.allergens.filter(a => !knownIds.has(a.id))
+            return unknowns.length > 0 ? (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">{t('voting.unknownAllergen')}:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {unknowns.map(a => (
+                    <Badge key={a.id} variant="secondary" className="text-xs">
+                      {a.emoji} {a.label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ) : null
+          })()}
+
+          <p className="text-[10px] text-muted-foreground">{t('voting.basedOnAI')}</p>
+        </div>
       </div>
 
       {/* Price Quick Select */}

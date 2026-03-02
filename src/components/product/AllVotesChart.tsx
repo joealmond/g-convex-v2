@@ -39,8 +39,8 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
   // Prepare data for scatter chart
   const data = votes.map((vote) => ({
     id: vote._id,
-    safety: vote.safety,
-    taste: vote.taste,
+    safety: vote.safety ?? 50,
+    taste: vote.taste ?? 50,
     isRegistered: !vote.isAnonymous,
     isImpersonated: false, // TODO: Add impersonation detection logic
     isCurrentUser:

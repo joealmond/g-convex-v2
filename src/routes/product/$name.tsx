@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { RatingBars } from '@/components/product/RatingBars'
 import { StoreList } from '@/components/product/StoreList'
-import { VotingSheet } from '@/components/product/VotingSheet'
+import { VotingSheet, type ThumbsVotePayload } from '@/components/product/VotingSheet'
 import { ReportProductDialog } from '@/components/product/ReportProductDialog'
 import { ShareButton } from '@/components/product/ShareButton'
 import { ProductChartTabs } from '@/components/product/ProductChartTabs'
@@ -18,6 +18,7 @@ import { ProductComments } from '@/components/product/ProductComments'
 import { VoterList } from '@/components/admin/VoterList'
 import { getQuadrant, QUADRANTS, type Product } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
+import { computePersonalizedSafety, computeTasteScore } from '@/lib/score-utils'
 import { useAnonymousId } from '@/hooks/use-anonymous-id'
 import { useAdmin } from '@/hooks/use-admin'
 import { useImpersonate } from '@/hooks/use-impersonate'
@@ -98,16 +99,17 @@ function ProductDetailContent() {
   const [isReporting, setIsReporting] = useState(false)
   const { impact, notification } = useHaptics()
 
-  const handleVote = async (safety: number, taste: number, price?: number) => {
+  const handleVote = async (payload: ThumbsVotePayload) => {
     if (!product) return
 
     setIsVoting(true)
     try {
       const votePayload = {
         productId: product._id,
-        safety,
-        taste,
-        price,
+        allergenVotes: payload.allergenVotes,
+        tasteVote: payload.tasteVote,
+        price: payload.price,
+        exactPrice: payload.exactPrice,
         anonymousId: anonymousId ?? undefined,
         storeName: storeTag || undefined,
         latitude: storeLat,
@@ -128,7 +130,7 @@ function ProductDetailContent() {
         // Calculate points earned and show gamification toast
         if (user) {
           const points = calculateVotePoints({
-            hasPrice: price !== undefined,
+            hasPrice: payload.price !== undefined,
             hasStore: !!storeTag,
             hasGPS: !!storeLat && !!storeLon,
           })
@@ -136,7 +138,7 @@ function ProductDetailContent() {
           // Build description with point breakdown
           const parts: string[] = []
           parts.push(t('voting.basePoints', { count: 10 }))
-          if (price !== undefined) parts.push(t('voting.priceBonus', { count: 5 }))
+          if (payload.price !== undefined) parts.push(t('voting.priceBonus', { count: 5 }))
           if (storeTag) parts.push(t('voting.storeBonus', { count: 10 }))
           if (storeLat && storeLon) parts.push(t('voting.gpsBonus', { count: 5 }))
 
@@ -145,9 +147,7 @@ function ProductDetailContent() {
             duration: 4000,
           })
         } else {
-          toast.success(t('voting.voteSubmitted'), {
-            description: `${appConfig.dimensions.axis1.label}: ${safety}, ${appConfig.dimensions.axis2.label}: ${taste}${price ? `, ${t('common.price')}: ${price}` : ''}`,
-          })
+          toast.success(t('voting.voteSubmitted'))
         }
       }
 
@@ -205,6 +205,11 @@ function ProductDetailContent() {
   const quadrant = getQuadrant(product.averageSafety, product.averageTaste)
   const quadrantInfo = QUADRANTS[quadrant]
   const priceScore = product.avgPrice ? (product.avgPrice / 5) * 100 : 0
+  const personalizedSafety = computePersonalizedSafety(
+    product.allergenScores as Record<string, { aiBase: 'contains' | 'free-from' | 'unknown'; upVotes: number; downVotes: number }> | undefined,
+    avoidedAllergens,
+  )
+  const tasteScore = computeTasteScore(product.tasteUpVotes ?? 0, product.tasteDownVotes ?? 0)
 
   return (
     <main className="flex-1 px-4 py-6">
@@ -288,9 +293,10 @@ function ProductDetailContent() {
           </CardHeader>
           <CardContent>
             <RatingBars
-              safety={product.averageSafety}
-              taste={product.averageTaste}
+              safety={personalizedSafety}
+              taste={tasteScore}
               price={priceScore}
+              personalized={avoidedAllergens.length > 0}
             />
           </CardContent>
         </Card>
@@ -424,8 +430,10 @@ function ProductDetailContent() {
             <VotingSheet 
               onVote={handleVote} 
               disabled={isVoting}
-              averageSafety={product.averageSafety}
-              averageTaste={product.averageTaste}
+              allergenScores={product.allergenScores as Record<string, { aiBase: 'contains' | 'free-from' | 'unknown'; upVotes: number; downVotes: number }> | undefined}
+              tasteUpVotes={product.tasteUpVotes ?? 0}
+              tasteDownVotes={product.tasteDownVotes ?? 0}
+              avoidedAllergens={avoidedAllergens}
             />
           </CardContent>
         </Card>
@@ -440,7 +448,11 @@ function ProductDetailContent() {
               product={product}
               myVote={myVote}
               allVotesCount={allVotes?.length || 0}
-              onVote={(safety: number, taste: number) => handleVote(safety, taste)}
+              onVote={(_safety: number, taste: number) => handleVote({
+                // Chart tap still sends legacy safety/taste — convert to thumbs
+                allergenVotes: undefined,
+                tasteVote: taste >= 50 ? 'up' : 'down',
+              })}
               isVoting={isVoting}
               t={t}
             />

@@ -35,9 +35,24 @@ export default defineSchema({
     ingredients: v.optional(v.array(v.string())),
     ingredientsText: v.optional(v.string()), // Raw OCR text from ingredient label
     freeFrom: v.optional(v.array(v.string())), // Allergens product is FREE FROM (e.g. ['gluten', 'milk'])
-    averageSafety: v.number(), // 0-100
-    averageTaste: v.number(), // 0-100
+    // === Per-allergen safety scores (new system) ===
+    allergenScores: v.optional(v.record(v.string(), v.object({
+      aiBase: v.union(v.literal('contains'), v.literal('free-from'), v.literal('unknown')),
+      upVotes: v.number(),
+      downVotes: v.number(),
+    }))),
+    // ^ Per-allergen scores: e.g. { "gluten": { aiBase: "free-from", upVotes: 15, downVotes: 2 } }
+    tasteUpVotes: v.optional(v.number()),   // Aggregated taste thumbs up
+    tasteDownVotes: v.optional(v.number()), // Aggregated taste thumbs down
+    // === Computed convenience fields (backward-compatible) ===
+    averageSafety: v.number(), // 0-100 — universal worst-case safety (lowest allergen score)
+    averageTaste: v.number(), // 0-100 — computed from taste up/down ratio
     avgPrice: v.optional(v.number()), // 1-5
+    exactPrices: v.optional(v.array(v.object({
+      amount: v.number(),
+      currency: v.string(),
+      storeName: v.optional(v.string()),
+    }))),
     voteCount: v.number(),
     registeredVotes: v.number(),
     anonymousVotes: v.number(),
@@ -71,9 +86,17 @@ export default defineSchema({
     userId: v.optional(v.string()), // Better Auth user._id is a string
     anonymousId: v.optional(v.string()),
     isAnonymous: v.boolean(),
-    safety: v.number(), // 0-100
-    taste: v.number(), // 0-100
-    price: v.optional(v.number()), // 1-5
+    // === Legacy fields (kept for backward compatibility with old votes) ===
+    safety: v.optional(v.number()), // 0-100 — LEGACY: old numeric safety
+    taste: v.optional(v.number()), // 0-100 — LEGACY: old numeric taste
+    // === New thumbs-based voting fields ===
+    allergenVotes: v.optional(v.record(v.string(), v.union(v.literal('up'), v.literal('down')))),
+    // ^ Per-allergen thumbs: e.g. { "gluten": "up", "milk": "down" }
+    tasteVote: v.optional(v.union(v.literal('up'), v.literal('down'))),
+    // ^ Single binary taste vote
+    price: v.optional(v.number()), // 1-5 subjective scale
+    exactPrice: v.optional(v.object({ amount: v.number(), currency: v.string() })),
+    // ^ Optional exact price with currency code (e.g. { amount: 4.99, currency: "USD" })
     storeName: v.optional(v.string()),
     latitude: v.optional(v.number()),
     longitude: v.optional(v.number()),

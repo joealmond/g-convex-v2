@@ -536,6 +536,8 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     taste, setTaste,
     price, setPrice,
     storeName, setStoreName,
+    // Allergens (detected by AI + barcode)
+    allergens,
     // Free-from sensitivities
     freeFrom, handleFreeFromToggle,
     // Ingredients

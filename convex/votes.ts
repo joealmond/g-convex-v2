@@ -7,6 +7,14 @@ import { authMutation, publicQuery, publicMutation, internalQuery, internalMutat
 import { votesByProduct } from './aggregates'
 import { productsGeo } from './geospatial'
 import type { Id } from './_generated/dataModel'
+import {
+  VALID_ALLERGEN_IDS,
+  buildInitialAllergenScores,
+  aggregateAllergenVotes,
+  aggregateTasteVotes,
+  computeUniversalSafety,
+  computeTasteScore,
+} from './lib/scoreUtils'
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
   vote: { kind: 'token bucket', rate: 10, period: 60000, capacity: 15 },
@@ -54,15 +62,21 @@ export const getByAnonymous = publicQuery({
 })
 
 /**
- * Cast a vote for a product
+ * Cast a vote for a product (new thumbs-based system)
  */
 export const cast = publicMutation({
   args: {
     productId: v.id('products'),
     anonymousId: v.optional(v.string()),
-    safety: v.number(),
-    taste: v.number(),
+    // New thumbs-based fields
+    allergenVotes: v.optional(v.record(v.string(), v.union(v.literal('up'), v.literal('down')))),
+    tasteVote: v.optional(v.union(v.literal('up'), v.literal('down'))),
+    // Legacy numeric fields (still accepted for backward compat)
+    safety: v.optional(v.number()),
+    taste: v.optional(v.number()),
+    // Price: subjective scale + optional exact price
     price: v.optional(v.number()),
+    exactPrice: v.optional(v.object({ amount: v.number(), currency: v.string() })),
     storeName: v.optional(v.string()),
     latitude: v.optional(v.number()),
     longitude: v.optional(v.number()),
@@ -84,11 +98,25 @@ export const cast = publicMutation({
       )
     }
 
-    // Validate vote values
-    if (args.safety < 0 || args.safety > 100) {
+    // Validate allergen vote IDs
+    if (args.allergenVotes) {
+      for (const allergenId of Object.keys(args.allergenVotes)) {
+        if (!VALID_ALLERGEN_IDS.includes(allergenId as typeof VALID_ALLERGEN_IDS[number])) {
+          throw new Error(`Invalid allergen ID: ${allergenId}`)
+        }
+      }
+    }
+
+    // Must provide at least one vote dimension
+    if (!args.allergenVotes && !args.tasteVote && args.safety === undefined && args.taste === undefined) {
+      throw new Error('Must provide at least one vote (allergenVotes, tasteVote, safety, or taste)')
+    }
+
+    // Legacy validation (for backward compat)
+    if (args.safety !== undefined && (args.safety < 0 || args.safety > 100)) {
       throw new Error('Safety must be between 0 and 100')
     }
-    if (args.taste < 0 || args.taste > 100) {
+    if (args.taste !== undefined && (args.taste < 0 || args.taste > 100)) {
       throw new Error('Taste must be between 0 and 100')
     }
     if (args.price !== undefined && (args.price < 1 || args.price > 5)) {
@@ -115,9 +143,12 @@ export const cast = publicMutation({
       // Update existing vote
       const oldVote = await ctx.db.get(existingVote._id)
       await ctx.db.patch(existingVote._id, {
+        allergenVotes: args.allergenVotes,
+        tasteVote: args.tasteVote,
         safety: args.safety,
         taste: args.taste,
         price: args.price,
+        exactPrice: args.exactPrice,
         storeName: args.storeName,
         latitude: args.latitude,
         longitude: args.longitude,
@@ -132,9 +163,12 @@ export const cast = publicMutation({
         userId: userId,
         anonymousId: args.anonymousId,
         isAnonymous,
+        allergenVotes: args.allergenVotes,
+        tasteVote: args.tasteVote,
         safety: args.safety,
         taste: args.taste,
         price: args.price,
+        exactPrice: args.exactPrice,
         storeName: args.storeName,
         latitude: args.latitude,
         longitude: args.longitude,
@@ -187,7 +221,8 @@ export const cast = publicMutation({
 
 /**
  * Create a new product and cast the initial vote atomically
- * Awards bonus points for discovering a new product
+ * Awards bonus points for discovering a new product.
+ * AI analysis initializes per-allergen safety scores.
  */
 export const createProductAndVote = publicMutation({
   args: {
@@ -197,9 +232,14 @@ export const createProductAndVote = publicMutation({
     backImageUrl: v.optional(v.string()),
     ingredients: v.optional(v.array(v.string())),
     anonymousId: v.optional(v.string()),
-    safety: v.number(),
-    taste: v.number(),
+    // New thumbs-based vote fields
+    allergenVotes: v.optional(v.record(v.string(), v.union(v.literal('up'), v.literal('down')))),
+    tasteVote: v.optional(v.union(v.literal('up'), v.literal('down'))),
+    // Legacy numeric fields (still accepted for backward compat)
+    safety: v.optional(v.number()),
+    taste: v.optional(v.number()),
     price: v.optional(v.number()),
+    exactPrice: v.optional(v.object({ amount: v.number(), currency: v.string() })),
     storeName: v.optional(v.string()),
     latitude: v.optional(v.number()),
     longitude: v.optional(v.number()),
@@ -259,14 +299,6 @@ export const createProductAndVote = publicMutation({
       throw new Error('A product with this name already exists')
     }
 
-    // Validate vote values
-    if (args.safety < 0 || args.safety > 100) {
-      throw new Error('Safety must be between 0 and 100')
-    }
-    if (args.taste < 0 || args.taste > 100) {
-      throw new Error('Taste must be between 0 and 100')
-    }
-
     const now = Date.now()
 
     // Merge allergens from barcode/user input + AI analysis
@@ -278,6 +310,43 @@ export const createProductAndVote = publicMutation({
     }
     const allergens = mergedAllergens.size > 0 ? [...mergedAllergens] : undefined
 
+    // Merge freeFrom suggestions
+    const mergedFreeFrom = new Set<string>(
+      (args.freeFrom ?? []).map(a => a.toLowerCase())
+    )
+    if (args.aiAnalysis?.suggestedFreeFrom) {
+      for (const ff of args.aiAnalysis.suggestedFreeFrom) {
+        mergedFreeFrom.add(ff.toLowerCase())
+      }
+    }
+    const freeFrom = mergedFreeFrom.size > 0 ? [...mergedFreeFrom] : undefined
+
+    // ─── Build initial per-allergen scores from AI data ─────────
+    const allergenScores = buildInitialAllergenScores(
+      allergens,
+      freeFrom,
+      VALID_ALLERGEN_IDS,
+    )
+
+    // Apply initial vote's allergen votes if provided
+    if (args.allergenVotes) {
+      for (const [allergenId, direction] of Object.entries(args.allergenVotes)) {
+        if (allergenScores[allergenId]) {
+          if (direction === 'up') {
+            allergenScores[allergenId]!.upVotes += 1
+          } else {
+            allergenScores[allergenId]!.downVotes += 1
+          }
+        }
+      }
+    }
+
+    // Compute initial scores for the product
+    const initialSafety = computeUniversalSafety(allergenScores)
+    const initialTasteUp = args.tasteVote === 'up' ? 1 : (args.tasteVote === 'down' ? 0 : (args.taste !== undefined && args.taste > 50 ? 1 : 0))
+    const initialTasteDown = args.tasteVote === 'down' ? 1 : (args.tasteVote === 'up' ? 0 : (args.taste !== undefined && args.taste <= 50 ? 1 : 0))
+    const initialTaste = computeTasteScore(initialTasteUp, initialTasteDown)
+
     // Create the product
     const productId = await ctx.db.insert('products', {
       name: args.name,
@@ -287,16 +356,24 @@ export const createProductAndVote = publicMutation({
       backImageStorageId: args.backImageStorageId,
       ingredients: args.ingredients ?? args.aiAnalysis?.tags,
       ingredientsText: args.ingredientsText,
-      freeFrom: args.freeFrom,
+      freeFrom,
       allergens,
+      allergenScores,
+      tasteUpVotes: initialTasteUp,
+      tasteDownVotes: initialTasteDown,
       barcode: args.barcode,
       barcodeSource: args.barcodeSource,
       brand: args.brand,
       category: args.category,
       nutritionScore: args.nutritionScore,
-      averageSafety: args.safety,
-      averageTaste: args.taste,
+      averageSafety: initialSafety,
+      averageTaste: initialTaste,
       avgPrice: args.price,
+      exactPrices: args.exactPrice ? [{
+        amount: args.exactPrice.amount,
+        currency: args.exactPrice.currency,
+        storeName: args.storeName,
+      }] : undefined,
       voteCount: 1,
       registeredVotes: isAnonymous ? 0 : 1,
       anonymousVotes: isAnonymous ? 1 : 0,
@@ -321,9 +398,12 @@ export const createProductAndVote = publicMutation({
       userId,
       anonymousId: args.anonymousId,
       isAnonymous,
+      allergenVotes: args.allergenVotes,
+      tasteVote: args.tasteVote,
       safety: args.safety,
       taste: args.taste,
       price: args.price,
+      exactPrice: args.exactPrice,
       storeName: args.storeName,
       latitude: args.latitude,
       longitude: args.longitude,
@@ -372,7 +452,8 @@ export const createProductAndVote = publicMutation({
 
 /**
  * Internal mutation to recalculate product averages
- * Supports time-decay: older votes have less weight using exponential decay
+ * Uses per-allergen vote aggregation + taste thumbs + price average.
+ * Maintains backward-compatible averageSafety/averageTaste fields.
  */
 export const recalculateProduct = internalMutation({
   args: { 
@@ -380,6 +461,9 @@ export const recalculateProduct = internalMutation({
     applyTimeDecay: v.optional(v.boolean()),
   },
   handler: async (ctx, { productId, applyTimeDecay = false }) => {
+    const product = await ctx.db.get(productId)
+    if (!product) return
+
     const votes = await ctx.db
       .query('votes')
       .withIndex('by_product', (q) => q.eq('productId', productId))
@@ -387,9 +471,11 @@ export const recalculateProduct = internalMutation({
 
     if (votes.length === 0) {
       await ctx.db.patch(productId, {
-        averageSafety: 50,
-        averageTaste: 50,
+        averageSafety: computeUniversalSafety(product.allergenScores),
+        averageTaste: 50, // neutral with no votes
         avgPrice: undefined,
+        tasteUpVotes: 0,
+        tasteDownVotes: 0,
         voteCount: 0,
         registeredVotes: 0,
         anonymousVotes: 0,
@@ -398,7 +484,34 @@ export const recalculateProduct = internalMutation({
       return
     }
 
-    // Get decay rate from settings (default 0.995 = 0.5% per day)
+    // ─── Aggregate per-allergen votes ───────────────────────────
+    const allergenScores = aggregateAllergenVotes(
+      product.allergenScores ?? undefined,
+      votes.map(v => ({
+        allergenVotes: v.allergenVotes ?? undefined,
+        safety: v.safety ?? undefined,
+      })),
+    )
+
+    // ─── Aggregate taste votes ──────────────────────────────────
+    const tasteAgg = aggregateTasteVotes(
+      votes.map(v => ({
+        tasteVote: v.tasteVote ?? undefined,
+        taste: v.taste ?? undefined,
+      })),
+    )
+
+    // ─── Calculate price (weighted average like before) ─────────
+    let totalWeightPrice = 0
+    let weightedPriceSum = 0
+    let registeredCount = 0
+    let anonymousCount = 0
+
+    const REGISTERED_WEIGHT = 2
+    const ANONYMOUS_WEIGHT = 1
+    const now = Date.now()
+
+    // Get decay rate from settings if needed
     let decayRate = 0.995
     if (applyTimeDecay) {
       const decayRateSetting = await ctx.db
@@ -410,38 +523,29 @@ export const recalculateProduct = internalMutation({
       }
     }
 
-    let totalWeightSafety = 0
-    let totalWeightTaste = 0
-    let totalWeightPrice = 0
-    let weightedSafetySum = 0
-    let weightedTasteSum = 0
-    let weightedPriceSum = 0
-    let registeredCount = 0
-    let anonymousCount = 0
-
-    const REGISTERED_WEIGHT = 2
-    const ANONYMOUS_WEIGHT = 1
-    const now = Date.now()
+    // Collect exact prices for the product
+    const exactPrices: Array<{ amount: number; currency: string; storeName?: string }> = []
 
     for (const vote of votes) {
       let baseWeight = vote.isAnonymous ? ANONYMOUS_WEIGHT : REGISTERED_WEIGHT
       
-      // Apply time-decay if enabled
       if (applyTimeDecay) {
         const ageInDays = (now - vote.createdAt) / (1000 * 60 * 60 * 24)
         const timeDecay = Math.pow(decayRate, ageInDays)
         baseWeight = baseWeight * timeDecay
       }
 
-      weightedSafetySum += vote.safety * baseWeight
-      totalWeightSafety += baseWeight
-
-      weightedTasteSum += vote.taste * baseWeight
-      totalWeightTaste += baseWeight
-
       if (vote.price !== undefined) {
         weightedPriceSum += vote.price * baseWeight
         totalWeightPrice += baseWeight
+      }
+
+      if (vote.exactPrice) {
+        exactPrices.push({
+          amount: vote.exactPrice.amount,
+          currency: vote.exactPrice.currency,
+          storeName: vote.storeName ?? undefined,
+        })
       }
 
       if (vote.isAnonymous) {
@@ -451,10 +555,18 @@ export const recalculateProduct = internalMutation({
       }
     }
 
+    // ─── Compute backward-compatible scores ─────────────────────
+    const universalSafety = computeUniversalSafety(allergenScores)
+    const tasteScore = computeTasteScore(tasteAgg.upVotes, tasteAgg.downVotes)
+
     await ctx.db.patch(productId, {
-      averageSafety: weightedSafetySum / totalWeightSafety,
-      averageTaste: weightedTasteSum / totalWeightTaste,
+      allergenScores,
+      tasteUpVotes: tasteAgg.upVotes,
+      tasteDownVotes: tasteAgg.downVotes,
+      averageSafety: universalSafety,
+      averageTaste: tasteScore,
       avgPrice: totalWeightPrice > 0 ? weightedPriceSum / totalWeightPrice : undefined,
+      exactPrices: exactPrices.length > 0 ? exactPrices : undefined,
       voteCount: votes.length,
       registeredVotes: registeredCount,
       anonymousVotes: anonymousCount,

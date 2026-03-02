@@ -1,17 +1,20 @@
 import { motion } from 'framer-motion'
 import { appConfig } from '@/lib/app-config'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface RatingBarsProps {
   safety: number
   taste: number
   price?: number
+  /** If true, safety bar shows "(for you)" indicator */
+  personalized?: boolean
 }
 
 /**
  * Displays 3 horizontal rating bars for product scores
- * - axis1 (safety): 0-100
- * - axis2 (taste): 0-100
+ * - axis1 (safety): 0-100 — personalized or universal depending on user profile
+ * - axis2 (taste): 0-100 — from thumbs up/down ratio
  * - axis3 (price): 0-100 (calculated from 1-5 scale)
  *
  * Each bar shows:
@@ -20,7 +23,8 @@ interface RatingBarsProps {
  * - Color-coded progress bar
  * - Rating label (Excellent/Good/Fair/Poor)
  */
-export function RatingBars({ safety, taste, price = 0 }: RatingBarsProps) {
+export function RatingBars({ safety, taste, price = 0, personalized = false }: RatingBarsProps) {
+  const { t } = useTranslation()
   /**
    * Get rating label based on score
    */
@@ -42,7 +46,12 @@ export function RatingBars({ safety, taste, price = 0 }: RatingBarsProps) {
   }
 
   const scores = [
-    { label: appConfig.dimensions.axis1.label, value: safety },
+    {
+      label: personalized
+        ? `${appConfig.dimensions.axis1.label} — ${t('voting.safeForYou')}`
+        : appConfig.dimensions.axis1.label,
+      value: safety,
+    },
     { label: appConfig.dimensions.axis2.label, value: taste },
     { label: appConfig.dimensions.axis3.label, value: price },
   ]

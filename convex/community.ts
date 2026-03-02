@@ -79,8 +79,8 @@ export const getCommunityFeed = publicQuery({
         productId: vote.productId as string,
         productName: product.name,
         productImage: product.imageUrl,
-        safety: vote.safety,
-        taste: vote.taste,
+        safety: vote.safety ?? 50,
+        taste: vote.taste ?? 50,
         timestamp: vote.createdAt,
       })
 

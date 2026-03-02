@@ -140,6 +140,7 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
             setStoreName={h.setStoreName}
             freeFrom={h.freeFrom}
             onFreeFromToggle={h.handleFreeFromToggle}
+            allergens={h.allergens}
             ingredientsText={h.ingredientsText}
             geoLoading={h.geoLoading}
             coords={h.coords}

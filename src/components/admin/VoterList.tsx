@@ -32,8 +32,8 @@ interface Vote {
   userId?: string
   anonymousId?: string
   isAnonymous: boolean
-  safety: number
-  taste: number
+  safety?: number
+  taste?: number
   price?: number
   storeName?: string
   latitude?: number
@@ -127,9 +127,9 @@ export function VoterList({ votes, onImpersonate }: VoterListProps) {
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs">
-                    <span className="font-medium text-safety-high">{vote.safety}</span>
+                    <span className="font-medium text-safety-high">{vote.safety ?? '–'}</span>
                     <span className="text-muted-foreground">/</span>
-                    <span className="font-medium text-primary">{vote.taste}</span>
+                    <span className="font-medium text-primary">{vote.taste ?? '–'}</span>
                     {vote.price && (
                       <>
                         <span className="text-muted-foreground">/</span>

@@ -66,14 +66,14 @@ export function ProductChartTabs({
           <>
             <div className="aspect-square max-w-sm mx-auto">
               <CoordinateGrid
-                initialSafety={myVote.safety}
-                initialTaste={myVote.taste}
+                initialSafety={myVote.safety ?? 50}
+                initialTaste={myVote.taste ?? 50}
                 onVote={onVote}
                 disabled={isVoting}
               />
             </div>
             <p className="text-sm text-muted-foreground text-center mt-4">
-              {t('voting.yourVote', { safety: myVote.safety, taste: myVote.taste })}
+              {t('voting.yourVote', { safety: myVote.safety ?? 50, taste: myVote.taste ?? 50 })}
               {myVote.price && t('voting.yourVotePrice', { price: myVote.price })}
             </p>
           </>
