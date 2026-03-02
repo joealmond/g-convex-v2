@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { StoreTagInput } from '@/components/dashboard/StoreTagInput'
 import { Badge } from '@/components/ui/badge'
+import { DataSourceBadge } from '@/components/product/DataSourceBadge'
 import { Bookmark, MapPin, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -29,6 +30,8 @@ interface ReviewStepProps {
   onFreeFromToggle: (id: string) => void
   /** Detected allergens from AI + barcode analysis */
   allergens?: string[]
+  /** Data source tier for allergen classifications */
+  dataSource?: 'openfoodfacts' | 'ai-ingredients' | 'ai-estimate' | 'community'
   // NEW: ingredients text from back scan
   ingredientsText: string
   // Geo — enhanced
@@ -61,6 +64,7 @@ export function ReviewStep({
   freeFrom,
   onFreeFromToggle,
   allergens = [],
+  dataSource,
   ingredientsText,
   geoLoading,
   coords,
@@ -123,7 +127,10 @@ export function ReviewStep({
 
       {/* AI-Detected Allergen Classifications (read-only) */}
       <div>
-        <Label className="mb-2 block">{t('voting.newProductAI')}</Label>
+        <div className="flex items-center gap-2 mb-2">
+          <Label className="block">{t('voting.newProductAI')}</Label>
+          <DataSourceBadge source={dataSource} />
+        </div>
         <div className="space-y-2">
           {/* Detected allergens (contains) */}
           {allergens.length > 0 && (
@@ -177,7 +184,7 @@ export function ReviewStep({
             ) : null
           })()}
 
-          <p className="text-[10px] text-muted-foreground">{t('voting.basedOnAI')}</p>
+          <p className="text-[10px] text-muted-foreground">{t('dataSource.disclaimer')}</p>
         </div>
       </div>
 

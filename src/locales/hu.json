@@ -748,5 +748,12 @@
       "label": "Tojás",
       "description": "Tojás és tojástermékek"
     }
+  },
+  "dataSource": {
+    "openfoodfacts": "Open Food Facts",
+    "aiIngredients": "AI összetevő-elemzés",
+    "aiEstimate": "AI becslés",
+    "community": "Közösségi beküldés",
+    "disclaimer": "Az allergén adatok tájékoztató jellegűek. Mindig ellenőrizd a termék címkéjét."
   }
 }

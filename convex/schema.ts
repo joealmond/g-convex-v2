@@ -35,6 +35,13 @@ export default defineSchema({
     ingredients: v.optional(v.array(v.string())),
     ingredientsText: v.optional(v.string()), // Raw OCR text from ingredient label
     freeFrom: v.optional(v.array(v.string())), // Allergens product is FREE FROM (e.g. ['gluten', 'milk'])
+    // Data source: where the allergen classification came from
+    dataSource: v.optional(v.union(
+      v.literal('openfoodfacts'),   // Barcode matched OFF + allergen data available
+      v.literal('ai-ingredients'),  // AI scanned back-of-package ingredients label
+      v.literal('ai-estimate'),     // AI guessed from front photo only
+      v.literal('community'),       // User manually entered allergens
+    )),
     // === Per-allergen safety scores (new system) ===
     allergenScores: v.optional(v.record(v.string(), v.object({
       aiBase: v.union(v.literal('contains'), v.literal('free-from'), v.literal('unknown')),

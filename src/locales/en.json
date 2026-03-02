@@ -748,5 +748,12 @@
       "label": "Eggs",
       "description": "Eggs and products thereof"
     }
+  },
+  "dataSource": {
+    "openfoodfacts": "Open Food Facts",
+    "aiIngredients": "AI Ingredients Scan",
+    "aiEstimate": "AI Estimate",
+    "community": "Community Submitted",
+    "disclaimer": "Allergen data is best effort. Always check the product label."
   }
 }

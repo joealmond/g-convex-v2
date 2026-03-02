@@ -18,6 +18,8 @@
 10. [Schema Reference](#schema-reference)
 11. [Key Files](#key-files)
 12. [Math Examples](#math-examples)
+13. [Design Rationale](#design-rationale)
+14. [Data Source Labels](#data-source-labels)
 
 ---
 
@@ -418,3 +420,33 @@ The Bayesian prior (virtual votes from AI) solves the **cold start problem**:
 ### Why Lowest Score as Personalized Safety?
 
 Allergic reactions are driven by the **worst-case** allergen, not the average. If a product is 100% safe for 4 of your allergens but 10% safe for 1, you should see 10%.
+
+---
+
+## Data Source Labels
+
+Each product tracks where its allergen data originated via a `dataSource` field. This is **informational only** — it does not affect scoring, locking, or editability.
+
+### Sources (in order of priority during capture)
+
+| Source | Label | Badge Color | Meaning |
+|--------|-------|-------------|---------|
+| `openfoodfacts` | Open Food Facts | Green | Barcode matched an OFF entry with allergen data for all tracked allergens |
+| `ai-ingredients` | AI Ingredients Scan | Blue | AI analyzed a photo of the ingredients list |
+| `ai-estimate` | AI Estimate | Amber | AI guessed allergens from the product name/front photo only |
+| `community` | Community Submitted | Gray | No automated data — everything entered by users |
+
+### How the source is determined
+
+During product capture, the tier is set by the **first match** in priority order:
+1. If barcode lookup returned `hasAllergenData: true` → `openfoodfacts`
+2. Else if ingredient image was processed successfully → `ai-ingredients`
+3. Else if AI classification returned results → `ai-estimate`
+4. Else → `community`
+
+### Key design decisions
+
+- **Same Bayesian priors** regardless of source — community votes always have equal weight
+- **No locking** — all products can be edited and voted on normally
+- **Disclaimer**: "Allergen data is best effort. Always check the product label." shown on the ReviewStep during capture
+- **Schema**: `dataSource` is `v.optional(v.union(...))` — older products without it simply don't show a badge

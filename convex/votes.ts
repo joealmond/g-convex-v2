@@ -271,6 +271,13 @@ export const createProductAndVote = publicMutation({
     brand: v.optional(v.string()),
     category: v.optional(v.string()),
     nutritionScore: v.optional(v.string()),
+    // Data source tier: where the allergen classification came from
+    dataSource: v.optional(v.union(
+      v.literal('openfoodfacts'),
+      v.literal('ai-ingredients'),
+      v.literal('ai-estimate'),
+      v.literal('community'),
+    )),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
@@ -366,6 +373,7 @@ export const createProductAndVote = publicMutation({
       brand: args.brand,
       category: args.category,
       nutritionScore: args.nutritionScore,
+      dataSource: args.dataSource,
       averageSafety: initialSafety,
       averageTaste: initialTaste,
       avgPrice: args.price,

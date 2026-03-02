@@ -24,6 +24,7 @@ type BarcodeResult =
         category?: string
         ingredients: string[]
         allergens: string[]
+        hasAllergenData: boolean
         nutritionScore?: string
         servingSize?: string
         imageUrl?: string
@@ -99,6 +100,7 @@ export const lookupBarcode = publicAction({
             ? product.ingredients_text.split(',').map((i: string) => i.trim()).filter(Boolean)
             : [],
           allergens: allergensList,
+          hasAllergenData: allergensList.length > 0,
           nutritionScore: product.nutriscore_grade || undefined,
           servingSize: product.serving_size || undefined,
           imageUrl: product.image_front_url || product.image_url || undefined,

@@ -70,6 +70,9 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
   const [category, setCategory] = useState<string | null>(null)
   const [nutritionScore, setNutritionScore] = useState<string | null>(null)
 
+  // Data source tier: where allergen classifications came from
+  const [dataSource, setDataSource] = useState<'openfoodfacts' | 'ai-ingredients' | 'ai-estimate' | 'community'>('community')
+
   const { anonId } = useAnonymousId()
   const { t } = useTranslation()
   const {
@@ -230,6 +233,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     setBrand(null)
     setCategory(null)
     setNutritionScore(null)
+    setDataSource('community')
   }, [imagePreview])
 
   /**
@@ -444,6 +448,20 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
         }
       }
 
+      // ── 9. Determine data source tier ──
+      const offHasAllergens = barcodeResult?.found
+        && barcodeResult.source === 'openfoodfacts'
+        && (barcodeResult.productData as { hasAllergenData?: boolean })?.hasAllergenData === true
+      if (offHasAllergens) {
+        setDataSource('openfoodfacts')
+      } else if (ingredientsResult && ingredientsResult.success) {
+        setDataSource('ai-ingredients')
+      } else if (aiResult && aiResult.success && aiResult.analysis) {
+        setDataSource('ai-estimate')
+      } else {
+        setDataSource('community')
+      }
+
       impact('medium')
       setProcessingStatus(t('cameraWizard.processingComplete'))
 
@@ -495,6 +513,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
         brand: brand || undefined,
         category: category || undefined,
         nutritionScore: nutritionScore || undefined,
+        dataSource,
       })
 
       setOpen(false)
@@ -515,7 +534,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
       setError(msg)
       setStep('review')
     }
-  }, [productName, anonId, safety, taste, price, storeName, allergens, freeFrom, ingredientsText, backImageUrl, analysis, realImageUrl, coords, createProductAndVote, onSuccess, resetDialog, t, barcode, barcodeSource, brand, category, nutritionScore])
+  }, [productName, anonId, safety, taste, price, storeName, allergens, freeFrom, ingredientsText, backImageUrl, analysis, realImageUrl, coords, createProductAndVote, onSuccess, resetDialog, t, barcode, barcodeSource, brand, category, nutritionScore, dataSource])
 
   const handleSaveAsDraft = useCallback(() => submitProduct({ isDraft: true }), [submitProduct])
   const handleSubmit = useCallback(() => submitProduct({ isDraft: false }), [submitProduct])
@@ -540,6 +559,8 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     allergens,
     // Free-from sensitivities
     freeFrom, handleFreeFromToggle,
+    // Data source tier
+    dataSource,
     // Ingredients
     ingredientsText,
     // Geo

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { RatingBars } from '@/components/product/RatingBars'
+import { DataSourceBadge } from '@/components/product/DataSourceBadge'
 import { StoreList } from '@/components/product/StoreList'
 import { VotingSheet, type ThumbsVotePayload } from '@/components/product/VotingSheet'
 import { ReportProductDialog } from '@/components/product/ReportProductDialog'
@@ -284,6 +285,9 @@ function ProductDetailContent() {
           <p className="text-sm text-muted-foreground">
             {product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}
           </p>
+          {product.dataSource && (
+            <DataSourceBadge source={product.dataSource as 'openfoodfacts' | 'ai-ingredients' | 'ai-estimate' | 'community'} />
+          )}
         </div>
 
         {/* Rating Bars */}
