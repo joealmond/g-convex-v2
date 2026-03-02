@@ -65,31 +65,7 @@ export function getQuadrantColor(quadrant: Quadrant): string {
   return QUADRANTS[quadrant]?.color || appConfig.colors.primary
 }
 
-/**
- * Vote quick presets
- */
-export interface VotePreset {
-  safety: number
-  taste: number
-  label: string
-}
-
-// Build presets from config
-export const SAFETY_PRESETS: VotePreset[] = appConfig.dimensions.axis1.presets.map((preset) => ({
-  safety: preset.value,
-  taste: 0,
-  label: preset.label,
-}))
-
-export const TASTE_PRESETS: VotePreset[] = appConfig.dimensions.axis2.presets.map((preset) => ({
-  safety: 0,
-  taste: preset.value,
-  label: preset.label,
-}))
-
-/**
- * Price scale
- */
+/**\n * Price scale\n */
 export const PRICE_LABELS = appConfig.dimensions.axis3.presets.map((preset) => preset.label)
 
 export function getPriceLabel(price: number): string {

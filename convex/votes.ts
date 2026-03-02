@@ -14,7 +14,10 @@ import {
   aggregateTasteVotes,
   computeUniversalSafety,
   computeTasteScore,
+  computeVoteSafety,
+  computeVoteTaste,
 } from './lib/scoreUtils'
+import type { AllergenScoresMap } from './lib/scoreUtils'
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
   vote: { kind: 'token bucket', rate: 10, period: 60000, capacity: 15 },
@@ -68,12 +71,9 @@ export const cast = publicMutation({
   args: {
     productId: v.id('products'),
     anonymousId: v.optional(v.string()),
-    // New thumbs-based fields
+    // Thumbs-based voting fields
     allergenVotes: v.optional(v.record(v.string(), v.union(v.literal('up'), v.literal('down')))),
     tasteVote: v.optional(v.union(v.literal('up'), v.literal('down'))),
-    // Legacy numeric fields (still accepted for backward compat)
-    safety: v.optional(v.number()),
-    taste: v.optional(v.number()),
     // Price: subjective scale + optional exact price
     price: v.optional(v.number()),
     exactPrice: v.optional(v.object({ amount: v.number(), currency: v.string() })),
@@ -108,17 +108,10 @@ export const cast = publicMutation({
     }
 
     // Must provide at least one vote dimension
-    if (!args.allergenVotes && !args.tasteVote && args.safety === undefined && args.taste === undefined) {
-      throw new Error('Must provide at least one vote (allergenVotes, tasteVote, safety, or taste)')
+    if (!args.allergenVotes && !args.tasteVote) {
+      throw new Error('Must provide at least one vote (allergenVotes or tasteVote)')
     }
 
-    // Legacy validation (for backward compat)
-    if (args.safety !== undefined && (args.safety < 0 || args.safety > 100)) {
-      throw new Error('Safety must be between 0 and 100')
-    }
-    if (args.taste !== undefined && (args.taste < 0 || args.taste > 100)) {
-      throw new Error('Taste must be between 0 and 100')
-    }
     if (args.price !== undefined && (args.price < 1 || args.price > 5)) {
       throw new Error('Price must be between 1 and 5')
     }
@@ -139,14 +132,21 @@ export const cast = publicMutation({
     }
 
     let voteId
+
+    // Fetch product for computing vote-level convenience scores
+    const product = await ctx.db.get(args.productId)
+    const productScores = (product?.allergenScores ?? undefined) as AllergenScoresMap | undefined
+    const voteSafety = computeVoteSafety(args.allergenVotes, productScores)
+    const voteTaste = computeVoteTaste(args.tasteVote)
+
     if (existingVote) {
       // Update existing vote
       const oldVote = await ctx.db.get(existingVote._id)
       await ctx.db.patch(existingVote._id, {
         allergenVotes: args.allergenVotes,
         tasteVote: args.tasteVote,
-        safety: args.safety,
-        taste: args.taste,
+        safety: voteSafety,
+        taste: voteTaste,
         price: args.price,
         exactPrice: args.exactPrice,
         storeName: args.storeName,
@@ -165,8 +165,8 @@ export const cast = publicMutation({
         isAnonymous,
         allergenVotes: args.allergenVotes,
         tasteVote: args.tasteVote,
-        safety: args.safety,
-        taste: args.taste,
+        safety: voteSafety,
+        taste: voteTaste,
         price: args.price,
         exactPrice: args.exactPrice,
         storeName: args.storeName,
@@ -235,9 +235,6 @@ export const createProductAndVote = publicMutation({
     // New thumbs-based vote fields
     allergenVotes: v.optional(v.record(v.string(), v.union(v.literal('up'), v.literal('down')))),
     tasteVote: v.optional(v.union(v.literal('up'), v.literal('down'))),
-    // Legacy numeric fields (still accepted for backward compat)
-    safety: v.optional(v.number()),
-    taste: v.optional(v.number()),
     price: v.optional(v.number()),
     exactPrice: v.optional(v.object({ amount: v.number(), currency: v.string() })),
     storeName: v.optional(v.string()),
@@ -350,8 +347,8 @@ export const createProductAndVote = publicMutation({
 
     // Compute initial scores for the product
     const initialSafety = computeUniversalSafety(allergenScores)
-    const initialTasteUp = args.tasteVote === 'up' ? 1 : (args.tasteVote === 'down' ? 0 : (args.taste !== undefined && args.taste > 50 ? 1 : 0))
-    const initialTasteDown = args.tasteVote === 'down' ? 1 : (args.tasteVote === 'up' ? 0 : (args.taste !== undefined && args.taste <= 50 ? 1 : 0))
+    const initialTasteUp = args.tasteVote === 'up' ? 1 : 0
+    const initialTasteDown = args.tasteVote === 'down' ? 1 : 0
     const initialTaste = computeTasteScore(initialTasteUp, initialTasteDown)
 
     // Create the product
@@ -400,7 +397,9 @@ export const createProductAndVote = publicMutation({
       }] : undefined,
     })
 
-    // Create the initial vote
+    // Create the initial vote (with computed convenience scores for chart display)
+    const voteSafety = computeVoteSafety(args.allergenVotes, allergenScores)
+    const voteTaste = computeVoteTaste(args.tasteVote)
     const voteId = await ctx.db.insert('votes', {
       productId,
       userId,
@@ -408,8 +407,8 @@ export const createProductAndVote = publicMutation({
       isAnonymous,
       allergenVotes: args.allergenVotes,
       tasteVote: args.tasteVote,
-      safety: args.safety,
-      taste: args.taste,
+      safety: voteSafety,
+      taste: voteTaste,
       price: args.price,
       exactPrice: args.exactPrice,
       storeName: args.storeName,
@@ -497,15 +496,13 @@ export const recalculateProduct = internalMutation({
       product.allergenScores ?? undefined,
       votes.map(v => ({
         allergenVotes: v.allergenVotes ?? undefined,
-        safety: v.safety ?? undefined,
       })),
     )
 
-    // ─── Aggregate taste votes ──────────────────────────────────
+    // ─── Aggregate taste votes ──────────────────────────────
     const tasteAgg = aggregateTasteVotes(
       votes.map(v => ({
         tasteVote: v.tasteVote ?? undefined,
-        taste: v.taste ?? undefined,
       })),
     )
 

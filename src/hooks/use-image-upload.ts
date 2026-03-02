@@ -496,8 +496,6 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
         imageUrl: realImageUrl || '',
         imageStorageId: undefined,
         anonymousId: anonId ?? undefined,
-        safety,
-        taste,
         price,
         storeName: storeName || undefined,
         latitude: coords?.latitude,
@@ -534,7 +532,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
       setError(msg)
       setStep('review')
     }
-  }, [productName, anonId, safety, taste, price, storeName, allergens, freeFrom, ingredientsText, backImageUrl, analysis, realImageUrl, coords, createProductAndVote, onSuccess, resetDialog, t, barcode, barcodeSource, brand, category, nutritionScore, dataSource])
+  }, [productName, anonId, price, storeName, allergens, freeFrom, ingredientsText, backImageUrl, analysis, realImageUrl, coords, createProductAndVote, onSuccess, resetDialog, t, barcode, barcodeSource, brand, category, nutritionScore, dataSource])
 
   const handleSaveAsDraft = useCallback(() => submitProduct({ isDraft: true }), [submitProduct])
   const handleSubmit = useCallback(() => submitProduct({ isDraft: false }), [submitProduct])

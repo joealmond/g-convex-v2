@@ -109,8 +109,6 @@ export function aggregateAllergenVotes(
   existingScores: AllergenScoresMap | undefined,
   votes: Array<{
     allergenVotes?: Record<string, 'up' | 'down'> | null
-    // Legacy fields
-    safety?: number | null
   }>,
 ): AllergenScoresMap {
   // Start with existing aiBase values, zeroed vote counts
@@ -137,18 +135,6 @@ export function aggregateAllergenVotes(
         }
       }
     }
-    // Legacy votes: if vote has numeric safety but no allergenVotes,
-    // map to the primary allergen (gluten) for backward compat
-    else if (vote.safety !== undefined && vote.safety !== null) {
-      if (!result['gluten']) {
-        result['gluten'] = { aiBase: 'unknown', upVotes: 0, downVotes: 0 }
-      }
-      if (vote.safety > 50) {
-        result['gluten']!.upVotes += 1
-      } else {
-        result['gluten']!.downVotes += 1
-      }
-    }
   }
 
   return result
@@ -161,30 +147,48 @@ export function aggregateAllergenVotes(
 export function aggregateTasteVotes(
   votes: Array<{
     tasteVote?: 'up' | 'down' | null
-    // Legacy
-    taste?: number | null
   }>,
 ): { upVotes: number; downVotes: number } {
   let upVotes = 0
   let downVotes = 0
 
   for (const vote of votes) {
-    if (vote.tasteVote) {
-      if (vote.tasteVote === 'up') {
-        upVotes += 1
-      } else {
-        downVotes += 1
-      }
-    }
-    // Legacy: map numeric taste to thumbs
-    else if (vote.taste !== undefined && vote.taste !== null) {
-      if (vote.taste > 50) {
-        upVotes += 1
-      } else {
-        downVotes += 1
-      }
+    if (vote.tasteVote === 'up') {
+      upVotes += 1
+    } else if (vote.tasteVote === 'down') {
+      downVotes += 1
     }
   }
 
   return { upVotes, downVotes }
+}
+
+// ─── Vote-Level Convenience Score Helpers ────────────────────────────────────
+
+/**
+ * Compute a single safety number for one vote (for chart display).
+ * Uses the product's AI base + just this vote's allergen thumbs.
+ */
+export function computeVoteSafety(
+  allergenVotes: Record<string, 'up' | 'down'> | undefined | null,
+  productAllergenScores: AllergenScoresMap | undefined | null,
+): number {
+  if (!allergenVotes || !productAllergenScores) return 50
+  const scores = Object.entries(allergenVotes).map(([id, dir]) => {
+    const aiBase = productAllergenScores[id]?.aiBase ?? 'unknown'
+    return computeAllergenScore(aiBase, dir === 'up' ? 1 : 0, dir === 'down' ? 1 : 0)
+  })
+  return scores.length > 0 ? Math.min(...scores) : 50
+}
+
+/**
+ * Compute a single taste number for one vote (for chart display).
+ * Maps binary thumbs to a 0-100 scale.
+ */
+export function computeVoteTaste(
+  tasteVote: 'up' | 'down' | undefined | null,
+): number {
+  if (tasteVote === 'up') return 75
+  if (tasteVote === 'down') return 25
+  return 50
 }

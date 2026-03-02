@@ -453,7 +453,7 @@ function ProductDetailContent() {
               myVote={myVote}
               allVotesCount={allVotes?.length || 0}
               onVote={(_safety: number, taste: number) => handleVote({
-                // Chart tap still sends legacy safety/taste — convert to thumbs
+                // Chart tap sends coordinates — convert to thumbs
                 allergenVotes: undefined,
                 tasteVote: taste >= 50 ? 'up' : 'down',
               })}

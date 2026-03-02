@@ -14,7 +14,7 @@
 6. [Vote Lifecycle](#vote-lifecycle)
 7. [Personalized Safety](#personalized-safety)
 8. [Universal Safety](#universal-safety)
-9. [Legacy Compatibility](#legacy-compatibility)
+9. [Vote Convenience Scores](#vote-convenience-scores)
 10. [Schema Reference](#schema-reference)
 11. [Key Files](#key-files)
 12. [Math Examples](#math-examples)
@@ -265,25 +265,14 @@ Stored as `product.averageSafety` for backward-compatible indexing and sorting.
 
 ---
 
-## Legacy Compatibility
+## Vote Convenience Scores
 
-The system maintains backward compatibility with old votes that used numeric `safety` (0-100) and `taste` (0-100) fields:
+Each vote stores auto-computed `safety` and `taste` numeric fields for chart display:
 
-### Vote Migration
+- **safety**: Computed via `computeVoteSafety()` — uses the product's AI base + this vote's allergen thumbs, takes the min across voted allergens. Gives each vote a meaningful position on the safety axis.
+- **taste**: Computed via `computeVoteTaste()` — `up` → 75, `down` → 25, no vote → 50.
 
-- Old votes have `safety: number` + `taste: number` but no `allergenVotes` or `tasteVote`
-- `aggregateAllergenVotes()` handles legacy: if a vote has `safety > 50` and no `allergenVotes`, counts as 👍 for `gluten` (primary allergen); `safety ≤ 50` → 👎 for `gluten`
-- `aggregateTasteVotes()` handles legacy: `taste > 50` → 👍; `taste ≤ 50` → 👎
-
-### Schema
-
-Legacy fields are now `v.optional()`:
-```typescript
-safety: v.optional(v.number()),  // 0-100 — LEGACY
-taste: v.optional(v.number()),   // 0-100 — LEGACY
-```
-
-New votes populate `allergenVotes` and `tasteVote` instead. Both old and new votes coexist in the same table and are aggregated together during recalculation.
+These are **derived convenience fields**, not user input. They're written at vote creation/update time and consumed by charts (`AllVotesChart`, `ProductChartTabs`), community feed, and admin views.
 
 ---
 
@@ -319,15 +308,15 @@ exactPrices: v.optional(v.array(v.object({
 ### Votes Table — Voting Fields
 
 ```typescript
-// Legacy fields (old votes)
-safety: v.optional(v.number())    // 0-100
-taste: v.optional(v.number())     // 0-100
-
-// New thumbs-based fields
+// Per-allergen thumbs voting
 allergenVotes: v.optional(v.record(v.string(), v.union(v.literal('up'), v.literal('down'))))
 tasteVote: v.optional(v.union(v.literal('up'), v.literal('down')))
 price: v.optional(v.number())     // 1-5
 exactPrice: v.optional(v.object({ amount: v.number(), currency: v.string() }))
+
+// Auto-computed convenience fields (for chart display)
+safety: v.optional(v.number())    // 0-100, derived from allergenVotes + product AI base
+taste: v.optional(v.number())     // 0-100, derived from tasteVote (up=75, down=25)
 ```
 
 ---

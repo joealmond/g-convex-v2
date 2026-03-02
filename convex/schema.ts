@@ -93,10 +93,10 @@ export default defineSchema({
     userId: v.optional(v.string()), // Better Auth user._id is a string
     anonymousId: v.optional(v.string()),
     isAnonymous: v.boolean(),
-    // === Legacy fields (kept for backward compatibility with old votes) ===
-    safety: v.optional(v.number()), // 0-100 — LEGACY: old numeric safety
-    taste: v.optional(v.number()), // 0-100 — LEGACY: old numeric taste
-    // === New thumbs-based voting fields ===
+    // === Computed convenience fields (for chart display, derived from thumbs votes) ===
+    safety: v.optional(v.number()), // 0-100 — auto-computed from allergenVotes + product AI base
+    taste: v.optional(v.number()), // 0-100 — auto-computed from tasteVote (up=75, down=25)
+    // === Thumbs-based voting fields ===
     allergenVotes: v.optional(v.record(v.string(), v.union(v.literal('up'), v.literal('down')))),
     // ^ Per-allergen thumbs: e.g. { "gluten": "up", "milk": "down" }
     tasteVote: v.optional(v.union(v.literal('up'), v.literal('down'))),
