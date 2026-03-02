@@ -4,9 +4,11 @@
 
 ## What Is This App?
 
-G-Matrix is a **community-driven product rating platform**. Users discover, rate, and locate niche products using a multi-dimensional voting system (2 main axes + price). The current niche is **gluten-free products**, but the codebase is designed to be **reusable for any product niche** (vegan, keto, organic, etc.) by changing a single config file.
+G-Matrix is a **community-driven product rating platform**. Users discover, rate, and locate niche products using a **per-allergen safety scoring system** with thumbs-up/down voting, plus taste and price dimensions. The current niche is **gluten-free products**, but the codebase is designed to be **reusable for any product niche** (vegan, keto, organic, etc.) by changing a single config file.
 
-**Core user flow**: Discover products in a feed → View product detail → Vote (safety + taste + price + store + GPS) → See where to buy → Earn points and badges.
+**Core user flow**: Discover products in a feed → View product detail → Vote (per-allergen safety 👍/👎 + taste 👍/👎 + price + store + GPS) → See personalized safety score → Earn points and badges.
+
+**Scoring model**: AI analyzes ingredients to set per-allergen priors (contains/free-from/unknown as virtual votes). Community thumbs votes shift scores via Bayesian updating. Each user sees a personalized safety = lowest score among their avoided allergens. See `docs/SCORING_SYSTEM.md` for full math and examples.
 
 ## Architecture Principles
 
@@ -21,7 +23,7 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 
 4. **Components under 200 lines** — If a component exceeds 200 lines, extract logic into a custom hook or split into sub-components. One file = one responsibility.
 
-5. **Backend is generic** — Convex functions in `convex/` are niche-agnostic. They operate on two-axis voting (fields named `safety`/`taste` for historical reasons, but the logic is generic threshold-based math). Don't add niche-specific logic to backend functions.
+5. **Backend is generic** — Convex functions in `convex/` are niche-agnostic. Scoring uses per-allergen Bayesian updating (`convex/lib/scoreUtils.ts`). Allergen IDs are validated against `VALID_ALLERGEN_IDS` (which must match `appConfig.allergens`). Don't add niche-specific logic to backend functions.
 
 6. **Convex Backend Patterns (New Architecture)**
    - **Auth Middlewares**: Always use `authQuery`, `authMutation`, `adminQuery`, `adminMutation` from `convex/lib/customFunctions.ts`. Do not use RAW `query` / `mutation` unless explicitly public.
@@ -63,7 +65,9 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | `src/lib/auth-client.ts` | Better Auth client — uses `VITE_CONVEX_SITE_URL` as baseURL on native, relative origin on web |
 | `capacitor.config.ts` | Capacitor config — webDir, schemes, hostname |
 | `convex/schema.ts` | Database schema: products, votes, profiles, files, comments, commentLikes tables |
-| `convex/votes.ts` | Vote casting, rate limiting, weighted average recalculation |
+| `convex/votes.ts` | Vote casting (per-allergen thumbs + taste + price), rate limiting, Bayesian recalculation |
+| `convex/lib/scoreUtils.ts` | Backend score computation: `computeAllergenScore()`, `aggregateAllergenVotes()`, `buildInitialAllergenScores()` |
+| `src/lib/score-utils.ts` | Frontend score computation (mirror of backend): `computePersonalizedSafety()`, `computeTasteScore()`, `computeUniversalSafety()` |
 | `convex/products.ts` | Product CRUD operations |
 | `convex/comments.ts` | Comment CRUD: post, edit, remove (soft-delete), toggleLike, getByProduct, getRecentFeed |
 | `convex/community.ts` | Aggregated community activity feed — merges votes, products, comments |
@@ -76,7 +80,8 @@ G-Matrix is a **community-driven product rating platform**. Users discover, rate
 | `src/components/product/` | Product detail: RatingBars, StoreList, VotingSheet, ImageUploadDialog, CameraWizard, ProductComments |
 | `src/components/map/` | Leaflet map: ProductMap, ProductPin |
 | `src/components/dashboard/` | Chart views: MatrixChart, CoordinateGrid, StatsCard, BadgeDisplay, Leaderboard, DeleteProductButton |
-| `src/components/QuadrantPicker.tsx` | Reusable 2×2 quadrant button grid used in VotingSheet, VotingPanel, ImageUploadDialog |
+| `src/components/QuadrantPicker.tsx` | Reusable 2×2 quadrant button grid used in chart views |
+| `docs/SCORING_SYSTEM.md` | Full scoring system documentation: formulas, Bayesian math, personalization, examples |
 | `src/lib/format-distance.ts` | `formatDistance(km, t)` — shared i18n-aware distance formatter |
 | `src/lib/format-time.ts` | `formatRelativeTimeI18n(timestamp, t)` — shared i18n-aware relative time formatter |
 | `src/hooks/` | Custom hooks: useAdmin, useGeolocation, useTranslation, useAnonymousId, useVoteMigration, useImpersonate, useTheme, useOnlineStatus, useCameraView |
@@ -133,7 +138,7 @@ src/hooks/use-translation.ts ── re-exports as useTranslation()
 The JSON files are organized by section:
 ```
 nav.*           — Navigation labels (home, profile, back, signIn, signOut)
-voting.*        — Voting UI (quickVote, submitVote, safety, taste, presets)
+voting.*        — Voting UI (thumbsUp, thumbsDown, iAgree, allergen scores, taste, price, presets)
 quadrants.*     — Quadrant names and descriptions
 gamification.*  — Points, badges, streak labels
 common.*        — Shared terms (loading, save, cancel, delete, edit, votes)
@@ -228,9 +233,14 @@ Standard shadcn/ui tokens (`bg-background`, `bg-card`, `bg-primary`, `text-foreg
 - **Chart ↔ list sync**: Clicking a chart dot should scroll to the product card; clicking a card should highlight the dot. Keep the scroll behavior smooth and mobile-friendly.
 
 ### Voting UX
-- **Fine tune UI lives in `VotingSheet`** as a collapsible section with sliders and a quadrant preview. Avoid adding new fine-tune layouts elsewhere unless required.
+- **Per-allergen thumbs voting** in `VotingSheet`. No sliders or quadrant picker — safety is voted per-allergen via 👍/👎 buttons. Taste is a single 👍/👎. Price uses 5-level presets (Budget→Luxury) + optional exact price input.
+- **"I Agree" quick vote**: One-tap shortcut that votes 👍 for all `free-from` allergens, 👎 for all `contains` allergens, and 👍 for taste. Skips `unknown` allergens.
+- **Personalized allergen display**: User's avoided allergens are shown expanded at the top of VotingSheet. Other allergens collapsed behind "Show more". Uses `avoidedAllergens` from dietary profile.
+- **Score computation**: Both frontend (`src/lib/score-utils.ts`) and backend (`convex/lib/scoreUtils.ts`) implement the same Bayesian formulas. Keep them in sync. See `docs/SCORING_SYSTEM.md` for formulas.
+- **Virtual votes from AI**: AI classification → virtual votes as Bayesian priors. `contains` → 2👎 (score≈0), `free-from` → 2👍 (score≈100), `unknown` → 1👍+1👎 (score=50). Community votes shift the score over time.
 - **Store selection** should prefer `appConfig.storeDefaults[locale]` via the dropdown, with a custom store fallback.
 - **Geolocation**: Use `useGeolocation` hook for any feature requiring location. Always handle permission denied states gracefully with UI feedback.
+- **Product capture flow**: ReviewStep shows AI allergen classification as read-only badges (contains=red, free-from=green, unknown=gray). No interactive safety/taste controls during capture — those are set by voting after the product is created.
 
 ### Nearby Range (Configurable)
 - Default home filter is **"nearby"** with auto-fallback to "recent" if no products are within range or GPS is unavailable.
@@ -652,6 +662,11 @@ Cards: `bg-card text-card-foreground rounded-2xl shadow-sm border border-border`
 - ❌ Don't test GPS features in Android emulator without setting mock location — GPS is unavailable by default (see `docs/ANDROID_EMULATOR_LOCATION.md`)
 - ❌ **Don't modify existing tests without a clear description of intent and explicit permission from the user.**
 - ❌ **Don't leave a known working solution undocumented or untested.** Always write tests to pin down the expected behavior.
+- ❌ Don't use a single numeric safety score — safety is per-allergen with Bayesian updating. Use `computeAllergenScore()` / `computePersonalizedSafety()` from `score-utils.ts`.
+- ❌ Don't modify `src/lib/score-utils.ts` without updating the backend mirror `convex/lib/scoreUtils.ts` — they must stay in sync.
+- ❌ Don't add/remove allergen IDs without updating BOTH `appConfig.allergens` in `src/lib/app-config.ts` AND `VALID_ALLERGEN_IDS` in `convex/lib/scoreUtils.ts`.
+- ❌ Don't add interactive safety/taste sliders to the product capture flow (ReviewStep) — the capture flow shows AI results as read-only badges. Safety/taste are set by community voting after product creation.
+- ❌ Don't show `averageSafety` as "your safety" — it's the universal worst-case (min of ALL allergens). Personalized safety is computed via `computePersonalizedSafety()` with the user's `avoidedAllergens`.
 
 ### Offline Support Architecture
 

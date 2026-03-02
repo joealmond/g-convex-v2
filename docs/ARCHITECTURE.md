@@ -80,6 +80,42 @@ Both are added to `trustedOrigins` in `convex/auth.ts` to allow auth from native
 | `convex/auth.ts` | `trustedOrigins` includes Capacitor scheme URLs |
 | `wrangler.jsonc` | Cloudflare Workers config |
 
+## Scoring System (Per-Allergen Safety + Thumbs Voting)
+
+Products are rated on **three dimensions**: Safety (per-allergen), Taste, and Price. All scores use **Bayesian updating** — AI seeds a prior, community thumbs votes shift it.
+
+> Full details: See `docs/SCORING_SYSTEM.md` for formulas, math examples, and design rationale.
+
+### Per-Allergen Safety
+
+Each product tracks an **independent score per allergen** (gluten, milk, soy, nuts, eggs). Each allergen has:
+- **AI base classification**: `contains` / `free-from` / `unknown` (from ingredient analysis)
+- **Community votes**: per-allergen thumbs 👍/👎
+
+**Score formula**: `score = (virtualUp + communityUp) / (virtualUp + virtualDown + communityUp + communityDown) × 100`
+
+AI virtual votes act as Bayesian priors: `contains` → 2👎 (score≈0), `free-from` → 2👍 (score≈100), `unknown` → 1👍+1👎 (score=50). Community votes override AI over time.
+
+### Personalized vs Universal Safety
+
+| Context | Formula | Usage |
+|---------|---------|-------|
+| **Personalized** | `MIN(allergenScore for user's avoidedAllergens)` | Product detail page, RatingBars |
+| **Universal** | `MIN(allergenScore for ALL allergens)` | Feed sorting, chart default, `averageSafety` field |
+
+### Taste
+
+Single thumbs 👍/👎 with neutral prior: `score = (1 + upVotes) / (2 + upVotes + downVotes) × 100`. Starts at 50.
+
+### Key Files
+
+| File | Role |
+|------|------|
+| `src/lib/score-utils.ts` | Frontend score computation (primary reference) |
+| `convex/lib/scoreUtils.ts` | Backend mirror + aggregate helpers |
+| `convex/votes.ts` | Vote casting, recalculation |
+| `src/components/product/VotingSheet.tsx` | Per-allergen thumbs voting UI |
+
 ## Data Flow
 
 ```
