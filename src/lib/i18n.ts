@@ -4,7 +4,7 @@
  * Static imports + CustomEvent + useState/useEffect
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 import enTranslations from '@/locales/en.json'
 import huTranslations from '@/locales/hu.json'
 
@@ -16,6 +16,23 @@ export interface Translations {
 
 const LOCALE_KEY = 'g-matrix-lang'
 const LOCALE_EVENT = 'g-matrix-locale-change'
+
+function subscribeToLocale(onStoreChange: () => void) {
+  if (typeof window === 'undefined') return () => {}
+
+  const handleLocaleChange = () => onStoreChange()
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === LOCALE_KEY) onStoreChange()
+  }
+
+  window.addEventListener(LOCALE_EVENT, handleLocaleChange)
+  window.addEventListener('storage', handleStorage)
+
+  return () => {
+    window.removeEventListener(LOCALE_EVENT, handleLocaleChange)
+    window.removeEventListener('storage', handleStorage)
+  }
+}
 
 // Both locale files are statically imported — no async needed
 const allTranslations: Record<Locale, Translations> = {
@@ -99,19 +116,7 @@ export function setLocale(locale: Locale): void {
  * Hook: returns the current locale, re-renders on change.
  */
 export function useLocale(): Locale {
-  const [locale, setLocaleState] = useState<Locale>(() => getStoredLocale())
-
-  useEffect(() => {
-    const handleChange = (e: Event) => {
-      const newLocale = (e as CustomEvent<Locale>).detail
-      setLocaleState(newLocale)
-    }
-
-    window.addEventListener(LOCALE_EVENT, handleChange)
-    return () => window.removeEventListener(LOCALE_EVENT, handleChange)
-  }, [])
-
-  return locale
+  return useSyncExternalStore(subscribeToLocale, getStoredLocale, () => 'en')
 }
 
 /**

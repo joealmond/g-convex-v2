@@ -4,7 +4,7 @@
 
 // IMPORTANT: Bump this version string on every deploy to invalidate old caches.
 // The activate handler automatically deletes caches that don't match CACHE_NAME.
-const CACHE_NAME = 'gmatrix-2025.02.20-v1'
+const CACHE_NAME = 'gmatrix-2026.03.08-v3'
 
 // Static assets to precache on install
 const PRECACHE_URLS = [
@@ -47,6 +47,11 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return
 
+  // Let the browser handle all cross-origin requests directly.
+  // Re-fetching third-party assets inside the service worker forces them
+  // through connect-src and can break fonts or public image hosts.
+  if (url.origin !== self.location.origin) return
+
   // Never cache Convex WebSocket or API requests
   if (
     url.hostname.includes('convex.cloud') ||
@@ -54,26 +59,6 @@ self.addEventListener('fetch', (event) => {
     url.protocol === 'wss:' ||
     url.pathname.startsWith('/api/')
   ) {
-    return
-  }
-
-  // Google Fonts: cache-first (they never change once versioned)
-  if (
-    url.hostname === 'fonts.googleapis.com' ||
-    url.hostname === 'fonts.gstatic.com'
-  ) {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached
-        return fetch(event.request).then((response) => {
-          if (response.ok) {
-            const clone = response.clone()
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
-          }
-          return response
-        })
-      })
-    )
     return
   }
 
@@ -92,7 +77,7 @@ self.addEventListener('fetch', (event) => {
             }
             return response
           })
-          .catch(() => cached) // If fetch fails and we have cache, that's fine
+          .catch(() => cached || globalThis.Response.error())
 
         return cached || fetchPromise
       })

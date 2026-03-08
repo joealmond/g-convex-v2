@@ -24,6 +24,7 @@ This checklist is the minimum release gate for shipping G-Matrix to the public a
 
 - [ ] Production Convex deployment is configured
 - [ ] `VITE_CONVEX_URL` and `VITE_CONVEX_SITE_URL` are set for production
+- [ ] Convex `SITE_URL` matches the actual deployed web origin for each environment (preview or production), not `http://localhost:3000`
 - [ ] Google OAuth production redirect URIs are configured
 - [ ] `trustedOrigins` in [convex/auth.ts](../convex/auth.ts) includes the production web domain and native origins
 - [ ] R2 bucket, credentials, and public URL are configured
@@ -58,6 +59,17 @@ GitHub Actions setup:
 - Repository Settings → Secrets and variables → Actions → New repository secret
 - Add the same values under the exact names used above
 - Re-run the Deploy workflow or push to the deployment branch again
+
+Convex environment setup for web auth redirects:
+- Web OAuth redirects are controlled by Convex `SITE_URL`, not by the Worker build output.
+- For preview, set it to the live preview origin before testing Google sign-in, for example:
+```bash
+npx convex env set SITE_URL "https://your-preview-worker.workers.dev"
+```
+- If you later attach a custom domain, update Convex again:
+```bash
+npx convex env set SITE_URL "https://preview.your-domain.com"
+```
 
 ## 4. Compliance And Store Requirements
 

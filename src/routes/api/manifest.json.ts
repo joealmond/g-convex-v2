@@ -43,20 +43,6 @@ function buildManifest(isMobile: boolean) {
         purpose: 'maskable',
       },
     ],
-    screenshots: [
-      {
-        src: '/screenshots/mobile.png',
-        type: 'image/png',
-        sizes: '390x844',
-        form_factor: 'narrow',
-      },
-      {
-        src: '/screenshots/wide.png',
-        type: 'image/png',
-        sizes: '1280x800',
-        form_factor: 'wide',
-      },
-    ],
     categories: ['food', 'health', 'lifestyle'],
     shortcuts: [
       {
@@ -82,7 +68,7 @@ export const Route = createFileRoute('/api/manifest/json')({
           status: 200,
           headers: {
             'Content-Type': 'application/manifest+json',
-            'Cache-Control': 'public, max-age=86400', // 24h cache
+            'Cache-Control': 'no-cache',
           },
         })
       },

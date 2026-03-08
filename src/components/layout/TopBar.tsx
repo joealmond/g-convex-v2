@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useSyncExternalStore } from 'react'
 import { appConfig } from '@/lib/app-config'
 import { useConvexAuth } from '@convex-dev/react-query'
 import { useQuery } from 'convex/react'
@@ -17,6 +17,10 @@ const LazyScoutCard = lazy(() =>
   import('@/components/dashboard/ScoutCard').then((module) => ({ default: module.ScoutCard }))
 )
 
+function subscribeToHydration() {
+  return () => {}
+}
+
 /**
  * Top navigation bar
  * Logo/app name (left) + location icon + points badge + user avatar or Sign In button (right)
@@ -30,6 +34,7 @@ export function TopBar() {
   const { coords, loading: geoLoading, requestLocation } = useGeolocation()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const { data: session } = useSession()
+  const isHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false)
 
   // Auto-request location on mount so the icon starts blue
   useEffect(() => {
@@ -106,8 +111,8 @@ export function TopBar() {
           <ThemeIcon className="h-4 w-4" />
         </button>
 
-        {/* Points Badge with Popover (only for authenticated users) */}
-        {isAuthenticated && profile && (
+        {/* Points Badge with Popover (only after client hydration) */}
+        {isHydrated && isAuthenticated && profile && (
           <Popover>
             <PopoverTrigger asChild>
               <button
@@ -135,7 +140,7 @@ export function TopBar() {
           </Popover>
         )}
 
-        {isAuthenticated ? (
+        {isHydrated && isAuthenticated ? (
           <div className="flex items-center gap-2">
             {/* Avatar - links to profile */}
             <Link to="/profile">
