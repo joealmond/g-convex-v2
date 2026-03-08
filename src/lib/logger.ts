@@ -3,12 +3,20 @@
  * Provides a centralized way to log errors, warnings, and info messages.
  * Integrates with Sentry for production error tracking.
  */
-import * as Sentry from '@sentry/react'
-
 type LogLevel = 'info' | 'warn' | 'error'
 
 interface LogContext {
-  [key: string]: any
+  [key: string]: unknown
+}
+
+let sentryModulePromise: Promise<typeof import('@sentry/react')> | null = null
+
+function getSentryModule() {
+  if (!sentryModulePromise) {
+    sentryModulePromise = import('@sentry/react')
+  }
+
+  return sentryModulePromise
 }
 
 class Logger {
@@ -39,13 +47,17 @@ class Logger {
       // In production, we send this to a logging service (Sentry)
       if (level === 'error') {
         console.error(JSON.stringify(logData))
-        Sentry.captureException(error || new Error(message), {
-          extra: context,
+        void getSentryModule().then((Sentry) => {
+          Sentry.captureException(error || new Error(message), {
+            extra: context,
+          })
         })
       } else {
         // Optional: console.log(JSON.stringify(logData))
         if (level === 'warn') {
-           Sentry.captureMessage(message, { level: 'warning', extra: context })
+          void getSentryModule().then((Sentry) => {
+            Sentry.captureMessage(message, { level: 'warning', extra: context })
+          })
         }
       }
     }

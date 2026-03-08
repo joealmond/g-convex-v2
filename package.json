@@ -19,6 +19,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "release:check:preview": "node scripts/release-check.mjs --environment preview",
+    "release:check:prod": "node scripts/release-check.mjs --environment production",
     "test": "vitest run --passWithNoTests",
     "test:e2e": "playwright test",
     "env:upload": "node scripts/upload-env.js",

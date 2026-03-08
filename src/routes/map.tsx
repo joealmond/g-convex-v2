@@ -9,6 +9,24 @@ import { Loader2 } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useTranslation } from '@/hooks/use-translation'
 
+function getProductDistance(product: Product, coords?: { latitude: number; longitude: number } | null): number | undefined {
+  if (!coords?.latitude || !coords?.longitude || !product.stores || product.stores.length === 0) {
+    return undefined
+  }
+
+  const distances = product.stores
+    .filter((store) => store.geoPoint)
+    .map((store) => {
+      if (!store.geoPoint) return Infinity
+      const latDiff = (store.geoPoint.lat - coords.latitude) * 111.32
+      const lonDiff =
+        (store.geoPoint.lng - coords.longitude) * 111.32 * Math.cos((coords.latitude * Math.PI) / 180)
+      return Math.sqrt(latDiff ** 2 + lonDiff ** 2)
+    })
+
+  return distances.length > 0 ? Math.min(...distances) : undefined
+}
+
 // Lazy-load the map component to defer leaflet/react-leaflet bundle
 const ProductMap = lazy(() =>
   import('@/components/map/ProductMap').then((mod) => ({ default: mod.ProductMap }))
@@ -48,17 +66,8 @@ function MapPageContent() {
   }, [requestLocation])
 
   const isLoading = products === undefined
-  const [nearbyRange, setNearbyRange] = useState(10) // Will sync on mount
+  const [nearbyRange, setNearbyRange] = useState(() => getNearbyRange())
   const [showRangeCircle, setShowRangeCircle] = useState(false)
-
-  // Initialize range from user's default setting
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    setNearbyRange(getNearbyRange())
-    // Note: We don't listen to 'g-matrix-default-nearby-range-change' here
-    // because changing the default in Profile shouldn't instantly affect an
-    // active Map session (or at least, the session range has detached).
-  }, [])
 
   const handleRangeChange = (km: number) => {
     setNearbyRange(km)
@@ -73,27 +82,6 @@ function MapPageContent() {
     }
     return [47.497, 19.04] // Budapest, Hungary
   }, [coords])
-
-  /**
-   * Helper: calculate distance between user and product stores in km
-   */
-  const getProductDistance = (product: Product): number | undefined => {
-    if (!coords?.latitude || !coords?.longitude || !product.stores || product.stores.length === 0) {
-      return undefined
-    }
-
-    const distances = product.stores
-      .filter((store) => store.geoPoint)
-      .map((store) => {
-        if (!store.geoPoint || !coords) return Infinity
-        const latDiff = (store.geoPoint.lat - coords.latitude) * 111.32
-        const lonDiff =
-          (store.geoPoint.lng - coords.longitude) * 111.32 * Math.cos((coords.latitude * Math.PI) / 180)
-        return Math.sqrt(latDiff ** 2 + lonDiff ** 2)
-      })
-
-    return distances.length > 0 ? Math.min(...distances) : undefined
-  }
 
   /**
    * Filter products based on selected filter
@@ -115,12 +103,12 @@ function MapPageContent() {
       case 'nearby':
         if (coords?.latitude && coords?.longitude) {
           result = result.filter((p) => {
-            const distance = getProductDistance(p)
+            const distance = getProductDistance(p, coords)
             return distance !== undefined && distance <= nearbyRange
           })
           result.sort(
             (a, b) =>
-              (getProductDistance(a) || Infinity) - (getProductDistance(b) || Infinity)
+              (getProductDistance(a, coords) || Infinity) - (getProductDistance(b, coords) || Infinity)
           )
         } else {
           // If nearby selected but no location, fall back to showing all locations but keep sort order

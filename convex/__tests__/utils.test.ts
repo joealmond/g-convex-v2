@@ -1,10 +1,15 @@
 import { test, expect } from 'vitest';
 import { safeAggregateDelete } from '../lib/utils';
-import { TableAggregate } from '@convex-dev/aggregate';
+
+interface MockDoc {
+  id: string
+  shouldFailWithMissingKey?: boolean
+  shouldFailWithOtherError?: boolean
+}
 
 // Mock TableAggregate for testing
 class MockAggregate {
-  async delete(ctx: any, doc: any) {
+  async delete(_ctx: unknown, doc: MockDoc) {
     if (doc.shouldFailWithMissingKey) {
       throw new Error('DELETE_MISSING_KEY: The document is not in the aggregate index');
     }
@@ -16,14 +21,14 @@ class MockAggregate {
 }
 
 test('safeAggregateDelete succeeds normally', async () => {
-  const mockAggregate = new MockAggregate() as unknown as TableAggregate<any>;
+  const mockAggregate = new MockAggregate();
   
   // Should not throw
   await expect(safeAggregateDelete({}, mockAggregate, { id: '123' })).resolves.not.toThrow();
 });
 
 test('safeAggregateDelete swallows DELETE_MISSING_KEY errors safely', async () => {
-  const mockAggregate = new MockAggregate() as unknown as TableAggregate<any>;
+  const mockAggregate = new MockAggregate();
   
   // The error is swallowed, so the promise should resolve successfully without throwing
   await expect(
@@ -32,7 +37,7 @@ test('safeAggregateDelete swallows DELETE_MISSING_KEY errors safely', async () =
 });
 
 test('safeAggregateDelete re-throws unrelated errors', async () => {
-  const mockAggregate = new MockAggregate() as unknown as TableAggregate<any>;
+  const mockAggregate = new MockAggregate();
   
   // Real network/DB errors should STILL throw
   await expect(

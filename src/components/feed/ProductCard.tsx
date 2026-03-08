@@ -6,7 +6,7 @@ import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
 import { MapPin, Trash2, AlertTriangle } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
 import { formatDistance } from '@/lib/format-distance'
-import { findAllergenConflicts } from '@convex/dietaryProfiles'
+import { findAllergenConflicts } from '@/lib/dietary-profiles'
 
 interface ProductCardProps {
   product: Product
@@ -51,7 +51,7 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
   return (
     <Link
       to={'/product/$name'}
-      params={{ name: product.name }}
+      params={{ name: encodeURIComponent(product.name) }}
       className="group cursor-pointer h-full block"
       preload="intent"
     >

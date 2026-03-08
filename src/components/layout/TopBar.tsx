@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { appConfig } from '@/lib/app-config'
 import { useConvexAuth } from '@convex-dev/react-query'
 import { useQuery } from 'convex/react'
@@ -9,11 +9,13 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { LogOut, MapPin, Trophy, Moon, Sun, Monitor } from 'lucide-react'
 import { authClient, useSession } from '@/lib/auth-client'
-import { ScoutCard } from '@/components/dashboard/ScoutCard'
 import { useGeolocation, useTheme } from '@/hooks'
 import { useTranslation } from '@/hooks/use-translation'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
-import { motion } from 'framer-motion'
+
+const LazyScoutCard = lazy(() =>
+  import('@/components/dashboard/ScoutCard').then((module) => ({ default: module.ScoutCard }))
+)
 
 /**
  * Top navigation bar
@@ -82,45 +84,53 @@ export function TopBar() {
       {/* Right: Location Icon + Theme Toggle + Points Badge + Auth */}
       <div className="flex items-center gap-2">
         {/* Location Status Icon */}
-        <motion.button
+        <button
           onClick={requestLocation}
           className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${getLocationColor()}`}
           title={getLocationTitle()}
           aria-label={getLocationTitle()}
-          whileTap={{ scale: 0.95 }}
         >
           <MapPin className="h-4 w-4" />
-        </motion.button>
+        </button>
 
         {/* Language Switcher (dropdown) */}
         <LanguageSwitcher />
 
         {/* Theme Toggle (3-state: light/dark/system) */}
-        <motion.button
+        <button
           onClick={cycleTheme}
           className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           title={getThemeTitle()}
           aria-label={getThemeTitle()}
-          whileTap={{ scale: 0.95 }}
         >
           <ThemeIcon className="h-4 w-4" />
-        </motion.button>
+        </button>
 
         {/* Points Badge with Popover (only for authenticated users) */}
         {isAuthenticated && profile && (
           <Popover>
             <PopoverTrigger asChild>
-              <motion.button
+              <button
                 className="h-8 px-3 bg-amber-500 text-white rounded-lg flex items-center gap-1.5 font-bold text-sm hover:bg-amber-500/90 transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
               >
                 <Trophy className="h-3.5 w-3.5" />
                 <span>{profile.points || 0}</span>
-              </motion.button>
+              </button>
             </PopoverTrigger>
             <PopoverContent className="p-0" align="end">
-              <ScoutCard />
+              <Suspense
+                fallback={
+                  <div className="w-64 p-4 space-y-3">
+                    <div className="animate-pulse space-y-3">
+                      <div className="h-4 bg-background rounded" />
+                      <div className="h-4 bg-background rounded" />
+                      <div className="h-4 bg-background rounded" />
+                    </div>
+                  </div>
+                }
+              >
+                <LazyScoutCard />
+              </Suspense>
             </PopoverContent>
           </Popover>
         )}

@@ -1,16 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, usePaginatedQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Suspense, useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import { Suspense, lazy, useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { ProductCard } from '@/components/feed/ProductCard'
-import { ProductStrip } from '@/components/feed/ProductStrip'
 import { FeedGrid } from '@/components/feed/FeedGrid'
 import { FilterChips } from '@/components/feed/FilterChips'
 import type { FilterType } from '@/components/feed/FilterChips'
 import { SensitivityFilterChips } from '@/components/feed/SensitivityFilterChips'
-import { MatrixChart } from '@/components/dashboard/MatrixChart'
-import { Leaderboard } from '@/components/dashboard/Leaderboard'
-import { StatsCard } from '@/components/dashboard/StatsCard'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useAdmin } from '@/hooks/use-admin'
 import { useTranslation } from '@/hooks/use-translation'
@@ -19,6 +15,19 @@ import { appConfig } from '@/lib/app-config'
 import { Loader2, Trophy, Flame, TrendingUp, Star, BarChart3, Grid3X3, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/types'
+
+const MatrixChart = lazy(() =>
+  import('@/components/dashboard/MatrixChart').then((module) => ({ default: module.MatrixChart }))
+)
+const ProductStrip = lazy(() =>
+  import('@/components/feed/ProductStrip').then((module) => ({ default: module.ProductStrip }))
+)
+const Leaderboard = lazy(() =>
+  import('@/components/dashboard/Leaderboard').then((module) => ({ default: module.Leaderboard }))
+)
+const StatsCard = lazy(() =>
+  import('@/components/dashboard/StatsCard').then((module) => ({ default: module.StatsCard }))
+)
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -38,6 +47,41 @@ function HomePageSkeleton() {
       </div>
     </div>
   )
+}
+
+function ChartLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-[320px] rounded-2xl border border-border bg-card">
+      <div className="text-center space-y-3">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
+        <p className="text-sm text-muted-foreground">Loading chart...</p>
+      </div>
+    </div>
+  )
+}
+
+function HomeWidgetsFallback() {
+  return (
+    <div className="flex gap-2 mb-3 md:grid md:grid-cols-4 md:gap-4 md:mb-6">
+      {[...Array(4)].map((_, index) => (
+        <div key={index} className="h-24 rounded-2xl bg-card border border-border animate-pulse" />
+      ))}
+    </div>
+  )
+}
+
+function StripLoadingFallback() {
+  return (
+    <div className="space-y-1.5">
+      {[...Array(4)].map((_, index) => (
+        <div key={index} className="h-24 rounded-2xl bg-card border border-border animate-pulse" />
+      ))}
+    </div>
+  )
+}
+
+function LeaderboardLoadingFallback() {
+  return <div className="min-h-[320px] rounded-2xl border border-border bg-card animate-pulse" />
 }
 
 /**
@@ -81,60 +125,51 @@ function HomePageContent() {
   // ── Filter state ──
   const [filterType, setFilterType] = useState<FilterType>('nearby')
   const [searchQuery, setSearchQuery] = useState('')
-  const [nearbyRange, setNearbyRange] = useState(1)
-
-  // Initialize nearby range from localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') setNearbyRange(getNearbyRange())
-  }, [])
+  const [nearbyRange, setNearbyRange] = useState(() => getNearbyRange())
 
   // ── Sensitivity filter state ──
   // Default: the niche's primary allergen (gluten) is always ON.
   // If user has a dietary profile, override with their saved preferences.
   const nicheDefault = useMemo(() => new Set([appConfig.riskConcept]), [])
   const dietaryProfile = useQuery(api.dietaryProfiles.getUserProfile)
-  const [activeSensitivities, setActiveSensitivities] = useState<Set<string>>(nicheDefault)
-  const [userHasToggled, setUserHasToggled] = useState(false)
+  const [manualSensitivities, setManualSensitivities] = useState<Set<string> | null>(null)
 
-  // Reactively derive filters from profile whenever it changes.
-  // Stops overriding once the user manually toggles a chip.
-  useEffect(() => {
-    if (userHasToggled) return // user manually adjusted — respect their choice
-    if (dietaryProfile === undefined) return // still loading (or re-subscribing after auth)
-    if (dietaryProfile) {
-      const allergenIds = new Set<string>()
-      if (dietaryProfile.avoidedAllergens && dietaryProfile.avoidedAllergens.length > 0) {
-        for (const a of dietaryProfile.avoidedAllergens) allergenIds.add(a)
+  const derivedSensitivities = useMemo(() => {
+    if (dietaryProfile === undefined || dietaryProfile === null) return nicheDefault
+
+    const allergenIds = new Set<string>()
+    if (dietaryProfile.avoidedAllergens && dietaryProfile.avoidedAllergens.length > 0) {
+      for (const allergenId of dietaryProfile.avoidedAllergens) allergenIds.add(allergenId)
+    }
+
+    if (dietaryProfile.conditions && dietaryProfile.conditions.length > 0) {
+      const conditionMap: Record<string, string> = {
+        celiac: 'gluten',
+        'gluten-sensitive': 'gluten',
+        lactose: 'milk',
+        soy: 'soy',
+        nut: 'nuts',
       }
-      // Legacy field: conditions = [{ type: 'celiac', severity: 3 }, ...]
-      if (dietaryProfile.conditions && dietaryProfile.conditions.length > 0) {
-        const conditionMap: Record<string, string> = {
-          celiac: 'gluten', 'gluten-sensitive': 'gluten',
-          lactose: 'milk', soy: 'soy', nut: 'nuts',
-        }
-        for (const c of dietaryProfile.conditions) {
-          const mapped = conditionMap[c.type]
-          if (mapped) allergenIds.add(mapped)
-        }
-      }
-      if (allergenIds.size > 0) {
-        setActiveSensitivities(allergenIds)
-        return
+      for (const condition of dietaryProfile.conditions) {
+        const mapped = conditionMap[condition.type]
+        if (mapped) allergenIds.add(mapped)
       }
     }
-    // null (not logged in or no dietary preferences) → niche default
-    setActiveSensitivities(nicheDefault)
-  }, [dietaryProfile, userHasToggled, nicheDefault])
+
+    return allergenIds.size > 0 ? allergenIds : nicheDefault
+  }, [dietaryProfile, nicheDefault])
+
+  const activeSensitivities = manualSensitivities ?? derivedSensitivities
 
   const toggleSensitivity = useCallback((id: string) => {
-    setUserHasToggled(true)
-    setActiveSensitivities((prev) => {
-      const next = new Set(prev)
+    setManualSensitivities((prev) => {
+      const base = prev ?? derivedSensitivities
+      const next = new Set(base)
       if (next.has(id)) next.delete(id)
       else next.add(id)
       return next
     })
-  }, [])
+  }, [derivedSensitivities])
 
   const excludeAllergens = useMemo(
     () => buildExcludeAllergens(activeSensitivities),
@@ -344,32 +379,34 @@ function HomePageContent() {
 
       {/* Gamification Widgets for Logged-in Users */}
       {user && profile && (
-        <div className="flex gap-2 mb-3 md:grid md:grid-cols-4 md:gap-4 md:mb-6">
-          <StatsCard
-            title={t('stats.yourPoints')}
-            value={profile.points}
-            subtitle={t('stats.votesCast', { count: profile.totalVotes })}
-            icon={<Trophy className="h-5 w-5 text-yellow-500" />}
-          />
-          <StatsCard
-            title={t('stats.currentStreak')}
-            value={t('stats.daysStreak', { count: profile.streak })}
-            subtitle={t('stats.keepVoting')}
-            icon={<Flame className="h-5 w-5 text-orange-500" />}
-          />
-          <StatsCard
-            title={t('stats.badgesEarned')}
-            value={profile.badges?.length || 0}
-            subtitle={t('stats.keepContributing')}
-            icon={<TrendingUp className="h-5 w-5 text-purple-500" />}
-          />
-          <StatsCard
-            title={t('stats.products')}
-            value={myProducts?.length ?? 0}
-            subtitle={t('stats.productsAdded', { count: myProducts?.length ?? 0 })}
-            icon={<Star className="h-5 w-5 text-primary" />}
-          />
-        </div>
+        <Suspense fallback={<HomeWidgetsFallback />}>
+          <div className="flex gap-2 mb-3 md:grid md:grid-cols-4 md:gap-4 md:mb-6">
+            <StatsCard
+              title={t('stats.yourPoints')}
+              value={profile.points}
+              subtitle={t('stats.votesCast', { count: profile.totalVotes })}
+              icon={<Trophy className="h-5 w-5 text-yellow-500" />}
+            />
+            <StatsCard
+              title={t('stats.currentStreak')}
+              value={t('stats.daysStreak', { count: profile.streak })}
+              subtitle={t('stats.keepVoting')}
+              icon={<Flame className="h-5 w-5 text-orange-500" />}
+            />
+            <StatsCard
+              title={t('stats.badgesEarned')}
+              value={profile.badges?.length || 0}
+              subtitle={t('stats.keepContributing')}
+              icon={<TrendingUp className="h-5 w-5 text-purple-500" />}
+            />
+            <StatsCard
+              title={t('stats.products')}
+              value={myProducts?.length ?? 0}
+              subtitle={t('stats.productsAdded', { count: myProducts?.length ?? 0 })}
+              icon={<Star className="h-5 w-5 text-primary" />}
+            />
+          </div>
+        </Suspense>
       )}
 
       {/* Feed View */}
@@ -408,15 +445,17 @@ function HomePageContent() {
                 <p className="text-xs text-muted-foreground">{t('feed.tryDifferentSearch')}</p>
               </div>
             ) : (
-              <div className="space-y-1.5">
-                {finalProducts.map((product) => (
-                  <ProductStrip
-                    key={product._id}
-                    product={product}
-                    highlight={searchQuery}
-                  />
-                ))}
-              </div>
+              <Suspense fallback={<StripLoadingFallback />}>
+                <div className="space-y-1.5">
+                  {finalProducts.map((product) => (
+                    <ProductStrip
+                      key={product._id}
+                      product={product}
+                      highlight={searchQuery}
+                    />
+                  ))}
+                </div>
+              </Suspense>
             )
           )}
 
@@ -475,12 +514,14 @@ function HomePageContent() {
               </div>
             ) : allProductsForChart.length > 0 ? (
               <div className="h-[280px] sm:h-[380px] lg:h-[460px] min-h-[250px]">
-                <MatrixChart
-                  products={allProductsForChart}
-                  onProductClick={handleChartDotClick}
-                  selectedProduct={selectedProduct}
-                  mode={chartMode}
-                />
+                <Suspense fallback={<ChartLoadingFallback />}>
+                  <MatrixChart
+                    products={allProductsForChart}
+                    onProductClick={handleChartDotClick}
+                    selectedProduct={selectedProduct}
+                    mode={chartMode}
+                  />
+                </Suspense>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-[280px] sm:h-[380px] lg:h-[460px] text-muted-foreground">
@@ -491,7 +532,9 @@ function HomePageContent() {
           </div>
 
           <div className="lg:col-span-1">
-            <Leaderboard limit={10} />
+            <Suspense fallback={<LeaderboardLoadingFallback />}>
+              <Leaderboard limit={10} />
+            </Suspense>
           </div>
         </div>
       )}

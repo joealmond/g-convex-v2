@@ -1,8 +1,12 @@
+import { lazy, Suspense, useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
-import { Grid3X3, MessageCircle, Plus, User, Map } from 'lucide-react'
+import { Grid3X3, MessageCircle, Plus, User, Map, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { AddProductDialog } from '@/components/dashboard/AddProductDialog'
 import { useTranslation } from '@/hooks/use-translation'
+
+const LazyAddProductDialog = lazy(() =>
+  import('@/components/dashboard/AddProductDialog').then((module) => ({ default: module.AddProductDialog }))
+)
 
 /**
  * Bottom tab navigation bar (mobile-optimized)
@@ -15,6 +19,7 @@ import { useTranslation } from '@/hooks/use-translation'
 export function BottomTabs() {
   const { t } = useTranslation()
   const location = useLocation()
+  const [shouldLoadAddDialog, setShouldLoadAddDialog] = useState(false)
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/'
@@ -27,6 +32,29 @@ export function BottomTabs() {
         ? 'text-[var(--nav-active)]'
         : 'text-[var(--nav-muted)] hover:text-[var(--nav-foreground)]'
     }`
+
+  const addButtonClassName = 'rounded-full w-[4.5rem] h-[4.5rem] p-0 bg-white text-primary hover:bg-white/90 dark:bg-accent dark:text-accent-foreground shadow-lg -mt-8 flex items-center justify-center border-4 border-[var(--nav-bg)]'
+
+  const addDialogTrigger = (
+    <Button
+      className={addButtonClassName}
+      title={t('common.addProduct')}
+      aria-label={t('common.addProduct')}
+    >
+      <Plus className="h-8 w-8" />
+    </Button>
+  )
+
+  const addDialogLoadingTrigger = (
+    <Button
+      className={addButtonClassName}
+      title={t('common.addProduct')}
+      aria-label={t('common.addProduct')}
+      onClick={() => setShouldLoadAddDialog(true)}
+    >
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </Button>
+  )
 
   return (
     <>
@@ -57,17 +85,20 @@ export function BottomTabs() {
 
         {/* Add Tab (Center, elevated circle) */}
         <div className="flex flex-col items-center justify-center flex-1">
-          <AddProductDialog
-            trigger={
-              <Button
-                className="rounded-full w-[4.5rem] h-[4.5rem] p-0 bg-white text-primary hover:bg-white/90 dark:bg-accent dark:text-accent-foreground shadow-lg -mt-8 flex items-center justify-center border-4 border-[var(--nav-bg)]"
-                title={t('common.addProduct')}
-                aria-label={t('common.addProduct')}
-              >
-                <Plus className="h-8 w-8" />
-              </Button>
-            }
-          />
+          {shouldLoadAddDialog ? (
+            <Suspense fallback={addDialogLoadingTrigger}>
+              <LazyAddProductDialog initiallyOpen trigger={addDialogTrigger} />
+            </Suspense>
+          ) : (
+            <Button
+              className={addButtonClassName}
+              title={t('common.addProduct')}
+              aria-label={t('common.addProduct')}
+              onClick={() => setShouldLoadAddDialog(true)}
+            >
+              <Plus className="h-8 w-8" />
+            </Button>
+          )}
         </div>
 
         {/* Map Tab */}

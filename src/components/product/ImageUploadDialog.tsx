@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { Button } from '../ui/button'
 import {
   Dialog,
@@ -17,12 +18,23 @@ import { CameraWizard } from './CameraWizard'
 interface ImageUploadDialogProps {
   trigger?: React.ReactNode
   onSuccess?: (productId: string) => void
+  initiallyOpen?: boolean
 }
 
-export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps) {
-  const h = useImageUpload({ onSuccess })
+export function ImageUploadDialog({ trigger, onSuccess, initiallyOpen = false }: ImageUploadDialogProps) {
+  const navigate = useNavigate()
+  const h = useImageUpload({
+    onSuccess,
+    onExistingProductFound: (productName) => {
+      navigate({
+        to: '/product/$name',
+        params: { name: encodeURIComponent(productName) },
+      })
+    },
+  })
   const isNative = Capacitor.isNativePlatform()
   const isNativeCameraWizard = isNative && h.step === 'wizard'
+  const hasAutoOpened = useRef(false)
 
   // On native, show a black screen BEFORE the dialog mounts so there's no
   // white/cream flash. CameraWizard will swap to camera-running (transparent)
@@ -43,6 +55,17 @@ export function ImageUploadDialog({ trigger, onSuccess }: ImageUploadDialogProps
       document.body.classList.remove('camera-starting')
     }
   }
+
+  useEffect(() => {
+    if (!initiallyOpen || hasAutoOpened.current) return
+
+    hasAutoOpened.current = true
+    h.setStep('wizard')
+    if (isNative) {
+      document.body.classList.add('camera-starting')
+    }
+    h.setOpen(true)
+  }, [h, initiallyOpen, isNative])
 
   // Lock body scroll on native when dialog is open in non-wizard steps.
   // modal={false} disables Radix's built-in scroll lock, so we do it manually.

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { DataSourceBadge } from '@/components/product/DataSourceBadge'
 import { Bookmark, MapPin, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import type { DataSource } from '@/lib/image-upload'
 import { cn } from '@/lib/utils'
 import type { ImageAnalysis } from '@/hooks/use-image-upload'
 
@@ -31,7 +32,7 @@ interface ReviewStepProps {
   /** Detected allergens from AI + barcode analysis */
   allergens?: string[]
   /** Data source tier for allergen classifications */
-  dataSource?: 'openfoodfacts' | 'ai-ingredients' | 'ai-estimate' | 'community'
+  dataSource?: DataSource
   // NEW: ingredients text from back scan
   ingredientsText: string
   // Geo — enhanced

@@ -229,6 +229,8 @@ If you see `v.id('users')` type errors:
 
 ## 📱 Mobile Development (iOS/Android)
 
+Release gating for public launch is tracked in [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md).
+
 This app uses **Capacitor** to run on iOS and Android with the same web codebase.
 
 ### Architecture: SSR (Web) + SPA Shell (Mobile)

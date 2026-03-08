@@ -12,6 +12,10 @@ interface State {
   error: Error | null
 }
 
+type WindowWithSentry = Window & {
+  __SENTRY__?: unknown
+}
+
 /**
  * Error Boundary component that catches JavaScript errors in child component tree.
  * 
@@ -42,7 +46,7 @@ export class ErrorBoundary extends Component<Props, State> {
     logger.error('ErrorBoundary caught an error', error, { componentStack: errorInfo.componentStack })
 
     // Report to Sentry if available (will be initialized in start.tsx)
-    if (typeof window !== 'undefined' && (window as any).__SENTRY__) {
+    if (typeof window !== 'undefined' && (window as WindowWithSentry).__SENTRY__) {
       import('@sentry/react').then((Sentry) => {
         Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } })
       })

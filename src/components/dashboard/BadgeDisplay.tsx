@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { BADGES } from '@convex/lib/gamification'
+import { BADGES } from '@/lib/gamification'
 import { useTranslation } from '@/hooks/use-translation'
 
 interface BadgeDisplayProps {

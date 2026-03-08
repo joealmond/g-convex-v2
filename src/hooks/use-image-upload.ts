@@ -6,6 +6,16 @@ import { useTranslation } from '@/hooks/use-translation'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { useHaptics } from '@/hooks/use-haptics'
+import {
+  getOpenFoodFactsSafetyScore,
+  getPreferredProductName,
+  isLocalBarcodeMatch,
+  isOpenFoodFactsBarcodeMatch,
+  mergeNormalizedIds,
+  resolveImageUploadDataSource,
+  type BarcodeLookupResult,
+  type DataSource,
+} from '@/lib/image-upload'
 import { logger } from '@/lib/logger'
 import { toast } from 'sonner'
 import type { CaptureResult } from '@/components/product/CameraWizard'
@@ -33,9 +43,10 @@ export interface BackAnalysis {
 
 interface UseImageUploadOptions {
   onSuccess?: (productId: string) => void
+  onExistingProductFound?: (productName: string) => void
 }
 
-export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
+export function useImageUpload({ onSuccess, onExistingProductFound }: UseImageUploadOptions = {}) {
   const { isOnline } = useOnlineStatus()
   const { impact } = useHaptics()
   const [open, setOpen] = useState(false)
@@ -71,7 +82,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
   const [nutritionScore, setNutritionScore] = useState<string | null>(null)
 
   // Data source tier: where allergen classifications came from
-  const [dataSource, setDataSource] = useState<'openfoodfacts' | 'ai-ingredients' | 'ai-estimate' | 'community'>('community')
+  const [dataSource, setDataSource] = useState<DataSource>('community')
 
   const { anonId } = useAnonymousId()
   const { t } = useTranslation()
@@ -315,12 +326,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
       }
 
       // ── 4. Look up barcode (if detected) ──
-      let barcodePromise: Promise<{
-        found: boolean
-        source?: string
-        existingProduct?: { name: string }
-        productData?: { name: string; imageUrl?: string; allergens?: string[] }
-      } | null> = Promise.resolve(null)
+      let barcodePromise: Promise<BarcodeLookupResult | null> = Promise.resolve(null)
 
       if (captures.detectedBarcode) {
         setProcessingStatus(t('cameraWizard.processingBarcode'))
@@ -338,7 +344,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
       ])
 
       // ── 5. Check if product already exists via barcode ──
-      if (barcodeResult?.found && barcodeResult.source === 'local' && barcodeResult.existingProduct) {
+      if (isLocalBarcodeMatch(barcodeResult)) {
         toast.info(t('smartCamera.existingProduct'), {
           description: barcodeResult.existingProduct.name,
           action: {
@@ -346,7 +352,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
             onClick: () => {
               setOpen(false)
               resetDialog()
-              window.location.href = `/product/${encodeURIComponent(barcodeResult.existingProduct!.name)}`
+              onExistingProductFound?.(barcodeResult.existingProduct.name)
             },
           },
         })
@@ -358,16 +364,18 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
       }
 
       // ── 6. Apply AI front analysis results ──
-      if (aiResult && aiResult.success && aiResult.analysis) {
-        setAnalysis(aiResult.analysis)
-        setProductName(aiResult.analysis.productName)
-        setSafety(aiResult.analysis.safety)
-        setTaste(aiResult.analysis.taste)
-        if (aiResult.analysis.containsGluten) {
-          setAllergens((prev) => [...new Set([...prev, 'gluten'])])
+      const aiAnalysis = aiResult?.success ? aiResult.analysis : null
+      const offProductData = isOpenFoodFactsBarcodeMatch(barcodeResult) ? barcodeResult.productData : null
+
+      if (aiAnalysis) {
+        setAnalysis(aiAnalysis)
+        setSafety(aiAnalysis.safety)
+        setTaste(aiAnalysis.taste)
+        if (aiAnalysis.containsGluten) {
+          setAllergens((prev) => mergeNormalizedIds(prev, ['gluten']))
         }
-        if (aiResult.analysis.suggestedFreeFrom?.length) {
-          setFreeFrom(new Set(aiResult.analysis.suggestedFreeFrom))
+        if (aiAnalysis.suggestedFreeFrom?.length) {
+          setFreeFrom(new Set(mergeNormalizedIds(aiAnalysis.suggestedFreeFrom)))
         }
         if (aiResult.imageUrl) setRealImageUrl(aiResult.imageUrl)
       } else {
@@ -380,46 +388,30 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
         setTaste(50)
       }
 
+      const preferredProductName = getPreferredProductName(aiAnalysis?.productName, offProductData?.name)
+      setProductName(preferredProductName)
+
       // ── 7. Apply barcode lookup data (OpenFoodFacts) ──
-      if (barcodeResult?.found && barcodeResult.source === 'openfoodfacts' && barcodeResult.productData) {
-        const pd = barcodeResult.productData as {
-          name: string; brand?: string; category?: string;
-          ingredients?: string[]; allergens?: string[];
-          nutritionScore?: string; servingSize?: string; imageUrl?: string;
-          barcode?: string
-        }
+      if (offProductData) {
         // Store barcode metadata
         setBarcodeSource('openfoodfacts')
-        if (pd.brand) setBrand(pd.brand)
-        if (pd.category) setCategory(pd.category)
-        if (pd.nutritionScore) setNutritionScore(pd.nutritionScore.toLowerCase())
-
-        // Use barcode product name if AI didn't produce one
-        if (!productName) {
-          setProductName(pd.name)
-        }
+        if (offProductData.brand) setBrand(offProductData.brand)
+        if (offProductData.category) setCategory(offProductData.category)
+        if (offProductData.nutritionScore) setNutritionScore(offProductData.nutritionScore.toLowerCase())
 
         // Map Nutri-Score → safety (only when AI analysis failed)
-        const scoreMap: Record<string, number> = { a: 80, b: 65, c: 50, d: 35, e: 20 }
-        const offSafety = scoreMap[pd.nutritionScore?.toLowerCase() ?? '']
-        if (offSafety && !(aiResult && aiResult.success && aiResult.analysis)) {
+        const offSafety = getOpenFoodFactsSafetyScore(offProductData.nutritionScore)
+        if (offSafety !== undefined && !aiAnalysis) {
           setSafety(offSafety)
         }
 
-        // Use OFF image as fallback if front upload returned nothing
-        if (!frontUrl && pd.imageUrl) {
-          setRealImageUrl(pd.imageUrl)
-        }
-
         // Merge OFF ingredients as tags when AI produced none
-        if (pd.ingredients?.length && !(aiResult?.analysis?.tags?.length)) {
-          setAnalysis((prev) => prev ? { ...prev, tags: pd.ingredients! } : null)
+        if (offProductData.ingredients.length && !(aiAnalysis?.tags.length)) {
+          setAnalysis((prev) => (prev ? { ...prev, tags: offProductData.ingredients } : null))
         }
 
-        if (pd.allergens?.length) {
-          setAllergens((prev) => [
-            ...new Set([...prev, ...pd.allergens!.map((a: string) => a.toLowerCase())]),
-          ])
+        if (offProductData.allergens.length) {
+          setAllergens((prev) => mergeNormalizedIds(prev, offProductData.allergens))
         }
         impact('medium')
         toast.success(t('smartCamera.barcodeFound'))
@@ -430,15 +422,11 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
         setIngredientsText(ingredientsResult.ingredientsText ?? '')
         // Merge freeFrom suggestions
         if (ingredientsResult.suggestedFreeFrom?.length) {
-          setFreeFrom((prev) => {
-            const merged = new Set(prev)
-            ingredientsResult.suggestedFreeFrom!.forEach((id) => merged.add(id))
-            return merged
-          })
+          setFreeFrom((prev) => new Set(mergeNormalizedIds(prev, ingredientsResult.suggestedFreeFrom)))
         }
         // Merge detected allergens
         if (ingredientsResult.detectedAllergens?.length) {
-          setAllergens((prev) => [...new Set([...prev, ...ingredientsResult.detectedAllergens!])])
+          setAllergens((prev) => mergeNormalizedIds(prev, ingredientsResult.detectedAllergens))
           // Remove detected allergens from freeFrom (they conflict)
           setFreeFrom((prev) => {
             const updated = new Set(prev)
@@ -449,18 +437,11 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
       }
 
       // ── 9. Determine data source tier ──
-      const offHasAllergens = barcodeResult?.found
-        && barcodeResult.source === 'openfoodfacts'
-        && (barcodeResult.productData as { hasAllergenData?: boolean })?.hasAllergenData === true
-      if (offHasAllergens) {
-        setDataSource('openfoodfacts')
-      } else if (ingredientsResult && ingredientsResult.success) {
-        setDataSource('ai-ingredients')
-      } else if (aiResult && aiResult.success && aiResult.analysis) {
-        setDataSource('ai-estimate')
-      } else {
-        setDataSource('community')
-      }
+      setDataSource(resolveImageUploadDataSource({
+        barcodeResult,
+        ingredientsResult,
+        aiResult,
+      }))
 
       impact('medium')
       setProcessingStatus(t('cameraWizard.processingComplete'))
@@ -477,7 +458,7 @@ export function useImageUpload({ onSuccess }: UseImageUploadOptions = {}) {
     }
   }, [
     resizeAndConvertImage, uploadFileToR2, analyzeImage, analyzeIngredients,
-    lookupBarcode, impact, t, resetDialog, productName,
+    lookupBarcode, impact, t, resetDialog, onExistingProductFound,
   ])
 
   /** Shared product creation logic for both draft save and full submit */

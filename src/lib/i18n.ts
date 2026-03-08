@@ -99,13 +99,9 @@ export function setLocale(locale: Locale): void {
  * Hook: returns the current locale, re-renders on change.
  */
 export function useLocale(): Locale {
-  const [locale, setLocaleState] = useState<Locale>('en')
+  const [locale, setLocaleState] = useState<Locale>(() => getStoredLocale())
 
   useEffect(() => {
-    // Default to English unless user has explicitly chosen a locale
-    const initial = getStoredLocale()
-    setLocaleState(initial)
-
     const handleChange = (e: Event) => {
       const newLocale = (e as CustomEvent<Locale>).detail
       setLocaleState(newLocale)

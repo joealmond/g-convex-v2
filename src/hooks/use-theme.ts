@@ -17,6 +17,16 @@ async function setNativeStatusBarStyle(resolved: 'light' | 'dark') {
   }
 }
 
+function applyTheme(resolved: 'light' | 'dark') {
+  const root = document.documentElement
+  if (resolved === 'dark') {
+    root.classList.add('dark')
+  } else {
+    root.classList.remove('dark')
+  }
+  void setNativeStatusBarStyle(resolved)
+}
+
 /**
  * Hook for managing theme (light/dark/system)
  * Persists theme preference in localStorage
@@ -29,29 +39,25 @@ async function setNativeStatusBarStyle(resolved: 'light' | 'dark') {
  * - resolvedTheme: Actual theme applied ('light' | 'dark') after system preference resolved
  */
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>('system')
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
-
-  // Initialize theme from localStorage or system preference
-  useEffect(() => {
-    // Only run on client
-    if (typeof window === 'undefined') return
-
-    // Get saved preference or default to 'system'
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'system'
+    return (localStorage.getItem('theme') as Theme) || 'system'
+  })
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light'
     const savedTheme = (localStorage.getItem('theme') as Theme) || 'system'
-    setThemeState(savedTheme)
-
-    // Determine resolved theme
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    const resolved = savedTheme === 'system' 
+    return savedTheme === 'system'
       ? (systemPrefersDark ? 'dark' : 'light')
-      : savedTheme === 'dark' 
-        ? 'dark' 
+      : savedTheme === 'dark'
+        ? 'dark'
         : 'light'
-    
-    setResolvedTheme(resolved)
-    applyTheme(resolved)
-  }, [])
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    applyTheme(resolvedTheme)
+  }, [resolvedTheme])
 
   // Listen to system preference changes
   useEffect(() => {
@@ -82,18 +88,6 @@ export function useTheme() {
         : 'light'
 
     setResolvedTheme(resolved)
-    applyTheme(resolved)
-  }
-
-  const applyTheme = (resolved: 'light' | 'dark') => {
-    const root = document.documentElement
-    if (resolved === 'dark') {
-      root.classList.add('dark')
-    } else {
-      root.classList.remove('dark')
-    }
-    // Update native StatusBar style
-    setNativeStatusBarStyle(resolved)
   }
 
   return { theme, setTheme, resolvedTheme }

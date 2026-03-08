@@ -107,12 +107,13 @@ export const lookupBarcode = publicAction({
           barcode,
         },
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to look up barcode'
       console.error('Open Food Facts API error:', error)
       return {
         found: false,
         source: 'openfoodfacts' as const,
-        error: error.message || 'Failed to look up barcode',
+        error: message,
       }
     }
   },

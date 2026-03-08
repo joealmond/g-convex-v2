@@ -22,34 +22,40 @@ export function SyncManager() {
     if (!isOnline || isSyncing.current) return
 
     const syncQueue = async () => {
-      const actions = await getAll()
-      if (actions.length === 0) return
-
       isSyncing.current = true
-      toast.info(t('offline.syncing', { count: actions.length }))
 
-      const executor = async (action: QueuedAction) => {
-        switch (action.type) {
-          case 'vote':
-            await castVote(action.payload as Parameters<typeof castVote>[0])
-            break
-          case 'addProduct':
-            await createProduct(action.payload as Parameters<typeof createProduct>[0])
-            break
-          default:
-            console.warn(`Unknown queued action type: ${action.type}`)
+      try {
+        const actions = await getAll()
+        if (actions.length === 0) return
+
+        toast.info(t('offline.syncing', { count: actions.length }))
+
+        const executor = async (action: QueuedAction) => {
+          switch (action.type) {
+            case 'vote':
+              await castVote(action.payload as Parameters<typeof castVote>[0])
+              break
+            case 'addProduct':
+              await createProduct(action.payload as Parameters<typeof createProduct>[0])
+              break
+            default:
+              throw new Error(`Unsupported queued action type: ${action.type}`)
+          }
         }
-      }
 
-      const result = await flush(executor)
+        const result = await flush(executor)
 
-      if (result.success > 0 && result.failed === 0) {
-        toast.success(t('offline.syncComplete'))
-      } else if (result.failed > 0) {
+        if (result.success > 0 && result.failed === 0) {
+          toast.success(t('offline.syncComplete'))
+        } else if (result.failed > 0) {
+          toast.warning(t('offline.syncFailed'))
+        }
+      } catch (error) {
+        console.error('Offline queue sync failed unexpectedly:', error)
         toast.warning(t('offline.syncFailed'))
+      } finally {
+        isSyncing.current = false
       }
-
-      isSyncing.current = false
     }
 
     syncQueue()

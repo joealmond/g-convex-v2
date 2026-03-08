@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getQuadrant, getQuadrantColor, getPriceLabel, QUADRANTS } from './types'
+import { getQuadrant, getQuadrantColor, getPriceLabel, QUADRANTS, type Quadrant } from './types'
 
 describe('getQuadrant', () => {
   it('returns topRight for high safety + high taste', () => {
@@ -42,7 +42,7 @@ describe('getQuadrant', () => {
 describe('getQuadrantColor', () => {
   it('returns a color string for each quadrant', () => {
     for (const key of Object.keys(QUADRANTS)) {
-      const color = getQuadrantColor(key as any)
+      const color = getQuadrantColor(key as Quadrant)
       expect(color).toBeTruthy()
       expect(typeof color).toBe('string')
     }

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import type { FilterType } from '@/components/feed/FilterChips'
 import type { Product } from '@/lib/types'
 
@@ -76,16 +76,7 @@ interface UseProductFilterOptions {
 export function useProductFilter({ products, nearbyProducts, latitude, longitude }: UseProductFilterOptions) {
   const [filterType, setFilterType] = useState<FilterType>('nearby')
   const [searchQuery, setSearchQuery] = useState('')
-  const [nearbyRange, setNearbyRangeState] = useState(DEFAULT_NEARBY_RANGE_KM)
-
-  // Initialize session range from default preferred range
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    setNearbyRangeState(getNearbyRange())
-    // We intentionally don't listen to the global event here anymore.
-    // The session range (Map/Feed) should be independent of the default
-    // profile setting until the page reloads.
-  }, [])
+  const [nearbyRange, setNearbyRangeState] = useState(() => getNearbyRange())
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value)

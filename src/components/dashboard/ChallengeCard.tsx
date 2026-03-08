@@ -35,6 +35,12 @@ interface ChallengeCardProps {
   } | null
 }
 
+const DAY_IN_MS = 1000 * 60 * 60 * 24
+
+function getDaysRemaining(endDate: number) {
+  return Math.ceil((endDate - Date.now()) / DAY_IN_MS)
+}
+
 export function ChallengeCard({ challenge, userProgress }: ChallengeCardProps) {
   const { t } = useTranslation()
   const claimReward = useMutation(api.challenges.claimReward)
@@ -65,9 +71,7 @@ export function ChallengeCard({ challenge, userProgress }: ChallengeCardProps) {
       logger.error('Failed to claim reward:', error)
     }
   }
-
-  const endDate = new Date(challenge.endDate)
-  const daysRemaining = Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  const daysRemaining = getDaysRemaining(challenge.endDate)
 
   return (
     <motion.div

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Suspense, useState } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,12 +11,9 @@ import { StoreList } from '@/components/product/StoreList'
 import { VotingSheet, type ThumbsVotePayload } from '@/components/product/VotingSheet'
 import { ReportProductDialog } from '@/components/product/ReportProductDialog'
 import { ShareButton } from '@/components/product/ShareButton'
-import { ProductChartTabs } from '@/components/product/ProductChartTabs'
 import { StoreTagInput } from '@/components/dashboard/StoreTagInput'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
 import { EditProductDialog } from '@/components/dashboard/EditProductDialog'
-import { ProductComments } from '@/components/product/ProductComments'
-import { VoterList } from '@/components/admin/VoterList'
 import { getQuadrant, QUADRANTS, type Product } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import { computePersonalizedSafety, computeTasteScore } from '@/lib/score-utils'
@@ -27,10 +24,20 @@ import { useTranslation } from '@/hooks/use-translation'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { useHaptics } from '@/hooks/use-haptics'
 import { enqueue } from '@/lib/offline-queue'
-import { calculateVotePoints } from '@convex/lib/gamification'
-import { findAllergenConflicts } from '@convex/dietaryProfiles'
+import { calculateVotePoints } from '@/lib/gamification'
+import { findAllergenConflicts } from '@/lib/dietary-profiles'
 import { ArrowLeft, Edit, Flag, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
+
+const ProductChartTabs = lazy(() =>
+  import('@/components/product/ProductChartTabs').then((module) => ({ default: module.ProductChartTabs }))
+)
+const ProductComments = lazy(() =>
+  import('@/components/product/ProductComments').then((module) => ({ default: module.ProductComments }))
+)
+const VoterList = lazy(() =>
+  import('@/components/admin/VoterList').then((module) => ({ default: module.VoterList }))
+)
 
 export const Route = createFileRoute('/product/$name')({
   component: ProductDetailPage,
@@ -48,6 +55,14 @@ function ProductDetailLoading() {
           ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+function SectionLoading({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
+      {label}
     </div>
   )
 }
@@ -448,30 +463,36 @@ function ProductDetailContent() {
             <CardTitle className="text-lg">{t('product.positionOnMatrix')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <ProductChartTabs
-              product={product}
-              myVote={myVote}
-              allVotesCount={allVotes?.length || 0}
-              onVote={(_safety: number, taste: number) => handleVote({
-                // Chart tap sends coordinates — convert to thumbs
-                allergenVotes: undefined,
-                tasteVote: taste >= 50 ? 'up' : 'down',
-              })}
-              isVoting={isVoting}
-              t={t}
-            />
+            <Suspense fallback={<SectionLoading label={t('common.loading')} />}>
+              <ProductChartTabs
+                product={product}
+                myVote={myVote}
+                allVotesCount={allVotes?.length || 0}
+                onVote={(_safety: number, taste: number) => handleVote({
+                  // Chart tap sends coordinates — convert to thumbs
+                  allergenVotes: undefined,
+                  tasteVote: taste >= 50 ? 'up' : 'down',
+                })}
+                isVoting={isVoting}
+                t={t}
+              />
+            </Suspense>
           </CardContent>
         </Card>
 
         {/* Comments / Reviews */}
-        <ProductComments productId={product._id} />
+        <Suspense fallback={<SectionLoading label={t('common.loading')} />}>
+          <ProductComments productId={product._id} />
+        </Suspense>
 
         {/* Admin Voter List */}
         {adminStatus?.isAdmin && allVotes && (
-          <VoterList
-            votes={allVotes}
-            onImpersonate={(userId) => startImpersonation(userId)}
-          />
+          <Suspense fallback={<SectionLoading label={t('common.loading')} />}>
+            <VoterList
+              votes={allVotes}
+              onImpersonate={(userId) => startImpersonation(userId)}
+            />
+          </Suspense>
         )}
       </div>
 

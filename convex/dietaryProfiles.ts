@@ -130,7 +130,7 @@ export const migrateToAllergens = internalMutation({
       if (profile.avoidedAllergens !== undefined) continue
 
       // Convert old conditions to allergen IDs
-      const conditions = (profile as any).conditions as Array<{ type: string; severity: number }> | undefined
+      const conditions = profile.conditions as Array<{ type: string; severity: number }> | undefined
       const allergenSet = new Set<string>()
       if (conditions) {
         for (const c of conditions) {

@@ -109,7 +109,7 @@ export function useGeolocation() {
               error: 'Location permission denied. Enable in Settings → Privacy → Location Services.',
               permissionStatus: 'denied',
             })
-            return
+            return null
           }
         }
 
@@ -120,15 +120,18 @@ export function useGeolocation() {
           maximumAge: 0,
         })
 
+        const nextCoords = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }
+
         setState({
-          coords: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          },
+          coords: nextCoords,
           loading: false,
           error: null,
           permissionStatus: 'granted',
         })
+        return nextCoords
       } catch (error: unknown) {
         logger.error('Geolocation error:', error)
         const message = error instanceof Error ? error.message : ''
@@ -148,6 +151,7 @@ export function useGeolocation() {
           error: errorMessage,
           permissionStatus: message.includes('permission') ? 'denied' : prev.permissionStatus,
         }))
+        return null
       }
     } else {
       // Web path: Use browser geolocation API
@@ -158,50 +162,56 @@ export function useGeolocation() {
           error: 'Geolocation is not supported by your browser',
           permissionStatus: 'denied',
         })
-        return
+        return null
       }
 
       setState((prev) => ({ ...prev, loading: true, error: null }))
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setState({
-            coords: {
+      return await new Promise<Coordinates | null>((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const nextCoords = {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
-            },
-            loading: false,
-            error: null,
-            permissionStatus: 'granted',
-          })
-        },
-        (error) => {
-          let errorMessage = 'Failed to get location'
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage = 'Location permission denied'
-              break
-            case error.POSITION_UNAVAILABLE:
-              errorMessage = 'Location information unavailable'
-              break
-            case error.TIMEOUT:
-              errorMessage = 'Location request timed out'
-              break
-          }
+            }
 
-          setState(prev => ({
-            coords: null,
-            loading: false,
-            error: errorMessage,
-            permissionStatus: error.code === error.PERMISSION_DENIED ? 'denied' : prev.permissionStatus,
-          }))
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
-      )
+            setState({
+              coords: nextCoords,
+              loading: false,
+              error: null,
+              permissionStatus: 'granted',
+            })
+            resolve(nextCoords)
+          },
+          (error) => {
+            let errorMessage = 'Failed to get location'
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = 'Location permission denied'
+                break
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location information unavailable'
+                break
+              case error.TIMEOUT:
+                errorMessage = 'Location request timed out'
+                break
+            }
+
+            setState(prev => ({
+              coords: null,
+              loading: false,
+              error: errorMessage,
+              permissionStatus: error.code === error.PERMISSION_DENIED ? 'denied' : prev.permissionStatus,
+            }))
+            resolve(null)
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          }
+        )
+      })
     }
   }, [isNative, checkPermissions, requestPermissions])
 

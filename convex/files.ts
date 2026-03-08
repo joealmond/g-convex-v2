@@ -1,4 +1,4 @@
-import { publicQuery, authMutation, publicAction, publicMutation } from './lib/customFunctions'
+import { publicQuery, authMutation, publicMutation } from './lib/customFunctions'
 
 import { v } from 'convex/values'
 

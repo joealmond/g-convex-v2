@@ -161,7 +161,7 @@ Only return valid JSON, no markdown formatting.`,
         } else {
           throw new Error('No JSON found in response')
         }
-      } catch (parseError) {
+      } catch {
         console.error('Failed to parse AI response:', textContent)
         return { success: false, error: 'AI analysis is currently unavailable. You can fill in the details manually.', imageUrl }
       }

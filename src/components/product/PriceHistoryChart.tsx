@@ -2,8 +2,8 @@
  * Price History Chart Component
  * Line chart showing price changes over time
  */
-
-import { useState, useEffect } from 'react'
+import { ClientOnly } from '@tanstack/react-router'
+import { useMemo, useState } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
@@ -18,35 +18,73 @@ interface PriceHistoryChartProps {
   productId: Id<'products'>
 }
 
+interface PriceTooltipPayload {
+  payload: {
+    date: string
+    price: number
+    fullDate: number
+  }
+}
+
+function PriceHistoryTooltip({
+  active,
+  payload,
+  t,
+}: {
+  active?: boolean
+  payload?: PriceTooltipPayload[]
+  t: (key: string, params?: Record<string, string | number>) => string
+}) {
+  if (!active || !payload || !payload.length) return null
+
+  const firstPayload = payload[0]
+  if (!firstPayload) return null
+
+  const data = firstPayload.payload
+  const pricePreset = appConfig.dimensions.axis3.presets.find(
+    (preset) => Math.abs(preset.value / 20 - data.price) < 0.5
+  )
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-background border border-border rounded-lg shadow-lg p-3"
+    >
+      <p className="text-sm font-medium">{data.fullDate}</p>
+      <p className="text-lg font-bold flex items-center gap-2">
+        {pricePreset?.emoji} {pricePreset?.label ?? `${'$'.repeat(Math.round(data.price))}`}
+      </p>
+      <p className="text-xs text-muted-foreground">{t('priceHistory.value')}: {data.price.toFixed(1)}</p>
+    </motion.div>
+  )
+}
+
 export function PriceHistoryChart({ productId }: PriceHistoryChartProps) {
   const { t } = useTranslation()
   const [timeRange, setTimeRange] = useState<30 | 90 | 365>(90)
-  const [mounted, setMounted] = useState(false)
   
   const history = useQuery(api.products.getPriceHistory, { 
     productId,
     days: timeRange,
   })
 
-  // Prevent SSR/hydration issues
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const chartData = useMemo(
+    () =>
+      [...(history ?? [])]
+        .reverse()
+        .map((snapshot) => ({
+          date: new Date(snapshot.snapshotDate).toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+          }),
+          price: snapshot.price,
+          fullDate: snapshot.snapshotDate,
+        })),
+    [history]
+  )
 
-  if (!mounted) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('priceHistory.title')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-            {t('common.loading')}
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+  const tooltipContent = useMemo(() => <PriceHistoryTooltip t={t} />, [t])
 
   if (!history || history.length === 0) {
     return (
@@ -65,41 +103,6 @@ export function PriceHistoryChart({ productId }: PriceHistoryChartProps) {
   }
 
   // Prepare chart data (spread to avoid mutating source array)
-  const chartData = [...history]
-    .reverse() // Oldest first
-    .map((snapshot) => ({
-      date: new Date(snapshot.snapshotDate).toLocaleDateString(undefined, { 
-        month: 'short', 
-        day: 'numeric' 
-      }),
-      price: snapshot.price,
-      fullDate: snapshot.snapshotDate,
-    }))
-
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload || !payload.length) return null
-
-    const data = payload[0].payload
-    const pricePreset = appConfig.dimensions.axis3.presets.find(
-      p => Math.abs(p.value / 20 - data.price) < 0.5 // Map 1-5 to closest preset
-    )
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-background border border-border rounded-lg shadow-lg p-3"
-      >
-        <p className="text-sm font-medium">{data.fullDate}</p>
-        <p className="text-lg font-bold flex items-center gap-2">
-          {pricePreset?.emoji} {pricePreset?.label ?? `${'$'.repeat(Math.round(data.price))}`}
-        </p>
-        <p className="text-xs text-muted-foreground">{t('priceHistory.value')}: {data.price.toFixed(1)}</p>
-      </motion.div>
-    )
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -134,31 +137,39 @@ export function PriceHistoryChart({ productId }: PriceHistoryChartProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis 
-              dataKey="date" 
-              className="text-sm"
-              tick={{ fill: 'var(--muted-foreground)' }}
-            />
-            <YAxis 
-              domain={[1, 5]}
-              ticks={[1, 2, 3, 4, 5]}
-              className="text-sm"
-              tick={{ fill: 'var(--muted-foreground)' }}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Line 
-              type="monotone" 
-              dataKey="price" 
-              stroke="var(--primary)"
-              strokeWidth={2}
-              dot={{ fill: 'var(--primary)', r: 4 }}
-              activeDot={{ r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <ClientOnly
+          fallback={
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              {t('common.loading')}
+            </div>
+          }
+        >
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis
+                dataKey="date"
+                className="text-sm"
+                tick={{ fill: 'var(--muted-foreground)' }}
+              />
+              <YAxis
+                domain={[1, 5]}
+                ticks={[1, 2, 3, 4, 5]}
+                className="text-sm"
+                tick={{ fill: 'var(--muted-foreground)' }}
+              />
+              <Tooltip content={tooltipContent} />
+              <Line
+                type="monotone"
+                dataKey="price"
+                stroke="var(--primary)"
+                strokeWidth={2}
+                dot={{ fill: 'var(--primary)', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </ClientOnly>
       </CardContent>
     </Card>
   )

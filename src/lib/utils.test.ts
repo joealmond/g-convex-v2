@@ -7,7 +7,7 @@ describe('cn', () => {
   })
 
   it('handles conditional classes', () => {
-    expect(cn('px-2', false && 'hidden', 'py-1')).toBe('px-2 py-1')
+    expect(cn('px-2', undefined, 'py-1')).toBe('px-2 py-1')
   })
 
   it('resolves tailwind conflicts (last wins)', () => {

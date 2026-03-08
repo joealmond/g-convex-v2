@@ -3,14 +3,9 @@ import { createRootRouteWithContext, ClientOnly, useRouteContext } from '@tansta
 import { Outlet, HeadContent, Scripts } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react'
+import { lazy, Suspense } from 'react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ImpersonateProvider } from '@/hooks/use-impersonate'
-import { AdminToolbar } from '@/components/AdminToolbar'
-import { VoteMigrationHandler } from '@/components/VoteMigrationHandler'
-import { OfflineBanner } from '@/components/OfflineBanner'
-import { SyncManager } from '@/components/SyncManager'
-import { PendingSyncBadge } from '@/components/PendingSyncBadge'
-import { PushNotificationManager } from '@/components/PushNotificationManager'
 import { TopBar } from '@/components/layout/TopBar'
 import { BottomTabs } from '@/components/layout/BottomTabs'
 import { PageShell } from '@/components/layout/PageShell'
@@ -23,6 +18,25 @@ import { useServiceWorker } from '@/hooks/use-online-status'
 import { useLocale } from '@/lib/i18n'
 
 import '../styles/globals.css'
+
+const LazyAdminToolbar = lazy(() =>
+  import('@/components/AdminToolbar').then((module) => ({ default: module.AdminToolbar }))
+)
+const LazyVoteMigrationHandler = lazy(() =>
+  import('@/components/VoteMigrationHandler').then((module) => ({ default: module.VoteMigrationHandler }))
+)
+const LazyOfflineBanner = lazy(() =>
+  import('@/components/OfflineBanner').then((module) => ({ default: module.OfflineBanner }))
+)
+const LazySyncManager = lazy(() =>
+  import('@/components/SyncManager').then((module) => ({ default: module.SyncManager }))
+)
+const LazyPendingSyncBadge = lazy(() =>
+  import('@/components/PendingSyncBadge').then((module) => ({ default: module.PendingSyncBadge }))
+)
+const LazyPushNotificationManager = lazy(() =>
+  import('@/components/PushNotificationManager').then((module) => ({ default: module.PushNotificationManager }))
+)
 
 // Get auth information for SSR using available cookies
 const getAuth = createServerFn({ method: 'GET' }).handler(async () => {
@@ -120,7 +134,9 @@ function RootComponent() {
         </head>
         <body className="min-[100dvh] bg-background antialiased">
           <ImpersonateProvider>
-            <OfflineBanner />
+            <Suspense fallback={null}>
+              <LazyOfflineBanner />
+            </Suspense>
             <TopBar />
             <ErrorBoundary>
               <PageShell>
@@ -128,13 +144,17 @@ function RootComponent() {
               </PageShell>
             </ErrorBoundary>
             <BottomTabs />
-            <AdminToolbar />
+            <Suspense fallback={null}>
+              <LazyAdminToolbar />
+            </Suspense>
             {/* Vote migration runs client-side only */}
             <ClientOnly fallback={null}>
-              <VoteMigrationHandler />
-              <SyncManager />
-              <PendingSyncBadge />
-              <PushNotificationManager />
+              <Suspense fallback={null}>
+                <LazyVoteMigrationHandler />
+                <LazySyncManager />
+                <LazyPendingSyncBadge />
+                <LazyPushNotificationManager />
+              </Suspense>
             </ClientOnly>
           </ImpersonateProvider>
           <Toaster richColors position="bottom-center" offset="14rem" toastOptions={{ style: { zIndex: 9999 } }} />

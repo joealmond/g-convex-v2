@@ -7,7 +7,7 @@ import { useGeolocation } from '@/hooks/use-geolocation'
 import { useTranslation } from '@/hooks/use-translation'
 import { appConfig } from '@/lib/app-config'
 import { MapPin, Loader2, X, Store } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
+import { useMemo, useState } from 'react'
 
 interface StoreTagInputProps {
   value: string
@@ -31,34 +31,25 @@ export function StoreTagInput({
   const { locale, t } = useTranslation()
   const [hasLocation, setHasLocation] = useState(false)
   const [isCustomMode, setIsCustomMode] = useState(false)
-  const pendingCapture = useRef(false)
 
   // Get predefined stores for current locale, fallback to 'en'
-  const predefinedStores = appConfig.storeDefaults[locale as keyof typeof appConfig.storeDefaults] 
-    || appConfig.storeDefaults.en || []
+  const predefinedStores = useMemo(
+    () => appConfig.storeDefaults[locale as keyof typeof appConfig.storeDefaults] || appConfig.storeDefaults.en || [],
+    [locale]
+  )
   
   // Special value for custom input mode
   const CUSTOM_STORE_VALUE = '__custom__'
 
-  // Check if current value is a custom store (not in predefined list)
-  useEffect(() => {
-    if (value && !(predefinedStores as readonly string[]).includes(value) && value !== CUSTOM_STORE_VALUE) {
-      setIsCustomMode(true)
-    }
-  }, [value, predefinedStores, CUSTOM_STORE_VALUE])
+  const isUsingCustomMode =
+    isCustomMode || (Boolean(value) && !(predefinedStores as readonly string[]).includes(value) && value !== CUSTOM_STORE_VALUE)
 
-  // Effect to handle location capture when coords change
-  useEffect(() => {
-    if (coords && pendingCapture.current && onLocationCapture) {
-      onLocationCapture(coords.latitude, coords.longitude)
+  const handleCaptureLocation = async () => {
+    const nextCoords = await requestLocation()
+    if (nextCoords && onLocationCapture) {
+      onLocationCapture(nextCoords.latitude, nextCoords.longitude)
       setHasLocation(true)
-      pendingCapture.current = false
     }
-  }, [coords, onLocationCapture])
-
-  const handleCaptureLocation = () => {
-    pendingCapture.current = true
-    requestLocation()
   }
 
   const handleClearLocation = () => {
@@ -99,7 +90,7 @@ export function StoreTagInput({
 
       <div className="flex gap-2">
         {/* Store Selector or Custom Input */}
-        {isCustomMode ? (
+        {isUsingCustomMode ? (
           <>
             <Input
               id="store-input"

@@ -2,6 +2,8 @@
 
 This guide covers deploying G-Matrix to iOS and Android devices using Capacitor. It includes platform-specific issues, workarounds, and testing procedures learned from production deployment.
 
+Before a public launch, run the full gate in [docs/RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md) alongside this deployment guide.
+
 ## Prerequisites
 
 | Tool | Version | Installation |

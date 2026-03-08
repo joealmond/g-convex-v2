@@ -1,8 +1,7 @@
 import { useTranslation } from '@/hooks/use-translation'
+import type { DataSource } from '@/lib/image-upload'
 import { cn } from '@/lib/utils'
 import { CheckCircle2, FlaskConical, AlertTriangle, Users } from 'lucide-react'
-
-type DataSource = 'openfoodfacts' | 'ai-ingredients' | 'ai-estimate' | 'community'
 
 interface DataSourceBadgeProps {
   source: DataSource | undefined | null

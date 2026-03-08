@@ -1,14 +1,14 @@
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Trophy, Flame, Star, Users, TrendingUp, Moon, Sun, Monitor, Settings, Languages, Loader2, Clock, UtensilsCrossed, MapPin, Radar, Award } from 'lucide-react'
 import { LanguageSelector } from '@/components/profile/LanguageSelector'
 import { getUserLevel, appConfig } from '@/lib/app-config'
-import { BADGES } from '@convex/lib/gamification'
+import { BADGES } from '@/lib/gamification'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { BadgeDisplay } from '@/components/dashboard/BadgeDisplay'
 import { DietaryProfileSettings } from '@/components/dashboard/DietaryProfileSettings'
@@ -231,12 +231,7 @@ function ProfileContent() {
   const { isLoading: isAuthLoading } = useConvexAuth()
 
   const ThemeIcon = theme === 'system' ? Monitor : resolvedTheme === 'dark' ? Moon : Sun
-  const [nearbyRangeKm, setNearbyRangeKm] = useState(5)
-
-  // Sync nearby range from localStorage on mount
-  useEffect(() => {
-    setNearbyRangeKm(getNearbyRange())
-  }, [])
+  const [nearbyRangeKm, setNearbyRangeKm] = useState(() => getNearbyRange())
   const themeLabel = theme === 'system' ? t('profile.themeSystem') : theme === 'dark' ? t('profile.themeDark') : t('profile.themeLight')
   const cycleTheme = () => {
     if (theme === 'light') setTheme('dark')
@@ -254,7 +249,7 @@ function ProfileContent() {
   const totalVotes = myVotes?.length || 0
   const earnedBadges = profile?.badges || []
   const currentStreak = profile?.streak || 0
-  const myProductsList = myProducts || []
+  const myProductsList = useMemo(() => myProducts || [], [myProducts])
 
   // Get user level and progress — memoized to avoid recalc on every render
   const { currentLevel, nextLevel, levelProgress } = useMemo(() => {

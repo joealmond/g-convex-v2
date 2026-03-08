@@ -33,6 +33,10 @@ export const Route = createFileRoute('/debug-native')({
   component: DebugNativePage,
 })
 
+type ErrorWithMessage = {
+  message?: string
+}
+
 function DebugNativePage() {
   // Platform info
   const platform = Capacitor.getPlatform()
@@ -78,40 +82,6 @@ function DebugNativePage() {
     await requestCameraPermissions()
   }, [requestCameraPermissions])
 
-  const handleCaptureTest = useCallback(async () => {
-    setCapturing(true)
-    try {
-      // Start camera
-      const started = await startCamera()
-      if (!started) {
-        setUploadError('Failed to start camera')
-        return
-      }
-
-      // Wait 2 seconds
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      // Capture photo
-      const file = await capturePhoto()
-      if (file) {
-        setCapturedBlob(URL.createObjectURL(file))
-        // Test upload
-        await handleUploadImage(file)
-      } else {
-        setUploadError('No photo captured')
-      }
-
-      // Stop camera
-      await stopCamera()
-    } catch (error: any) {
-      logger.error('Capture test failed:', error)
-      setUploadError(error.message || 'Capture failed')
-      await stopCamera()
-    } finally {
-      setCapturing(false)
-    }
-  }, [startCamera, stopCamera, capturePhoto])
-
   const handleUploadImage = useCallback(async (file: File) => {
     setUploadLoading(true)
     setUploadError(null)
@@ -150,13 +120,49 @@ function DebugNativePage() {
         url: `Successfully uploaded (storageId: ${storageId})` 
       })
       console.log('[Upload Test] ✅ Success!')
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorWithMessage = error as ErrorWithMessage
       logger.error('[Upload Test] ❌ Error:', error)
-      setUploadError(error.message || 'Upload failed')
+      setUploadError(errorWithMessage.message || 'Upload failed')
     } finally {
       setUploadLoading(false)
     }
   }, [generateUploadUrl])
+
+  const handleCaptureTest = useCallback(async () => {
+    setCapturing(true)
+    try {
+      // Start camera
+      const started = await startCamera()
+      if (!started) {
+        setUploadError('Failed to start camera')
+        return
+      }
+
+      // Wait 2 seconds
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+      // Capture photo
+      const file = await capturePhoto()
+      if (file) {
+        setCapturedBlob(URL.createObjectURL(file))
+        // Test upload
+        await handleUploadImage(file)
+      } else {
+        setUploadError('No photo captured')
+      }
+
+      // Stop camera
+      await stopCamera()
+    } catch (error: unknown) {
+      const errorWithMessage = error as ErrorWithMessage
+      logger.error('Capture test failed:', error)
+      setUploadError(errorWithMessage.message || 'Capture failed')
+      await stopCamera()
+    } finally {
+      setCapturing(false)
+    }
+  }, [startCamera, stopCamera, capturePhoto, handleUploadImage])
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

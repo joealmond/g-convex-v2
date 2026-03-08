@@ -151,21 +151,24 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
   // Defer chart rendering until container has non-zero dimensions
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerReady, setContainerReady] = useState(false)
+
   useEffect(() => {
-    if (!containerRef.current) return
+    if (!containerRef.current || containerReady) return
+
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
           setContainerReady(true)
+          observer.disconnect()
+          break
         }
       }
     })
+
     observer.observe(containerRef.current)
-    // Check immediately in case already sized
-    const rect = containerRef.current.getBoundingClientRect()
-    if (rect.width > 0 && rect.height > 0) setContainerReady(true)
+
     return () => observer.disconnect()
-  }, [])
+  }, [containerReady])
 
   return (
     <div className="w-full h-full flex flex-col">

@@ -13,6 +13,13 @@ interface StoreListProps {
   product: Product
 }
 
+function getStoreFreshnessColor(lastSeenAt: number): string {
+  const days = Math.floor((Date.now() - lastSeenAt) / 86400000)
+  if (days < 7) return 'border-l-4 border-l-safety-high'
+  if (days < 30) return 'border-l-4 border-l-safety-mid'
+  return 'border-l-4 border-l-border opacity-70'
+}
+
 /**
  * Displays list of stores where product is available
  * - Store name
@@ -33,16 +40,6 @@ export function StoreList({ product }: StoreListProps) {
         <p className="text-xs">{t('store.beFirst')}</p>
       </div>
     )
-  }
-
-  /**
-   * Get freshness classes — green <7d, yellow <30d, gray >30d
-   */
-  const getFreshnessColor = (lastSeenAt: number): string => {
-    const days = Math.floor((Date.now() - lastSeenAt) / 86400000)
-    if (days < 7) return 'border-l-4 border-l-safety-high'
-    if (days < 30) return 'border-l-4 border-l-safety-mid'
-    return 'border-l-4 border-l-border opacity-70'
   }
 
   const renderPrice = (price?: number): string => {
@@ -93,7 +90,7 @@ export function StoreList({ product }: StoreListProps) {
             key={index}
             className={cn(
               'w-full p-4 bg-card rounded-xl border border-border hover:shadow-md transition-shadow',
-              getFreshnessColor(store.lastSeenAt)
+              getStoreFreshnessColor(store.lastSeenAt)
             )}
           >
             {/* Store Name */}
