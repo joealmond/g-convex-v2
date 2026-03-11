@@ -44,9 +44,10 @@ interface Vote {
 interface VoterListProps {
   votes: Vote[]
   onImpersonate: (userId: string) => void
+  embedded?: boolean
 }
 
-export function VoterList({ votes, onImpersonate }: VoterListProps) {
+export function VoterList({ votes, onImpersonate, embedded = false }: VoterListProps) {
   const [deletingVoteId, setDeletingVoteId] = useState<Id<'votes'> | null>(
     null
   )
@@ -67,13 +68,19 @@ export function VoterList({ votes, onImpersonate }: VoterListProps) {
   }
 
   if (votes.length === 0) {
-    return (
-      <Card>
+    const emptyState = (
+      <>
         <CardHeader>
           <CardTitle>{t('voting.voterList')}</CardTitle>
           <CardDescription>{t('voting.noVotesYet')}</CardDescription>
         </CardHeader>
-      </Card>
+      </>
+    )
+
+    return embedded ? (
+      <div className="rounded-2xl border border-border bg-muted/10">{emptyState}</div>
+    ) : (
+      <Card>{emptyState}</Card>
     )
   }
 
@@ -81,95 +88,105 @@ export function VoterList({ votes, onImpersonate }: VoterListProps) {
   const registered = votes.filter((v) => !v.isAnonymous).length
   const anonymous = votes.filter((v) => v.isAnonymous).length
 
-  return (
+  const content = (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>{t('voting.voterList')}</CardTitle>
-              <CardDescription>
-                {t('voting.votesCountDesc', { total: votes.length, registered, anonymous })}
-              </CardDescription>
-            </div>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>{t('voting.voterList')}</CardTitle>
+            <CardDescription>
+              {t('voting.votesCountDesc', { total: votes.length, registered, anonymous })}
+            </CardDescription>
           </div>
-        </CardHeader>
-        <CardContent className="px-3 sm:px-6">
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {votes.map((vote) => (
-              <div
-                key={vote._id}
-                className="flex items-center gap-2 p-2 sm:p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-              >
-                {/* Vote Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                    {vote.isAnonymous ? (
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">
-                        <User className="h-3 w-3 mr-0.5" />
-                        {t('voting.anon')}
-                      </Badge>
-                    ) : (
-                      <Badge variant="default" className="text-[10px] px-1.5 py-0 h-5">
-                        <User className="h-3 w-3 mr-0.5" />
-                        {t('voting.reg')}
-                      </Badge>
-                    )}
-                    <span className="text-xs text-muted-foreground truncate">
-                      {vote.userId
-                        ? `#${vote.userId.slice(-6)}`
-                        : vote.anonymousId
-                          ? `#${vote.anonymousId.slice(-6)}`
-                          : '?'}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground ml-auto">
-                      {new Date(vote.createdAt).toLocaleDateString(locale)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <span className="font-medium text-safety-high">{vote.safety ?? '–'}</span>
-                    <span className="text-muted-foreground">/</span>
-                    <span className="font-medium text-primary">{vote.taste ?? '–'}</span>
-                    {vote.price && (
-                      <>
-                        <span className="text-muted-foreground">/</span>
-                        <span className="font-medium text-gold">{vote.price}</span>
-                      </>
-                    )}
-                    {vote.storeName && (
-                      <span className="text-muted-foreground truncate ml-1">@ {vote.storeName}</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Admin Actions */}
-                <div className="flex gap-0.5 flex-shrink-0">
-                  {!vote.isAnonymous && vote.userId && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => onImpersonate(vote.userId!)}
-                      title={t('voting.impersonateUser')}
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                    </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="px-3 sm:px-6">
+        <div className="space-y-2 max-h-96 overflow-y-auto">
+          {votes.map((vote) => (
+            <div
+              key={vote._id}
+              className="flex items-center gap-2 p-2 sm:p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                  {vote.isAnonymous ? (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">
+                      <User className="h-3 w-3 mr-0.5" />
+                      {t('voting.anon')}
+                    </Badge>
+                  ) : (
+                    <Badge variant="default" className="text-[10px] px-1.5 py-0 h-5">
+                      <User className="h-3 w-3 mr-0.5" />
+                      {t('voting.reg')}
+                    </Badge>
                   )}
+                  <span className="text-xs text-muted-foreground truncate">
+                    {vote.userId
+                      ? `#${vote.userId.slice(-6)}`
+                      : vote.anonymousId
+                        ? `#${vote.anonymousId.slice(-6)}`
+                        : '?'}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground ml-auto">
+                    {new Date(vote.createdAt).toLocaleDateString(locale)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="font-medium text-safety-high">{vote.safety ?? '–'}</span>
+                  <span className="text-muted-foreground">/</span>
+                  <span className="font-medium text-primary">{vote.taste ?? '–'}</span>
+                  {vote.price && (
+                    <>
+                      <span className="text-muted-foreground">/</span>
+                      <span className="font-medium text-gold">{vote.price}</span>
+                    </>
+                  )}
+                  {vote.storeName && (
+                    <span className="text-muted-foreground truncate ml-1">@ {vote.storeName}</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-0.5 flex-shrink-0">
+                {!vote.isAnonymous && vote.userId && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={() => setDeletingVoteId(vote._id)}
-                      title={t('voting.deleteThisVote')}
+                    className="h-8 w-8"
+                    onClick={() => onImpersonate(vote.userId!)}
+                    title={t('voting.impersonateUser')}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Eye className="h-3.5 w-3.5" />
                   </Button>
-                </div>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  onClick={() => setDeletingVoteId(vote._id)}
+                    title={t('voting.deleteThisVote')}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </>
+  )
+
+  return (
+    <>
+      {embedded ? (
+        <div className="flex h-full min-h-[24rem] flex-col rounded-2xl border border-border bg-muted/10">
+          {content}
+        </div>
+      ) : (
+        <Card>
+          {content}
+        </Card>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

@@ -47,8 +47,8 @@ export function ProductChartTabs({
       {/* My Vote View */}
       <TabsContent value="my-vote">
         {myVote ? (
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] lg:items-center">
-            <div className="mx-auto aspect-square w-full max-w-[16rem]">
+          <div className="space-y-4">
+            <div className="mx-auto aspect-square w-full max-w-[17rem]">
               <CoordinateGrid
                 initialSafety={myVote.safety ?? 50}
                 initialTaste={myVote.taste ?? 50}
@@ -56,14 +56,12 @@ export function ProductChartTabs({
                 disabled
               />
             </div>
-            <div className="rounded-2xl border border-border bg-muted/20 p-4 sm:p-5">
-              <p className="text-base font-semibold text-foreground">
-                {t('voting.yourVote', { safety: myVote.safety ?? 50, taste: myVote.taste ?? 50 })}
-                {myVote.price && t('voting.yourVotePrice', { price: myVote.price })}
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t('product.myVoteHelp')}
-              </p>
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
+              <span className="text-muted-foreground">{t('voting.safety')}: <span className="font-semibold text-foreground">{myVote.safety ?? 50}</span></span>
+              <span className="text-muted-foreground">{t('voting.taste')}: <span className="font-semibold text-foreground">{myVote.taste ?? 50}</span></span>
+              {myVote.price && (
+                <span className="text-muted-foreground">{t('voting.price')}: <span className="font-semibold text-foreground">{myVote.price}/5</span></span>
+              )}
             </div>
           </div>
         ) : (
@@ -92,7 +90,7 @@ export function ProductChartTabs({
       {/* All Votes View */}
       <TabsContent value="all-votes" className="space-y-4">
         {hasVotes ? (
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_17rem] xl:items-start">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_15rem] xl:items-start">
             <div className="rounded-2xl border border-border bg-muted/10 p-3 sm:p-4">
               <AllVotesChart
                 productId={product._id}
@@ -129,10 +127,6 @@ export function ProductChartTabs({
                 <p className="mt-2 text-2xl font-semibold text-foreground">
                   {Math.round(product.averageTaste)}/100
                 </p>
-              </div>
-
-              <div className="rounded-2xl border border-border bg-muted/20 p-4 text-sm text-muted-foreground">
-                {t('product.votesSectionIntro')}
               </div>
             </div>
           </div>

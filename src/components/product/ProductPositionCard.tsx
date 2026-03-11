@@ -56,7 +56,7 @@ export function ProductPositionCard({
         : t('product.priceNotRated')
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full min-h-0 flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {hasPrice ? (
           <div className="inline-flex rounded-full border border-border bg-muted/50 p-1">
@@ -83,9 +83,9 @@ export function ProductPositionCard({
         {action}
       </div>
 
-      <div className="flex flex-1 flex-col rounded-[1.75rem] border border-border bg-card p-4 shadow-sm">
-        <div className="relative flex-1 overflow-hidden rounded-[1.25rem] border border-border/80 bg-background p-3">
-          <svg viewBox="0 0 280 280" className="h-auto w-full" role="img" aria-label={t('product.positionOnMatrix')}>
+      <div className="flex min-h-0 flex-1 flex-col rounded-[1.75rem] border border-border bg-card p-3 shadow-sm sm:p-4">
+        <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-[1.25rem] border border-border/80 bg-background p-3">
+          <svg viewBox="0 0 280 280" className="block aspect-square h-auto max-h-full w-full max-w-[28rem]" role="img" aria-label={t('product.positionOnMatrix')}>
             <rect x="24" y="24" width="116" height="116" fill={quadrantMap.topLeft.color} fillOpacity="0.12" rx="16" />
             <rect x="140" y="24" width="116" height="116" fill={quadrantMap.topRight.color} fillOpacity="0.12" rx="16" />
             <rect x="24" y="140" width="116" height="116" fill={quadrantMap.bottomLeft.color} fillOpacity="0.12" rx="16" />
@@ -119,16 +119,15 @@ export function ProductPositionCard({
             <circle cx={point.x} cy={point.y} r="9" fill={quadrantInfo.color} />
             <circle cx={point.x} cy={point.y} r="4" fill="#FFFFFF" />
           </svg>
-
-          <div className="mt-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-            <span>{axisYLabel}</span>
-            <span>{axisXLabel}</span>
-          </div>
+        </div>
+        <div className="mt-2 flex items-center justify-between gap-3 text-[11px] text-muted-foreground sm:text-xs">
+          <span>{axisYLabel}</span>
+          <span>{axisXLabel}</span>
         </div>
       </div>
 
       <div
-        className="rounded-2xl border px-4 py-3"
+        className="rounded-2xl border px-3 py-3 sm:px-4"
         style={{
           borderColor: `${quadrantInfo.color}44`,
           backgroundColor: `${quadrantInfo.color}12`,
@@ -139,7 +138,7 @@ export function ProductPositionCard({
             <p className="text-sm font-semibold text-foreground">
               {quadrantInfo.emoji} {quadrantInfo.label}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">{quadrantInfo.description}</p>
+            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{quadrantInfo.description}</p>
           </div>
           <Badge
             className={cn('shrink-0 text-white', mode === 'value' && !hasPrice && 'opacity-70')}
@@ -148,7 +147,7 @@ export function ProductPositionCard({
             {mode === 'vibe' ? `${Math.round(averageTaste)}/100` : secondaryValue}
           </Badge>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+        <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
           <span>{appConfig.dimensions.axis2.label}: {Math.round(averageTaste)}/100</span>
           <span>•</span>
           <span>{axisYLabel}: {secondaryValue}</span>

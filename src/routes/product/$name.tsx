@@ -191,7 +191,7 @@ function ProductDetailContent() {
 
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,1fr)] lg:items-stretch">
           {product.imageUrl && !product.imageUrl.startsWith('blob:') ? (
-            <div className="h-[24rem] w-full overflow-hidden rounded-3xl border border-border bg-background shadow-sm sm:h-[30rem] lg:h-[36rem]">
+            <div className="h-full min-h-[24rem] w-full overflow-hidden rounded-3xl border border-border bg-background shadow-sm sm:min-h-[30rem] lg:min-h-[36rem]">
               <img
                 src={product.imageUrl}
                 alt={product.name}
@@ -199,12 +199,12 @@ function ProductDetailContent() {
               />
             </div>
           ) : (
-            <div className="flex h-[24rem] items-center justify-center rounded-3xl border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground sm:h-[30rem] lg:h-[36rem]">
+            <div className="flex h-full min-h-[24rem] items-center justify-center rounded-3xl border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground sm:min-h-[30rem] lg:min-h-[36rem]">
               {t('common.noImage')}
             </div>
           )}
 
-          <Card className="h-[24rem] shadow-card sm:h-[30rem] lg:h-[36rem]">
+          <Card className="h-full min-h-[24rem] overflow-hidden shadow-card sm:min-h-[30rem] lg:min-h-[36rem]">
             <CardContent className="flex h-full flex-col space-y-5 p-5 sm:p-6">
               <div className="space-y-2">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -302,13 +302,13 @@ function ProductDetailContent() {
         ) : null}
 
         {(hasStoreData || hasStructuredIngredients || hasOcrIngredients) && (
-          <section className="grid gap-6 xl:grid-cols-2 xl:items-start">
+          <section className="grid gap-6 xl:grid-cols-2 xl:items-stretch">
             {hasStoreData && (
               <Card className="shadow-card">
                 <CardHeader>
                   <CardTitle className="text-lg">{t('product.whereToBuy')}</CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(15rem,18rem)]">
+                <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(15rem,18rem)] lg:items-stretch">
                   <StoreList product={product as Product} mapSearchBase={{ productId: product._id, name: product.name }} />
 
                   {firstStoreWithGeo?.geoPoint && mapSearch ? (
@@ -323,9 +323,6 @@ function ProductDetailContent() {
                             />
                           </Suspense>
                         </div>
-                        <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-full bg-card/95 px-3 py-2 text-center text-sm font-semibold text-foreground shadow-md backdrop-blur-sm transition-transform group-hover:-translate-y-0.5">
-                          {t('store.viewOnMap')}
-                        </div>
                       </div>
                     </Link>
                   ) : null}
@@ -334,11 +331,11 @@ function ProductDetailContent() {
             )}
 
             {(hasStructuredIngredients || hasOcrIngredients) && (
-              <Card className="shadow-card">
+              <Card className="h-full shadow-card">
                 <CardHeader>
                   <CardTitle className="text-lg">{t('product.ingredients')}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="flex h-full min-h-[16rem] flex-col space-y-4">
                   {hasStructuredIngredients && (
                     <div className="flex flex-wrap gap-2">
                       {product.ingredients?.map((ingredient, idx) => (
@@ -375,25 +372,30 @@ function ProductDetailContent() {
           <CardHeader>
             <CardTitle className="text-lg">{t('product.votesSection')}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <Suspense fallback={<SectionLoading label={t('common.loading')} />}>
-              <ProductChartTabs
-                product={product}
-                myVote={myVote}
-                allVotesCount={allVotes?.length || 0}
-                t={t}
-                onRequestVote={() => setIsVoteDialogOpen(true)}
-              />
-            </Suspense>
+          <CardContent>
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)] xl:items-stretch">
+              <div className="rounded-2xl border border-border bg-muted/10 p-4 sm:p-5">
+                <Suspense fallback={<SectionLoading label={t('common.loading')} />}>
+                  <ProductChartTabs
+                    product={product}
+                    myVote={myVote}
+                    allVotesCount={allVotes?.length || 0}
+                    t={t}
+                    onRequestVote={() => setIsVoteDialogOpen(true)}
+                  />
+                </Suspense>
+              </div>
 
-            {adminStatus?.isAdmin && allVotes && (
-              <Suspense fallback={<SectionLoading label={t('common.loading')} />}>
-                <VoterList
-                  votes={allVotes}
-                  onImpersonate={(userId) => startImpersonation(userId)}
-                />
-              </Suspense>
-            )}
+              {adminStatus?.isAdmin && allVotes ? (
+                <Suspense fallback={<SectionLoading label={t('common.loading')} />}>
+                  <VoterList
+                    votes={allVotes}
+                    onImpersonate={(userId) => startImpersonation(userId)}
+                    embedded
+                  />
+                </Suspense>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
 

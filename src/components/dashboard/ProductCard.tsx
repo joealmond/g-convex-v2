@@ -6,7 +6,10 @@ import type { Product } from '@/lib/types'
 import { getQuadrant, getQuadrantColor, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import { DeleteProductButton } from './DeleteProductButton'
+import { VoteProductDialog } from '@/components/product/VoteProductDialog'
+import { Button } from '@/components/ui/button'
 import { useAdmin } from '@/hooks/use-admin'
+import { useTranslation } from '@/hooks/use-translation'
 import { Trash2 } from 'lucide-react'
 
 interface ProductCardProps {
@@ -20,6 +23,7 @@ interface ProductCardProps {
  */
 export function ProductCard({ product, onClick, isSelected = false }: ProductCardProps) {
   const { isAdmin } = useAdmin()
+  const { t } = useTranslation()
   const quadrant = getQuadrant(product.averageSafety, product.averageTaste)
   const color = getQuadrantColor(quadrant)
 
@@ -74,6 +78,23 @@ export function ProductCard({ product, onClick, isSelected = false }: ProductCar
                 Price: {'$'.repeat(Math.round(product.avgPrice))}
               </div>
             )}
+
+            <div
+              className="mt-3"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+            >
+              <VoteProductDialog
+                product={product}
+                trigger={
+                  <Button size="sm" variant="outline" className="rounded-xl px-3">
+                    {t('product.voteAction')}
+                  </Button>
+                }
+              />
+            </div>
           </div>
 
           {/* Quadrant indicator dot */}
