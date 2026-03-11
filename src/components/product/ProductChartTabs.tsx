@@ -34,7 +34,7 @@ export function ProductChartTabs({
 
   return (
     <Tabs defaultValue={myVote ? 'my-vote' : 'all-votes'} className="w-full">
-      <TabsList className={`grid w-full mb-4 ${tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+      <TabsList className={`mb-5 grid w-full rounded-2xl bg-muted/60 p-1 ${tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
         <TabsTrigger value="my-vote" disabled={!myVote}>
           {t('product.myVote')}
         </TabsTrigger>
@@ -45,9 +45,9 @@ export function ProductChartTabs({
       </TabsList>
 
       {/* My Vote View */}
-      <TabsContent value="my-vote">
+      <TabsContent value="my-vote" className="mt-0">
         {myVote ? (
-          <div className="space-y-4">
+          <div className="space-y-5 rounded-[1.75rem] border border-border bg-card p-4 shadow-sm sm:p-5">
             <div className="mx-auto aspect-square w-full max-w-[17rem]">
               <CoordinateGrid
                 initialSafety={myVote.safety ?? 50}
@@ -88,10 +88,10 @@ export function ProductChartTabs({
       </TabsContent>
 
       {/* All Votes View */}
-      <TabsContent value="all-votes" className="space-y-4">
+      <TabsContent value="all-votes" className="mt-0 space-y-4">
         {hasVotes ? (
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_15rem] xl:items-start">
-            <div className="rounded-2xl border border-border bg-muted/10 p-3 sm:p-4">
+            <div className="rounded-[1.75rem] border border-border bg-card p-3 shadow-sm sm:p-4">
               <AllVotesChart
                 productId={product._id}
                 highlightVoteId={myVote?._id}
@@ -99,7 +99,7 @@ export function ProductChartTabs({
             </div>
 
             <div className="grid gap-3">
-              <div className="rounded-2xl border border-border bg-muted/20 p-4">
+              <div className="rounded-[1.5rem] border border-border bg-card p-4 shadow-sm">
                 <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
                   {t('product.voteSpread')}
                 </p>
@@ -111,7 +111,7 @@ export function ProductChartTabs({
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-border bg-muted/20 p-4">
+              <div className="rounded-[1.5rem] border border-border bg-card p-4 shadow-sm">
                 <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
                   {t('voting.safety')}
                 </p>
@@ -120,7 +120,7 @@ export function ProductChartTabs({
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-border bg-muted/20 p-4">
+              <div className="rounded-[1.5rem] border border-border bg-card p-4 shadow-sm">
                 <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
                   {t('voting.taste')}
                 </p>

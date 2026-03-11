@@ -9,7 +9,6 @@ import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
 import { DataSourceBadge } from '@/components/product/DataSourceBadge'
 import { ProductPositionCard } from '@/components/product/ProductPositionCard'
 import { VoteProductDialog } from '@/components/product/VoteProductDialog'
-import { StoreList } from '@/components/product/StoreList'
 import { ReportProductDialog } from '@/components/product/ReportProductDialog'
 import { ShareButton } from '@/components/product/ShareButton'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
@@ -231,7 +230,7 @@ function ProductDetailContent() {
                     open={isVoteDialogOpen}
                     onOpenChange={setIsVoteDialogOpen}
                     trigger={
-                      <Button size="sm" className="rounded-full px-4">
+                      <Button size="lg" className="h-12 rounded-full px-6 text-base font-semibold shadow-sm">
                         {t('product.voteAction')}
                       </Button>
                     }
@@ -304,18 +303,16 @@ function ProductDetailContent() {
         {(hasStoreData || hasStructuredIngredients || hasOcrIngredients) && (
           <section className="grid gap-6 xl:grid-cols-2 xl:items-stretch">
             {hasStoreData && (
-              <Card className="shadow-card">
+              <Card className="h-full shadow-card">
                 <CardHeader>
                   <CardTitle className="text-lg">{t('product.whereToBuy')}</CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(15rem,18rem)] lg:items-stretch">
-                  <StoreList product={product as Product} mapSearchBase={{ productId: product._id, name: product.name }} />
-
+                <CardContent className="h-full min-h-[18rem] p-4 pt-0 sm:p-6 sm:pt-0">
                   {firstStoreWithGeo?.geoPoint && mapSearch ? (
-                    <Link to="/map" search={mapSearch} className="group block h-full min-h-[16rem]">
-                      <div className="relative h-full overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-sm">
-                        <div className="pointer-events-none h-full min-h-[16rem] w-full">
-                          <Suspense fallback={<div className="flex h-full min-h-[16rem] items-center justify-center bg-muted/20 text-sm text-muted-foreground">{t('common.loading')}</div>}>
+                    <Link to="/map" search={mapSearch} className="group block h-full min-h-[18rem]">
+                      <div className="h-full overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-sm transition-shadow group-hover:shadow-md">
+                        <div className="pointer-events-none h-full min-h-[18rem] w-full">
+                          <Suspense fallback={<div className="flex h-full min-h-[18rem] items-center justify-center bg-muted/20 text-sm text-muted-foreground">{t('common.loading')}</div>}>
                             <ProductMap
                               products={[product as Product]}
                               center={[firstStoreWithGeo.geoPoint.lat, firstStoreWithGeo.geoPoint.lng]}
@@ -325,7 +322,11 @@ function ProductDetailContent() {
                         </div>
                       </div>
                     </Link>
-                  ) : null}
+                  ) : (
+                    <div className="flex h-full min-h-[18rem] items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 text-sm text-muted-foreground">
+                      {t('store.noStores')}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -335,7 +336,7 @@ function ProductDetailContent() {
                 <CardHeader>
                   <CardTitle className="text-lg">{t('product.ingredients')}</CardTitle>
                 </CardHeader>
-                <CardContent className="flex h-full min-h-[16rem] flex-col space-y-4">
+                <CardContent className="flex h-full min-h-[18rem] flex-col space-y-4">
                   {hasStructuredIngredients && (
                     <div className="flex flex-wrap gap-2">
                       {product.ingredients?.map((ingredient, idx) => (
@@ -374,7 +375,7 @@ function ProductDetailContent() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)] xl:items-stretch">
-              <div className="rounded-2xl border border-border bg-muted/10 p-4 sm:p-5">
+              <div className="rounded-3xl border border-border bg-gradient-to-br from-background to-muted/20 p-4 shadow-sm sm:p-5">
                 <Suspense fallback={<SectionLoading label={t('common.loading')} />}>
                   <ProductChartTabs
                     product={product}

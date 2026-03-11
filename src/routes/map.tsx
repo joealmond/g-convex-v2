@@ -177,8 +177,10 @@ function MapPageContent() {
     )}>
       {/* Filter Chips — floating over the map */}
       <div className={cn(
-        'absolute right-2 z-[400] flex items-center gap-2 left-14 sm:left-2 md:left-4 md:right-4 md:top-4',
-        isBrowser ? 'top-4' : 'top-[calc(env(safe-area-inset-top,0px)+0.5rem)]'
+        'absolute z-[400] flex items-center gap-2 md:left-4 md:right-4 md:top-4',
+        isBrowser
+          ? 'left-4 right-4 top-4'
+          : 'left-[4.75rem] right-2 top-[calc(env(safe-area-inset-top,0px)+0.5rem)] sm:left-2'
       )}>
         <FilterChips 
           value={filterType} 

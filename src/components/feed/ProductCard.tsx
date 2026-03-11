@@ -169,27 +169,26 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
           <p className="text-xs text-muted-foreground mt-2 md:mt-3 md:text-sm">
             {product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}
           </p>
+
+          <div
+            className="mt-3"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+          >
+            <VoteProductDialog
+              product={product}
+              trigger={
+                <Button size="sm" variant="outline" className="w-full rounded-xl border-primary/30 bg-primary/5 font-semibold text-primary hover:bg-primary/10 md:w-auto md:px-4">
+                  {t('product.voteAction')}
+                </Button>
+              }
+            />
+          </div>
         </div>
 
       </Link>
-
-      <div className="px-3 pb-3 md:flex md:items-end md:pb-4 md:pr-4">
-        <div
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-          }}
-        >
-          <VoteProductDialog
-            product={product}
-            trigger={
-              <Button size="sm" variant="outline" className="w-full rounded-xl md:w-auto">
-                {t('product.voteAction')}
-              </Button>
-            }
-          />
-        </div>
-      </div>
     </motion.div>
   )
 }
