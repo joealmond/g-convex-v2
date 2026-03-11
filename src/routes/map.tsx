@@ -5,6 +5,8 @@ import { Suspense, useState, useMemo, lazy } from 'react'
 import { FilterChips, type FilterType } from '@/components/feed/FilterChips'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { getNearbyRange } from '@/hooks/use-product-filter'
+import { isWeb } from '@/lib/platform'
+import { cn } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useTranslation } from '@/hooks/use-translation'
@@ -58,6 +60,7 @@ function MapPageContent() {
   const { t } = useTranslation()
   const products = useQuery(api.products.listAll)
   const { coords, loading: geoLoading } = useGeolocation()
+  const isBrowser = isWeb()
   const [filterType, setFilterType] = useState<FilterType>('all')
 
   const isLoading = products === undefined
@@ -139,9 +142,15 @@ function MapPageContent() {
   }, [coords])
 
   return (
-    <div className="absolute inset-x-0 top-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] md:top-12 md:bottom-0">
+    <div className={cn(
+      'absolute inset-x-0 md:bottom-0',
+      isBrowser ? 'top-12 bottom-0' : 'top-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] md:top-12'
+    )}>
       {/* Filter Chips — floating over the map */}
-      <div className="absolute left-2 right-2 top-[calc(env(safe-area-inset-top,0px)+0.5rem)] z-[400] flex items-center gap-2 md:left-4 md:right-4 md:top-4">
+      <div className={cn(
+        'absolute left-2 right-2 z-[400] flex items-center gap-2 md:left-4 md:right-4 md:top-4',
+        isBrowser ? 'top-4' : 'top-[calc(env(safe-area-inset-top,0px)+0.5rem)]'
+      )}>
         <FilterChips 
           value={filterType} 
           onChange={setFilterType} 

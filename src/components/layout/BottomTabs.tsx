@@ -3,6 +3,7 @@ import { Link, useLocation } from '@tanstack/react-router'
 import { Grid3X3, MessageCircle, Plus, User, Map, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/hooks/use-translation'
+import { isWeb } from '@/lib/platform'
 
 const LazyAddProductDialog = lazy(() =>
   import('@/components/dashboard/AddProductDialog').then((module) => ({ default: module.AddProductDialog }))
@@ -17,6 +18,10 @@ const LazyAddProductDialog = lazy(() =>
  * Dark mode: Slate (#1E293B) with light icons, amber active
  */
 export function BottomTabs() {
+  if (isWeb()) {
+    return null
+  }
+
   const { t } = useTranslation()
   const location = useLocation()
   const [shouldLoadAddDialog, setShouldLoadAddDialog] = useState(false)

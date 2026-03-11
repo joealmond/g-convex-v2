@@ -12,6 +12,8 @@ import { useAdmin } from '@/hooks/use-admin'
 import { useTranslation } from '@/hooks/use-translation'
 import { getNearbyRange } from '@/hooks/use-product-filter'
 import { appConfig } from '@/lib/app-config'
+import { isWeb } from '@/lib/platform'
+import { cn } from '@/lib/utils'
 import { Loader2, Trophy, Flame, TrendingUp, Star, BarChart3, Grid3X3, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/types'
@@ -110,6 +112,7 @@ function HomePageContent() {
   const profile = useQuery(api.profiles.getCurrent)
   const { coords } = useGeolocation()
   const { isAdmin } = useAdmin()
+  const isBrowser = isWeb()
 
   // Product count for stat card (same query as profile page)
   const myProducts = useQuery(api.products.getByCreator, user ? { userId: user._id } : 'skip')
@@ -312,7 +315,10 @@ function HomePageContent() {
   return (
     <main className="flex-1 mx-auto w-full px-2 pb-4 sm:px-4 sm:pb-6 md:px-6 xl:px-8">
       {/* Browser decision: page/body scroll, with the control rail sticky below the top navbar. */}
-      <div className="sticky top-0 z-[40] w-full border-b border-border/60 bg-background/95 pb-4 backdrop-blur-sm md:top-[3.5rem] md:z-[45]">
+      <div className={cn(
+        'sticky z-[40] w-full border-b border-border/60 bg-background/95 pb-4 backdrop-blur-sm md:z-[45]',
+        isBrowser ? 'top-[3.5rem]' : 'top-0 md:top-[3.5rem]'
+      )}>
         <div className="flex items-center gap-2 pt-1 md:pt-3">
           {/* Search Input */}
           <div className="flex-1 relative">

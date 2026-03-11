@@ -14,6 +14,7 @@ import { useAdmin } from '@/hooks/use-admin'
 import { useTranslation } from '@/hooks/use-translation'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { cn } from '@/lib/utils'
+import { isWeb } from '@/lib/platform'
 
 const LazyScoutCard = lazy(() =>
   import('@/components/dashboard/ScoutCard').then((module) => ({ default: module.ScoutCard }))
@@ -43,6 +44,7 @@ export function TopBar() {
   const { isAdmin } = useAdmin()
   const isHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false)
   const [shouldLoadAddDialog, setShouldLoadAddDialog] = useState(false)
+  const isBrowser = isWeb()
 
   const handleSignOut = async () => {
     await authClient.signOut()
@@ -125,7 +127,10 @@ export function TopBar() {
   )
 
   return (
-    <header className="sticky top-0 z-50 hidden border-b border-border bg-background/95 backdrop-blur-sm safe-top md:block">
+    <header className={cn(
+      'sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm safe-top',
+      isBrowser ? 'block' : 'hidden md:block'
+    )}>
     <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
       <Link to="/" className="flex shrink-0 items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-sm">
