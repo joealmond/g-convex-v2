@@ -23,7 +23,7 @@ export const Route = createFileRoute('/community')({
 function CommunityPageSkeleton() {
   return (
     <div className="flex-1 bg-background">
-      <div className="max-w-2xl mx-auto w-full px-4 py-4 space-y-3">
+      <div className="mx-auto w-full max-w-4xl px-4 py-5 space-y-3 md:px-6 md:py-6 xl:px-8">
         <div className="h-8 w-40 bg-muted animate-pulse rounded" />
         <div className="flex gap-2">
           <div className="h-9 w-20 bg-muted animate-pulse rounded-full" />
@@ -79,7 +79,7 @@ function CommunityContent() {
 
   return (
     <div className="flex-1 bg-background">
-      <div className="max-w-2xl mx-auto w-full px-4 py-4 space-y-4">
+      <div className="mx-auto w-full max-w-4xl px-4 py-5 space-y-4 md:px-6 md:py-6 xl:px-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -130,7 +130,7 @@ function CommunityContent() {
             ))}
           </div>
         ) : feed && feed.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0 xl:grid-cols-1">
             {feed.map((item: FeedItem, idx: number) => (
               <FeedCard key={`${item.type}-${item.timestamp}-${idx}`} item={item} t={t} />
             ))}
@@ -158,9 +158,9 @@ function FeedCard({ item, t }: { item: FeedItem; t: (key: string, params?: Recor
   const userLabel = `User #${item.userId?.slice(-6) || '???'}`
 
   return (
-    <Card className="rounded-2xl shadow-sm border border-border overflow-hidden">
+    <Card className="overflow-hidden rounded-2xl border border-border shadow-sm md:rounded-3xl md:bg-card/80">
       <CardContent className="p-4">
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3 md:gap-4">
           {/* Product thumbnail (if available) */}
           {item.productImage && (
             <Link
@@ -171,7 +171,7 @@ function FeedCard({ item, t }: { item: FeedItem; t: (key: string, params?: Recor
               <img
                 src={item.productImage}
                 alt={item.productName}
-                className="h-12 w-12 rounded-lg object-contain bg-muted p-1"
+                className="h-12 w-12 rounded-lg object-contain bg-muted p-1 md:h-14 md:w-14"
               />
             </Link>
           )}

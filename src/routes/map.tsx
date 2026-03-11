@@ -139,9 +139,9 @@ function MapPageContent() {
   }, [coords])
 
   return (
-    <div className="absolute inset-0 top-0 md:top-12" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
+    <div className="absolute inset-x-0 top-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] md:top-12 md:bottom-0">
       {/* Filter Chips — floating over the map */}
-      <div className="absolute top-[calc(env(safe-area-inset-top,0px)+0.5rem)] md:top-2 left-2 right-2 z-[400] flex items-center gap-2">
+      <div className="absolute left-2 right-2 top-[calc(env(safe-area-inset-top,0px)+0.5rem)] z-[400] flex items-center gap-2 md:left-4 md:right-4 md:top-4">
         <FilterChips 
           value={filterType} 
           onChange={setFilterType} 
@@ -149,7 +149,7 @@ function MapPageContent() {
           onRangeChange={handleRangeChange}
         />
         {geoLoading && (
-          <span className="text-[10px] text-muted-foreground whitespace-nowrap bg-background/80 rounded-full px-2 py-0.5">
+          <span className="text-[10px] text-muted-foreground whitespace-nowrap rounded-full bg-background/80 px-2 py-0.5">
             {t('location.locating')}
           </span>
         )}

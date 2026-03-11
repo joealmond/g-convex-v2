@@ -311,9 +311,9 @@ function HomePageContent() {
 
   return (
     <main className="flex-1 mx-auto w-full px-2 pb-4 sm:px-4 sm:pb-6 md:px-6 xl:px-8">
-      {/* Search Bar + View Toggle — sticky, sits directly under the notch safe area */}
-      <div className="sticky top-0 z-[40] -mx-2 bg-background/95 px-2 pb-4 backdrop-blur-sm sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-5 sm:backdrop-blur-none border-b border-border/60">
-        <div className="flex items-center gap-2 pt-1">
+      {/* Browser decision: page/body scroll, with the control rail sticky below the top navbar. */}
+      <div className="sticky top-0 z-[40] w-full border-b border-border/60 bg-background/95 pb-4 backdrop-blur-sm md:top-[3.5rem] md:z-[45]">
+        <div className="flex items-center gap-2 pt-1 md:pt-3">
           {/* Search Input */}
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -358,25 +358,31 @@ function HomePageContent() {
           </div>
         </div>
 
-        {/* Filter Chips — feed type + sensitivity, balanced padding */}
-        <div className="pt-3 space-y-2">
-          <FilterChips
-            value={filterType}
-            onChange={handleFilterChange}
-            nearbyRange={nearbyRange}
-            onRangeChange={setNearbyRange}
-          />
-          <SensitivityFilterChips
-            activeFilters={activeSensitivities}
-            onToggle={toggleSensitivity}
-          />
+        {/* Filters stay in one line when possible and wrap when they don't fit. */}
+        <div className="pt-3 md:pt-4">
+          <div className="flex flex-col gap-2 xl:flex-row xl:items-start xl:justify-between">
+            <div className="min-w-0 flex-1">
+              <FilterChips
+                value={filterType}
+                onChange={handleFilterChange}
+                nearbyRange={nearbyRange}
+                onRangeChange={setNearbyRange}
+              />
+            </div>
+            <div className="min-w-0 xl:max-w-[22rem] xl:justify-end xl:flex">
+              <SensitivityFilterChips
+                activeFilters={activeSensitivities}
+                onToggle={toggleSensitivity}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Gamification Widgets for Logged-in Users */}
       {user && profile && (
         <Suspense fallback={<HomeWidgetsFallback />}>
-          <div className="flex gap-2 mb-3 md:grid md:grid-cols-4 md:gap-4 md:mb-6">
+          <div className="mt-4 flex gap-2 mb-3 md:grid md:grid-cols-4 md:gap-4 md:mb-6 md:mt-6">
             <StatsCard
               title={t('stats.yourPoints')}
               value={profile.points}

@@ -74,14 +74,15 @@ function Login() {
 
   return (
     <div className="min-[100dvh] flex items-center justify-center p-4 bg-background">
-      <Card className="w-full max-w-md rounded-2xl shadow-sm">
-        <CardHeader className="text-center space-y-2">
+      <Card className="w-full max-w-5xl rounded-2xl shadow-sm md:rounded-3xl md:overflow-hidden">
+        <div className="md:grid md:grid-cols-[1.1fr_0.9fr]">
+        <CardHeader className="space-y-2 text-center md:justify-center md:border-r md:border-border md:bg-muted/30 md:px-8 md:text-left">
           <CardTitle className="text-3xl font-bold text-foreground">{t('login.welcomeTo', { appName: appConfig.appName })}</CardTitle>
           <CardDescription className="text-base text-muted-foreground">
             {appConfig.tagline}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 md:px-8 md:py-8">
           {/* Benefits Section */}
           <div className="space-y-3 p-4 bg-background rounded-xl">
             <h3 className="font-semibold text-sm text-foreground">{t('login.whySignIn')}</h3>
@@ -154,6 +155,7 @@ function Login() {
             </p>
           </div>
         </CardContent>
+        </div>
       </Card>
     </div>
   )

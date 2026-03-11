@@ -32,7 +32,7 @@ export const Route = createFileRoute('/profile')({
 function ProfileLoading() {
   return (
     <div className="flex-1 flex flex-col bg-background">
-      <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-6">
+      <div className="mx-auto w-full max-w-5xl px-4 py-6 space-y-6 md:px-6 xl:px-8">
         {/* Header skeleton */}
         <div className="h-10 w-24 bg-muted animate-pulse rounded" />
         
@@ -119,7 +119,7 @@ function GuestProfileContent() {
 
   return (
     <div className="flex-1 flex flex-col bg-background">
-      <div className="max-w-3xl mx-auto w-full px-4 py-4 space-y-3">
+      <div className="mx-auto w-full max-w-4xl px-4 py-5 space-y-4 md:px-6 md:py-6 xl:px-8">
 
         {/* Preferences row — always visible at top */}
         <Card className="rounded-2xl shadow-sm">
@@ -146,9 +146,9 @@ function GuestProfileContent() {
         </Card>
 
         {/* Sign-in section — inline, no page navigation */}
-        <Card className="rounded-2xl shadow-sm overflow-hidden">
+        <Card className="overflow-hidden rounded-2xl shadow-sm md:rounded-3xl">
           <div className="h-1 bg-gradient-to-r from-primary via-primary/60 to-primary/30" />
-          <CardContent className="px-5 pt-5 pb-5 space-y-4">
+          <CardContent className="px-5 pt-5 pb-5 space-y-4 md:px-6 md:pt-6 md:pb-6">
 
             {/* Header */}
             <div className="text-center">
@@ -301,7 +301,7 @@ function ProfileContent() {
   return (
     <div className="flex-1 flex flex-col bg-background">
       {/* Mobile-first profile layout */}
-      <div className="max-w-3xl mx-auto w-full px-4 py-3 space-y-4 flex flex-col"
+      <div className="mx-auto flex w-full max-w-5xl flex-col space-y-4 px-4 py-4 md:px-6 md:py-6 xl:px-8"
         style={{ minHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))' }}
       >
 
@@ -373,8 +373,8 @@ function ProfileContent() {
             </div>
           }
         >
-          <div className="p-3">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="p-3 md:p-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
               <StatsCard
                 title={t('gamification.points')}
                 value={points}

@@ -46,7 +46,7 @@ export const Route = createFileRoute('/product/$name')({
 function ProductDetailLoading() {
   return (
     <div className="flex-1 px-4 py-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="mx-auto max-w-6xl space-y-6 px-0 md:px-2 xl:px-4">
         <div className="h-10 w-32 bg-muted animate-pulse rounded" />
         <div className="h-64 bg-muted animate-pulse rounded-2xl" />
         <div className="space-y-4">
@@ -202,7 +202,7 @@ function ProductDetailContent() {
   if (product === null) {
     return (
       <div className="flex-1 px-4 py-8">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="mx-auto max-w-6xl text-center">
           <h1 className="text-2xl font-bold mb-4">{t('product.notFound')}</h1>
           <p className="text-muted-foreground mb-6">
             {t('product.notFoundDesc', { name })}
@@ -228,8 +228,8 @@ function ProductDetailContent() {
   const tasteScore = computeTasteScore(product.tasteUpVotes ?? 0, product.tasteDownVotes ?? 0)
 
   return (
-    <main className="flex-1 px-4 py-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <main className="flex-1 px-4 py-6 md:px-6 xl:px-8">
+      <div className="mx-auto max-w-6xl space-y-6">
         {/* Back Button + Action Buttons */}
         <div className="flex items-center justify-between gap-4">
           <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
@@ -275,7 +275,7 @@ function ProductDetailContent() {
 
         {/* Hero Image */}
         {product.imageUrl && !product.imageUrl.startsWith('blob:') && (
-          <div className="w-full h-80 overflow-hidden rounded-2xl bg-background flex items-center justify-center p-4">
+          <div className="flex w-full items-center justify-center overflow-hidden rounded-2xl bg-background p-4 md:h-[26rem] lg:h-[30rem] md:rounded-3xl">
             <img
               src={product.imageUrl}
               alt={product.name}
