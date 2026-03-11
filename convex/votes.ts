@@ -116,6 +116,15 @@ export const cast = publicMutation({
       throw new Error('Price must be between 1 and 5')
     }
 
+    const product = await ctx.db.get(args.productId)
+    if (!product) {
+      throw new Error('Product not found')
+    }
+
+    if (userId && product.createdBy && product.createdBy === userId) {
+      throw new Error('You cannot vote on your own product')
+    }
+
     // Check if user already voted for this product
     let existingVote
     if (userId) {
@@ -133,8 +142,6 @@ export const cast = publicMutation({
 
     let voteId
 
-    // Fetch product for computing vote-level convenience scores
-    const product = await ctx.db.get(args.productId)
     const productScores = (product?.allergenScores ?? undefined) as AllergenScoresMap | undefined
     const voteSafety = computeVoteSafety(args.allergenVotes, productScores)
     const voteTaste = computeVoteTaste(args.tasteVote)

@@ -156,7 +156,7 @@ export function TopBar() {
 
   return (
     <header className={cn(
-      'sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm safe-top',
+      'sticky top-0 z-[1200] border-b border-border bg-background/95 backdrop-blur-sm safe-top',
       isBrowser ? 'block' : 'hidden md:block'
     )}>
     <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">

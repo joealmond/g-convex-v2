@@ -82,6 +82,7 @@
     "iAgree": "I Agree — All Good!",
     "iAgreeDesc": "Endorse safety + taste",
     "showMoreAllergens": "Show more allergens",
+    "selectedAllergensHint": "Your saved allergens are shown first. Other allergens are available below.",
     "showLess": "Show less",
     "yourSafety": "Your Safety",
     "universalSafety": "Universal Safety",
@@ -102,6 +103,7 @@
     "freeFromLabel": "Free from",
     "unknownAllergen": "Unknown",
     "voteOnAllergens": "Rate safety per allergen"
+    ,"cannotVoteOwnProduct": "You cannot vote on your own product."
   },
   "quadrants": {
     "holyGrail": "Holy Grail",

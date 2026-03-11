@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { getNearbyRange } from '@/hooks/use-product-filter'
 import { isWeb } from '@/lib/platform'
-import { cn } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useTranslation } from '@/hooks/use-translation'
@@ -168,94 +167,91 @@ function MapPageContent() {
     return undefined
   }, [coords])
 
+  const pageMinHeight = isBrowser
+    ? 'calc(100dvh - 7rem)'
+    : 'calc(100dvh - 6rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))'
+
   return (
-    <div className={cn(
-      'absolute inset-x-0 md:bottom-0',
-      isBrowser
-        ? 'top-[calc(3.5rem+env(safe-area-inset-top,0px))] bottom-0'
-        : 'top-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] md:top-[calc(3.5rem+env(safe-area-inset-top,0px))]'
-    )}>
-      {/* Filter Chips — floating over the map */}
-      <div className={cn(
-        'absolute z-[400] flex items-center gap-2 md:left-4 md:right-4 md:top-4',
-        isBrowser
-          ? 'left-4 right-4 top-4'
-          : 'left-[4.75rem] right-2 top-[calc(env(safe-area-inset-top,0px)+0.5rem)] sm:left-2'
-      )}>
-        <FilterChips 
-          value={filterType} 
-          onChange={setFilterType} 
-          nearbyRange={nearbyRange}
-          onRangeChange={handleRangeChange}
-          compact
-        />
-        {geoLoading && (
-          <span className="text-[10px] text-muted-foreground whitespace-nowrap rounded-full bg-background/80 px-2 py-0.5">
-            {t('location.locating')}
-          </span>
-        )}
+    <div className="flex flex-col bg-background" style={{ minHeight: pageMinHeight }}>
+      <div className="border-b border-border bg-background/95 px-3 py-3 backdrop-blur-sm sm:px-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <FilterChips
+              value={filterType}
+              onChange={setFilterType}
+              nearbyRange={nearbyRange}
+              onRangeChange={handleRangeChange}
+              compact
+            />
+          </div>
+          {geoLoading && (
+            <span className="shrink-0 text-[10px] text-muted-foreground whitespace-nowrap rounded-full bg-muted px-2 py-1">
+              {t('location.locating')}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Map — fills entire available area */}
-      {isLoading ? (
-        <div className="absolute inset-0 bg-background flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <>
-          <ProductMap
-            products={filteredProducts}
-            center={mapCenter}
-            zoom={focusedProduct ? 15 : 13}
-            userLocation={userLocation}
-            nearbyRange={nearbyRange * 1000} // ProductMap expects meters
-            showRangeCircle={showRangeCircle}
-          />
-          {filteredProducts.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="text-center px-4 bg-card/90 rounded-xl p-4 shadow-lg">
-                <p className="text-foreground mb-2">{t('location.noProductsWithLocation')}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t('location.noProductsHint')}
-                </p>
+      <div className="relative flex-1 min-h-[24rem]">
+        {isLoading ? (
+          <div className="absolute inset-0 bg-background flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <>
+            <ProductMap
+              products={filteredProducts}
+              center={mapCenter}
+              zoom={focusedProduct ? 15 : 13}
+              userLocation={userLocation}
+              nearbyRange={nearbyRange * 1000}
+              showRangeCircle={showRangeCircle}
+            />
+            {filteredProducts.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center px-4 bg-card/90 rounded-xl p-4 shadow-lg">
+                  <p className="text-foreground mb-2">{t('location.noProductsWithLocation')}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t('location.noProductsHint')}
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {!isLoading && filteredProducts.length > 0 && (
+          <div className="absolute bottom-4 left-2 z-10 bg-card rounded-full shadow-lg px-3 py-1.5">
+            <p className="text-xs font-semibold text-foreground">
+              {t('location.pins', { count: markerCount })} · {t('location.productsCount', { count: filteredProducts.length })}
+            </p>
+          </div>
+        )}
+
+        {focusedProduct && (
+          <div className="absolute bottom-16 left-2 right-2 z-10 md:bottom-4 md:left-auto md:right-4 md:w-[22rem]">
+            <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-lg backdrop-blur-sm">
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                {t('location.focusedProduct')}
+              </p>
+              <p className="mt-1 text-base font-semibold text-foreground">{focusedProduct.name}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t('location.focusedProductHint')}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" asChild>
+                  <Link to="/product/$name" params={{ name: focusedProduct.name }}>
+                    {t('productMap.viewProduct')}
+                  </Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link to="/map">{t('location.showAllProducts')}</Link>
+                </Button>
               </div>
             </div>
-          )}
-        </>
-      )}
-
-      {/* Map Markers Badge — count matches cluster numbering */}
-      {!isLoading && filteredProducts.length > 0 && (
-        <div className="absolute bottom-4 left-2 z-[400] bg-card rounded-full shadow-lg px-3 py-1.5">
-          <p className="text-xs font-semibold text-foreground">
-            {t('location.pins', { count: markerCount })} · {t('location.productsCount', { count: filteredProducts.length })}
-          </p>
-        </div>
-      )}
-
-      {focusedProduct && (
-        <div className="absolute bottom-16 left-2 right-2 z-[400] md:bottom-4 md:left-auto md:right-4 md:w-[22rem]">
-          <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-lg backdrop-blur-sm">
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
-              {t('location.focusedProduct')}
-            </p>
-            <p className="mt-1 text-base font-semibold text-foreground">{focusedProduct.name}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t('location.focusedProductHint')}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" asChild>
-                <Link to="/product/$name" params={{ name: focusedProduct.name }}>
-                  {t('productMap.viewProduct')}
-                </Link>
-              </Button>
-              <Button size="sm" asChild>
-                <Link to="/map">{t('location.showAllProducts')}</Link>
-              </Button>
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

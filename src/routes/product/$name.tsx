@@ -301,18 +301,18 @@ function ProductDetailContent() {
         ) : null}
 
         {(hasStoreData || hasStructuredIngredients || hasOcrIngredients) && (
-          <section className="grid gap-6 xl:grid-cols-2 xl:items-stretch">
+          <section className="grid gap-6 xl:grid-cols-2 xl:items-start">
             {hasStoreData && (
-              <Card className="h-full shadow-card">
+              <Card className="shadow-card xl:self-start">
                 <CardHeader>
                   <CardTitle className="text-lg">{t('product.whereToBuy')}</CardTitle>
                 </CardHeader>
-                <CardContent className="h-full min-h-[18rem] p-4 pt-0 sm:p-6 sm:pt-0">
+                <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
                   {firstStoreWithGeo?.geoPoint && mapSearch ? (
-                    <Link to="/map" search={mapSearch} className="group block h-full min-h-[18rem]">
-                      <div className="h-full overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-sm transition-shadow group-hover:shadow-md">
-                        <div className="pointer-events-none h-full min-h-[18rem] w-full">
-                          <Suspense fallback={<div className="flex h-full min-h-[18rem] items-center justify-center bg-muted/20 text-sm text-muted-foreground">{t('common.loading')}</div>}>
+                    <Link to="/map" search={mapSearch} className="group block">
+                      <div className="h-[18rem] overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-sm transition-shadow group-hover:shadow-md sm:h-[20rem] xl:h-[22rem]">
+                        <div className="pointer-events-none h-full w-full">
+                          <Suspense fallback={<div className="flex h-full items-center justify-center bg-muted/20 text-sm text-muted-foreground">{t('common.loading')}</div>}>
                             <ProductMap
                               products={[product as Product]}
                               center={[firstStoreWithGeo.geoPoint.lat, firstStoreWithGeo.geoPoint.lng]}
@@ -323,7 +323,7 @@ function ProductDetailContent() {
                       </div>
                     </Link>
                   ) : (
-                    <div className="flex h-full min-h-[18rem] items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 text-sm text-muted-foreground">
+                    <div className="flex h-[18rem] items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 text-sm text-muted-foreground sm:h-[20rem] xl:h-[22rem]">
                       {t('store.noStores')}
                     </div>
                   )}

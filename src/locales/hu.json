@@ -82,6 +82,7 @@
     "iAgree": "Egyetértek — Minden OK!",
     "iAgreeDesc": "Biztonság + íz jóváhagyása",
     "showMoreAllergens": "További allergének",
+    "selectedAllergensHint": "A mentett allergénjeid látszanak elöl. A többi lenyitható lent.",
     "showLess": "Kevesebb",
     "yourSafety": "Biztonságod",
     "universalSafety": "Általános biztonság",
@@ -102,6 +103,7 @@
     "freeFromLabel": "Mentes",
     "unknownAllergen": "Ismeretlen",
     "voteOnAllergens": "Értékeld a biztonságot allergénenként"
+    ,"cannotVoteOwnProduct": "A saját beküldött termékedre nem szavazhatsz."
   },
   "quadrants": {
     "holyGrail": "Szent Grál",
