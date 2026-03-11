@@ -18,13 +18,10 @@ const LazyAddProductDialog = lazy(() =>
  * Dark mode: Slate (#1E293B) with light icons, amber active
  */
 export function BottomTabs() {
-  if (isWeb()) {
-    return null
-  }
-
   const { t } = useTranslation()
   const location = useLocation()
   const [shouldLoadAddDialog, setShouldLoadAddDialog] = useState(false)
+  const isBrowser = isWeb()
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/'
@@ -63,6 +60,7 @@ export function BottomTabs() {
 
   return (
     <>
+      {isBrowser ? null : (
       <nav
         className="fixed bottom-0 left-0 right-0 z-50 flex flex-col border-t border-white/20 dark:border-border md:hidden"
         style={{ backgroundColor: 'var(--nav-bg)' }}
@@ -129,6 +127,7 @@ export function BottomTabs() {
         {/* Safe area spacer for devices with home indicator */}
         <div className="safe-bottom" style={{ backgroundColor: 'var(--nav-bg)' }} />
       </nav>
+      )}
     </>
   )
 }
