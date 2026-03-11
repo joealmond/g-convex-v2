@@ -123,7 +123,7 @@ function ReportsContent() {
     <main className="flex-1 px-4 py-6">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
               {t('reports.title')}
@@ -134,7 +134,7 @@ function ReportsContent() {
             </p>
           </div>
 
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" asChild className="self-start sm:self-auto">
             <Link to="/admin">
               <ArrowLeft className="mr-2 h-4 w-4" />
               {t('nav.adminPanel')}
@@ -145,10 +145,10 @@ function ReportsContent() {
         {/* Status Filter */}
         <Card className="border-0 shadow-sm">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
               <label className="text-sm font-medium">{t('reports.filterByStatus')}</label>
               <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ReportStatus | 'all')}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

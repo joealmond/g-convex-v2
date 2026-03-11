@@ -25,13 +25,13 @@ export const Route = createFileRoute('/files')({
 /** SSR-safe skeleton shown while hooks hydrate on the client */
 function FilesPageSkeleton() {
   return (
-    <div className="min-h-screen">
+    <div className="flex-1">
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
+        <div className="mx-auto w-full max-w-4xl px-4 py-4 md:px-6 xl:px-8">
           <div className="h-7 w-32 bg-muted animate-pulse rounded" />
         </div>
       </header>
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
+      <main className="mx-auto w-full max-w-4xl px-4 py-8 md:px-6 xl:px-8">
         <div className="bg-card rounded-lg border border-border p-6 mb-6">
           <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4" />
           <div className="h-10 w-40 bg-muted animate-pulse rounded" />
@@ -137,7 +137,7 @@ function FilesPageContent() {
   // Not authenticated
   if (!isSessionLoading && !session?.user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="flex min-h-[60dvh] flex-col items-center justify-center p-4">
         <div className="text-center max-w-md">
           <File className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
           <h1 className="text-2xl font-bold mb-2">{t('files.demoTitle')}</h1>
@@ -164,10 +164,10 @@ function FilesPageContent() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="flex-1">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="mx-auto flex w-full max-w-4xl items-center justify-between px-4 py-4 md:px-6 xl:px-8">
           <div className="flex items-center gap-4">
             <Link
               to="/"
@@ -185,7 +185,7 @@ function FilesPageContent() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
+      <main className="mx-auto w-full max-w-4xl px-4 py-8 md:px-6 xl:px-8">
         {/* Upload Section */}
         <div className="bg-card rounded-lg border border-border p-6 mb-6">
           <h2 className="font-semibold mb-4">{t('files.uploadFile')}</h2>
@@ -235,7 +235,7 @@ function FilesPageContent() {
               {files?.map((file) => (
                 <div
                   key={file._id}
-                  className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
+                  className="flex flex-wrap items-center gap-4 p-4 transition-colors hover:bg-muted/50 md:flex-nowrap"
                 >
                   <File className="w-8 h-8 text-primary flex-shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -244,7 +244,7 @@ function FilesPageContent() {
                       {formatFileSize(file.size)} • {formatRelativeTime(file.createdAt)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="ml-auto flex items-center gap-2">
                     {file.url && (
                       <a
                         href={file.url}
