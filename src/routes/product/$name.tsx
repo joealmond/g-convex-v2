@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useQuery, useMutation } from 'convex/react'
+import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Suspense, lazy, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -8,11 +8,10 @@ import { Badge } from '@/components/ui/badge'
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
 import { DataSourceBadge } from '@/components/product/DataSourceBadge'
 import { ProductPositionCard } from '@/components/product/ProductPositionCard'
+import { VoteProductDialog } from '@/components/product/VoteProductDialog'
 import { StoreList } from '@/components/product/StoreList'
-import { VotingSheet, type ThumbsVotePayload } from '@/components/product/VotingSheet'
 import { ReportProductDialog } from '@/components/product/ReportProductDialog'
 import { ShareButton } from '@/components/product/ShareButton'
-import { StoreTagInput } from '@/components/dashboard/StoreTagInput'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
 import { EditProductDialog } from '@/components/dashboard/EditProductDialog'
 import { type Product } from '@/lib/types'
@@ -21,13 +20,8 @@ import { useAnonymousId } from '@/hooks/use-anonymous-id'
 import { useAdmin } from '@/hooks/use-admin'
 import { useImpersonate } from '@/hooks/use-impersonate'
 import { useTranslation } from '@/hooks/use-translation'
-import { useOnlineStatus } from '@/hooks/use-online-status'
-import { useHaptics } from '@/hooks/use-haptics'
-import { enqueue } from '@/lib/offline-queue'
-import { calculateVotePoints } from '@/lib/gamification'
 import { findAllergenConflicts } from '@/lib/dietary-profiles'
 import { ArrowLeft, Edit, Flag, AlertTriangle } from 'lucide-react'
-import { toast } from 'sonner'
 
 const ProductChartTabs = lazy(() =>
   import('@/components/product/ProductChartTabs').then((module) => ({ default: module.ProductChartTabs }))
@@ -82,11 +76,9 @@ function ProductDetailContent() {
   const { anonId: anonymousId } = useAnonymousId()
   const adminStatus = useAdmin()
   const { startImpersonation } = useImpersonate()
-  const { isOnline } = useOnlineStatus()
 
   const product = useQuery(api.products.getByName, { name })
   const user = useQuery(api.users.current)
-  const castVote = useMutation(api.votes.cast)
   const avoidedAllergens = useQuery(api.dietaryProfiles.getAvoidedAllergens) ?? []
   const allergenConflicts = product?.allergens
     ? findAllergenConflicts(product.allergens, avoidedAllergens)
@@ -101,86 +93,9 @@ function ProductDetailContent() {
       (anonymousId && vote.anonymousId === anonymousId)
   )
 
-  const [storeTag, setStoreTag] = useState('')
-  const [storeLat, setStoreLat] = useState<number | undefined>()
-  const [storeLon, setStoreLon] = useState<number | undefined>()
-  const [isVoting, setIsVoting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isReporting, setIsReporting] = useState(false)
-  const { impact, notification } = useHaptics()
-
-  const handleVote = async (payload: ThumbsVotePayload) => {
-    if (!product) return
-
-    setIsVoting(true)
-    try {
-      const votePayload = {
-        productId: product._id,
-        allergenVotes: payload.allergenVotes,
-        tasteVote: payload.tasteVote,
-        price: payload.price,
-        exactPrice: payload.exactPrice,
-        anonymousId: anonymousId ?? undefined,
-        storeName: storeTag || undefined,
-        latitude: storeLat,
-        longitude: storeLon,
-      }
-
-      if (!isOnline) {
-        await enqueue('vote', votePayload as Record<string, unknown>)
-        impact('light')
-        toast.success('📋 ' + t('offline.voteSavedOffline'), {
-          duration: 4000,
-        })
-      } else {
-        await castVote(votePayload)
-        impact('medium')
-
-        if (user) {
-          const points = calculateVotePoints({
-            hasPrice: payload.price !== undefined,
-            hasStore: !!storeTag,
-            hasGPS: !!storeLat && !!storeLon,
-          })
-
-          const parts: string[] = []
-          parts.push(t('voting.basePoints', { count: 10 }))
-          if (payload.price !== undefined) parts.push(t('voting.priceBonus', { count: 5 }))
-          if (storeTag) parts.push(t('voting.storeBonus', { count: 10 }))
-          if (storeLat && storeLon) parts.push(t('voting.gpsBonus', { count: 5 }))
-
-          toast.success(`🎉 ${t('voting.voteSubmitted')}`, {
-            description: `+${points} ${t('gamification.points')}! ${parts.join(' + ')}`,
-            duration: 4000,
-          })
-        } else {
-          toast.success(t('voting.voteSubmitted'))
-        }
-      }
-
-      setStoreTag('')
-      setStoreLat(undefined)
-      setStoreLon(undefined)
-    } catch (error: unknown) {
-      notification('error')
-      toast.error(t('voting.voteFailed'), {
-        description: error instanceof Error ? error.message : t('errors.generic'),
-      })
-    } finally {
-      setIsVoting(false)
-    }
-  }
-
-  const handleLocationCapture = (lat: number, lon: number) => {
-    if (lat === 0 && lon === 0) {
-      setStoreLat(undefined)
-      setStoreLon(undefined)
-      return
-    }
-
-    setStoreLat(lat)
-    setStoreLon(lon)
-  }
+  const [isVoteDialogOpen, setIsVoteDialogOpen] = useState(false)
 
   const handleProductDeleted = () => {
     navigate({ to: '/' })
@@ -218,11 +133,6 @@ function ProductDetailContent() {
   )
   const hasStructuredIngredients = Boolean(product.ingredients && product.ingredients.length > 0)
   const hasOcrIngredients = Boolean(product.ingredientsText?.trim())
-  const locationPreview = [
-    storeTag.trim() || null,
-    storeLat !== undefined && storeLon !== undefined ? t('imageUpload.currentLocation') : null,
-  ].filter(Boolean).join(' · ')
-
   return (
     <main className="flex-1 px-4 py-6 md:px-6 xl:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -267,23 +177,23 @@ function ProductDetailContent() {
           </div>
         )}
 
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] lg:items-start">
+        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,1fr)] lg:items-stretch">
           {product.imageUrl && !product.imageUrl.startsWith('blob:') ? (
-            <div className="flex min-h-[20rem] w-full items-center justify-center overflow-hidden rounded-3xl border border-border bg-background p-4 shadow-sm md:min-h-[26rem] lg:min-h-[30rem]">
+            <div className="h-[24rem] w-full overflow-hidden rounded-3xl border border-border bg-background shadow-sm sm:h-[30rem] lg:h-[36rem]">
               <img
                 src={product.imageUrl}
                 alt={product.name}
-                className="h-full w-full object-contain"
+                className="h-full w-full object-cover"
               />
             </div>
           ) : (
-            <div className="flex min-h-[20rem] items-center justify-center rounded-3xl border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+            <div className="flex h-[24rem] items-center justify-center rounded-3xl border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground sm:h-[30rem] lg:h-[36rem]">
               {t('common.noImage')}
             </div>
           )}
 
-          <Card className="shadow-card">
-            <CardContent className="space-y-5 p-5 sm:p-6">
+          <Card className="h-[24rem] shadow-card sm:h-[30rem] lg:h-[36rem]">
+            <CardContent className="flex h-full flex-col space-y-5 p-5 sm:p-6">
               <div className="space-y-2">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <h1 className="min-w-0 flex-1 break-words text-2xl font-bold text-foreground sm:text-3xl">
@@ -302,6 +212,19 @@ function ProductDetailContent() {
                 averageSafety={product.averageSafety}
                 averageTaste={product.averageTaste}
                 avgPrice={product.avgPrice}
+                action={
+                  <VoteProductDialog
+                    product={product as Product}
+                    avoidedAllergens={avoidedAllergens}
+                    open={isVoteDialogOpen}
+                    onOpenChange={setIsVoteDialogOpen}
+                    trigger={
+                      <Button size="sm" className="rounded-full px-4">
+                        {t('product.voteAction')}
+                      </Button>
+                    }
+                  />
+                }
               />
             </CardContent>
           </Card>
@@ -413,41 +336,6 @@ function ProductDetailContent() {
           </Card>
         )}
 
-        <Card className="shadow-card" data-voting-section>
-          <CardHeader>
-            <CardTitle className="text-lg">{t('product.rateThisProduct')}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <VotingSheet
-              onVote={handleVote}
-              disabled={isVoting}
-              allergenScores={product.allergenScores as Record<string, { aiBase: 'contains' | 'free-from' | 'unknown'; upVotes: number; downVotes: number }> | undefined}
-              tasteUpVotes={product.tasteUpVotes ?? 0}
-              tasteDownVotes={product.tasteDownVotes ?? 0}
-              avoidedAllergens={avoidedAllergens}
-            />
-
-            <CollapsibleSection
-              title={t('product.whereDidYouBuy')}
-              defaultOpen={Boolean(storeTag || (storeLat !== undefined && storeLon !== undefined))}
-              preview={
-                <p className="truncate text-xs text-muted-foreground">
-                  {locationPreview || t('imageUpload.storeHelpText')}
-                </p>
-              }
-            >
-              <div className="p-4">
-                <StoreTagInput
-                  value={storeTag}
-                  onChange={setStoreTag}
-                  onLocationCapture={handleLocationCapture}
-                  disabled={isVoting}
-                />
-              </div>
-            </CollapsibleSection>
-          </CardContent>
-        </Card>
-
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="text-lg">{t('product.votesSection')}</CardTitle>
@@ -459,6 +347,7 @@ function ProductDetailContent() {
                 myVote={myVote}
                 allVotesCount={allVotes?.length || 0}
                 t={t}
+                onRequestVote={() => setIsVoteDialogOpen(true)}
               />
             </Suspense>
 

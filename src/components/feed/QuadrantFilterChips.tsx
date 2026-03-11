@@ -39,7 +39,13 @@ export function QuadrantFilterChips({ value, onChange }: QuadrantFilterChipsProp
             onClick={() => onChange(option.value)}
             className={cn(
               'inline-flex min-h-10 items-center gap-2 rounded-2xl border px-3 py-2 text-left text-xs font-medium transition-all sm:text-sm',
-              isActive ? 'text-white shadow-sm' : 'bg-card text-foreground hover:bg-muted/70'
+              option.color
+                ? isActive
+                  ? 'text-white shadow-sm'
+                  : 'bg-card text-foreground hover:bg-muted/70'
+                : isActive
+                  ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-card text-foreground hover:bg-muted/70'
             )}
             style={option.color
               ? isActive

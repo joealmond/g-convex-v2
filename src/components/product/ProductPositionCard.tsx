@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { appConfig } from '@/lib/app-config'
@@ -19,6 +19,7 @@ interface ProductPositionCardProps {
   averageSafety: number
   averageTaste: number
   avgPrice?: number | null
+  action?: ReactNode
 }
 
 function buildPoint(horizontalScore: number, verticalScore: number) {
@@ -31,6 +32,7 @@ export function ProductPositionCard({
   averageSafety,
   averageTaste,
   avgPrice,
+  action,
 }: ProductPositionCardProps) {
   const { t } = useTranslation()
   const [mode, setMode] = useState<ProductPositionMode>('vibe')
@@ -54,32 +56,35 @@ export function ProductPositionCard({
         : t('product.priceNotRated')
 
   return (
-    <div className="space-y-4">
-      {hasPrice && (
-        <div className="inline-flex rounded-full border border-border bg-muted/50 p-1">
-          <Button
-            type="button"
-            variant={mode === 'vibe' ? 'default' : 'ghost'}
-            size="sm"
-            className="rounded-full px-4"
-            onClick={() => setMode('vibe')}
-          >
-            {t('chart.vibe')}
-          </Button>
-          <Button
-            type="button"
-            variant={mode === 'value' ? 'default' : 'ghost'}
-            size="sm"
-            className="rounded-full px-4"
-            onClick={() => setMode('value')}
-          >
-            {t('chart.value')}
-          </Button>
-        </div>
-      )}
+    <div className="flex h-full flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {hasPrice ? (
+          <div className="inline-flex rounded-full border border-border bg-muted/50 p-1">
+            <Button
+              type="button"
+              variant={mode === 'vibe' ? 'default' : 'ghost'}
+              size="sm"
+              className="rounded-full px-4"
+              onClick={() => setMode('vibe')}
+            >
+              {t('chart.vibe')}
+            </Button>
+            <Button
+              type="button"
+              variant={mode === 'value' ? 'default' : 'ghost'}
+              size="sm"
+              className="rounded-full px-4"
+              onClick={() => setMode('value')}
+            >
+              {t('chart.value')}
+            </Button>
+          </div>
+        ) : <div />}
+        {action}
+      </div>
 
-      <div className="mx-auto max-w-[22rem] rounded-[1.75rem] border border-border bg-card p-4 shadow-sm">
-        <div className="relative overflow-hidden rounded-[1.25rem] border border-border/80 bg-background p-3">
+      <div className="flex flex-1 flex-col rounded-[1.75rem] border border-border bg-card p-4 shadow-sm">
+        <div className="relative flex-1 overflow-hidden rounded-[1.25rem] border border-border/80 bg-background p-3">
           <svg viewBox="0 0 280 280" className="h-auto w-full" role="img" aria-label={t('product.positionOnMatrix')}>
             <rect x="24" y="24" width="116" height="116" fill={quadrantMap.topLeft.color} fillOpacity="0.12" rx="16" />
             <rect x="140" y="24" width="116" height="116" fill={quadrantMap.topRight.color} fillOpacity="0.12" rx="16" />

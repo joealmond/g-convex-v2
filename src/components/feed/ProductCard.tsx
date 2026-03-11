@@ -3,6 +3,8 @@ import { motion } from 'framer-motion'
 import { type Product, getQuadrant, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
+import { VoteProductDialog } from '@/components/product/VoteProductDialog'
+import { Button } from '@/components/ui/button'
 import { MapPin, Trash2, AlertTriangle } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
 import { formatDistance } from '@/lib/format-distance'
@@ -49,17 +51,17 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
   const hasLocation = product.stores?.some(s => s.geoPoint)
 
   return (
-    <Link
-      to={'/product/$name'}
-      params={{ name: product.name }}
-      className="group cursor-pointer h-full block"
-      preload="intent"
+    <motion.div
+      className="bg-card text-card-foreground rounded-2xl overflow-hidden shadow-card h-full flex flex-col border border-border md:flex-row md:items-stretch md:rounded-3xl md:bg-card"
+      whileHover={{ y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
-      <motion.div
-        className="bg-card text-card-foreground rounded-2xl overflow-hidden shadow-card h-full flex flex-col border border-border md:flex-row md:items-stretch md:rounded-3xl md:bg-card"
-        whileHover={{ y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-        whileTap={{ scale: 0.98 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      <Link
+        to={'/product/$name'}
+        params={{ name: product.name }}
+        className="group flex h-full flex-1 cursor-pointer flex-col md:flex-row"
+        preload="intent"
       >
         {/* Product Image */}
         <div className="relative aspect-square bg-background overflow-hidden md:w-[43%] md:min-w-[10.5rem] md:max-w-[13rem] md:aspect-[4/3] lg:w-[40%] xl:w-[42%]">
@@ -168,7 +170,26 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
             {product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}
           </p>
         </div>
-      </motion.div>
-    </Link>
+
+      </Link>
+
+      <div className="px-3 pb-3 md:flex md:items-end md:pb-4 md:pr-4">
+        <div
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+          }}
+        >
+          <VoteProductDialog
+            product={product}
+            trigger={
+              <Button size="sm" variant="outline" className="w-full rounded-xl md:w-auto">
+                {t('product.voteAction')}
+              </Button>
+            }
+          />
+        </div>
+      </div>
+    </motion.div>
   )
 }

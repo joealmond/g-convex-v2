@@ -15,6 +15,7 @@ interface ProductChartTabsProps {
   myVote?: Doc<'votes'>
   allVotesCount: number
   t: (key: string, params?: Record<string, string | number>) => string
+  onRequestVote?: () => void
 }
 
 /**
@@ -25,6 +26,7 @@ export function ProductChartTabs({
   myVote,
   allVotesCount,
   t,
+  onRequestVote,
 }: ProductChartTabsProps) {
   const hasPrice = !!product.avgPrice
   const tabCount = hasPrice ? 3 : 2
@@ -64,11 +66,16 @@ export function ProductChartTabs({
               {t('voting.notVotedYet')}
             </p>
             <Button
-              onClick={() =>
+              onClick={() => {
+                if (onRequestVote) {
+                  onRequestVote()
+                  return
+                }
+
                 document
                   .querySelector('[data-voting-section]')
                   ?.scrollIntoView({ behavior: 'smooth' })
-              }
+              }}
             >
               {t('voting.castYourVote')}
             </Button>

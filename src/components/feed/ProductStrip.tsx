@@ -1,6 +1,8 @@
 import { Link } from '@tanstack/react-router'
 import { type Product, getQuadrant, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
+import { VoteProductDialog } from '@/components/product/VoteProductDialog'
+import { Button } from '@/components/ui/button'
 import { MapPin } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
 import { formatDistance } from '@/lib/format-distance'
@@ -56,13 +58,13 @@ export function ProductStrip({ product, distanceKm, highlight }: ProductStripPro
   }
 
   return (
-    <Link
-      to="/product/$name"
-      params={{ name: product.name }}
-      className="group block"
-      preload="intent"
-    >
-      <div className="flex items-center gap-3 bg-card rounded-xl p-2 pr-3 border border-border/50 hover:border-primary/30 hover:shadow-sm transition-all">
+    <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-2 pr-3 transition-all hover:border-primary/30 hover:shadow-sm">
+      <Link
+        to="/product/$name"
+        params={{ name: product.name }}
+        className="group flex min-w-0 flex-1 items-center gap-3"
+        preload="intent"
+      >
         {/* Thumbnail */}
         <div className="relative w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
           {product.imageUrl ? (
@@ -130,7 +132,24 @@ export function ProductStrip({ product, distanceKm, highlight }: ProductStripPro
             </span>
           )}
         </div>
+      </Link>
+
+      <div
+        className="flex-shrink-0"
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }}
+      >
+        <VoteProductDialog
+          product={product}
+          trigger={
+            <Button size="sm" variant="outline" className="rounded-lg px-3">
+              {t('product.voteAction')}
+            </Button>
+          }
+        />
       </div>
-    </Link>
+    </div>
   )
 }
