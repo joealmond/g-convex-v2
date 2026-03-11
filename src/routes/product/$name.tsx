@@ -5,8 +5,9 @@ import { Suspense, lazy, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { RatingBars } from '@/components/product/RatingBars'
+import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
 import { DataSourceBadge } from '@/components/product/DataSourceBadge'
+import { ProductPositionCard } from '@/components/product/ProductPositionCard'
 import { StoreList } from '@/components/product/StoreList'
 import { VotingSheet, type ThumbsVotePayload } from '@/components/product/VotingSheet'
 import { ReportProductDialog } from '@/components/product/ReportProductDialog'
@@ -14,9 +15,8 @@ import { ShareButton } from '@/components/product/ShareButton'
 import { StoreTagInput } from '@/components/dashboard/StoreTagInput'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
 import { EditProductDialog } from '@/components/dashboard/EditProductDialog'
-import { getQuadrant, QUADRANTS, type Product } from '@/lib/types'
+import { type Product } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
-import { computePersonalizedSafety, computeTasteScore } from '@/lib/score-utils'
 import { useAnonymousId } from '@/hooks/use-anonymous-id'
 import { useAdmin } from '@/hooks/use-admin'
 import { useImpersonate } from '@/hooks/use-impersonate'
@@ -88,23 +88,17 @@ function ProductDetailContent() {
   const user = useQuery(api.users.current)
   const castVote = useMutation(api.votes.cast)
   const avoidedAllergens = useQuery(api.dietaryProfiles.getAvoidedAllergens) ?? []
-  
-  // Check allergen conflicts for this product
   const allergenConflicts = product?.allergens
     ? findAllergenConflicts(product.allergens, avoidedAllergens)
     : []
-  
-  // Get all votes for this product (for All Votes tab)
   const allVotes = useQuery(
     api.votes.getByProduct,
     product ? { productId: product._id } : 'skip'
   )
-  
-  // Find user's vote if they have one
   const myVote = allVotes?.find(
-    (v) =>
-      (user && v.userId === user._id) ||
-      (anonymousId && v.anonymousId === anonymousId)
+    (vote) =>
+      (user && vote.userId === user._id) ||
+      (anonymousId && vote.anonymousId === anonymousId)
   )
 
   const [storeTag, setStoreTag] = useState('')
@@ -133,7 +127,6 @@ function ProductDetailContent() {
       }
 
       if (!isOnline) {
-        // Queue for later sync
         await enqueue('vote', votePayload as Record<string, unknown>)
         impact('light')
         toast.success('📋 ' + t('offline.voteSavedOffline'), {
@@ -143,7 +136,6 @@ function ProductDetailContent() {
         await castVote(votePayload)
         impact('medium')
 
-        // Calculate points earned and show gamification toast
         if (user) {
           const points = calculateVotePoints({
             hasPrice: payload.price !== undefined,
@@ -151,7 +143,6 @@ function ProductDetailContent() {
             hasGPS: !!storeLat && !!storeLon,
           })
 
-          // Build description with point breakdown
           const parts: string[] = []
           parts.push(t('voting.basePoints', { count: 10 }))
           if (payload.price !== undefined) parts.push(t('voting.priceBonus', { count: 5 }))
@@ -167,7 +158,6 @@ function ProductDetailContent() {
         }
       }
 
-      // Reset form
       setStoreTag('')
       setStoreLat(undefined)
       setStoreLon(undefined)
@@ -185,10 +175,11 @@ function ProductDetailContent() {
     if (lat === 0 && lon === 0) {
       setStoreLat(undefined)
       setStoreLon(undefined)
-    } else {
-      setStoreLat(lat)
-      setStoreLon(lon)
+      return
     }
+
+    setStoreLat(lat)
+    setStoreLon(lon)
   }
 
   const handleProductDeleted = () => {
@@ -218,19 +209,23 @@ function ProductDetailContent() {
     )
   }
 
-  const quadrant = getQuadrant(product.averageSafety, product.averageTaste)
-  const quadrantInfo = QUADRANTS[quadrant]
-  const priceScore = product.avgPrice ? (product.avgPrice / 5) * 100 : 0
-  const personalizedSafety = computePersonalizedSafety(
-    product.allergenScores as Record<string, { aiBase: 'contains' | 'free-from' | 'unknown'; upVotes: number; downVotes: number }> | undefined,
-    avoidedAllergens,
+  const hasStoreData = Boolean(
+    product.stores?.some((store) =>
+      Boolean(store.name?.trim()) ||
+      Boolean(store.geoPoint) ||
+      Boolean(store.price)
+    )
   )
-  const tasteScore = computeTasteScore(product.tasteUpVotes ?? 0, product.tasteDownVotes ?? 0)
+  const hasStructuredIngredients = Boolean(product.ingredients && product.ingredients.length > 0)
+  const hasOcrIngredients = Boolean(product.ingredientsText?.trim())
+  const locationPreview = [
+    storeTag.trim() || null,
+    storeLat !== undefined && storeLon !== undefined ? t('imageUpload.currentLocation') : null,
+  ].filter(Boolean).join(' · ')
 
   return (
     <main className="flex-1 px-4 py-6 md:px-6 xl:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
-        {/* Back Button + Action Buttons */}
         <div className="flex items-center justify-between gap-4">
           <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
             <Link to="/">
@@ -238,7 +233,7 @@ function ProductDetailContent() {
               {t('nav.back')}
             </Link>
           </Button>
-          
+
           <div className="flex gap-2">
             <ShareButton
               productName={product.name}
@@ -257,7 +252,6 @@ function ProductDetailContent() {
           </div>
         </div>
 
-        {/* Admin Controls */}
         {adminStatus?.isAdmin && (
           <div className="flex gap-2 justify-end">
             <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
@@ -273,55 +267,106 @@ function ProductDetailContent() {
           </div>
         )}
 
-        {/* Hero Image */}
-        {product.imageUrl && !product.imageUrl.startsWith('blob:') && (
-          <div className="flex w-full items-center justify-center overflow-hidden rounded-2xl bg-background p-4 md:h-[26rem] lg:h-[30rem] md:rounded-3xl">
-            <img
-              src={product.imageUrl}
-              alt={product.name}
-              className="w-full h-full object-contain"
-            />
-          </div>
-        )}
-
-        {/* Product Name + Quadrant Badge */}
-        <div className="space-y-2">
-          <div className="flex items-start gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex-1 min-w-0 break-words">{product.name}</h1>
-            {quadrantInfo && (
-              <Badge
-                className="text-white font-semibold px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap flex-shrink-0"
-                style={{ backgroundColor: quadrantInfo.color }}
-              >
-                {quadrantInfo.emoji} {quadrantInfo.name}
-              </Badge>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}
-          </p>
-          {product.dataSource && (
-            <DataSourceBadge source={product.dataSource as 'openfoodfacts' | 'ai-ingredients' | 'ai-estimate' | 'community'} />
+        <section className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] lg:items-start">
+          {product.imageUrl && !product.imageUrl.startsWith('blob:') ? (
+            <div className="flex min-h-[20rem] w-full items-center justify-center overflow-hidden rounded-3xl border border-border bg-background p-4 shadow-sm md:min-h-[26rem] lg:min-h-[30rem]">
+              <img
+                src={product.imageUrl}
+                alt={product.name}
+                className="h-full w-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="flex min-h-[20rem] items-center justify-center rounded-3xl border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+              {t('common.noImage')}
+            </div>
           )}
-        </div>
 
-        {/* Rating Bars */}
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle className="text-lg">{t('product.ratings')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RatingBars
-              safety={personalizedSafety}
-              taste={tasteScore}
-              price={priceScore}
-              personalized={avoidedAllergens.length > 0}
-            />
-          </CardContent>
-        </Card>
+          <Card className="shadow-card">
+            <CardContent className="space-y-5 p-5 sm:p-6">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <h1 className="min-w-0 flex-1 break-words text-2xl font-bold text-foreground sm:text-3xl">
+                    {product.name}
+                  </h1>
+                  <Badge variant="outline" className="shrink-0 rounded-full px-3 py-1 text-xs font-medium">
+                    {product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}
+                  </Badge>
+                </div>
+                {product.dataSource && (
+                  <DataSourceBadge source={product.dataSource as 'openfoodfacts' | 'ai-ingredients' | 'ai-estimate' | 'community'} />
+                )}
+              </div>
 
-        {/* Stores */}
-        {product.stores && product.stores.length > 0 && (
+              <ProductPositionCard
+                averageSafety={product.averageSafety}
+                averageTaste={product.averageTaste}
+                avgPrice={product.avgPrice}
+              />
+            </CardContent>
+          </Card>
+        </section>
+
+        {(product.freeFrom && product.freeFrom.length > 0) || (product.allergens && product.allergens.length > 0) ? (
+          <Card className={`shadow-card ${allergenConflicts.length > 0 ? 'border-safety-low' : ''}`}>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                {allergenConflicts.length > 0 && (
+                  <AlertTriangle className="h-5 w-5 text-safety-low" />
+                )}
+                {t('product.freeFromAndWarnings')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {product.freeFrom && product.freeFrom.length > 0 && (
+                <div>
+                  <p className="mb-2 text-sm font-semibold text-foreground">{t('imageUpload.freeFrom')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {product.freeFrom.map((allergenId: string) => {
+                      const allergen = appConfig.allergens.find((item) => item.id === allergenId)
+                      return (
+                        <Badge
+                          key={allergenId}
+                          className="px-3 py-1 text-xs font-medium bg-safety-high/15 text-safety-high border border-safety-high/30"
+                        >
+                          {allergen ? `${allergen.emoji} ${t(`imageUpload.freeFromAllergen.${allergenId}`)}` : allergenId}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {product.allergens && product.allergens.length > 0 && (
+                <div>
+                  <p className="mb-2 text-sm font-semibold text-foreground">{t('allergens.title')}</p>
+                  {allergenConflicts.length > 0 && (
+                    <p className="mb-3 text-sm font-medium text-safety-low">
+                      {t('allergens.warningContains')}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {product.allergens.map((allergenId) => {
+                      const allergen = appConfig.allergens.find((item) => item.id === allergenId)
+                      const isConflict = allergenConflicts.includes(allergenId)
+                      return (
+                        <Badge
+                          key={allergenId}
+                          variant={isConflict ? 'destructive' : 'secondary'}
+                          className="px-3 py-1 text-xs font-medium"
+                        >
+                          {allergen ? `${allergen.emoji} ${allergen.label}` : allergenId}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {hasStoreData && (
           <Card className="shadow-card">
             <CardHeader>
               <CardTitle className="text-lg">{t('product.whereToBuy')}</CardTitle>
@@ -332,178 +377,113 @@ function ProductDetailContent() {
           </Card>
         )}
 
-        {/* Ingredients */}
-        {product.ingredients && product.ingredients.length > 0 && (
+        {(hasStructuredIngredients || hasOcrIngredients) && (
           <Card className="shadow-card">
             <CardHeader>
               <CardTitle className="text-lg">{t('product.ingredients')}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {product.ingredients.map((ingredient, idx) => (
-                  <Badge
-                    key={idx}
-                    variant="outline"
-                    className="px-3 py-1 text-xs font-medium"
-                  >
-                    {ingredient}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Allergens */}
-        {product.allergens && product.allergens.length > 0 && (
-          <Card className={`shadow-card ${allergenConflicts.length > 0 ? 'border-safety-low' : ''}`}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                {allergenConflicts.length > 0 && (
-                  <AlertTriangle className="h-5 w-5 text-safety-low" />
-                )}
-                {t('allergens.title')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {allergenConflicts.length > 0 && (
-                <p className="text-sm text-safety-low font-medium mb-3">
-                  {t('allergens.warningContains')}
-                </p>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {product.allergens.map((allergenId) => {
-                  const allergen = appConfig.allergens.find(a => a.id === allergenId)
-                  const isConflict = allergenConflicts.includes(allergenId)
-                  return (
+            <CardContent className="space-y-4">
+              {hasStructuredIngredients && (
+                <div className="flex flex-wrap gap-2">
+                  {product.ingredients?.map((ingredient, idx) => (
                     <Badge
-                      key={allergenId}
-                      variant={isConflict ? 'destructive' : 'secondary'}
+                      key={idx}
+                      variant="outline"
                       className="px-3 py-1 text-xs font-medium"
                     >
-                      {allergen ? `${allergen.emoji} ${allergen.label}` : allergenId}
+                      {ingredient}
                     </Badge>
-                  )
-                })}
-              </div>
+                  ))}
+                </div>
+              )}
+
+              {hasOcrIngredients && (
+                <CollapsibleSection
+                  title={t('imageUpload.ingredientsFromScan')}
+                  preview={<p className="line-clamp-2 text-xs text-muted-foreground">{t('product.ingredientsFromScanPreview')}</p>}
+                >
+                  <div className="p-4">
+                    <p className="whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
+                      {product.ingredientsText}
+                    </p>
+                  </div>
+                </CollapsibleSection>
+              )}
             </CardContent>
           </Card>
         )}
 
-        {/* Free From Badges — NEW */}
-        {product.freeFrom && product.freeFrom.length > 0 && (
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="text-lg">{t('imageUpload.freeFrom')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {product.freeFrom.map((allergenId: string) => {
-                  const allergen = appConfig.allergens.find(a => a.id === allergenId)
-                  return (
-                    <Badge
-                      key={allergenId}
-                      className="px-3 py-1 text-xs font-medium bg-safety-high/15 text-safety-high border border-safety-high/30"
-                    >
-                      {allergen ? `${allergen.emoji} ${t(`imageUpload.freeFromAllergen.${allergenId}`)}` : allergenId}
-                    </Badge>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Raw Ingredients Text — NEW (from back scan OCR) */}
-        {product.ingredientsText && (
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="text-lg">{t('imageUpload.ingredientsFromScan')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                {product.ingredientsText}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Voting Section */}
         <Card className="shadow-card" data-voting-section>
           <CardHeader>
             <CardTitle className="text-lg">{t('product.rateThisProduct')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Store Location Input */}
-            <div>
-              <h4 className="font-semibold text-sm mb-3">{t('product.whereDidYouBuy')}</h4>
-              <StoreTagInput
-                value={storeTag}
-                onChange={setStoreTag}
-                onLocationCapture={handleLocationCapture}
-                disabled={isVoting}
-              />
-            </div>
-
-            {/* Voting Interface */}
-            <VotingSheet 
-              onVote={handleVote} 
+            <VotingSheet
+              onVote={handleVote}
               disabled={isVoting}
               allergenScores={product.allergenScores as Record<string, { aiBase: 'contains' | 'free-from' | 'unknown'; upVotes: number; downVotes: number }> | undefined}
               tasteUpVotes={product.tasteUpVotes ?? 0}
               tasteDownVotes={product.tasteDownVotes ?? 0}
               avoidedAllergens={avoidedAllergens}
             />
+
+            <CollapsibleSection
+              title={t('product.whereDidYouBuy')}
+              defaultOpen={Boolean(storeTag || (storeLat !== undefined && storeLon !== undefined))}
+              preview={
+                <p className="truncate text-xs text-muted-foreground">
+                  {locationPreview || t('imageUpload.storeHelpText')}
+                </p>
+              }
+            >
+              <div className="p-4">
+                <StoreTagInput
+                  value={storeTag}
+                  onChange={setStoreTag}
+                  onLocationCapture={handleLocationCapture}
+                  disabled={isVoting}
+                />
+              </div>
+            </CollapsibleSection>
           </CardContent>
         </Card>
 
-        {/* Chart View with Tabs */}
         <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="text-lg">{t('product.positionOnMatrix')}</CardTitle>
+            <CardTitle className="text-lg">{t('product.votesSection')}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <Suspense fallback={<SectionLoading label={t('common.loading')} />}>
               <ProductChartTabs
                 product={product}
                 myVote={myVote}
                 allVotesCount={allVotes?.length || 0}
-                onVote={(_safety: number, taste: number) => handleVote({
-                  // Chart tap sends coordinates — convert to thumbs
-                  allergenVotes: undefined,
-                  tasteVote: taste >= 50 ? 'up' : 'down',
-                })}
-                isVoting={isVoting}
                 t={t}
               />
             </Suspense>
+
+            {adminStatus?.isAdmin && allVotes && (
+              <Suspense fallback={<SectionLoading label={t('common.loading')} />}>
+                <VoterList
+                  votes={allVotes}
+                  onImpersonate={(userId) => startImpersonation(userId)}
+                />
+              </Suspense>
+            )}
           </CardContent>
         </Card>
 
-        {/* Comments / Reviews */}
         <Suspense fallback={<SectionLoading label={t('common.loading')} />}>
           <ProductComments productId={product._id} />
         </Suspense>
-
-        {/* Admin Voter List */}
-        {adminStatus?.isAdmin && allVotes && (
-          <Suspense fallback={<SectionLoading label={t('common.loading')} />}>
-            <VoterList
-              votes={allVotes}
-              onImpersonate={(userId) => startImpersonation(userId)}
-            />
-          </Suspense>
-        )}
       </div>
 
-      {/* Edit Dialog */}
       <EditProductDialog
         product={product as Product}
         open={isEditing}
         onOpenChange={setIsEditing}
       />
 
-      {/* Report Dialog */}
       <ReportProductDialog
         productId={product._id}
         productName={product.name}

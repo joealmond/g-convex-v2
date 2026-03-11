@@ -5,6 +5,7 @@ import { Suspense, lazy, useState, useRef, useEffect, useMemo, useCallback } fro
 import { ProductCard } from '@/components/feed/ProductCard'
 import { FeedGrid } from '@/components/feed/FeedGrid'
 import { FilterChips } from '@/components/feed/FilterChips'
+import { QuadrantFilterChips, type QuadrantFilterValue } from '@/components/feed/QuadrantFilterChips'
 import type { FilterType } from '@/components/feed/FilterChips'
 import { SensitivityFilterChips } from '@/components/feed/SensitivityFilterChips'
 import { useGeolocation } from '@/hooks/use-geolocation'
@@ -13,8 +14,9 @@ import { useTranslation } from '@/hooks/use-translation'
 import { getNearbyRange } from '@/hooks/use-product-filter'
 import { appConfig } from '@/lib/app-config'
 import { isWeb } from '@/lib/platform'
+import { getQuadrant } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { Loader2, Trophy, Flame, TrendingUp, Star, BarChart3, Grid3X3, Search, X } from 'lucide-react'
+import { Loader2, Trophy, Flame, TrendingUp, Star, BarChart3, Grid3X3, Search, X, ArrowUp, ArrowDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/types'
 
@@ -23,9 +25,6 @@ const MatrixChart = lazy(() =>
 )
 const ProductStrip = lazy(() =>
   import('@/components/feed/ProductStrip').then((module) => ({ default: module.ProductStrip }))
-)
-const Leaderboard = lazy(() =>
-  import('@/components/dashboard/Leaderboard').then((module) => ({ default: module.Leaderboard }))
 )
 const StatsCard = lazy(() =>
   import('@/components/dashboard/StatsCard').then((module) => ({ default: module.StatsCard }))
@@ -82,10 +81,6 @@ function StripLoadingFallback() {
   )
 }
 
-function LeaderboardLoadingFallback() {
-  return <div className="min-h-[320px] rounded-2xl border border-border bg-card animate-pulse" />
-}
-
 /**
  * SSR-safe wrapper — hooks are only called inside HomePageContent
  * which is wrapped in a Suspense boundary.
@@ -125,6 +120,7 @@ function HomePageContent() {
   const [filterType, setFilterType] = useState<FilterType>('nearby')
   const [searchQuery, setSearchQuery] = useState('')
   const [nearbyRange, setNearbyRange] = useState(() => getNearbyRange())
+  const [quadrantFilter, setQuadrantFilter] = useState<QuadrantFilterValue>('all')
 
   // ── Sensitivity filter state ──
   // Default: the niche's primary allergen (gluten) is always ON.
@@ -211,6 +207,11 @@ function HomePageContent() {
 
   // ── Derived data ──
   const { displayProducts, displayLoading, displayCanLoadMore, displayLoadMore, displayIsLoadingMore } = useMemo(() => {
+    const applyQuadrantFilter = (items: Product[]) => {
+      if (quadrantFilter === 'all') return items
+      return items.filter((product) => getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter)
+    }
+
     if (isNearbyMode) {
       // Nearby: client-side allergen filtering on small set
       let items = (nearbyProducts ?? []) as Product[]
@@ -220,6 +221,7 @@ function HomePageContent() {
           return !p.allergens.some((a) => excludeAllergens.includes(a.toLowerCase()))
         })
       }
+      items = applyQuadrantFilter(items)
       return {
         displayProducts: items,
         displayLoading: nearbyProducts === undefined,
@@ -231,7 +233,7 @@ function HomePageContent() {
 
     if (isSearchMode) {
       return {
-        displayProducts: searchResult.results as Product[],
+        displayProducts: applyQuadrantFilter(searchResult.results as Product[]),
         displayLoading: searchResult.status === 'LoadingFirstPage',
         displayCanLoadMore: searchResult.status === 'CanLoadMore',
         displayLoadMore: () => searchResult.loadMore(20),
@@ -241,13 +243,13 @@ function HomePageContent() {
 
     // recent / trending
     return {
-      displayProducts: feedResult.results as Product[],
+      displayProducts: applyQuadrantFilter(feedResult.results as Product[]),
       displayLoading: feedResult.status === 'LoadingFirstPage',
       displayCanLoadMore: feedResult.status === 'CanLoadMore',
       displayLoadMore: () => feedResult.loadMore(20),
       displayIsLoadingMore: feedResult.status === 'LoadingMore',
     }
-  }, [isNearbyMode, isSearchMode, nearbyProducts, searchResult, feedResult, excludeAllergens])
+  }, [isNearbyMode, isSearchMode, nearbyProducts, searchResult, feedResult, excludeAllergens, quadrantFilter])
 
   // Fallback: if nearby has no GPS, show recent feed instead
   const showNearbyFallback = isNearbyMode && !latitude && !longitude
@@ -259,11 +261,25 @@ function HomePageContent() {
     { initialNumItems: 20 }
   )
 
-  const finalProducts = showNearbyFallback ? (fallbackFeed.results as Product[]) : displayProducts
+  const finalProducts = showNearbyFallback
+    ? (fallbackFeed.results as Product[]).filter((product) =>
+        quadrantFilter === 'all'
+          ? true
+          : getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter
+      )
+    : displayProducts
   const finalLoading = showNearbyFallback ? fallbackFeed.status === 'LoadingFirstPage' : displayLoading
   const finalCanLoadMore = showNearbyFallback ? fallbackFeed.status === 'CanLoadMore' : displayCanLoadMore
   const finalLoadMore = showNearbyFallback ? () => fallbackFeed.loadMore(20) : displayLoadMore
   const finalIsLoadingMore = showNearbyFallback ? fallbackFeed.status === 'LoadingMore' : displayIsLoadingMore
+  const filteredChartProducts = useMemo(
+    () => (allProductsForChart ?? []).filter((product) =>
+      quadrantFilter === 'all'
+        ? true
+        : getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter
+    ),
+    [allProductsForChart, quadrantFilter]
+  )
 
   const useCardLayout = filterType !== 'all'
 
@@ -271,6 +287,8 @@ function HomePageContent() {
   const [viewMode, setViewMode] = useState<'feed' | 'chart'>('feed')
   const [chartMode, setChartMode] = useState<'vibe' | 'value'>('vibe')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [scrollY, setScrollY] = useState(0)
+  const [savedScrollY, setSavedScrollY] = useState(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const productCardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
@@ -299,18 +317,46 @@ function HomePageContent() {
   )
 
   useEffect(() => {
-    if (selectedProduct && viewMode === 'feed') {
+    if (selectedProduct) {
       const cardElement = productCardRefs.current.get(selectedProduct._id)
       if (cardElement) {
         setTimeout(() => cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100)
       }
     }
-  }, [selectedProduct, viewMode])
+  }, [selectedProduct])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleScroll = () => {
+      setScrollY(window.scrollY)
+    }
+
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const handleChartDotClick = (product: Product) => {
     setSelectedProduct(product)
-    setViewMode('feed')
   }
+
+  const handleScrollToggle = () => {
+    if (typeof window === 'undefined') return
+
+    if (scrollY > 80) {
+      setSavedScrollY(window.scrollY)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    if (savedScrollY > 0) {
+      window.scrollTo({ top: savedScrollY, behavior: 'smooth' })
+    }
+  }
+
+  const shouldShowScrollToggle = scrollY > 240 || (scrollY <= 80 && savedScrollY > 0)
+  const showChartPanel = viewMode === 'chart'
 
   return (
     <main className="flex-1 mx-auto w-full px-2 pb-4 sm:px-4 sm:pb-6 md:px-6 xl:px-8">
@@ -367,12 +413,16 @@ function HomePageContent() {
         {/* Filters stay in one line when possible and wrap when they don't fit. */}
         <div className="pt-3 md:pt-4">
           <div className="flex flex-col gap-2 xl:flex-row xl:items-start xl:justify-between">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 space-y-2">
               <FilterChips
                 value={filterType}
                 onChange={handleFilterChange}
                 nearbyRange={nearbyRange}
                 onRangeChange={setNearbyRange}
+              />
+              <QuadrantFilterChips
+                value={quadrantFilter}
+                onChange={setQuadrantFilter}
               />
             </div>
             <div className="min-w-0 xl:max-w-[22rem] xl:justify-end xl:flex">
@@ -385,10 +435,55 @@ function HomePageContent() {
         </div>
       </div>
 
-      {/* Gamification Widgets for Logged-in Users */}
-      {user && profile && (
+      {showChartPanel ? (
+        <div className="mt-4 mb-4 rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-6 md:mt-6 md:mb-6">
+          <div className="mb-2 flex items-center justify-between gap-2 sm:mb-4">
+            <h2 className="truncate text-base font-semibold sm:text-xl">{t('chart.gMatrix')}</h2>
+            <div className="flex shrink-0 gap-1.5">
+              <Button
+                onClick={() => setChartMode('vibe')}
+                variant={chartMode === 'vibe' ? 'default' : 'outline'}
+                size="sm"
+                className="h-8 gap-1 px-2.5 text-xs sm:px-3 sm:text-sm"
+              >
+                🛡️ {t('chart.vibe')}
+              </Button>
+              <Button
+                onClick={() => setChartMode('value')}
+                variant={chartMode === 'value' ? 'default' : 'outline'}
+                size="sm"
+                className="h-8 gap-1 px-2.5 text-xs sm:px-3 sm:text-sm"
+              >
+                💰 {t('chart.value')}
+              </Button>
+            </div>
+          </div>
+
+          {allProductsForChart === undefined ? (
+            <div className="flex h-[280px] items-center justify-center sm:h-[380px] lg:h-[420px]">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredChartProducts.length > 0 ? (
+            <div className="h-[280px] min-h-[250px] sm:h-[380px] lg:h-[420px]">
+              <Suspense fallback={<ChartLoadingFallback />}>
+                <MatrixChart
+                  products={filteredChartProducts}
+                  onProductClick={handleChartDotClick}
+                  selectedProduct={selectedProduct}
+                  mode={chartMode}
+                />
+              </Suspense>
+            </div>
+          ) : (
+            <div className="flex h-[280px] flex-col items-center justify-center text-muted-foreground sm:h-[380px] lg:h-[420px]">
+              <p className="mb-2 text-lg">{t('chart.noProductsYet')}</p>
+              <p className="text-sm">{t('chart.addFirstProduct')}</p>
+            </div>
+          )}
+        </div>
+      ) : user && profile ? (
         <Suspense fallback={<HomeWidgetsFallback />}>
-          <div className="mt-4 flex gap-2 mb-3 md:grid md:grid-cols-4 md:gap-4 md:mb-6 md:mt-6">
+          <div className="mt-4 mb-3 flex gap-2 md:mt-6 md:mb-6 md:grid md:grid-cols-4 md:gap-4">
             <StatsCard
               title={t('stats.yourPoints')}
               value={profile.points}
@@ -415,11 +510,9 @@ function HomePageContent() {
             />
           </div>
         </Suspense>
-      )}
+      ) : null}
 
-      {/* Feed View */}
-      {viewMode === 'feed' && (
-        <div className="space-y-3">
+      <div className="space-y-3">
           {finalLoading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -488,63 +581,17 @@ function HomePageContent() {
             </div>
           )}
         </div>
-      )}
 
-      {/* Chart View */}
-      {viewMode === 'chart' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          <div className="lg:col-span-2 bg-card rounded-2xl shadow-sm p-3 sm:p-6">
-            <div className="flex items-center justify-between mb-2 sm:mb-4 gap-2">
-              <h2 className="text-base sm:text-xl font-semibold truncate">{t('chart.gMatrix')}</h2>
-              <div className="flex gap-1.5 flex-shrink-0">
-                <Button
-                  onClick={() => setChartMode('vibe')}
-                  variant={chartMode === 'vibe' ? 'default' : 'outline'}
-                  size="sm"
-                  className="gap-1 px-2.5 sm:px-3 h-8 text-xs sm:text-sm"
-                >
-                  🛡️ {t('chart.vibe')}
-                </Button>
-                <Button
-                  onClick={() => setChartMode('value')}
-                  variant={chartMode === 'value' ? 'default' : 'outline'}
-                  size="sm"
-                  className="gap-1 px-2.5 sm:px-3 h-8 text-xs sm:text-sm"
-                >
-                  💰 {t('chart.value')}
-                </Button>
-              </div>
-            </div>
-
-            {allProductsForChart === undefined ? (
-              <div className="flex items-center justify-center h-[280px] sm:h-[380px] lg:h-[460px]">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : allProductsForChart.length > 0 ? (
-              <div className="h-[280px] sm:h-[380px] lg:h-[460px] min-h-[250px]">
-                <Suspense fallback={<ChartLoadingFallback />}>
-                  <MatrixChart
-                    products={allProductsForChart}
-                    onProductClick={handleChartDotClick}
-                    selectedProduct={selectedProduct}
-                    mode={chartMode}
-                  />
-                </Suspense>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-[280px] sm:h-[380px] lg:h-[460px] text-muted-foreground">
-                <p className="text-lg mb-2">{t('chart.noProductsYet')}</p>
-                <p className="text-sm">{t('chart.addFirstProduct')}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="lg:col-span-1">
-            <Suspense fallback={<LeaderboardLoadingFallback />}>
-              <Leaderboard limit={10} />
-            </Suspense>
-          </div>
-        </div>
+      {shouldShowScrollToggle && (
+        <Button
+          type="button"
+          size="icon"
+          className="fixed bottom-24 right-4 z-50 h-12 w-12 rounded-full shadow-lg md:bottom-6"
+          onClick={handleScrollToggle}
+          title={scrollY > 80 ? t('feed.backToTop') : t('feed.backToPosition')}
+        >
+          {scrollY > 80 ? <ArrowUp className="h-5 w-5" /> : <ArrowDown className="h-5 w-5" />}
+        </Button>
       )}
     </main>
   )

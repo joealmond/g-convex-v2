@@ -1,15 +1,14 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronDown, ChevronUp, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { motion, AnimatePresence } from 'framer-motion'
 import { appConfig } from '@/lib/app-config'
-import { cn } from '@/lib/utils'
-import { ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, Check } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
 import type { AllergenScoresMap } from '@/lib/score-utils'
 import { computeAllergenScoreFromData, computeTasteScore } from '@/lib/score-utils'
+import { cn } from '@/lib/utils'
 
-/** New vote shape emitted by VotingSheet */
 export interface ThumbsVotePayload {
   allergenVotes?: Record<string, 'up' | 'down'>
   tasteVote?: 'up' | 'down'
@@ -20,25 +19,12 @@ export interface ThumbsVotePayload {
 interface VotingSheetProps {
   onVote: (payload: ThumbsVotePayload) => void
   disabled?: boolean
-  /** Per-allergen scores from the product (for showing current state) */
   allergenScores?: AllergenScoresMap | null
-  /** Product-level taste aggregates */
   tasteUpVotes?: number
   tasteDownVotes?: number
-  /** User's avoided allergens from dietary profile */
   avoidedAllergens?: string[]
 }
 
-/**
- * Thumbs-based voting UI.
- *
- * Layout:
- *  1. "I Agree" quick endorsement button
- *  2. Per-allergen 👍/👎 rows (user's allergens expanded, rest in accordion)
- *  3. Taste 👍/👎 row
- *  4. Price section ($ to $$$$$ + optional exact price)
- *  5. Submit button
- */
 export function VotingSheet({
   onVote,
   disabled = false,
@@ -48,11 +34,10 @@ export function VotingSheet({
   avoidedAllergens = [],
 }: VotingSheetProps) {
   const { t } = useTranslation()
-
-  // ─── State ────────────────────────────────────────────────────
   const [allergenVotes, setAllergenVotes] = useState<Record<string, 'up' | 'down'>>({})
   const [tasteVote, setTasteVote] = useState<'up' | 'down' | null>(null)
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null)
+  const [showPriceDetails, setShowPriceDetails] = useState(false)
   const [showExactPrice, setShowExactPrice] = useState(false)
   const [exactPriceAmount, setExactPriceAmount] = useState('')
   const [exactPriceCurrency, setExactPriceCurrency] = useState('USD')
@@ -60,16 +45,17 @@ export function VotingSheet({
 
   const pricePresets = appConfig.dimensions.axis3.presets
   const allAllergens = appConfig.allergens
+  const userAllergens = allAllergens.filter((allergen) => avoidedAllergens.includes(allergen.id))
+  const otherAllergens = allAllergens.filter((allergen) => !avoidedAllergens.includes(allergen.id))
+  const allergensToShow = userAllergens.length > 0 ? userAllergens : allAllergens
+  const hasAnyVote = Object.keys(allergenVotes).length > 0 || tasteVote !== null
+  const currentTasteScore = computeTasteScore(tasteUpVotes, tasteDownVotes)
+  const tasteColorClass = currentTasteScore >= 60 ? 'bg-safety-high' : currentTasteScore >= 40 ? 'bg-safety-mid' : 'bg-safety-low'
 
-  // Split allergens: user's avoided first, then the rest
-  const userAllergens = allAllergens.filter(a => avoidedAllergens.includes(a.id))
-  const otherAllergens = allAllergens.filter(a => !avoidedAllergens.includes(a.id))
-  const hasOtherAllergens = otherAllergens.length > 0
-
-  // ─── Handlers ─────────────────────────────────────────────────
   const handleAllergenVote = (allergenId: string, direction: 'up' | 'down') => {
     if (disabled) return
-    setAllergenVotes(prev => {
+
+    setAllergenVotes((prev) => {
       const next = { ...prev }
       if (next[allergenId] === direction) {
         delete next[allergenId]
@@ -82,62 +68,44 @@ export function VotingSheet({
 
   const handleTasteVote = (direction: 'up' | 'down') => {
     if (disabled) return
-    setTasteVote(prev => prev === direction ? null : direction)
+    setTasteVote((prev) => (prev === direction ? null : direction))
   }
 
   const handlePriceClick = (value: number) => {
     if (disabled) return
-    setSelectedPrice(value === selectedPrice ? null : value)
+    setSelectedPrice((prev) => (prev === value ? null : value))
   }
 
-  const buildExactPrice = () =>
-    showExactPrice && exactPriceAmount
-      ? { amount: parseFloat(exactPriceAmount), currency: exactPriceCurrency }
-      : undefined
+  const buildExactPrice = () => {
+    if (!showExactPrice || !exactPriceAmount) return undefined
+    return { amount: parseFloat(exactPriceAmount), currency: exactPriceCurrency }
+  }
 
-  const buildPriceValue = () =>
-    selectedPrice ? Math.round(selectedPrice / 20) : undefined
+  const buildPriceValue = () => (selectedPrice ? Math.round(selectedPrice / 20) : undefined)
 
-  const handleIAgree = () => {
-    if (disabled) return
-    const quickAllergenVotes: Record<string, 'up' | 'down'> = {}
-    const allergensToVote = userAllergens.length > 0 ? userAllergens : allAllergens
-    for (const a of allergensToVote) {
-      quickAllergenVotes[a.id] = 'up'
-    }
-    onVote({
-      allergenVotes: quickAllergenVotes,
-      tasteVote: 'up',
-      price: buildPriceValue(),
-      exactPrice: buildExactPrice(),
-    })
-    resetForm()
+  const resetForm = () => {
+    setAllergenVotes({})
+    setTasteVote(null)
+    setSelectedPrice(null)
+    setShowPriceDetails(false)
+    setShowExactPrice(false)
+    setExactPriceAmount('')
+    setExactPriceCurrency('USD')
   }
 
   const handleSubmit = () => {
-    if (disabled) return
-    const hasVotes = Object.keys(allergenVotes).length > 0 || tasteVote !== null
-    if (!hasVotes) return
+    if (disabled || !hasAnyVote) return
+
     onVote({
       allergenVotes: Object.keys(allergenVotes).length > 0 ? allergenVotes : undefined,
       tasteVote: tasteVote ?? undefined,
       price: buildPriceValue(),
       exactPrice: buildExactPrice(),
     })
+
     resetForm()
   }
 
-  const resetForm = () => {
-    setAllergenVotes({})
-    setTasteVote(null)
-    setSelectedPrice(null)
-    setShowExactPrice(false)
-    setExactPriceAmount('')
-  }
-
-  const hasAnyVote = Object.keys(allergenVotes).length > 0 || tasteVote !== null
-
-  // ─── Render helpers ───────────────────────────────────────────
   const renderAllergenRow = (allergen: typeof allAllergens[number]) => {
     const scoreData = allergenScores?.[allergen.id]
     const currentScore = scoreData ? computeAllergenScoreFromData(scoreData) : null
@@ -145,15 +113,14 @@ export function VotingSheet({
 
     return (
       <div key={allergen.id} className="flex items-center gap-2 py-2">
-        {/* Allergen label + current score bar */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="text-sm">{allergen.emoji}</span>
-            <span className="text-sm font-medium truncate">{allergen.label}</span>
+            <span className="truncate text-sm font-medium">{allergen.label}</span>
           </div>
           {currentScore !== null && (
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <div className="h-1 flex-1 max-w-16 bg-muted rounded-full overflow-hidden">
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <div className="h-1 max-w-16 flex-1 overflow-hidden rounded-full bg-muted">
                 <div
                   className={cn(
                     'h-full rounded-full transition-all',
@@ -162,7 +129,7 @@ export function VotingSheet({
                   style={{ width: `${currentScore}%` }}
                 />
               </div>
-              <span className="text-[10px] text-muted-foreground tabular-nums">{currentScore}</span>
+              <span className="text-[10px] tabular-nums text-muted-foreground">{currentScore}</span>
               {scoreData && (
                 <span className="text-[10px] text-muted-foreground">
                   ({scoreData.upVotes}👍 {scoreData.downVotes}👎)
@@ -172,16 +139,12 @@ export function VotingSheet({
           )}
         </div>
 
-        {/* Thumbs buttons */}
         <div className="flex gap-1.5">
           <motion.div whileTap={{ scale: disabled ? 1 : 0.9 }}>
             <Button
               variant={myVote === 'up' ? 'default' : 'outline'}
               size="sm"
-              className={cn(
-                'h-9 w-9 p-0',
-                myVote === 'up' && 'bg-safety-high hover:bg-safety-high/90 text-white'
-              )}
+              className={cn('h-9 w-9 p-0', myVote === 'up' && 'bg-safety-high text-white hover:bg-safety-high/90')}
               onClick={() => handleAllergenVote(allergen.id, 'up')}
               disabled={disabled}
             >
@@ -192,10 +155,7 @@ export function VotingSheet({
             <Button
               variant={myVote === 'down' ? 'default' : 'outline'}
               size="sm"
-              className={cn(
-                'h-9 w-9 p-0',
-                myVote === 'down' && 'bg-safety-low hover:bg-safety-low/90 text-white'
-              )}
+              className={cn('h-9 w-9 p-0', myVote === 'down' && 'bg-safety-low text-white hover:bg-safety-low/90')}
               onClick={() => handleAllergenVote(allergen.id, 'down')}
               disabled={disabled}
             >
@@ -207,76 +167,39 @@ export function VotingSheet({
     )
   }
 
-  // ─── Taste score ──────────────────────────────────────────────
-  const currentTasteScore = computeTasteScore(tasteUpVotes, tasteDownVotes)
-  const tasteColorClass = currentTasteScore >= 60 ? 'bg-safety-high' : currentTasteScore >= 40 ? 'bg-safety-mid' : 'bg-safety-low'
-
   return (
     <div className="space-y-4">
-      {/* "I Agree" quick endorsement */}
-      <motion.div whileTap={{ scale: disabled ? 1 : 0.98 }}>
-        <Button
-          variant="outline"
-          className="w-full h-12 flex items-center justify-center gap-2 border-2 border-primary hover:bg-primary hover:text-primary-foreground"
-          onClick={handleIAgree}
-          disabled={disabled}
-        >
-          <Check className="h-4 w-4" />
-          <div className="text-center">
-            <span className="font-semibold text-sm">{t('voting.iAgree')}</span>
-            <span className="text-xs text-muted-foreground ml-2">
-              {t('voting.iAgreeDesc')}
-            </span>
-          </div>
-        </Button>
-      </motion.div>
-
-      {/* Per-allergen voting rows */}
       <div>
-        <label className="text-xs font-semibold text-muted-foreground mb-1 block uppercase tracking-wide">
+        <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t('voting.voteOnAllergens')}
         </label>
 
-        {/* User's avoided allergens (always expanded) */}
-        {userAllergens.length > 0 && (
-          <div className="divide-y divide-border">
-            {userAllergens.map(renderAllergenRow)}
-          </div>
-        )}
+        <div className="divide-y divide-border">
+          {allergensToShow.map(renderAllergenRow)}
+        </div>
 
-        {/* If user has no allergen profile, show all allergens */}
-        {userAllergens.length === 0 && (
-          <div className="divide-y divide-border">
-            {allAllergens.map(renderAllergenRow)}
-          </div>
-        )}
-
-        {/* "Show more" accordion for other allergens */}
-        {userAllergens.length > 0 && hasOtherAllergens && (
+        {userAllergens.length > 0 && otherAllergens.length > 0 && (
           <div className="mt-1">
             <button
               type="button"
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
-              onClick={() => setShowMoreAllergens(!showMoreAllergens)}
+              className="flex items-center gap-1.5 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              onClick={() => setShowMoreAllergens((prev) => !prev)}
             >
-              {showMoreAllergens ? (
-                <ChevronUp className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronDown className="h-3.5 w-3.5" />
-              )}
+              {showMoreAllergens ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
               {showMoreAllergens ? t('voting.showLess') : t('voting.showMoreAllergens')}
               <span className="text-muted-foreground/60">({otherAllergens.length})</span>
             </button>
-            <AnimatePresence>
+
+            <AnimatePresence initial={false}>
               {showMoreAllergens && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.15 }}
                   className="overflow-hidden"
                 >
-                  <div className="divide-y divide-border">
+                  <div className="mt-1 divide-y divide-border">
                     {otherAllergens.map(renderAllergenRow)}
                   </div>
                 </motion.div>
@@ -286,30 +209,21 @@ export function VotingSheet({
         )}
       </div>
 
-      {/* Taste voting row */}
       <div>
-        <label className="text-xs font-semibold text-muted-foreground mb-1 block uppercase tracking-wide">
-          {appConfig.dimensions.axis2.label}
+        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {t('voting.taste')}
         </label>
-        <div className="flex items-center gap-2 py-2">
-          <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-3 rounded-2xl border border-border px-3 py-3">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <span className="text-sm">😋</span>
-              <span className="text-sm font-medium">{appConfig.dimensions.axis2.label}</span>
+              <span className="truncate text-sm font-medium">{appConfig.dimensions.axis2.label}</span>
             </div>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <div className="h-1 flex-1 max-w-16 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={cn('h-full rounded-full transition-all', tasteColorClass)}
-                  style={{ width: `${currentTasteScore}%` }}
-                />
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <div className="h-1 max-w-24 flex-1 overflow-hidden rounded-full bg-muted">
+                <div className={cn('h-full rounded-full transition-all', tasteColorClass)} style={{ width: `${currentTasteScore}%` }} />
               </div>
-              <span className="text-[10px] text-muted-foreground tabular-nums">
-                {currentTasteScore}
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                ({tasteUpVotes}👍 {tasteDownVotes}👎)
-              </span>
+              <span className="text-[10px] tabular-nums text-muted-foreground">{currentTasteScore}</span>
+              <span className="text-[10px] text-muted-foreground">({tasteUpVotes}👍 {tasteDownVotes}👎)</span>
             </div>
           </div>
 
@@ -318,10 +232,7 @@ export function VotingSheet({
               <Button
                 variant={tasteVote === 'up' ? 'default' : 'outline'}
                 size="sm"
-                className={cn(
-                  'h-9 w-9 p-0',
-                  tasteVote === 'up' && 'bg-safety-high hover:bg-safety-high/90 text-white'
-                )}
+                className={cn('h-9 w-9 p-0', tasteVote === 'up' && 'bg-safety-high text-white hover:bg-safety-high/90')}
                 onClick={() => handleTasteVote('up')}
                 disabled={disabled}
               >
@@ -332,10 +243,7 @@ export function VotingSheet({
               <Button
                 variant={tasteVote === 'down' ? 'default' : 'outline'}
                 size="sm"
-                className={cn(
-                  'h-9 w-9 p-0',
-                  tasteVote === 'down' && 'bg-safety-low hover:bg-safety-low/90 text-white'
-                )}
+                className={cn('h-9 w-9 p-0', tasteVote === 'down' && 'bg-safety-low text-white hover:bg-safety-low/90')}
                 onClick={() => handleTasteVote('down')}
                 disabled={disabled}
               >
@@ -346,78 +254,100 @@ export function VotingSheet({
         </div>
       </div>
 
-      {/* Price (Optional) */}
-      <div>
-        <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wide">
-          {appConfig.dimensions.axis3.question} <span className="font-normal normal-case">(optional)</span>
-        </label>
-        <div className="grid grid-cols-5 gap-1.5">
-          {pricePresets.map((preset, index) => {
-            const val = (index + 1) * 20
-            return (
-              <motion.div key={preset.label} whileTap={{ scale: disabled ? 1 : 0.95 }}>
-                <Button
-                  variant={selectedPrice === val ? 'default' : 'outline'}
-                  className={cn(
-                    'w-full h-10 text-xs px-1',
-                    selectedPrice === val && 'bg-primary hover:bg-primary/90'
-                  )}
-                  onClick={() => handlePriceClick(val)}
-                  disabled={disabled}
-                  title={preset.description}
-                >
-                  {preset.emoji}
-                </Button>
-              </motion.div>
-            )
-          })}
-        </div>
-
-        {/* Exact price toggle */}
+      <div className="rounded-2xl border border-border bg-muted/30">
         <button
           type="button"
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-2 flex items-center gap-1"
-          onClick={() => setShowExactPrice(!showExactPrice)}
+          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+          onClick={() => setShowPriceDetails((prev) => !prev)}
         >
-          {showExactPrice ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-          {t('voting.exactPrice')}
+          <div>
+            <p className="text-sm font-semibold text-foreground">{t('voting.addPriceDetails')}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {selectedPrice
+                ? `${t('voting.price')}: ${pricePresets.find((preset) => preset.value === selectedPrice)?.label ?? selectedPrice}`
+                : t('voting.priceDetailsHelp')}
+            </p>
+          </div>
+          {showPriceDetails ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          )}
         </button>
-        <AnimatePresence>
-          {showExactPrice && (
+
+        <AnimatePresence initial={false}>
+          {showPriceDetails && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="flex gap-2 mt-2">
-                <Input
-                  type="number"
-                  placeholder={t('voting.enterPrice')}
-                  value={exactPriceAmount}
-                  onChange={(e) => setExactPriceAmount(e.target.value)}
-                  className="flex-1 h-9 text-sm"
-                  min={0}
-                  step="0.01"
-                  disabled={disabled}
-                />
-                <Input
-                  type="text"
-                  placeholder={t('voting.currency')}
-                  value={exactPriceCurrency}
-                  onChange={(e) => setExactPriceCurrency(e.target.value.toUpperCase())}
-                  className="w-16 h-9 text-sm text-center"
-                  maxLength={3}
-                  disabled={disabled}
-                />
+              <div className="border-t border-border px-4 py-4">
+                <div className="mb-3 grid grid-cols-5 gap-2">
+                  {pricePresets.map((preset) => {
+                    const isSelected = selectedPrice === preset.value
+                    return (
+                      <motion.div key={preset.value} whileTap={{ scale: disabled ? 1 : 0.94 }}>
+                        <Button
+                          variant={isSelected ? 'default' : 'outline'}
+                          className={cn('h-14 w-full flex-col gap-0.5 px-0 py-1', isSelected && 'bg-primary text-primary-foreground')}
+                          onClick={() => handlePriceClick(preset.value)}
+                          disabled={disabled}
+                        >
+                          <span className="text-base leading-none">{preset.emoji}</span>
+                          <span className="text-[10px] leading-none">{preset.label}</span>
+                        </Button>
+                      </motion.div>
+                    )
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline"
+                  onClick={() => setShowExactPrice((prev) => !prev)}
+                >
+                  {showExactPrice ? `${t('common.close')} ${t('voting.exactPrice').toLowerCase()}` : t('voting.exactPrice')}
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {showExactPrice && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          min="0"
+                          step="0.01"
+                          placeholder={t('voting.enterPrice')}
+                          value={exactPriceAmount}
+                          onChange={(event) => setExactPriceAmount(event.target.value)}
+                          disabled={disabled}
+                        />
+                        <Input
+                          placeholder={t('voting.currency')}
+                          value={exactPriceCurrency}
+                          onChange={(event) => setExactPriceCurrency(event.target.value.toUpperCase())}
+                          disabled={disabled}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Submit button */}
       {hasAnyVote && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -427,7 +357,7 @@ export function VotingSheet({
           <Button
             onClick={handleSubmit}
             disabled={disabled}
-            className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+            className="h-11 w-full bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
           >
             {t('voting.submitVote')}
           </Button>

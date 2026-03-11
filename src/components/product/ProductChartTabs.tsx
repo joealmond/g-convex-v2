@@ -14,28 +14,24 @@ interface ProductChartTabsProps {
   }
   myVote?: Doc<'votes'>
   allVotesCount: number
-  onVote: (safety: number, taste: number) => void
-  isVoting: boolean
   t: (key: string, params?: Record<string, string | number>) => string
 }
 
 /**
- * Tabbed chart view: Average, My Vote, All Votes, Price History
+ * Tabbed chart view: all votes, my vote, price history.
  */
 export function ProductChartTabs({
   product,
   myVote,
   allVotesCount,
-  onVote,
-  isVoting,
   t,
 }: ProductChartTabsProps) {
   const hasPrice = !!product.avgPrice
+  const tabCount = hasPrice ? 3 : 2
 
   return (
-    <Tabs defaultValue="average" className="w-full">
-      <TabsList className={`grid w-full mb-4 ${hasPrice ? 'grid-cols-4' : 'grid-cols-3'}`}>
-        <TabsTrigger value="average">{t('product.average')}</TabsTrigger>
+    <Tabs defaultValue="all-votes" className="w-full">
+      <TabsList className={`grid w-full mb-4 ${tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
         <TabsTrigger value="my-vote" disabled={!myVote}>
           {t('product.myVote')}
         </TabsTrigger>
@@ -45,21 +41,6 @@ export function ProductChartTabs({
         )}
       </TabsList>
 
-      {/* Average View */}
-      <TabsContent value="average">
-        <div className="aspect-square max-w-sm mx-auto">
-          <CoordinateGrid
-            initialSafety={product.averageSafety}
-            initialTaste={product.averageTaste}
-            onVote={onVote}
-            disabled={isVoting}
-          />
-        </div>
-        <p className="text-sm text-muted-foreground text-center mt-4">
-          {t('voting.communityAverage')}
-        </p>
-      </TabsContent>
-
       {/* My Vote View */}
       <TabsContent value="my-vote">
         {myVote ? (
@@ -68,8 +49,8 @@ export function ProductChartTabs({
               <CoordinateGrid
                 initialSafety={myVote.safety ?? 50}
                 initialTaste={myVote.taste ?? 50}
-                onVote={onVote}
-                disabled={isVoting}
+                onVote={() => {}}
+                disabled
               />
             </div>
             <p className="text-sm text-muted-foreground text-center mt-4">
@@ -105,6 +86,17 @@ export function ProductChartTabs({
         </div>
         <p className="text-sm text-muted-foreground text-center mt-4">
           {allVotesCount} {allVotesCount === 1 ? t('voting.individualVote') : t('voting.individualVotes')}
+        </p>
+        <div className="mt-6 aspect-square max-w-sm mx-auto">
+          <CoordinateGrid
+            initialSafety={product.averageSafety}
+            initialTaste={product.averageTaste}
+            onVote={() => {}}
+            disabled
+          />
+        </div>
+        <p className="text-sm text-muted-foreground text-center mt-4">
+          {t('voting.communityAverage')}
         </p>
       </TabsContent>
 
