@@ -412,23 +412,23 @@ function HomePageContent() {
 
         {/* Filters stay in one line when possible and wrap when they don't fit. */}
         <div className="pt-3 md:pt-4">
-          <div className="flex flex-col gap-2 xl:flex-row xl:items-start xl:justify-between">
-            <div className="min-w-0 flex-1 space-y-2">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
               <FilterChips
                 value={filterType}
                 onChange={handleFilterChange}
                 nearbyRange={nearbyRange}
                 onRangeChange={setNearbyRange}
               />
-              <QuadrantFilterChips
-                value={quadrantFilter}
-                onChange={setQuadrantFilter}
-              />
-            </div>
-            <div className="min-w-0 xl:max-w-[22rem] xl:justify-end xl:flex">
               <SensitivityFilterChips
                 activeFilters={activeSensitivities}
                 onToggle={toggleSensitivity}
+              />
+            </div>
+            <div className="min-w-0">
+              <QuadrantFilterChips
+                value={quadrantFilter}
+                onChange={setQuadrantFilter}
               />
             </div>
           </div>

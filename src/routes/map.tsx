@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, ClientOnly } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Suspense, useState, useMemo, lazy } from 'react'
@@ -198,26 +198,34 @@ function MapPageContent() {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <>
-            <ProductMap
-              products={filteredProducts}
-              center={mapCenter}
-              zoom={focusedProduct ? 15 : 13}
-              userLocation={userLocation}
-              nearbyRange={nearbyRange * 1000}
-              showRangeCircle={showRangeCircle}
-            />
-            {filteredProducts.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-center px-4 bg-card/90 rounded-xl p-4 shadow-lg">
-                  <p className="text-foreground mb-2">{t('location.noProductsWithLocation')}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {t('location.noProductsHint')}
-                  </p>
-                </div>
+          <ClientOnly
+            fallback={
+              <div className="absolute inset-0 bg-background flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            )}
-          </>
+            }
+          >
+            <>
+              <ProductMap
+                products={filteredProducts}
+                center={mapCenter}
+                zoom={focusedProduct ? 15 : 13}
+                userLocation={userLocation}
+                nearbyRange={nearbyRange * 1000}
+                showRangeCircle={showRangeCircle}
+              />
+              {filteredProducts.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="text-center px-4 bg-card/90 rounded-xl p-4 shadow-lg">
+                    <p className="text-foreground mb-2">{t('location.noProductsWithLocation')}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t('location.noProductsHint')}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
+          </ClientOnly>
         )}
 
         {!isLoading && filteredProducts.length > 0 && (

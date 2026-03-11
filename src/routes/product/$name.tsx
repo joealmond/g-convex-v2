@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate, ClientOnly } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Suspense, lazy, useState } from 'react'
@@ -312,13 +312,15 @@ function ProductDetailContent() {
                     <Link to="/map" search={mapSearch} className="group block">
                       <div className="h-[18rem] overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-sm transition-shadow group-hover:shadow-md sm:h-[20rem] xl:h-[22rem]">
                         <div className="pointer-events-none h-full w-full">
-                          <Suspense fallback={<div className="flex h-full items-center justify-center bg-muted/20 text-sm text-muted-foreground">{t('common.loading')}</div>}>
-                            <ProductMap
-                              products={[product as Product]}
-                              center={[firstStoreWithGeo.geoPoint.lat, firstStoreWithGeo.geoPoint.lng]}
-                              zoom={15}
-                            />
-                          </Suspense>
+                          <ClientOnly fallback={<div className="flex h-full items-center justify-center bg-muted/20 text-sm text-muted-foreground">{t('common.loading')}</div>}>
+                            <Suspense fallback={<div className="flex h-full items-center justify-center bg-muted/20 text-sm text-muted-foreground">{t('common.loading')}</div>}>
+                              <ProductMap
+                                products={[product as Product]}
+                                center={[firstStoreWithGeo.geoPoint.lat, firstStoreWithGeo.geoPoint.lng]}
+                                zoom={15}
+                              />
+                            </Suspense>
+                          </ClientOnly>
                         </div>
                       </div>
                     </Link>
