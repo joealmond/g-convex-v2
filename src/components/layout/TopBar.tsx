@@ -6,8 +6,14 @@ import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Grid3X3, Loader2, LogOut, Map, MapPin, MessageCircle, Monitor, Moon, Plus, Shield, Sun, Trophy, User } from 'lucide-react'
+import { Grid3X3, Loader2, LogOut, Map, MapPin, Menu, MessageCircle, Monitor, Moon, Plus, Shield, Sun, Trophy, User } from 'lucide-react'
 import { authClient, useSession } from '@/lib/auth-client'
 import { useGeolocation, useTheme } from '@/hooks'
 import { useAdmin } from '@/hooks/use-admin'
@@ -126,20 +132,42 @@ export function TopBar() {
     </Button>
   )
 
+  const compactAddDialogTrigger = (
+    <Button
+      className="h-10 w-10 rounded-xl px-0 shadow-sm"
+      title={t('common.addProduct')}
+      aria-label={t('common.addProduct')}
+    >
+      <Plus className="h-4 w-4" />
+    </Button>
+  )
+
+  const menuTriggerButton = (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-10 w-10 rounded-xl"
+      aria-label={appConfig.appName}
+      title={appConfig.appName}
+    >
+      <Menu className="h-5 w-5" />
+    </Button>
+  )
+
   return (
     <header className={cn(
       'sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm safe-top',
       isBrowser ? 'block' : 'hidden md:block'
     )}>
     <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-      <Link to="/" className="flex shrink-0 items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity">
+      <Link to="/" className="flex shrink-0 items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity min-w-0">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-sm">
           <span className="text-primary-foreground font-bold text-sm">G</span>
         </div>
-        <span className="hidden lg:inline text-foreground">{appConfig.appName}</span>
+        <span className="hidden min-[1180px]:inline text-foreground">{appConfig.appName}</span>
       </Link>
 
-      <nav className="flex min-w-0 flex-1 items-center justify-center gap-4 overflow-x-auto py-1 lg:gap-5">
+      <nav className="hidden min-[1180px]:flex min-w-0 flex-1 items-center justify-center gap-4 overflow-x-auto py-1 lg:gap-5">
         {navItems.map((item) => {
           const Icon = item.icon
           return (
@@ -167,10 +195,55 @@ export function TopBar() {
             onClick={() => setShouldLoadAddDialog(true)}
           >
             <Plus className="h-4 w-4" />
-            <span className="hidden lg:inline">{t('common.addProduct')}</span>
+            <span>{t('common.addProduct')}</span>
           </Button>
         )}
       </nav>
+
+      <div className="min-[1180px]:hidden flex min-w-0 flex-1 items-center justify-start gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            {menuTriggerButton}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-60">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              return (
+                <DropdownMenuItem key={item.to} asChild>
+                  <Link to={item.to} className="cursor-pointer">
+                    <Icon className="mr-2 h-4 w-4" />
+                    {item.label}
+                  </Link>
+                </DropdownMenuItem>
+              )
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {shouldLoadAddDialog ? (
+          <Suspense fallback={
+            <Button
+              className="h-10 w-10 rounded-xl px-0 shadow-sm"
+              title={t('common.addProduct')}
+              aria-label={t('common.addProduct')}
+              onClick={() => setShouldLoadAddDialog(true)}
+            >
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </Button>
+          }>
+            <LazyAddProductDialog initiallyOpen trigger={compactAddDialogTrigger} />
+          </Suspense>
+        ) : (
+          <Button
+            className="h-10 w-10 rounded-xl px-0 shadow-sm"
+            title={t('common.addProduct')}
+            aria-label={t('common.addProduct')}
+            onClick={() => setShouldLoadAddDialog(true)}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
 
       <div className="flex shrink-0 items-center gap-2">
         {/* Location Status Icon */}
@@ -256,7 +329,7 @@ export function TopBar() {
         ) : (
           <Button
             onClick={() => navigate({ to: '/login' })}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground h-8 px-4 text-sm rounded-lg"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground h-8 rounded-lg px-3 text-sm sm:px-4"
           >
             {t('nav.signIn')}
           </Button>
