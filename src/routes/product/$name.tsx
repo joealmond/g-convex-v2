@@ -84,7 +84,7 @@ function ProductDetailContent() {
   const { startImpersonation } = useImpersonate()
   const { isOnline } = useOnlineStatus()
 
-  const product = useQuery(api.products.getByName, { name: decodeURIComponent(name) })
+  const product = useQuery(api.products.getByName, { name })
   const user = useQuery(api.users.current)
   const castVote = useMutation(api.votes.cast)
   const avoidedAllergens = useQuery(api.dietaryProfiles.getAvoidedAllergens) ?? []
@@ -205,7 +205,7 @@ function ProductDetailContent() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-2xl font-bold mb-4">{t('product.notFound')}</h1>
           <p className="text-muted-foreground mb-6">
-            {t('product.notFoundDesc', { name: decodeURIComponent(name) })}
+            {t('product.notFoundDesc', { name })}
           </p>
           <Button asChild>
             <Link to="/">

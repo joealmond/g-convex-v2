@@ -51,7 +51,7 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
   return (
     <Link
       to={'/product/$name'}
-      params={{ name: encodeURIComponent(product.name) }}
+      params={{ name: product.name }}
       className="group cursor-pointer h-full block"
       preload="intent"
     >

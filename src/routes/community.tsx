@@ -165,7 +165,7 @@ function FeedCard({ item, t }: { item: FeedItem; t: (key: string, params?: Recor
           {item.productImage && (
             <Link
               to="/product/$name"
-              params={{ name: encodeURIComponent(item.productName) }}
+              params={{ name: item.productName }}
               className="flex-shrink-0"
             >
               <img
@@ -196,7 +196,7 @@ function FeedCard({ item, t }: { item: FeedItem; t: (key: string, params?: Recor
                 <span className="text-sm text-muted-foreground">{t('community.ratedAs')}</span>
                 <Link
                   to="/product/$name"
-                  params={{ name: encodeURIComponent(item.productName) }}
+                  params={{ name: item.productName }}
                   className="text-sm font-semibold text-foreground hover:underline truncate"
                 >
                   {item.productName}
@@ -224,7 +224,7 @@ function FeedCard({ item, t }: { item: FeedItem; t: (key: string, params?: Recor
                 <span className="text-sm text-muted-foreground">{t('community.addedProduct')}</span>
                 <Link
                   to="/product/$name"
-                  params={{ name: encodeURIComponent(item.productName) }}
+                  params={{ name: item.productName }}
                   className="text-sm font-semibold text-foreground hover:underline truncate"
                 >
                   {item.productName}
@@ -239,7 +239,7 @@ function FeedCard({ item, t }: { item: FeedItem; t: (key: string, params?: Recor
                   <span className="text-sm text-muted-foreground">{t('community.commented')}</span>
                   <Link
                     to="/product/$name"
-                    params={{ name: encodeURIComponent(item.productName) }}
+                    params={{ name: item.productName }}
                     className="text-sm font-semibold text-foreground hover:underline truncate"
                   >
                     {item.productName}

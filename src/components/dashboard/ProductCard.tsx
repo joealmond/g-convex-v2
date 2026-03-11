@@ -98,7 +98,7 @@ export function ProductCard({ product, onClick, isSelected = false }: ProductCar
   )
 
   return (
-    <Link to="/product/$name" params={{ name: encodeURIComponent(product.name) }}>
+    <Link to="/product/$name" params={{ name: product.name }}>
       <motion.div
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}

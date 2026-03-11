@@ -1,4 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
+
+function subscribe(onStoreChange: () => void) {
+  window.addEventListener('online', onStoreChange)
+  window.addEventListener('offline', onStoreChange)
+
+  return () => {
+    window.removeEventListener('online', onStoreChange)
+    window.removeEventListener('offline', onStoreChange)
+  }
+}
+
+function getSnapshot() {
+  return navigator.onLine
+}
+
+function getServerSnapshot() {
+  return true
+}
 
 /**
  * Hook for tracking online/offline status.
@@ -6,24 +24,11 @@ import { useState, useEffect } from 'react'
  * Uses navigator.onLine + event listeners.
  */
 export function useOnlineStatus() {
-  const [isOnline, setIsOnline] = useState(() => {
-    // SSR-safe: default to true on server
-    if (typeof navigator === 'undefined') return true
-    return navigator.onLine
-  })
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true)
-    const handleOffline = () => setIsOnline(false)
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [])
+  const isOnline = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  )
 
   return { isOnline }
 }

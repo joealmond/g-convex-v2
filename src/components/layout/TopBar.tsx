@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { lazy, Suspense, useEffect, useSyncExternalStore } from 'react'
+import { lazy, Suspense, useSyncExternalStore } from 'react'
 import { appConfig } from '@/lib/app-config'
 import { useConvexAuth } from '@convex-dev/react-query'
 import { useQuery } from 'convex/react'
@@ -35,11 +35,6 @@ export function TopBar() {
   const { theme, setTheme, resolvedTheme } = useTheme()
   const { data: session } = useSession()
   const isHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false)
-
-  // Auto-request location on mount so the icon starts blue
-  useEffect(() => {
-    requestLocation()
-  }, [requestLocation])
 
   const handleSignOut = async () => {
     await authClient.signOut()

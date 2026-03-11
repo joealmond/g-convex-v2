@@ -4,6 +4,8 @@ This guide covers deploying G-Matrix to iOS and Android devices using Capacitor.
 
 Before a public launch, run the full gate in [docs/RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md) alongside this deployment guide.
 
+If production web infrastructure is intentionally deferred, you can continue native and web QA against the preview environment first. In that mode, keep preview deploys healthy, use the preview web origin for Convex `SITE_URL`, and postpone production Worker/domain setup until you are ready to open the public release track.
+
 ## Prerequisites
 
 | Tool | Version | Installation |

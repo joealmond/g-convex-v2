@@ -13,6 +13,14 @@ This checklist is the minimum release gate for shipping G-Matrix to the public a
 - [ ] CI is green in [.github/workflows/ci.yml](../.github/workflows/ci.yml)
 - [ ] No known P0 or P1 bugs in auth, voting, camera, offline sync, or product creation
 
+### Preview-Only Mode
+
+If production is intentionally deferred, treat preview as the active release candidate and do not block day-to-day QA on missing production infrastructure.
+
+- Required for preview-only work: `npm run release:check:preview`, preview Worker deploy, preview Convex `SITE_URL`, and manual QA on the preview URL
+- Explicitly deferred: `npm run release:check:prod`, first production Worker creation, production domain attachment, and production mobile store submission
+- Before enabling production later, complete the deferred production items in sections 3 and 6
+
 ## 2. Product Safety Boundaries
 
 - [ ] Frontend and backend score logic still match in [src/lib/score-utils.ts](../src/lib/score-utils.ts) and [convex/lib/scoreUtils.ts](../convex/lib/scoreUtils.ts)

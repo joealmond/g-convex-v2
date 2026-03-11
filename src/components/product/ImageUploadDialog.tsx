@@ -28,7 +28,7 @@ export function ImageUploadDialog({ trigger, onSuccess, initiallyOpen = false }:
     onExistingProductFound: (productName) => {
       navigate({
         to: '/product/$name',
-        params: { name: encodeURIComponent(productName) },
+        params: { name: productName },
       })
     },
   })

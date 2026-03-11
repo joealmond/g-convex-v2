@@ -319,6 +319,16 @@ npm run build
 wrangler deploy
 ```
 
+### Deferring Production
+
+You can run the project in a preview-only deployment mode while production infrastructure is not ready yet.
+
+- Use preview validation and deployment as the active path: `npm run release:check:preview`
+- Keep preview auth aligned by setting Convex `SITE_URL` to the live preview origin
+- Defer production-specific setup until later: production Worker creation, production custom domain, production Convex deployment, and `release:check:prod`
+
+See [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) for the full preview-only vs production gate.
+
 ### Netlify / Vercel
 
 See [docs/NETLIFY_SETUP.md](docs/NETLIFY_SETUP.md) or [docs/VERCEL_SETUP.md](docs/VERCEL_SETUP.md) for detailed instructions.

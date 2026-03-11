@@ -76,7 +76,7 @@ export function ProfileActivityFeed({
                       {t('profile.votedOn')}{' '}
                       <Link
                         to="/product/$name"
-                        params={{ name: encodeURIComponent(product.name) }}
+                        params={{ name: product.name }}
                         className="font-semibold hover:underline"
                       >
                         {product.name}
@@ -118,7 +118,7 @@ export function ProfileActivityFeed({
                     {t('profile.added')}{' '}
                     <Link
                       to="/product/$name"
-                      params={{ name: encodeURIComponent(product.name) }}
+                      params={{ name: product.name }}
                       className="font-semibold hover:underline"
                     >
                       {product.name}
