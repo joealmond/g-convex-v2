@@ -8,7 +8,7 @@ interface FeedGridProps {
 
 /**
  * Responsive grid for product cards
- * 2 columns on mobile, 3 on tablet, 4 on desktop
+ * 2 columns through tablet widths, 3 on xl screens, 4 on 2xl screens
  */
 export function FeedGrid({ children, isEmpty }: FeedGridProps) {
   const { t } = useTranslation()

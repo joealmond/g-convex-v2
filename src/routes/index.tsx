@@ -317,7 +317,7 @@ function HomePageContent() {
       {/* Browser decision: page/body scroll, with the control rail sticky below the top navbar. */}
       <div className={cn(
         'sticky z-[40] w-full border-b border-border/60 bg-background/95 pb-4 backdrop-blur-sm md:z-[45]',
-        isBrowser ? 'top-[3.5rem]' : 'top-0 md:top-[3.5rem]'
+        isBrowser ? 'top-[calc(3.5rem+env(safe-area-inset-top,0px))]' : 'top-0 md:top-[calc(3.5rem+env(safe-area-inset-top,0px))]'
       )}>
         <div className="flex items-center gap-2 pt-1 md:pt-3">
           {/* Search Input */}

@@ -289,13 +289,6 @@ input, textarea, [contenteditable], .selectable {
   border: none !important;
 }
 
-/* Hide Leaflet zoom controls on mobile — pinch zoom is sufficient */
-@media (max-width: 767px) {
-  .leaflet-control-zoom {
-    display: none !important;
-  }
-}
-
 /**
  * Camera preview transparency for capacitor-camera-view.
  * The native camera renders BEHIND the WebView, so we must make

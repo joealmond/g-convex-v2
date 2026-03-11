@@ -144,11 +144,13 @@ function MapPageContent() {
   return (
     <div className={cn(
       'absolute inset-x-0 md:bottom-0',
-      isBrowser ? 'top-12 bottom-0' : 'top-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] md:top-12'
+      isBrowser
+        ? 'top-[calc(3.5rem+env(safe-area-inset-top,0px))] bottom-0'
+        : 'top-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] md:top-[calc(3.5rem+env(safe-area-inset-top,0px))]'
     )}>
       {/* Filter Chips — floating over the map */}
       <div className={cn(
-        'absolute left-2 right-2 z-[400] flex items-center gap-2 md:left-4 md:right-4 md:top-4',
+        'absolute right-2 z-[400] flex items-center gap-2 left-14 sm:left-2 md:left-4 md:right-4 md:top-4',
         isBrowser ? 'top-4' : 'top-[calc(env(safe-area-inset-top,0px)+0.5rem)]'
       )}>
         <FilterChips 
@@ -156,6 +158,7 @@ function MapPageContent() {
           onChange={setFilterType} 
           nearbyRange={nearbyRange}
           onRangeChange={handleRangeChange}
+          compact
         />
         {geoLoading && (
           <span className="text-[10px] text-muted-foreground whitespace-nowrap rounded-full bg-background/80 px-2 py-0.5">
