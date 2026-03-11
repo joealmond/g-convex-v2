@@ -1,5 +1,5 @@
-import { Link, useNavigate } from '@tanstack/react-router'
-import { lazy, Suspense, useSyncExternalStore } from 'react'
+import { Link, useLocation, useNavigate } from '@tanstack/react-router'
+import { lazy, Suspense, useState, useSyncExternalStore } from 'react'
 import { appConfig } from '@/lib/app-config'
 import { useConvexAuth } from '@convex-dev/react-query'
 import { useQuery } from 'convex/react'
@@ -7,14 +7,19 @@ import { api } from '@convex/_generated/api'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { LogOut, MapPin, Trophy, Moon, Sun, Monitor } from 'lucide-react'
+import { Grid3X3, Loader2, LogOut, Map, MapPin, MessageCircle, Monitor, Moon, Plus, Shield, Sun, Trophy, User } from 'lucide-react'
 import { authClient, useSession } from '@/lib/auth-client'
 import { useGeolocation, useTheme } from '@/hooks'
+import { useAdmin } from '@/hooks/use-admin'
 import { useTranslation } from '@/hooks/use-translation'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { cn } from '@/lib/utils'
 
 const LazyScoutCard = lazy(() =>
   import('@/components/dashboard/ScoutCard').then((module) => ({ default: module.ScoutCard }))
+)
+const LazyAddProductDialog = lazy(() =>
+  import('@/components/dashboard/AddProductDialog').then((module) => ({ default: module.AddProductDialog }))
 )
 
 function subscribeToHydration() {
@@ -29,12 +34,15 @@ function subscribeToHydration() {
 export function TopBar() {
   const { t } = useTranslation()
   const { isAuthenticated } = useConvexAuth()
+  const location = useLocation()
   const navigate = useNavigate()
   const profile = useQuery(api.profiles.getCurrent)
   const { coords, loading: geoLoading, requestLocation } = useGeolocation()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const { data: session } = useSession()
+  const { isAdmin } = useAdmin()
   const isHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false)
+  const [shouldLoadAddDialog, setShouldLoadAddDialog] = useState(false)
 
   const handleSignOut = async () => {
     await authClient.signOut()
@@ -70,19 +78,96 @@ export function TopBar() {
     return t('theme.light')
   }
 
+  const isActive = (path: string) => {
+    if (path === '/') return location.pathname === '/'
+    return location.pathname.startsWith(path)
+  }
+
+  const navItems = [
+    { to: '/', label: t('nav.home'), icon: Grid3X3 },
+    { to: '/community', label: t('nav.community'), icon: MessageCircle },
+    { to: '/map', label: t('nav.map'), icon: Map },
+    { to: '/profile', label: t('nav.profile'), icon: User },
+  ]
+
+  if (isAdmin) {
+    navItems.push({ to: '/admin', label: t('nav.adminPanel'), icon: Shield })
+  }
+
+  const desktopNavClass = (active: boolean) => cn(
+    'inline-flex h-10 items-center gap-2 border-b-2 px-1 text-sm font-medium transition-colors whitespace-nowrap',
+    active
+      ? 'border-primary text-foreground'
+      : 'border-transparent text-muted-foreground hover:border-primary/30 hover:text-foreground'
+  )
+
+  const addDialogTrigger = (
+    <Button
+      className="h-10 rounded-full px-3 shadow-sm"
+      title={t('common.addProduct')}
+      aria-label={t('common.addProduct')}
+    >
+      <Plus className="h-4 w-4" />
+      <span className="hidden lg:inline">{t('common.addProduct')}</span>
+    </Button>
+  )
+
+  const addDialogLoadingTrigger = (
+    <Button
+      className="h-10 rounded-full px-3 shadow-sm"
+      title={t('common.addProduct')}
+      aria-label={t('common.addProduct')}
+      onClick={() => setShouldLoadAddDialog(true)}
+    >
+      <Loader2 className="h-4 w-4 animate-spin" />
+      <span className="hidden lg:inline">{t('common.addProduct')}</span>
+    </Button>
+  )
+
   return (
-    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border safe-top hidden md:block">
-    <div className="h-12 flex items-center justify-between px-4 sm:px-6">
-      {/* Left: Logo/App Name */}
-      <Link to="/" className="flex items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+    <header className="sticky top-0 z-50 hidden border-b border-border bg-background/95 backdrop-blur-sm safe-top md:block">
+    <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+      <Link to="/" className="flex shrink-0 items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-sm">
           <span className="text-primary-foreground font-bold text-sm">G</span>
         </div>
-        <span className="hidden sm:inline text-foreground">{appConfig.appName}</span>
+        <span className="hidden lg:inline text-foreground">{appConfig.appName}</span>
       </Link>
 
-      {/* Right: Location Icon + Theme Toggle + Points Badge + Auth */}
-      <div className="flex items-center gap-2">
+      <nav className="flex min-w-0 flex-1 items-center justify-center gap-4 overflow-x-auto py-1 lg:gap-5">
+        {navItems.map((item) => {
+          const Icon = item.icon
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={desktopNavClass(isActive(item.to))}
+              preload="intent"
+            >
+              <Icon className="h-4 w-4" />
+              <span>{item.label}</span>
+            </Link>
+          )
+        })}
+
+        {shouldLoadAddDialog ? (
+          <Suspense fallback={addDialogLoadingTrigger}>
+            <LazyAddProductDialog initiallyOpen trigger={addDialogTrigger} />
+          </Suspense>
+        ) : (
+          <Button
+            className="h-10 rounded-full px-3 shadow-sm"
+            title={t('common.addProduct')}
+            aria-label={t('common.addProduct')}
+            onClick={() => setShouldLoadAddDialog(true)}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden lg:inline">{t('common.addProduct')}</span>
+          </Button>
+        )}
+      </nav>
+
+      <div className="flex shrink-0 items-center gap-2">
         {/* Location Status Icon */}
         <button
           onClick={requestLocation}
@@ -137,7 +222,6 @@ export function TopBar() {
 
         {isHydrated && isAuthenticated ? (
           <div className="flex items-center gap-2">
-            {/* Avatar - links to profile */}
             <Link to="/profile">
               <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
                 {session?.user?.image && (
@@ -153,7 +237,6 @@ export function TopBar() {
               </Avatar>
             </Link>
 
-            {/* Sign Out Button */}
             <Button
               variant="ghost"
               size="icon"

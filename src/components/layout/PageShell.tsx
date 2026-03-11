@@ -20,7 +20,7 @@ export function PageShell({ children, className = '' }: PageShellProps) {
     >
       {/* Desktop: add extra top spacing to account for TopBar */}
       <div className={`hidden md:block h-6`} />
-      <div className={`w-full mx-auto md:max-w-3xl md:shadow-[0_2px_40px_rgba(0,0,0,0.08)] md:border md:border-border md:rounded-3xl md:bg-card md:overflow-hidden min-h-[calc(100dvh-5rem)] ${className}`}>
+      <div className={`w-full mx-auto md:w-[min(calc(100%-2.5rem),74rem)] xl:w-[min(calc(100%-4rem),88rem)] md:max-w-none md:shadow-[0_2px_40px_rgba(0,0,0,0.08)] md:border md:border-border md:rounded-3xl md:bg-card min-h-[calc(100dvh-5rem)] ${className}`}>
         {children}
       </div>
     </div>

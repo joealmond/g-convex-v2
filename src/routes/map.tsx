@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Suspense, useState, useMemo, useEffect, lazy } from 'react'
+import { Suspense, useState, useMemo, lazy } from 'react'
 import { FilterChips, type FilterType } from '@/components/feed/FilterChips'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { getNearbyRange } from '@/hooks/use-product-filter'
@@ -57,13 +57,8 @@ function MapPage() {
 function MapPageContent() {
   const { t } = useTranslation()
   const products = useQuery(api.products.listAll)
-  const { coords, loading: geoLoading, requestLocation } = useGeolocation()
+  const { coords, loading: geoLoading } = useGeolocation()
   const [filterType, setFilterType] = useState<FilterType>('all')
-
-  // Auto-request location on mount
-  useEffect(() => {
-    requestLocation()
-  }, [requestLocation])
 
   const isLoading = products === undefined
   const [nearbyRange, setNearbyRange] = useState(() => getNearbyRange())

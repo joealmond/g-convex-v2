@@ -56,18 +56,18 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
       preload="intent"
     >
       <motion.div
-        className="bg-card text-card-foreground rounded-2xl overflow-hidden shadow-card h-full flex flex-col"
+        className="bg-card text-card-foreground rounded-2xl overflow-hidden shadow-card h-full flex flex-col border border-border/70 md:flex-row md:items-stretch md:rounded-3xl md:bg-background/70"
         whileHover={{ y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
         whileTap={{ scale: 0.98 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       >
         {/* Product Image */}
-        <div className="relative aspect-square bg-background overflow-hidden">
+        <div className="relative aspect-square bg-background overflow-hidden md:w-[43%] md:min-w-[10.5rem] md:max-w-[13rem] md:aspect-[4/3] lg:w-[40%] xl:w-[42%]">
           {product.imageUrl ? (
             <img
               src={product.imageUrl}
               alt={product.name}
-              className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform"
+              className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform md:p-3"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
@@ -129,42 +129,42 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
         </div>
 
         {/* Info Section */}
-        <div className="p-3 flex-1 flex flex-col justify-between">
+        <div className="p-3 flex-1 flex flex-col justify-between md:p-4 md:min-w-0">
           {/* Product Name */}
-          <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors md:text-base">
             {product.name}
           </h3>
 
           {/* Distance (if available) */}
           {distanceKm !== undefined && (
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1 md:text-sm">
               {formatDistance(distanceKm, t)}
             </p>
           )}
 
           {/* Scoring Dots Row */}
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2 mt-2 md:mt-3">
             {/* Axis 1 (Safety) Dot */}
             <div
-              className={`w-2 h-2 rounded-full ${getSafetyColor(product.averageSafety)}`}
+              className={`w-2 h-2 rounded-full md:w-2.5 md:h-2.5 ${getSafetyColor(product.averageSafety)}`}
               title={`${appConfig.dimensions.axis1.label}: ${product.averageSafety.toFixed(0)}`}
             />
 
             {/* Axis 2 (Taste) Dot */}
             <div
-              className={`w-2 h-2 rounded-full ${getSafetyColor(product.averageTaste)}`}
+              className={`w-2 h-2 rounded-full md:w-2.5 md:h-2.5 ${getSafetyColor(product.averageTaste)}`}
               title={`${appConfig.dimensions.axis2.label}: ${product.averageTaste.toFixed(0)}`}
             />
 
             {/* Axis 3 (Price) Dot */}
             <div
-              className={`w-2 h-2 rounded-full ${getSafetyColor(priceScore)}`}
+              className={`w-2 h-2 rounded-full md:w-2.5 md:h-2.5 ${getSafetyColor(priceScore)}`}
               title={`${appConfig.dimensions.axis3.label}: ${priceScore.toFixed(0)}`}
             />
           </div>
 
           {/* Vote Count */}
-          <p className="text-xs text-muted-foreground mt-2">
+          <p className="text-xs text-muted-foreground mt-2 md:mt-3 md:text-sm">
             {product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}
           </p>
         </div>

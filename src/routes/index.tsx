@@ -108,7 +108,7 @@ function HomePageContent() {
   const { t } = useTranslation()
   const user = useQuery(api.users.current)
   const profile = useQuery(api.profiles.getCurrent)
-  const { coords, requestLocation } = useGeolocation()
+  const { coords } = useGeolocation()
   const { isAdmin } = useAdmin()
 
   // Product count for stat card (same query as profile page)
@@ -117,10 +117,6 @@ function HomePageContent() {
   // GPS
   const latitude = coords?.latitude
   const longitude = coords?.longitude
-
-  useEffect(() => {
-    requestLocation()
-  }, [requestLocation])
 
   // ── Filter state ──
   const [filterType, setFilterType] = useState<FilterType>('nearby')
@@ -314,9 +310,9 @@ function HomePageContent() {
   }
 
   return (
-    <main className="flex-1 mx-auto px-2 sm:px-4 pb-4 sm:pb-6 max-w-7xl w-full">
+    <main className="flex-1 mx-auto w-full px-2 pb-4 sm:px-4 sm:pb-6 md:px-6 xl:px-8">
       {/* Search Bar + View Toggle — sticky, sits directly under the notch safe area */}
-      <div className="sticky top-0 md:top-[3.5rem] z-[40] bg-background -mx-2 px-2 sm:-mx-4 sm:px-4 pb-3">
+      <div className="sticky top-0 z-[40] -mx-2 bg-background/95 px-2 pb-4 backdrop-blur-sm sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-5 sm:backdrop-blur-none border-b border-border/60">
         <div className="flex items-center gap-2 pt-1">
           {/* Search Input */}
           <div className="flex-1 relative">
