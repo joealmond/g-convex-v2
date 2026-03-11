@@ -29,6 +29,9 @@ const ProductChartTabs = lazy(() =>
 const ProductComments = lazy(() =>
   import('@/components/product/ProductComments').then((module) => ({ default: module.ProductComments }))
 )
+const ProductMap = lazy(() =>
+  import('@/components/map/ProductMap').then((module) => ({ default: module.ProductMap }))
+)
 const VoterList = lazy(() =>
   import('@/components/admin/VoterList').then((module) => ({ default: module.VoterList }))
 )
@@ -131,8 +134,17 @@ function ProductDetailContent() {
       Boolean(store.price)
     )
   )
+  const firstStoreWithGeo = product.stores?.find((store) => store.geoPoint)
   const hasStructuredIngredients = Boolean(product.ingredients && product.ingredients.length > 0)
   const hasOcrIngredients = Boolean(product.ingredientsText?.trim())
+  const mapSearch = firstStoreWithGeo?.geoPoint
+    ? {
+        productId: product._id,
+        name: product.name,
+        lat: firstStoreWithGeo.geoPoint.lat,
+        lng: firstStoreWithGeo.geoPoint.lng,
+      }
+    : undefined
   return (
     <main className="flex-1 px-4 py-6 md:px-6 xl:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -289,51 +301,74 @@ function ProductDetailContent() {
           </Card>
         ) : null}
 
-        {hasStoreData && (
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="text-lg">{t('product.whereToBuy')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <StoreList product={product as Product} />
-            </CardContent>
-          </Card>
-        )}
+        {(hasStoreData || hasStructuredIngredients || hasOcrIngredients) && (
+          <section className="grid gap-6 xl:grid-cols-2 xl:items-start">
+            {hasStoreData && (
+              <Card className="shadow-card">
+                <CardHeader>
+                  <CardTitle className="text-lg">{t('product.whereToBuy')}</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(15rem,18rem)]">
+                  <StoreList product={product as Product} mapSearchBase={{ productId: product._id, name: product.name }} />
 
-        {(hasStructuredIngredients || hasOcrIngredients) && (
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="text-lg">{t('product.ingredients')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {hasStructuredIngredients && (
-                <div className="flex flex-wrap gap-2">
-                  {product.ingredients?.map((ingredient, idx) => (
-                    <Badge
-                      key={idx}
-                      variant="outline"
-                      className="px-3 py-1 text-xs font-medium"
+                  {firstStoreWithGeo?.geoPoint && mapSearch ? (
+                    <Link to="/map" search={mapSearch} className="group block h-full min-h-[16rem]">
+                      <div className="relative h-full overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-sm">
+                        <div className="pointer-events-none h-full min-h-[16rem] w-full">
+                          <Suspense fallback={<div className="flex h-full min-h-[16rem] items-center justify-center bg-muted/20 text-sm text-muted-foreground">{t('common.loading')}</div>}>
+                            <ProductMap
+                              products={[product as Product]}
+                              center={[firstStoreWithGeo.geoPoint.lat, firstStoreWithGeo.geoPoint.lng]}
+                              zoom={15}
+                            />
+                          </Suspense>
+                        </div>
+                        <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-full bg-card/95 px-3 py-2 text-center text-sm font-semibold text-foreground shadow-md backdrop-blur-sm transition-transform group-hover:-translate-y-0.5">
+                          {t('store.viewOnMap')}
+                        </div>
+                      </div>
+                    </Link>
+                  ) : null}
+                </CardContent>
+              </Card>
+            )}
+
+            {(hasStructuredIngredients || hasOcrIngredients) && (
+              <Card className="shadow-card">
+                <CardHeader>
+                  <CardTitle className="text-lg">{t('product.ingredients')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {hasStructuredIngredients && (
+                    <div className="flex flex-wrap gap-2">
+                      {product.ingredients?.map((ingredient, idx) => (
+                        <Badge
+                          key={idx}
+                          variant="outline"
+                          className="px-3 py-1 text-xs font-medium"
+                        >
+                          {ingredient}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {hasOcrIngredients && (
+                    <CollapsibleSection
+                      title={t('imageUpload.ingredientsFromScan')}
+                      preview={<p className="line-clamp-2 text-xs text-muted-foreground">{t('product.ingredientsFromScanPreview')}</p>}
                     >
-                      {ingredient}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              {hasOcrIngredients && (
-                <CollapsibleSection
-                  title={t('imageUpload.ingredientsFromScan')}
-                  preview={<p className="line-clamp-2 text-xs text-muted-foreground">{t('product.ingredientsFromScanPreview')}</p>}
-                >
-                  <div className="p-4">
-                    <p className="whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
-                      {product.ingredientsText}
-                    </p>
-                  </div>
-                </CollapsibleSection>
-              )}
-            </CardContent>
-          </Card>
+                      <div className="p-4">
+                        <p className="whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
+                          {product.ingredientsText}
+                        </p>
+                      </div>
+                    </CollapsibleSection>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </section>
         )}
 
         <Card className="shadow-card">

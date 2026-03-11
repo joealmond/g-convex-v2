@@ -245,7 +245,11 @@
     "myVote": "My Vote",
     "allVotes": "All Votes",
     "votesSection": "Votes",
-    "priceNotRated": "Price not rated yet"
+    "priceNotRated": "Price not rated yet",
+    "myVoteHelp": "This keeps your last rating visible against the live community consensus.",
+    "voteSpread": "Vote spread",
+    "votesSectionIntro": "This chart is useful once a few people have voted: it shows whether opinions cluster tightly or split across the matrix.",
+    "votesSectionEmpty": "This section is for individual community vote positions. Until people vote, there is nothing meaningful to plot here, so the best next step is the first vote."
   },
   "profile": {
     "anonymousUser": "Anonymous User",
@@ -344,7 +348,10 @@
     "noProductsWithLocation": "No products found with location",
     "noProductsHint": "Try adjusting your filters or add products with store locations. Make sure to allow location access to add pinned products.",
     "pins": "{count} pins",
-    "productsCount": "{count} products"
+    "productsCount": "{count} products",
+    "focusedProduct": "Focused product",
+    "focusedProductHint": "Showing the exact product location you opened from the detail page.",
+    "showAllProducts": "Show all products"
   },
   "theme": {
     "system": "Theme: System (tap to change)",
@@ -680,6 +687,7 @@
     "beFirst": "Be the first to add a location!",
     "nearMe": "Near Me",
     "openInMaps": "Open in maps",
+    "viewOnMap": "View on map",
     "subtitle": "Community-rated products available at this location",
     "products": "Products",
     "totalVotes": "Total Votes",

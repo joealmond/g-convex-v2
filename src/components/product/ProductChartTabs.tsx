@@ -30,9 +30,10 @@ export function ProductChartTabs({
 }: ProductChartTabsProps) {
   const hasPrice = !!product.avgPrice
   const tabCount = hasPrice ? 3 : 2
+  const hasVotes = allVotesCount > 0
 
   return (
-    <Tabs defaultValue="all-votes" className="w-full">
+    <Tabs defaultValue={myVote ? 'my-vote' : 'all-votes'} className="w-full">
       <TabsList className={`grid w-full mb-4 ${tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
         <TabsTrigger value="my-vote" disabled={!myVote}>
           {t('product.myVote')}
@@ -46,8 +47,8 @@ export function ProductChartTabs({
       {/* My Vote View */}
       <TabsContent value="my-vote">
         {myVote ? (
-          <>
-            <div className="aspect-square max-w-sm mx-auto">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] lg:items-center">
+            <div className="mx-auto aspect-square w-full max-w-[16rem]">
               <CoordinateGrid
                 initialSafety={myVote.safety ?? 50}
                 initialTaste={myVote.taste ?? 50}
@@ -55,14 +56,19 @@ export function ProductChartTabs({
                 disabled
               />
             </div>
-            <p className="text-sm text-muted-foreground text-center mt-4">
-              {t('voting.yourVote', { safety: myVote.safety ?? 50, taste: myVote.taste ?? 50 })}
-              {myVote.price && t('voting.yourVotePrice', { price: myVote.price })}
-            </p>
-          </>
+            <div className="rounded-2xl border border-border bg-muted/20 p-4 sm:p-5">
+              <p className="text-base font-semibold text-foreground">
+                {t('voting.yourVote', { safety: myVote.safety ?? 50, taste: myVote.taste ?? 50 })}
+                {myVote.price && t('voting.yourVotePrice', { price: myVote.price })}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {t('product.myVoteHelp')}
+              </p>
+            </div>
+          </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">
+          <div className="rounded-2xl border border-dashed border-border bg-muted/10 px-4 py-8 text-center sm:px-6">
+            <p className="mb-3 text-muted-foreground">
               {t('voting.notVotedYet')}
             </p>
             <Button
@@ -84,27 +90,63 @@ export function ProductChartTabs({
       </TabsContent>
 
       {/* All Votes View */}
-      <TabsContent value="all-votes">
-        <div className="max-w-sm mx-auto">
-          <AllVotesChart
-            productId={product._id}
-            highlightVoteId={myVote?._id}
-          />
-        </div>
-        <p className="text-sm text-muted-foreground text-center mt-4">
-          {allVotesCount} {allVotesCount === 1 ? t('voting.individualVote') : t('voting.individualVotes')}
-        </p>
-        <div className="mt-6 aspect-square max-w-sm mx-auto">
-          <CoordinateGrid
-            initialSafety={product.averageSafety}
-            initialTaste={product.averageTaste}
-            onVote={() => {}}
-            disabled
-          />
-        </div>
-        <p className="text-sm text-muted-foreground text-center mt-4">
-          {t('voting.communityAverage')}
-        </p>
+      <TabsContent value="all-votes" className="space-y-4">
+        {hasVotes ? (
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_17rem] xl:items-start">
+            <div className="rounded-2xl border border-border bg-muted/10 p-3 sm:p-4">
+              <AllVotesChart
+                productId={product._id}
+                highlightVoteId={myVote?._id}
+              />
+            </div>
+
+            <div className="grid gap-3">
+              <div className="rounded-2xl border border-border bg-muted/20 p-4">
+                <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                  {t('product.voteSpread')}
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-foreground">
+                  {allVotesCount}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {allVotesCount === 1 ? t('voting.individualVote') : t('voting.individualVotes')}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-muted/20 p-4">
+                <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                  {t('voting.safety')}
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-foreground">
+                  {Math.round(product.averageSafety)}/100
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-muted/20 p-4">
+                <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                  {t('voting.taste')}
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-foreground">
+                  {Math.round(product.averageTaste)}/100
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-muted/20 p-4 text-sm text-muted-foreground">
+                {t('product.votesSectionIntro')}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-border bg-muted/10 px-4 py-8 text-center sm:px-6">
+            <p className="text-base font-semibold text-foreground">{t('voting.noVotesYet')}</p>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
+              {t('product.votesSectionEmpty')}
+            </p>
+            <Button className="mt-4" onClick={onRequestVote}>
+              {t('product.voteAction')}
+            </Button>
+          </div>
+        )}
       </TabsContent>
 
       {/* Price History View */}

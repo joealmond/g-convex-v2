@@ -245,7 +245,11 @@
     "myVote": "Szavazatom",
     "allVotes": "Összes Szavazat",
     "votesSection": "Szavazatok",
-    "priceNotRated": "Még nincs árértékelés"
+    "priceNotRated": "Még nincs árértékelés",
+    "myVoteHelp": "Itt látod a saját legutóbbi értékelésedet a friss közösségi állapot mellett.",
+    "voteSpread": "Szavazati szórás",
+    "votesSectionIntro": "Ez a grafikon akkor hasznos, ha már többen szavaztak: megmutatja, hogy a vélemények egy helyre húznak-e, vagy szétszóródnak a mátrixban.",
+    "votesSectionEmpty": "Ez a rész az egyéni közösségi szavazatok pozícióit mutatja. Amíg senki sem szavazott, nincs érdemi eloszlás, ezért most az első szavazat a következő értelmes lépés."
   },
   "profile": {
     "anonymousUser": "Névtelen Felhasználó",
@@ -344,7 +348,10 @@
     "noProductsWithLocation": "Nincs termék helyadattal",
     "noProductsHint": "Próbáld módosítani a szűrőket vagy adj hozzá termékeket bolt helyszínnel. Engedélyezd a helymeghatározást a rögzített termékek hozzáadásához.",
     "pins": "{count} jelölő",
-    "productsCount": "{count} termék"
+    "productsCount": "{count} termék",
+    "focusedProduct": "Kiemelt termék",
+    "focusedProductHint": "A részletes oldalról megnyitott pontos termékhelyet mutatjuk.",
+    "showAllProducts": "Összes termék mutatása"
   },
   "theme": {
     "system": "Téma: Rendszer (érintsd a váltáshoz)",
@@ -680,6 +687,7 @@
     "beFirst": "Légy az első, aki helyszínt ad hozzá!",
     "nearMe": "Közelemben",
     "openInMaps": "Megnyitás térképen",
+    "viewOnMap": "Megnézem a térképen",
     "subtitle": "A közösség által értékelt termékek ezen a helyen",
     "products": "Termékek",
     "totalVotes": "Összes Szavazat",

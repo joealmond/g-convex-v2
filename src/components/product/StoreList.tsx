@@ -5,12 +5,15 @@ import { useGeolocation } from '@/hooks/use-geolocation'
 import { Badge } from '@/components/ui/badge'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from '@/hooks/use-translation'
-import { isIOS, isNative } from '@/lib/platform'
 import { formatRelativeTimeI18n } from '@/lib/format-time'
 import { formatDistance } from '@/lib/format-distance'
 
 interface StoreListProps {
   product: Product
+  mapSearchBase?: {
+    productId: string
+    name: string
+  }
 }
 
 function getStoreFreshnessColor(lastSeenAt: number): string {
@@ -29,7 +32,7 @@ function getStoreFreshnessColor(lastSeenAt: number): string {
  * - "Near Me" badge for stores within 5km
  * - Tap to open in maps (Apple Maps on iOS, Google Maps elsewhere)
  */
-export function StoreList({ product }: StoreListProps) {
+export function StoreList({ product, mapSearchBase }: StoreListProps) {
   const { t } = useTranslation()
   const { coords } = useGeolocation()
 
@@ -60,30 +63,18 @@ export function StoreList({ product }: StoreListProps) {
     return distance !== undefined && distance <= 5
   }
 
-  /**
-   * Open store location in maps — Apple Maps on iOS native, Google Maps elsewhere
-   */
-  const handleOpenMap = (store: (typeof product.stores)[0]) => {
-    if (!store.geoPoint) return
-    const { lat, lng } = store.geoPoint
-    const label = encodeURIComponent(store.name)
-
-    let mapsUrl: string
-    if (isNative() && isIOS()) {
-      // Apple Maps deep link
-      mapsUrl = `maps:?q=${label}&ll=${lat},${lng}`
-    } else {
-      // Google Maps (works on Android native + web)
-      mapsUrl = `https://maps.google.com/?q=${lat},${lng}(${label})`
-    }
-    window.open(mapsUrl, '_blank')
-  }
-
   return (
     <div className="space-y-3">
       {product.stores.map((store, index) => {
         const distance = getStoreDistance(store)
         const nearby = isNearby(store)
+        const mapSearch = store.geoPoint && mapSearchBase
+          ? {
+              ...mapSearchBase,
+              lat: store.geoPoint.lat,
+              lng: store.geoPoint.lng,
+            }
+          : undefined
 
         return (
           <div
@@ -95,13 +86,17 @@ export function StoreList({ product }: StoreListProps) {
           >
             {/* Store Name */}
             <div className="flex items-center justify-between mb-2">
-              <Link
-                to="/store/$name"
-                params={{ name: store.name }}
-                className="font-semibold text-sm text-foreground hover:text-primary hover:underline truncate"
-              >
-                {store.name}
-              </Link>
+              {mapSearch ? (
+                <Link
+                  to="/map"
+                  search={mapSearch}
+                  className="truncate text-sm font-semibold text-foreground hover:text-primary hover:underline"
+                >
+                  {store.name}
+                </Link>
+              ) : (
+                <p className="truncate text-sm font-semibold text-foreground">{store.name}</p>
+              )}
 
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {/* Near Me Badge */}
@@ -136,14 +131,15 @@ export function StoreList({ product }: StoreListProps) {
               )}
 
               {/* Map Link */}
-              {store.geoPoint && (
-                <button
-                  onClick={() => handleOpenMap(store)}
-                  className="flex items-center gap-1 hover:text-primary transition-colors ml-auto"
+              {mapSearch && (
+                <Link
+                  to="/map"
+                  search={mapSearch}
+                  className="ml-auto flex items-center gap-1 transition-colors hover:text-primary"
                 >
                   <Navigation className="h-3 w-3" />
-                  <span>{t('store.openInMaps')}</span>
-                </button>
+                  <span>{t('store.viewOnMap')}</span>
+                </Link>
               )}
             </div>
           </div>

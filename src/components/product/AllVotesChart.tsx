@@ -27,7 +27,7 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
 
   if (!votes || votes.length === 0) {
     return (
-      <div className="aspect-square w-full flex items-center justify-center text-muted-foreground">
+      <div className="flex h-[14rem] w-full items-center justify-center text-muted-foreground sm:h-[18rem]">
         <div className="text-center">
           <p className="mb-2">{t('chart.noVotesYet')}</p>
           <p className="text-sm">{t('chart.beFirstToVote')}</p>
@@ -65,7 +65,7 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
   }
 
   return (
-    <div className="w-full aspect-square">
+    <div className="h-[18rem] w-full sm:h-[22rem] lg:h-[24rem]">
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart
           margin={{ top: 20, right: 20, bottom: 40, left: 40 }}
@@ -163,7 +163,7 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
       </ResponsiveContainer>
       
       {/* Legend */}
-      <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
           <div className="h-3 w-3 rounded-full" style={{ background: chartColors.safetyHigh }} />
           <span>{t('chart.registered')}</span>

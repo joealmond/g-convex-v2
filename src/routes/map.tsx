@@ -1,8 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Suspense, useState, useMemo, lazy } from 'react'
 import { FilterChips, type FilterType } from '@/components/feed/FilterChips'
+import { Button } from '@/components/ui/button'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { getNearbyRange } from '@/hooks/use-product-filter'
 import { isWeb } from '@/lib/platform'
@@ -10,6 +11,14 @@ import { cn } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useTranslation } from '@/hooks/use-translation'
+import { z } from 'zod'
+
+const mapSearchSchema = z.object({
+  productId: z.string().optional(),
+  name: z.string().optional(),
+  lat: z.coerce.number().optional(),
+  lng: z.coerce.number().optional(),
+})
 
 function getProductDistance(product: Product, coords?: { latitude: number; longitude: number } | null): number | undefined {
   if (!coords?.latitude || !coords?.longitude || !product.stores || product.stores.length === 0) {
@@ -35,6 +44,7 @@ const ProductMap = lazy(() =>
 )
 
 export const Route = createFileRoute('/map')({
+  validateSearch: mapSearchSchema,
   component: MapPage,
 })
 
@@ -58,6 +68,7 @@ function MapPage() {
 
 function MapPageContent() {
   const { t } = useTranslation()
+  const search = Route.useSearch()
   const products = useQuery(api.products.listAll)
   const { coords, loading: geoLoading } = useGeolocation()
   const isBrowser = isWeb()
@@ -67,6 +78,13 @@ function MapPageContent() {
   const [nearbyRange, setNearbyRange] = useState(() => getNearbyRange())
   const [showRangeCircle, setShowRangeCircle] = useState(false)
 
+  const focusedProducts = useMemo(() => {
+    if (!products || !search.productId) return undefined
+    return products.filter((product) => product._id === search.productId)
+  }, [products, search.productId])
+
+  const focusedProduct = focusedProducts?.[0]
+
   const handleRangeChange = (km: number) => {
     setNearbyRange(km)
     setShowRangeCircle(true)
@@ -75,17 +93,26 @@ function MapPageContent() {
 
   // Determine map center (user location or Budapest fallback)
   const mapCenter: [number, number] = useMemo(() => {
+    if (typeof search.lat === 'number' && typeof search.lng === 'number') {
+      return [search.lat, search.lng]
+    }
     if (coords !== null && coords.latitude !== null && coords.longitude !== null) {
       return [coords.latitude, coords.longitude]
     }
     return [47.497, 19.04] // Budapest, Hungary
-  }, [coords])
+  }, [coords, search.lat, search.lng])
 
   /**
    * Filter products based on selected filter
    */
   const filteredProducts = useMemo(() => {
     if (!products) return []
+
+    if (focusedProducts && focusedProducts.length > 0) {
+      return focusedProducts.filter(
+        (product) => product.stores && product.stores.some((store) => store.geoPoint)
+      )
+    }
 
     let result = [...products]
 
@@ -123,7 +150,7 @@ function MapPageContent() {
     }
 
     return result
-  }, [products, filterType, coords, nearbyRange])
+  }, [products, focusedProducts, filterType, coords, nearbyRange])
 
   // Count total map markers (each store with a geoPoint = 1 marker)
   const markerCount = useMemo(() => {
@@ -177,7 +204,7 @@ function MapPageContent() {
           <ProductMap
             products={filteredProducts}
             center={mapCenter}
-            zoom={13}
+            zoom={focusedProduct ? 15 : 13}
             userLocation={userLocation}
             nearbyRange={nearbyRange * 1000} // ProductMap expects meters
             showRangeCircle={showRangeCircle}
@@ -201,6 +228,30 @@ function MapPageContent() {
           <p className="text-xs font-semibold text-foreground">
             {t('location.pins', { count: markerCount })} · {t('location.productsCount', { count: filteredProducts.length })}
           </p>
+        </div>
+      )}
+
+      {focusedProduct && (
+        <div className="absolute bottom-16 left-2 right-2 z-[400] md:bottom-4 md:left-auto md:right-4 md:w-[22rem]">
+          <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-lg backdrop-blur-sm">
+            <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+              {t('location.focusedProduct')}
+            </p>
+            <p className="mt-1 text-base font-semibold text-foreground">{focusedProduct.name}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t('location.focusedProductHint')}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" asChild>
+                <Link to="/product/$name" params={{ name: focusedProduct.name }}>
+                  {t('productMap.viewProduct')}
+                </Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link to="/map">{t('location.showAllProducts')}</Link>
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

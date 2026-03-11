@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from 'react'
 import { useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
 import { VotingSheet, type ThumbsVotePayload } from '@/components/product/VotingSheet'
 import { StoreTagInput } from '@/components/dashboard/StoreTagInput'
@@ -121,39 +121,43 @@ export function VoteProductDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
-        <DialogHeader>
+      <DialogContent className="w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] overflow-hidden rounded-[1.75rem] border-border bg-card p-0 shadow-2xl sm:max-w-3xl lg:max-w-4xl">
+        <DialogHeader className="border-b border-border px-4 py-4 sm:px-6">
           <DialogTitle>{t('product.rateThisProduct')}</DialogTitle>
+          <DialogDescription>{product.name}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          <VotingSheet
-            onVote={handleVote}
-            disabled={isVoting}
-            allergenScores={product.allergenScores as Record<string, { aiBase: 'contains' | 'free-from' | 'unknown'; upVotes: number; downVotes: number }> | undefined}
-            tasteUpVotes={product.tasteUpVotes ?? 0}
-            tasteDownVotes={product.tasteDownVotes ?? 0}
-            avoidedAllergens={avoidedAllergens}
-          />
+        <div className="max-h-[calc(92vh-5rem)] overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+          <div className="space-y-5">
+            <VotingSheet
+              onVote={handleVote}
+              disabled={isVoting}
+              allergenScores={product.allergenScores as Record<string, { aiBase: 'contains' | 'free-from' | 'unknown'; upVotes: number; downVotes: number }> | undefined}
+              tasteUpVotes={product.tasteUpVotes ?? 0}
+              tasteDownVotes={product.tasteDownVotes ?? 0}
+              avoidedAllergens={avoidedAllergens}
+            />
 
-          <CollapsibleSection
-            title={t('product.whereDidYouBuy')}
-            defaultOpen={Boolean(storeTag || (storeLat !== undefined && storeLon !== undefined))}
-            preview={
-              <p className="truncate text-xs text-muted-foreground">
-                {locationPreview || t('imageUpload.storeHelpText')}
-              </p>
-            }
-          >
-            <div className="p-4">
-              <StoreTagInput
-                value={storeTag}
-                onChange={setStoreTag}
-                onLocationCapture={handleLocationCapture}
-                disabled={isVoting}
-              />
-            </div>
-          </CollapsibleSection>
+            <CollapsibleSection
+              title={t('product.whereDidYouBuy')}
+              className="bg-muted/20"
+              defaultOpen={Boolean(storeTag || (storeLat !== undefined && storeLon !== undefined))}
+              preview={
+                <p className="truncate text-xs text-muted-foreground">
+                  {locationPreview || t('imageUpload.storeHelpText')}
+                </p>
+              }
+            >
+              <div className="p-4 sm:p-5">
+                <StoreTagInput
+                  value={storeTag}
+                  onChange={setStoreTag}
+                  onLocationCapture={handleLocationCapture}
+                  disabled={isVoting}
+                />
+              </div>
+            </CollapsibleSection>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
