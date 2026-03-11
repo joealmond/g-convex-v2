@@ -80,8 +80,8 @@ export function FilterChips({ value, onChange, nearbyRange, onRangeChange, compa
               value === filter.value
                 ? 'bg-primary text-primary-foreground'
                 : compact
-                  ? 'bg-background/80 text-muted-foreground border border-border/50 hover:bg-background'
-                  : 'bg-muted text-muted-foreground border border-border hover:bg-card'
+                  ? 'bg-card/95 text-foreground border border-border shadow-sm hover:bg-card'
+                  : 'bg-card text-foreground border border-border hover:bg-muted'
             )}
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}

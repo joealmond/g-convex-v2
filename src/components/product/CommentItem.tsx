@@ -108,7 +108,7 @@ export function CommentItem({
                 onChange={(e) => setEditText(e.target.value)}
                 rows={2}
                 maxLength={500}
-                className="flex-1 resize-none rounded-lg border border-border bg-card px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="flex-1 resize-none rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
               <Button size="sm" onClick={handleEdit} disabled={!editText.trim()}>
                 {t('common.save')}

@@ -145,7 +145,7 @@ function MapPageContent() {
     <div className={cn(
       'absolute inset-x-0 md:bottom-0',
       isBrowser
-        ? 'top-0 bottom-0'
+        ? 'top-[calc(3.5rem+env(safe-area-inset-top,0px))] bottom-0'
         : 'top-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] md:top-[calc(3.5rem+env(safe-area-inset-top,0px))]'
     )}>
       {/* Filter Chips — floating over the map */}

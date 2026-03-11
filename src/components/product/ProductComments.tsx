@@ -23,18 +23,14 @@ export function ProductComments({ productId }: ProductCommentsProps) {
   })
 
   const isLoading = comments === undefined
+  const commentCount = comments?.length ?? 0
 
   return (
-    <Card className="shadow-card">
+    <Card className="border-border shadow-card">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <MessageCircle className="h-5 w-5" />
-          {t('community.comments')}
-          {comments && comments.length > 0 && (
-            <span className="text-sm font-normal text-muted-foreground">
-              ({comments.length})
-            </span>
-          )}
+          {t('community.comments', { count: commentCount })}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

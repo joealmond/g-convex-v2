@@ -56,7 +56,7 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
       preload="intent"
     >
       <motion.div
-        className="bg-card text-card-foreground rounded-2xl overflow-hidden shadow-card h-full flex flex-col border border-border/70 md:flex-row md:items-stretch md:rounded-3xl md:bg-background/70"
+        className="bg-card text-card-foreground rounded-2xl overflow-hidden shadow-card h-full flex flex-col border border-border md:flex-row md:items-stretch md:rounded-3xl md:bg-card"
         whileHover={{ y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
         whileTap={{ scale: 0.98 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
