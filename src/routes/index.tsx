@@ -12,6 +12,7 @@ import { useGeolocation } from '@/hooks/use-geolocation'
 import { useAdmin } from '@/hooks/use-admin'
 import { useTranslation } from '@/hooks/use-translation'
 import { useNearbyRangeState } from '@/hooks/use-product-filter'
+import { useSessionSensitivityFilters } from '@/hooks/use-session-sensitivity-filters'
 import { appConfig } from '@/lib/app-config'
 import { isWeb } from '@/lib/platform'
 import { getQuadrant } from '@/lib/types'
@@ -127,7 +128,6 @@ function HomePageContent() {
   // If user has a dietary profile, override with their saved preferences.
   const nicheDefault = useMemo(() => new Set([appConfig.riskConcept]), [])
   const dietaryProfile = useQuery(api.dietaryProfiles.getUserProfile)
-  const [manualSensitivities, setManualSensitivities] = useState<Set<string> | null>(null)
 
   const derivedSensitivities = useMemo(() => {
     if (dietaryProfile === undefined || dietaryProfile === null) return nicheDefault
@@ -154,17 +154,8 @@ function HomePageContent() {
     return allergenIds.size > 0 ? allergenIds : nicheDefault
   }, [dietaryProfile, nicheDefault])
 
-  const activeSensitivities = manualSensitivities ?? derivedSensitivities
-
-  const toggleSensitivity = useCallback((id: string) => {
-    setManualSensitivities((prev) => {
-      const base = prev ?? derivedSensitivities
-      const next = new Set(base)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }, [derivedSensitivities])
+  const { activeFilters: activeSensitivities, toggleFilter: toggleSensitivity } =
+    useSessionSensitivityFilters(derivedSensitivities)
 
   const excludeAllergens = useMemo(
     () => buildExcludeAllergens(activeSensitivities),
