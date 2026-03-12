@@ -1,9 +1,26 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import type { FilterType } from '@/components/feed/FilterChips'
 import type { Product } from '@/lib/types'
 
 /** Default nearby range in km, overridden by localStorage "g-matrix-nearby-range" */
 const DEFAULT_NEARBY_RANGE_KM = 1
+
+export function useNearbyRangeState() {
+  const [nearbyRange, setNearbyRange] = useState(DEFAULT_NEARBY_RANGE_KM)
+
+  useEffect(() => {
+    setNearbyRange(getNearbyRange())
+
+    const handleRangeChange = () => {
+      setNearbyRange(getNearbyRange())
+    }
+
+    window.addEventListener('g-matrix-default-nearby-range-change', handleRangeChange)
+    return () => window.removeEventListener('g-matrix-default-nearby-range-change', handleRangeChange)
+  }, [])
+
+  return [nearbyRange, setNearbyRange] as const
+}
 
 /** Read user's preferred nearby range from localStorage (SSR-safe) */
 export function getNearbyRange(): number {
@@ -76,7 +93,7 @@ interface UseProductFilterOptions {
 export function useProductFilter({ products, nearbyProducts, latitude, longitude }: UseProductFilterOptions) {
   const [filterType, setFilterType] = useState<FilterType>('nearby')
   const [searchQuery, setSearchQuery] = useState('')
-  const [nearbyRange, setNearbyRangeState] = useState(() => getNearbyRange())
+  const [nearbyRange, setNearbyRangeState] = useNearbyRangeState()
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value)

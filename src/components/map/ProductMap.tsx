@@ -59,6 +59,7 @@ export function ProductMap({ products, center = [47.497, 19.040], zoom = 12, use
 
       {/* Recenter map when center prop changes */}
       <RecenterMap center={center} />
+      <InvalidateMapSize />
 
       {/* User location: blue translucent circle (~5km radius) */}
       {userLocation && showRangeCircle && (
@@ -146,8 +147,26 @@ function RecenterMap({ center }: { center: [number, number] }) {
   const map = useMap()
 
   useEffect(() => {
+    map.invalidateSize()
     map.setView(center, map.getZoom())
   }, [center, map])
+
+  return null
+}
+
+function InvalidateMapSize() {
+  const map = useMap()
+
+  useEffect(() => {
+    const run = () => map.invalidateSize()
+    const rafId = window.requestAnimationFrame(run)
+    const timeoutId = window.setTimeout(run, 120)
+
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      window.clearTimeout(timeoutId)
+    }
+  }, [map])
 
   return null
 }

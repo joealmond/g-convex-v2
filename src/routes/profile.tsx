@@ -21,7 +21,7 @@ import { useGeolocation, useTheme } from '@/hooks'
 import { useConvexAuth } from '@convex-dev/react-query'
 import { authClient } from '@/lib/auth-client'
 import { isNative } from '@/lib/platform'
-import { getNearbyRange } from '@/hooks/use-product-filter'
+import { useNearbyRangeState } from '@/hooks/use-product-filter'
 import { formatRelativeTimeI18n } from '@/lib/format-time'
 
 
@@ -231,7 +231,7 @@ function ProfileContent() {
   const { isLoading: isAuthLoading } = useConvexAuth()
 
   const ThemeIcon = theme === 'system' ? Monitor : resolvedTheme === 'dark' ? Moon : Sun
-  const [nearbyRangeKm, setNearbyRangeKm] = useState(() => getNearbyRange())
+  const [nearbyRangeKm, setNearbyRangeKm] = useNearbyRangeState()
   const themeLabel = theme === 'system' ? t('profile.themeSystem') : theme === 'dark' ? t('profile.themeDark') : t('profile.themeLight')
   const cycleTheme = () => {
     if (theme === 'light') setTheme('dark')

@@ -39,20 +39,23 @@ function applyTheme(resolved: 'light' | 'dark') {
  * - resolvedTheme: Actual theme applied ('light' | 'dark') after system preference resolved
  */
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'system'
-    return (localStorage.getItem('theme') as Theme) || 'system'
-  })
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'light'
+  const [theme, setThemeState] = useState<Theme>('system')
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const savedTheme = (localStorage.getItem('theme') as Theme) || 'system'
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    return savedTheme === 'system'
+    const nextResolvedTheme = savedTheme === 'system'
       ? (systemPrefersDark ? 'dark' : 'light')
       : savedTheme === 'dark'
         ? 'dark'
         : 'light'
-  })
+
+    setThemeState(savedTheme)
+    setResolvedTheme(nextResolvedTheme)
+  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') return

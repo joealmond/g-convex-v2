@@ -5,7 +5,7 @@ import { Suspense, useState, useMemo, lazy } from 'react'
 import { FilterChips, type FilterType } from '@/components/feed/FilterChips'
 import { Button } from '@/components/ui/button'
 import { useGeolocation } from '@/hooks/use-geolocation'
-import { getNearbyRange } from '@/hooks/use-product-filter'
+import { useNearbyRangeState } from '@/hooks/use-product-filter'
 import { isWeb } from '@/lib/platform'
 import { Loader2 } from 'lucide-react'
 import type { Product } from '@/lib/types'
@@ -74,7 +74,7 @@ function MapPageContent() {
   const [filterType, setFilterType] = useState<FilterType>('all')
 
   const isLoading = products === undefined
-  const [nearbyRange, setNearbyRange] = useState(() => getNearbyRange())
+  const [nearbyRange, setNearbyRange] = useNearbyRangeState()
   const [showRangeCircle, setShowRangeCircle] = useState(false)
 
   const focusedProducts = useMemo(() => {
@@ -205,7 +205,7 @@ function MapPageContent() {
               </div>
             }
           >
-            <>
+            <div className="absolute inset-0">
               <ProductMap
                 products={filteredProducts}
                 center={mapCenter}
@@ -224,7 +224,7 @@ function MapPageContent() {
                   </div>
                 </div>
               )}
-            </>
+            </div>
           </ClientOnly>
         )}
 

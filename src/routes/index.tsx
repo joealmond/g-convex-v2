@@ -11,7 +11,7 @@ import { SensitivityFilterChips } from '@/components/feed/SensitivityFilterChips
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useAdmin } from '@/hooks/use-admin'
 import { useTranslation } from '@/hooks/use-translation'
-import { getNearbyRange } from '@/hooks/use-product-filter'
+import { useNearbyRangeState } from '@/hooks/use-product-filter'
 import { appConfig } from '@/lib/app-config'
 import { isWeb } from '@/lib/platform'
 import { getQuadrant } from '@/lib/types'
@@ -119,7 +119,7 @@ function HomePageContent() {
   // ── Filter state ──
   const [filterType, setFilterType] = useState<FilterType>('nearby')
   const [searchQuery, setSearchQuery] = useState('')
-  const [nearbyRange, setNearbyRange] = useState(() => getNearbyRange())
+  const [nearbyRange, setNearbyRange] = useNearbyRangeState()
   const [quadrantFilter, setQuadrantFilter] = useState<QuadrantFilterValue>('all')
 
   // ── Sensitivity filter state ──
@@ -413,17 +413,21 @@ function HomePageContent() {
         {/* Filters stay in one line when possible and wrap when they don't fit. */}
         <div className="pt-3 md:pt-4">
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <FilterChips
-                value={filterType}
-                onChange={handleFilterChange}
-                nearbyRange={nearbyRange}
-                onRangeChange={setNearbyRange}
-              />
-              <SensitivityFilterChips
-                activeFilters={activeSensitivities}
-                onToggle={toggleSensitivity}
-              />
+            <div className="flex flex-wrap items-start gap-2 sm:items-center">
+              <div className="min-w-0 flex-1">
+                <FilterChips
+                  value={filterType}
+                  onChange={handleFilterChange}
+                  nearbyRange={nearbyRange}
+                  onRangeChange={setNearbyRange}
+                />
+              </div>
+              <div className="ml-auto flex justify-end">
+                <SensitivityFilterChips
+                  activeFilters={activeSensitivities}
+                  onToggle={toggleSensitivity}
+                />
+              </div>
             </div>
             <div className="min-w-0">
               <QuadrantFilterChips
