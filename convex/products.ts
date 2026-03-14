@@ -189,8 +189,8 @@ export const listFeed = publicQuery({
       queryToPage = filter(
         baseQuery,
         (product) => {
-          // Products with no allergens data pass through (not penalized for missing data)
-          if (!product.allergens || product.allergens.length === 0) return true
+          // When allergen filters are active, unknown products are treated as unsafe.
+          if (!product.allergens || product.allergens.length === 0) return false
           // Exclude products that contain ANY of the excluded allergens
           return !product.allergens.some((a: string) =>
             excludeAllergens!.includes(a.toLowerCase())
@@ -243,7 +243,7 @@ export const searchPaginated = publicQuery({
       queryToPage = filter(
         baseQuery,
         (product) => {
-          if (!product.allergens || product.allergens.length === 0) return true
+          if (!product.allergens || product.allergens.length === 0) return false
           return !product.allergens.some((a: string) =>
             excludeAllergens!.includes(a.toLowerCase())
           )

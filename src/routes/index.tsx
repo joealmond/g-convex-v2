@@ -227,7 +227,7 @@ function HomePageContent() {
 
       if (excludeAllergens.length > 0) {
         items = items.filter((p) => {
-          if (!p.allergens || p.allergens.length === 0) return true
+          if (!p.allergens || p.allergens.length === 0) return false
           return !p.allergens.some((a) => excludeAllergens.includes(a.toLowerCase()))
         })
       }
