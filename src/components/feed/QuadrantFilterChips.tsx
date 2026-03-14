@@ -15,7 +15,7 @@ export function QuadrantFilterChips({ selectedQuadrant, onToggle }: QuadrantFilt
 
   return (
     <div
-      className="grid w-[4.5rem] grid-cols-2 gap-0 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+      className="grid w-20 grid-cols-2 gap-0 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
       role="group"
       aria-label={t('feed.quadrantFilter')}
     >
@@ -29,7 +29,7 @@ export function QuadrantFilterChips({ selectedQuadrant, onToggle }: QuadrantFilt
             onClick={() => onToggle(quadrantKey)}
             aria-pressed={isActive}
             className={cn(
-              'flex h-9 w-9 items-center justify-center border-r border-b text-sm leading-none transition-colors',
+              'flex h-9 w-10 items-center justify-center border-r border-b text-sm leading-none transition-colors',
               quadrantKey === 'topRight' || quadrantKey === 'bottomRight' ? 'border-r-0' : '',
               quadrantKey === 'bottomLeft' || quadrantKey === 'bottomRight' ? 'border-b-0' : '',
               isActive ? 'text-white' : 'text-foreground/85 hover:brightness-95'

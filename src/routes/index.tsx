@@ -441,30 +441,32 @@ function HomePageContent() {
 
         {/* Filters stay in one line when possible and wrap when they don't fit. */}
         <div className="pt-3 md:pt-4">
-          <div className="space-y-2">
-            <div className="sm:hidden">
-              <SensitivityFilterChips
-                activeFilters={activeSensitivities}
-                onToggle={toggleSensitivity}
-              />
-            </div>
-            <div className="flex flex-wrap items-start gap-2 sm:items-center">
-              <div className="min-w-0 w-full sm:flex-1">
-                <FilterChips
-                  value={filterType}
-                  onChange={handleFilterChange}
-                  nearbyRange={nearbyRange}
-                  onRangeChange={setNearbyRange}
-                />
-              </div>
-              <div className="ml-auto hidden sm:flex sm:justify-end">
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="sm:hidden">
                 <SensitivityFilterChips
                   activeFilters={activeSensitivities}
                   onToggle={toggleSensitivity}
                 />
               </div>
+              <div className="flex flex-wrap items-start gap-2 sm:items-center">
+                <div className="min-w-0 w-full sm:flex-1">
+                  <FilterChips
+                    value={filterType}
+                    onChange={handleFilterChange}
+                    nearbyRange={nearbyRange}
+                    onRangeChange={setNearbyRange}
+                  />
+                </div>
+                <div className="ml-auto hidden sm:flex sm:justify-end">
+                  <SensitivityFilterChips
+                    activeFilters={activeSensitivities}
+                    onToggle={toggleSensitivity}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="min-w-0">
+            <div className="shrink-0 self-center">
               <QuadrantFilterChips
                 selectedQuadrant={quadrantFilter}
                 onToggle={toggleQuadrantFilter}

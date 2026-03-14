@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/use-translation'
 import { NEARBY_RANGE_OPTIONS } from '@/hooks/use-product-filter'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, MapPin } from 'lucide-react'
 
 export type FilterType = 'all' | 'recent' | 'nearby' | 'trending'
 
@@ -47,8 +47,8 @@ export function FilterChips({ value, onChange, nearbyRange, onRangeChange, compa
     { value: 'all', label: t('feed.all') },
     { value: 'recent', label: t('feed.recent') },
     { value: 'nearby', label: (
-      <span className="inline-flex items-center gap-0.5">
-        {t('feed.nearby')}
+      <span className="inline-flex items-center gap-1">
+        <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
         {nearbyRange !== undefined && (
           <span className="text-[10px] opacity-75">{nearbyRange}km</span>
         )}
@@ -77,12 +77,19 @@ export function FilterChips({ value, onChange, nearbyRange, onRangeChange, compa
               compact
                 ? 'px-2.5 py-1 text-[11px]'
                 : 'px-2.5 py-1.5 text-[13px] min-h-[34px]',
+              filter.value === 'nearby' && (compact ? 'min-w-[3.75rem]' : 'min-w-[4.5rem]'),
               value === filter.value
                 ? 'bg-primary text-primary-foreground'
                 : compact
                   ? 'bg-card/95 text-foreground border border-border shadow-sm hover:bg-card'
                   : 'bg-card text-foreground border border-border hover:bg-muted'
             )}
+            title={filter.value === 'nearby' ? t('feed.nearby') : undefined}
+            aria-label={filter.value === 'nearby'
+              ? nearbyRange !== undefined
+                ? `${t('feed.nearby')} ${nearbyRange}km`
+                : t('feed.nearby')
+              : undefined}
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           >
