@@ -1,59 +1,9 @@
-import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceArea, ReferenceLine } from 'recharts'
-import { motion } from 'framer-motion'
+import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, ResponsiveContainer, Cell, ReferenceArea, ReferenceLine } from 'recharts'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import type { Product } from '@/lib/types'
 import { getQuadrant, getQuadrantColor, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import { hashStringToColor } from '@/lib/utils'
-
-interface TooltipPayload {
-  payload: ChartDataPoint
-}
-
-/**
- * Extracted to module level to avoid re-creating on every render.
- */
-function CustomTooltip({ active, payload, mode }: { active?: boolean; payload?: TooltipPayload[]; mode: 'vibe' | 'value' }) {
-  if (active && payload && payload.length > 0) {
-    const firstPayload = payload[0]
-    if (!firstPayload) return null
-    const data = firstPayload.payload as ChartDataPoint
-    const product = data.product
-
-    const showQuadrant = mode === 'vibe'
-    const quadrant = showQuadrant ? getQuadrant(product.averageSafety, product.averageTaste) : null
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-card border border-border rounded-lg p-3 shadow-lg max-w-[200px]"
-      >
-        <p className="font-semibold text-sm truncate">{product.name}</p>
-        <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-          {mode === 'vibe' ? (
-            <>
-              <p>{appConfig.dimensions.axis1.label}: {product.averageSafety.toFixed(0)}</p>
-              <p>{appConfig.dimensions.axis2.label}: {product.averageTaste.toFixed(0)}</p>
-            </>
-          ) : (
-            <>
-              <p>{appConfig.valueLens.axis1Label}: {(product.avgPrice || 50).toFixed(0)}</p>
-              <p>{appConfig.valueLens.axis2Label}: {product.averageTaste.toFixed(0)}</p>
-            </>
-          )}
-          <p>Votes: {product.voteCount}</p>
-          {showQuadrant && quadrant && (
-            <p className="text-xs font-medium" style={{ color: getQuadrantColor(quadrant) }}>
-              {QUADRANTS[quadrant]?.name || 'Unknown'}
-            </p>
-          )}
-        </div>
-      </motion.div>
-    )
-  }
-  return null
-}
 
 interface MatrixChartProps {
   products: Product[]
@@ -147,11 +97,6 @@ export function MatrixChart({ products, onProductClick, selectedProduct, onSelec
     ? appConfig.quadrants 
     : appConfig.valueLens.quadrants, [mode])
 
-  const tooltipContent = useMemo(
-    () => <CustomTooltip mode={mode} />,
-    [mode]
-  )
-
   // Defer chart rendering until container has non-zero dimensions
   const chartRootRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -193,8 +138,7 @@ export function MatrixChart({ products, onProductClick, selectedProduct, onSelec
       if (!target || !root.contains(target)) return
 
       if (target.closest('[data-selected-product-tooltip]')) return
-      if (target.closest('.recharts-scatter-symbol')) return
-      if (target.closest('.recharts-tooltip-wrapper')) return
+      if (target.closest('.chart-click-dot')) return
 
       onSelectionClear?.()
     }
@@ -300,8 +244,6 @@ export function MatrixChart({ products, onProductClick, selectedProduct, onSelec
               width={28}
             />
             <ZAxis type="number" dataKey="z" range={[40, 300]} />
-            <Tooltip content={selectedProduct ? () => null : tooltipContent} cursor={{ strokeDasharray: '3 3' }} />
-
             <Scatter
               data={data}
               onClick={(data) => {
@@ -319,7 +261,7 @@ export function MatrixChart({ products, onProductClick, selectedProduct, onSelec
                     fillOpacity={isSelected ? 1 : 0.75}
                     stroke={isSelected ? 'var(--foreground)' : '#fff'}
                     strokeWidth={isSelected ? 3 : 1.5}
-                    className="cursor-pointer drop-shadow-sm"
+                    className="chart-click-dot cursor-pointer drop-shadow-sm"
                   />
                 )
               })}

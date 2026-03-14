@@ -7,7 +7,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
   ReferenceLine,
   Cell,
@@ -83,8 +82,7 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
       if (!target || !root.contains(target)) return
 
       if (target.closest('[data-selected-vote-tooltip]')) return
-      if (target.closest('.recharts-scatter-symbol')) return
-      if (target.closest('.recharts-tooltip-wrapper')) return
+      if (target.closest('.chart-click-dot')) return
 
       setSelectedVoteId(null)
     }
@@ -169,36 +167,6 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
             strokeWidth={1}
           />
           
-          <Tooltip
-            cursor={{ strokeDasharray: '3 3' }}
-            content={({ payload }) => {
-              if (selectedVote) return null
-              if (!payload || payload.length === 0) return null
-              const vote = payload[0].payload
-              return (
-                <div className="bg-card p-3 rounded-lg shadow-lg border border-border">
-                  <p className="font-semibold mb-1">
-                    {vote.isRegistered ? t('chart.registeredUser') : t('chart.anonymous')}
-                  </p>
-                  <p className="text-sm">
-                    {t('voting.safety')}: {vote.safety}
-                  </p>
-                  <p className="text-sm">
-                    {t('voting.taste')}: {vote.taste}
-                  </p>
-                  {vote.price && (
-                    <p className="text-sm">{t('voting.price')}: {vote.price}/5</p>
-                  )}
-                  {vote.storeName && (
-                    <p className="text-sm text-muted-foreground">
-                      {vote.storeName}
-                    </p>
-                  )}
-                </div>
-              )
-            }}
-          />
-          
           <Scatter
             data={data}
             fill={chartColors.safetyHigh}
@@ -211,7 +179,7 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
                 r={highlightVoteId === entry.id ? 8 : 6}
                 stroke={highlightVoteId === entry.id ? chartColors.primaryDark : 'none'}
                 strokeWidth={highlightVoteId === entry.id ? 2 : 0}
-                className="cursor-pointer"
+                className="chart-click-dot cursor-pointer"
               />
             ))}
           </Scatter>
