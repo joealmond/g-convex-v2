@@ -20,12 +20,12 @@ interface LanguageSelectorProps {
  */
 export function LanguageSelector({ locale, setLocale }: LanguageSelectorProps) {
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1.5">
       {LOCALES.map(({ value, flag, label }) => (
         <button
           key={value}
           onClick={() => setLocale(value)}
-          className={`px-2.5 py-1 text-xs rounded-full transition-colors ${
+          className={`min-h-9 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
             locale === value
               ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-muted-foreground hover:bg-muted/80'

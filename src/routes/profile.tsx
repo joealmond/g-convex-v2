@@ -124,9 +124,9 @@ function GuestProfileContent() {
         {/* Preferences row — always visible at top */}
         <Card className="rounded-2xl shadow-sm">
           <CardContent className="p-0">
-            <div className="flex items-center divide-x divide-border">
+            <div className="flex items-stretch divide-x divide-border">
               {/* Language */}
-              <div className="flex-1 flex items-center justify-between px-4 py-3">
+              <div className="flex min-h-[4rem] flex-1 items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-2">
                   <Languages className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span className="text-xs font-medium text-foreground">{t('profile.language')}</span>
@@ -136,7 +136,7 @@ function GuestProfileContent() {
               {/* Theme */}
               <button
                 onClick={cycleTheme}
-                className="flex items-center gap-2 px-4 py-3 hover:bg-muted/50 transition-colors"
+                className="flex min-h-[4rem] items-center gap-2 px-4 py-3 hover:bg-muted/50 transition-colors"
               >
                 <ThemeIcon className="h-4 w-4 text-muted-foreground shrink-0" />
                 <span className="text-xs text-muted-foreground whitespace-nowrap">{themeLabel}</span>

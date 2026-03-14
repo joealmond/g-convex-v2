@@ -682,7 +682,8 @@
   "productMap": {
     "safetyTitle": "Safety: {score}",
     "tasteTitle": "Taste: {score}",
-    "viewProduct": "View Product \u2192"
+    "viewProduct": "View Product \u2192",
+    "backToProduct": "Back to Product"
   },
   "store": {
     "noStores": "No stores recorded yet",

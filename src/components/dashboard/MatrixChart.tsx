@@ -171,7 +171,7 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
   }, [containerReady])
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="chart-interaction-reset flex h-full w-full flex-col select-none">
       {/* Quadrant Legend — compact row above the chart */}
       <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mb-2 px-1">
         {[

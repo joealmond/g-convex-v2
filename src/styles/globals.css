@@ -112,6 +112,10 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+body {
+  min-height: 100dvh;
+}
+
 /* Re-enable text selection where needed */
 input, textarea, [contenteditable], .selectable {
   -webkit-user-select: auto;
@@ -271,6 +275,29 @@ input, textarea, [contenteditable], .selectable {
 /* Extend background into safe area (immersive header/footer) */
 .safe-top-margin {
   margin-top: env(safe-area-inset-top, 0px);
+}
+
+.native-page-safe-top {
+  padding-top: max(env(safe-area-inset-top, 0px), 1rem);
+}
+
+@media (min-width: 768px) {
+  .native-page-safe-top {
+    padding-top: 0;
+  }
+}
+
+.chart-interaction-reset,
+.chart-interaction-reset * {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.chart-interaction-reset .recharts-wrapper,
+.chart-interaction-reset .recharts-surface,
+.chart-interaction-reset svg,
+.chart-interaction-reset svg * {
+  outline: none !important;
 }
 
 @keyframes progress {

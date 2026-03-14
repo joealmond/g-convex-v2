@@ -261,7 +261,7 @@ function ProductDetailContent() {
                       return (
                         <Badge
                           key={allergenId}
-                          className="px-3 py-1 text-xs font-medium bg-safety-high/15 text-safety-high border border-safety-high/30"
+                          className="px-3 py-1 text-xs font-medium border border-safety-high/35 bg-safety-high/15 text-foreground dark:text-white"
                         >
                           {allergen ? `${allergen.emoji} ${t(`imageUpload.freeFromAllergen.${allergenId}`)}` : allergenId}
                         </Badge>
@@ -287,7 +287,7 @@ function ProductDetailContent() {
                         <Badge
                           key={allergenId}
                           variant={isConflict ? 'destructive' : 'secondary'}
-                          className="px-3 py-1 text-xs font-medium"
+                          className="px-3 py-1 text-xs font-medium text-foreground dark:text-white"
                         >
                           {allergen ? `${allergen.emoji} ${allergen.label}` : allergenId}
                         </Badge>

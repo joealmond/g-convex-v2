@@ -97,13 +97,13 @@ export function VoteProductDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] overflow-hidden rounded-[1.75rem] border-border bg-card p-0 shadow-2xl sm:max-w-3xl lg:max-w-4xl">
-        <DialogHeader className="border-b border-border px-4 py-4 sm:px-6">
+      <DialogContent className="w-[calc(100%-0.5rem)] max-w-[calc(100%-0.5rem)] overflow-hidden rounded-[1.25rem] border-border bg-card p-0 shadow-2xl sm:w-[calc(100%-1rem)] sm:max-w-3xl lg:max-w-4xl">
+        <DialogHeader className="border-b border-border px-3 py-3 sm:px-6 sm:py-4">
           <DialogTitle>{t('product.rateThisProduct')}</DialogTitle>
           <DialogDescription>{product.name}</DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[calc(92vh-5rem)] overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+        <div className="max-h-[calc(100dvh-7rem-env(safe-area-inset-top,0px))] overflow-y-auto px-3 py-3 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] sm:max-h-[calc(92vh-5rem)] sm:px-6 sm:py-6">
           <div className="space-y-5">
             <VotingSheet
               onVote={handleVote}

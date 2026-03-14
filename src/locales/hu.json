@@ -682,7 +682,8 @@
   "productMap": {
     "safetyTitle": "Biztonság: {score}",
     "tasteTitle": "Íz: {score}",
-    "viewProduct": "Termék Megtekintése →"
+    "viewProduct": "Termék Megtekintése →",
+    "backToProduct": "Vissza a termékhez"
   },
   "store": {
     "noStores": "Még nincs bolt rögzítve",

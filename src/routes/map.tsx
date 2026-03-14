@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useNearbyRangeState } from '@/hooks/use-product-filter'
 import { isWeb } from '@/lib/platform'
-import { Loader2 } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useTranslation } from '@/hooks/use-translation'
 import { z } from 'zod'
@@ -169,11 +169,11 @@ function MapPageContent() {
 
   const pageMinHeight = isBrowser
     ? 'calc(100dvh - 7rem)'
-    : 'calc(100dvh - 6rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))'
+    : 'calc(100dvh - max(env(safe-area-inset-top, 0px), 1rem) - 6.5rem - env(safe-area-inset-bottom, 0px))'
 
   return (
-    <div className="flex flex-col bg-background" style={{ minHeight: pageMinHeight }}>
-      <div className="border-b border-border bg-background/95 px-3 py-3 backdrop-blur-sm sm:px-4">
+    <div className="flex flex-1 flex-col bg-background" style={{ minHeight: pageMinHeight }}>
+      <div className="border-b border-border bg-background/95 px-3 py-2 backdrop-blur-sm sm:px-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <FilterChips
@@ -189,10 +189,25 @@ function MapPageContent() {
               {t('location.locating')}
             </span>
           )}
+
+          {focusedProduct && (
+            <div className="flex flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
+              <Button size="sm" asChild>
+                <Link to="/product/$name" params={{ name: focusedProduct.name }}>
+                  {t('productMap.backToProduct')}
+                </Link>
+              </Button>
+              <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" asChild>
+                <Link to="/map" aria-label={t('common.close')}>
+                  <X className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="relative flex-1 min-h-[24rem]">
+      <div className="relative flex-1 min-h-[24rem] overflow-hidden">
         {isLoading ? (
           <div className="absolute inset-0 bg-background flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -236,29 +251,6 @@ function MapPageContent() {
           </div>
         )}
 
-        {focusedProduct && (
-          <div className="absolute bottom-16 left-2 right-2 z-10 md:bottom-4 md:left-auto md:right-4 md:w-[22rem]">
-            <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-lg backdrop-blur-sm">
-              <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                {t('location.focusedProduct')}
-              </p>
-              <p className="mt-1 text-base font-semibold text-foreground">{focusedProduct.name}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t('location.focusedProductHint')}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" asChild>
-                  <Link to="/product/$name" params={{ name: focusedProduct.name }}>
-                    {t('productMap.viewProduct')}
-                  </Link>
-                </Button>
-                <Button size="sm" asChild>
-                  <Link to="/map">{t('location.showAllProducts')}</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

@@ -59,7 +59,7 @@ export function FilterChips({ value, onChange, nearbyRange, onRangeChange, compa
   ]
 
   return (
-    <div className={cn('flex flex-wrap gap-1.5 relative', compact ? '' : 'gap-1.5')}>
+    <div className="relative flex flex-wrap gap-1">
       {filters.map((filter) => (
         <div key={filter.value} className="relative" ref={filter.value === 'nearby' ? dropdownRef : undefined}>
           <motion.button
@@ -75,8 +75,8 @@ export function FilterChips({ value, onChange, nearbyRange, onRangeChange, compa
             className={cn(
               'rounded-full font-medium whitespace-nowrap',
               compact
-                ? 'px-3 py-1 text-xs'
-                : 'px-3 py-1.5 text-sm min-h-[36px]',
+                ? 'px-2.5 py-1 text-[11px]'
+                : 'px-2.5 py-1.5 text-[13px] min-h-[34px]',
               value === filter.value
                 ? 'bg-primary text-primary-foreground'
                 : compact

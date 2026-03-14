@@ -153,7 +153,7 @@ export function VotingSheet({
           </p>
         )}
 
-        <div className="divide-y divide-border">
+        <div className="overflow-hidden rounded-2xl border border-border bg-muted/20 px-3 divide-y divide-border">
           {allergensToShow.map(renderAllergenRow)}
         </div>
 
@@ -178,7 +178,7 @@ export function VotingSheet({
                   transition={{ duration: 0.15 }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-1 divide-y divide-border">
+                  <div className="mt-1 overflow-hidden rounded-2xl border border-border bg-muted/15 px-3 divide-y divide-border">
                     {otherAllergens.map(renderAllergenRow)}
                   </div>
                 </motion.div>
@@ -192,7 +192,7 @@ export function VotingSheet({
         <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t('voting.taste')}
         </label>
-        <div className="flex items-center gap-3 rounded-2xl border border-border px-3 py-3">
+        <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/20 px-3 py-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <span className="truncate text-sm font-medium">{appConfig.dimensions.axis2.label}</span>

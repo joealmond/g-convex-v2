@@ -29,7 +29,7 @@ export function QuadrantFilterChips({ value, onChange }: QuadrantFilterChipsProp
   ]
 
   return (
-    <div className="flex flex-wrap gap-2" aria-label={t('feed.quadrantFilter')}>
+    <div className="flex flex-wrap gap-1.5" aria-label={t('feed.quadrantFilter')}>
       {options.map((option) => {
         const isActive = value === option.value
         return (
@@ -38,7 +38,7 @@ export function QuadrantFilterChips({ value, onChange }: QuadrantFilterChipsProp
             type="button"
             onClick={() => onChange(option.value)}
             className={cn(
-              'inline-flex min-h-10 items-center gap-2 rounded-2xl border px-3 py-2 text-left text-xs font-medium transition-all sm:text-sm',
+              'inline-flex min-h-9 items-center gap-1.5 rounded-2xl border px-2.5 py-1.5 text-left text-[12px] font-medium transition-all sm:text-sm',
               option.color
                 ? isActive
                   ? 'text-white shadow-sm'

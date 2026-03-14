@@ -19,7 +19,7 @@ export function SensitivityFilterChips({ activeFilters, onToggle }: SensitivityF
   const { t } = useTranslation()
 
   return (
-    <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('feed.sensitivityFilters')}>
+    <div className="flex flex-wrap gap-1" role="group" aria-label={t('feed.sensitivityFilters')}>
       {appConfig.allergens.map((allergen) => {
         const isActive = activeFilters.has(allergen.id)
         return (
@@ -28,7 +28,7 @@ export function SensitivityFilterChips({ activeFilters, onToggle }: SensitivityF
             onClick={() => onToggle(allergen.id)}
             className={cn(
               'rounded-full font-medium flex items-center justify-center',
-              'min-h-[36px] min-w-[36px] px-2 text-lg',
+              'min-h-[34px] min-w-[34px] px-2 text-base',
               isActive
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'bg-muted text-muted-foreground border border-border hover:bg-card'
