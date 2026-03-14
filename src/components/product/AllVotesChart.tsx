@@ -1,5 +1,6 @@
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
+import { useCallback, useMemo, useState } from 'react'
 import {
   ScatterChart,
   Scatter,
@@ -24,6 +25,7 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
   const { t } = useTranslation()
   const votes = useQuery(api.votes.getByProduct, { productId })
   const user = useQuery(api.users.current)
+  const [selectedVoteId, setSelectedVoteId] = useState<Id<'votes'> | null>(null)
 
   if (!votes || votes.length === 0) {
     return (
@@ -50,6 +52,11 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
     price: vote.price,
   }))
 
+  const selectedVote = useMemo(
+    () => data.find((vote) => vote.id === selectedVoteId) ?? null,
+    [data, selectedVoteId]
+  )
+
   // Color mapping
   const getVoteColor = (vote: (typeof data)[0]) => {
     if (highlightVoteId && vote.id === highlightVoteId) {
@@ -64,8 +71,40 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
     return chartColors.anonymous // Gray for anonymous
   }
 
+  const handleChartPointerDownCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (!selectedVote) return
+    const target = event.target as HTMLElement | null
+    if (!target) return
+
+    if (target.closest('.recharts-scatter-symbol')) return
+    if (target.closest('[data-selected-vote-tooltip]')) return
+
+    setSelectedVoteId(null)
+  }, [selectedVote])
+
   return (
-    <div className="h-[18rem] w-full sm:h-[22rem] lg:h-[24rem]">
+    <div
+      className="relative h-[18rem] w-full sm:h-[22rem] lg:h-[24rem]"
+      onPointerDownCapture={handleChartPointerDownCapture}
+    >
+      {selectedVote && (
+        <div
+          data-selected-vote-tooltip
+          className="absolute right-2 top-2 z-20 max-w-[220px] rounded-lg border border-border bg-card p-3 shadow-lg"
+        >
+          <p className="mb-1 text-sm font-semibold">
+            {selectedVote.isRegistered ? t('chart.registeredUser') : t('chart.anonymous')}
+          </p>
+          <p className="text-sm">{t('voting.safety')}: {selectedVote.safety}</p>
+          <p className="text-sm">{t('voting.taste')}: {selectedVote.taste}</p>
+          {selectedVote.price && (
+            <p className="text-sm">{t('voting.price')}: {selectedVote.price}/5</p>
+          )}
+          {selectedVote.storeName && (
+            <p className="text-sm text-muted-foreground">{selectedVote.storeName}</p>
+          )}
+        </div>
+      )}
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart
           margin={{ top: 20, right: 20, bottom: 40, left: 40 }}
@@ -122,6 +161,7 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
           <Tooltip
             cursor={{ strokeDasharray: '3 3' }}
             content={({ payload }) => {
+              if (selectedVote) return null
               if (!payload || payload.length === 0) return null
               const vote = payload[0].payload
               return (
@@ -148,7 +188,11 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
             }}
           />
           
-          <Scatter data={data} fill={chartColors.safetyHigh}>
+          <Scatter
+            data={data}
+            fill={chartColors.safetyHigh}
+            onClick={(entry) => setSelectedVoteId(entry.id)}
+          >
             {data.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
@@ -156,6 +200,7 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
                 r={highlightVoteId === entry.id ? 8 : 6}
                 stroke={highlightVoteId === entry.id ? chartColors.primaryDark : 'none'}
                 strokeWidth={highlightVoteId === entry.id ? 2 : 0}
+                className="cursor-pointer"
               />
             ))}
           </Scatter>

@@ -14,7 +14,7 @@ import { useTranslation } from '@/hooks/use-translation'
 import { useNearbyRangeState } from '@/hooks/use-product-filter'
 import { useSessionSensitivityFilters } from '@/hooks/use-session-sensitivity-filters'
 import { appConfig } from '@/lib/app-config'
-import { isWeb } from '@/lib/platform'
+import { isIOS, isWeb } from '@/lib/platform'
 import { getQuadrant, type Quadrant } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Loader2, Trophy, Flame, TrendingUp, Star, BarChart3, Grid3X3, Search, X, ArrowUp, ArrowDown } from 'lucide-react'
@@ -361,16 +361,21 @@ function HomePageContent() {
 
     const currentScrollY = window.scrollY
     const currentSavedScrollY = savedScrollYRef.current
+    const scrollBehavior: ScrollBehavior = !isBrowser && isIOS() ? 'auto' : 'smooth'
 
     if (currentScrollY > 80) {
       savedScrollYRef.current = currentScrollY
       setSavedScrollY(currentScrollY)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      window.scrollTo({ top: 0, behavior: scrollBehavior })
+      scrollYRef.current = 0
+      setScrollY(0)
       return
     }
 
     if (currentSavedScrollY > 0) {
-      window.scrollTo({ top: currentSavedScrollY, behavior: 'smooth' })
+      window.scrollTo({ top: currentSavedScrollY, behavior: scrollBehavior })
+      scrollYRef.current = currentSavedScrollY
+      setScrollY(currentSavedScrollY)
       savedScrollYRef.current = 0
       setSavedScrollY(0)
     }
@@ -530,6 +535,7 @@ function HomePageContent() {
                   products={filteredChartProducts}
                   onProductClick={handleChartDotClick}
                   selectedProduct={selectedProduct}
+                  onSelectionClear={() => setSelectedProduct(null)}
                   mode={chartMode}
                 />
               </Suspense>

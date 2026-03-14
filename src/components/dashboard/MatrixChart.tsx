@@ -59,6 +59,7 @@ interface MatrixChartProps {
   products: Product[]
   onProductClick?: (product: Product) => void
   selectedProduct?: Product | null
+  onSelectionClear?: () => void
   mode?: 'vibe' | 'value'
 }
 
@@ -120,7 +121,7 @@ function jitterOverlapping(points: ChartDataPoint[], threshold = 3, spread = 3):
  * - Vibe: safety (Y) × taste (X) — default G-Matrix
  * - Value: price (Y) × taste (X) — value-for-money lens
  */
-export function MatrixChart({ products, onProductClick, selectedProduct, mode = 'vibe' }: MatrixChartProps) {
+export function MatrixChart({ products, onProductClick, selectedProduct, onSelectionClear, mode = 'vibe' }: MatrixChartProps) {
   // Build raw data points — memoized to avoid recomputing on every render
   const rawData = useMemo<ChartDataPoint[]>(() => 
     products.map((product) => ({
@@ -146,28 +147,14 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
     ? appConfig.quadrants 
     : appConfig.valueLens.quadrants, [mode])
 
-  const tooltipContent = useMemo(() => <CustomTooltip mode={mode} />, [mode])
+  const tooltipContent = useMemo(
+    () => <CustomTooltip mode={mode} />,
+    [mode]
+  )
 
   // Defer chart rendering until container has non-zero dimensions
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerReady, setContainerReady] = useState(false)
-  const [tooltipResetKey, setTooltipResetKey] = useState(0)
-  const dismissTimeoutRef = useRef<number | null>(null)
-
-  const dismissTooltip = useCallback(() => {
-    setTooltipResetKey((previous) => previous + 1)
-  }, [])
-
-  const scheduleTooltipDismiss = useCallback(() => {
-    if (dismissTimeoutRef.current !== null) {
-      window.clearTimeout(dismissTimeoutRef.current)
-    }
-
-    dismissTimeoutRef.current = window.setTimeout(() => {
-      dismissTooltip()
-      dismissTimeoutRef.current = null
-    }, 2500)
-  }, [dismissTooltip])
 
   useEffect(() => {
     if (!containerRef.current || containerReady) return
@@ -187,39 +174,29 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
     return () => observer.disconnect()
   }, [containerReady])
 
-  useEffect(() => {
-    return () => {
-      if (dismissTimeoutRef.current !== null) {
-        window.clearTimeout(dismissTimeoutRef.current)
-      }
-    }
-  }, [])
+  const selectedQuadrant = selectedProduct
+    ? getQuadrant(
+        mode === 'vibe' ? selectedProduct.averageSafety : (selectedProduct.avgPrice || 50),
+        selectedProduct.averageTaste
+      )
+    : null
 
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!containerRef.current) return
-      const target = event.target as HTMLElement | null
-      if (!target) return
+  const handleChartPointerDownCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (!selectedProduct) return
+    const target = event.target as HTMLElement | null
+    if (!target) return
 
-      const clickedInteractiveDot = target.closest('.recharts-scatter-symbol')
-      if (clickedInteractiveDot) return
+    if (target.closest('.recharts-scatter-symbol')) return
+    if (target.closest('[data-selected-product-tooltip]')) return
 
-      const clickedTooltip = target.closest('.recharts-tooltip-wrapper')
-      if (clickedTooltip) return
-
-      dismissTooltip()
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown, true)
-    return () => document.removeEventListener('pointerdown', handlePointerDown, true)
-  }, [dismissTooltip])
-
-  useEffect(() => {
-    dismissTooltip()
-  }, [products, mode, dismissTooltip])
+    onSelectionClear?.()
+  }, [onSelectionClear, selectedProduct])
 
   return (
-    <div className="chart-interaction-reset flex h-full w-full flex-col select-none">
+    <div
+      className="chart-interaction-reset flex h-full w-full flex-col select-none"
+      onPointerDownCapture={handleChartPointerDownCapture}
+    >
       {/* Quadrant Legend — compact row above the chart */}
       <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mb-2 px-1">
         {[
@@ -242,6 +219,31 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
 
       {/* Chart */}
       <div ref={containerRef} className="flex-1 min-h-0 relative">
+        {selectedProduct && selectedQuadrant && (
+          <div
+            data-selected-product-tooltip
+            className="absolute right-2 top-2 z-20 max-w-[220px] rounded-lg border border-border bg-card p-3 shadow-lg"
+          >
+            <p className="truncate text-sm font-semibold">{selectedProduct.name}</p>
+            <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+              {mode === 'vibe' ? (
+                <>
+                  <p>{appConfig.dimensions.axis1.label}: {selectedProduct.averageSafety.toFixed(0)}</p>
+                  <p>{appConfig.dimensions.axis2.label}: {selectedProduct.averageTaste.toFixed(0)}</p>
+                </>
+              ) : (
+                <>
+                  <p>{appConfig.valueLens.axis1Label}: {(selectedProduct.avgPrice || 50).toFixed(0)}</p>
+                  <p>{appConfig.valueLens.axis2Label}: {selectedProduct.averageTaste.toFixed(0)}</p>
+                </>
+              )}
+              <p>Votes: {selectedProduct.voteCount}</p>
+              <p className="font-medium" style={{ color: getQuadrantColor(selectedQuadrant) }}>
+                {QUADRANTS[selectedQuadrant]?.name || 'Unknown'}
+              </p>
+            </div>
+          </div>
+        )}
         {!containerReady ? (
           <div className="flex items-center justify-center h-full">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -249,7 +251,6 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
         ) : (
         <ResponsiveContainer width="100%" height="100%" minHeight={250}>
           <ScatterChart
-            key={tooltipResetKey}
             margin={{ top: 8, right: 12, bottom: 24, left: 8 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
@@ -288,13 +289,12 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
               width={28}
             />
             <ZAxis type="number" dataKey="z" range={[40, 300]} />
-            <Tooltip content={tooltipContent} cursor={{ strokeDasharray: '3 3' }} />
+            <Tooltip content={selectedProduct ? () => null : tooltipContent} cursor={{ strokeDasharray: '3 3' }} />
 
             <Scatter
               data={data}
               onClick={(data) => {
                 onProductClick?.(data.product)
-                scheduleTooltipDismiss()
               }}
             >
               {data.map((entry, index) => {
