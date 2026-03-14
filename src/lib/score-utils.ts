@@ -24,6 +24,8 @@ export interface AllergenScoreData {
 
 /** Per-allergen scores stored on a product document */
 export type AllergenScoresMap = Record<string, AllergenScoreData>
+export type AllergenState = 'likely-unsafe' | 'uncertain' | 'likely-safe'
+export type AllergenConfidence = 'low' | 'medium' | 'high'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -33,12 +35,12 @@ export type AllergenScoresMap = Record<string, AllergenScoreData>
  * reflects the AI assessment; as community votes accumulate they dominate.
  *
  * contains  → 2 virtual 👎 → initial score ≈ 0
- * free-from → 2 virtual 👍 → initial score ≈ 100
+ * free-from → 2 virtual 👍 + 1 virtual 👎 → initial score ≈ 67
  * unknown   → 1 virtual 👍 + 1 virtual 👎 → initial score = 50
  */
 const AI_VIRTUAL_VOTES: Record<AiBase, { up: number; down: number }> = {
   'contains':  { up: 0, down: 2 },
-  'free-from': { up: 2, down: 0 },
+  'free-from': { up: 2, down: 1 },
   'unknown':   { up: 1, down: 1 },
 }
 
@@ -51,11 +53,11 @@ const AI_VIRTUAL_VOTES: Record<AiBase, { up: number; down: number }> = {
  *   score = (virtualUp + communityUp) / (virtualUp + virtualDown + communityUp + communityDown) × 100
  *
  * Examples:
- *   free-from, 0 community votes → (2+0)/(2+0+0+0) = 100
+ *   free-from, 0 community votes → (2+0)/(2+1+0+0) ≈ 67
  *   contains,  0 community votes → (0+0)/(0+2+0+0) = 0
  *   unknown,   0 community votes → (1+0)/(1+1+0+0) = 50
  *   contains, 15👍 2👎           → (0+15)/(0+2+15+2) ≈ 79  (community overrides AI)
- *   free-from, 0👍 5👎           → (2+0)/(2+0+0+5) ≈ 29   (community flags issue)
+ *   free-from, 0👍 5👎           → (2+0)/(2+1+0+5) = 25   (community flags issue)
  */
 export function computeAllergenScore(
   aiBase: AiBase,
@@ -75,6 +77,29 @@ export function computeAllergenScore(
  */
 export function computeAllergenScoreFromData(data: AllergenScoreData): number {
   return computeAllergenScore(data.aiBase, data.upVotes, data.downVotes)
+}
+
+/**
+ * Derive the conservative user-facing state for an allergen score.
+ */
+export function deriveAllergenState(
+  score: number,
+  independentVoteCount: number,
+): AllergenState {
+  if (score <= 25) return 'likely-unsafe'
+  if (score >= 80 && independentVoteCount >= 5) return 'likely-safe'
+  return 'uncertain'
+}
+
+/**
+ * Derive a simple confidence label from the independent vote count.
+ */
+export function deriveAllergenConfidence(
+  independentVoteCount: number,
+): AllergenConfidence {
+  if (independentVoteCount <= 2) return 'low'
+  if (independentVoteCount <= 9) return 'medium'
+  return 'high'
 }
 
 // ─── Personalized Safety ─────────────────────────────────────────────────────

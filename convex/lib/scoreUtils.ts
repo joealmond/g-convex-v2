@@ -19,6 +19,8 @@ export interface AllergenScoreData {
 }
 
 export type AllergenScoresMap = Record<string, AllergenScoreData>
+export type AllergenState = 'likely-unsafe' | 'uncertain' | 'likely-safe'
+export type AllergenConfidence = 'low' | 'medium' | 'high'
 
 // ─── Valid Allergen IDs (must match appConfig.allergens) ─────────────────────
 
@@ -28,7 +30,7 @@ export const VALID_ALLERGEN_IDS = ['gluten', 'milk', 'soy', 'nuts', 'eggs'] as c
 
 const AI_VIRTUAL_VOTES: Record<AiBase, { up: number; down: number }> = {
   'contains':  { up: 0, down: 2 },
-  'free-from': { up: 2, down: 0 },
+  'free-from': { up: 2, down: 1 },
   'unknown':   { up: 1, down: 1 },
 }
 
@@ -49,6 +51,23 @@ export function computeAllergenScore(
 
 export function computeAllergenScoreFromData(data: AllergenScoreData): number {
   return computeAllergenScore(data.aiBase, data.upVotes, data.downVotes)
+}
+
+export function deriveAllergenState(
+  score: number,
+  independentVoteCount: number,
+): AllergenState {
+  if (score <= 25) return 'likely-unsafe'
+  if (score >= 80 && independentVoteCount >= 5) return 'likely-safe'
+  return 'uncertain'
+}
+
+export function deriveAllergenConfidence(
+  independentVoteCount: number,
+): AllergenConfidence {
+  if (independentVoteCount <= 2) return 'low'
+  if (independentVoteCount <= 9) return 'medium'
+  return 'high'
 }
 
 // ─── Taste Score ─────────────────────────────────────────────────────────────

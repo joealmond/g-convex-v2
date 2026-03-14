@@ -4,6 +4,8 @@ import {
   computeAllergenScoreFromData,
   computePersonalizedSafety,
   computeTasteScore,
+  deriveAllergenConfidence,
+  deriveAllergenState,
   buildInitialAllergenScores,
   computeUniversalSafety,
   type AllergenScoresMap,
@@ -13,8 +15,8 @@ import {
 // ─── computeAllergenScore ────────────────────────────────────────────────────
 
 describe('computeAllergenScore', () => {
-  it('returns 100 for free-from with zero community votes', () => {
-    expect(computeAllergenScore('free-from', 0, 0)).toBe(100)
+  it('returns 67 for free-from with zero community votes', () => {
+    expect(computeAllergenScore('free-from', 0, 0)).toBe(67)
   })
 
   it('returns 0 for contains with zero community votes', () => {
@@ -33,10 +35,10 @@ describe('computeAllergenScore', () => {
   })
 
   it('community votes can flag AI free-from as unsafe', () => {
-    // free-from = 2 virtual up, 0 virtual down
-    // 0 up, 5 down → (2+0)/(2+0+0+5) = 2/7 ≈ 29
+    // free-from = 2 virtual up, 1 virtual down
+    // 0 up, 5 down → (2+0)/(2+1+0+5) = 2/8 = 25
     const score = computeAllergenScore('free-from', 0, 5)
-    expect(score).toBe(29)
+    expect(score).toBe(25)
   })
 
   it('equal community votes on unknown stay near 50', () => {
@@ -60,8 +62,47 @@ describe('computeAllergenScoreFromData', () => {
   it('delegates to computeAllergenScore correctly', () => {
     const data = { aiBase: 'free-from' as AiBase, upVotes: 3, downVotes: 1 }
     const score = computeAllergenScoreFromData(data)
-    // free-from = 2 virtual up → (2+3)/(2+0+3+1) = 5/6 ≈ 83
-    expect(score).toBe(83)
+    // free-from = 2 virtual up, 1 virtual down → (2+3)/(2+1+3+1) = 5/7 ≈ 71
+    expect(score).toBe(71)
+  })
+})
+
+// ─── deriveAllergenState ────────────────────────────────────────────────────
+
+describe('deriveAllergenState', () => {
+  it('returns likely-unsafe for scores at or below 25', () => {
+    expect(deriveAllergenState(25, 100)).toBe('likely-unsafe')
+    expect(deriveAllergenState(0, 0)).toBe('likely-unsafe')
+  })
+
+  it('returns uncertain until both likely-safe conditions are met', () => {
+    expect(deriveAllergenState(26, 100)).toBe('uncertain')
+    expect(deriveAllergenState(79, 100)).toBe('uncertain')
+    expect(deriveAllergenState(80, 4)).toBe('uncertain')
+  })
+
+  it('returns likely-safe only when score and vote threshold are both met', () => {
+    expect(deriveAllergenState(80, 5)).toBe('likely-safe')
+    expect(deriveAllergenState(93, 12)).toBe('likely-safe')
+  })
+})
+
+// ─── deriveAllergenConfidence ───────────────────────────────────────────────
+
+describe('deriveAllergenConfidence', () => {
+  it('returns low for 0 to 2 votes', () => {
+    expect(deriveAllergenConfidence(0)).toBe('low')
+    expect(deriveAllergenConfidence(2)).toBe('low')
+  })
+
+  it('returns medium for 3 to 9 votes', () => {
+    expect(deriveAllergenConfidence(3)).toBe('medium')
+    expect(deriveAllergenConfidence(9)).toBe('medium')
+  })
+
+  it('returns high for 10 or more votes', () => {
+    expect(deriveAllergenConfidence(10)).toBe('high')
+    expect(deriveAllergenConfidence(42)).toBe('high')
   })
 })
 
@@ -69,11 +110,11 @@ describe('computeAllergenScoreFromData', () => {
 
 describe('computePersonalizedSafety', () => {
   const allergenScores: AllergenScoresMap = {
-    gluten: { aiBase: 'free-from', upVotes: 10, downVotes: 0 }, // score ≈ 100
+    gluten: { aiBase: 'free-from', upVotes: 10, downVotes: 0 }, // score ≈ 92
     milk: { aiBase: 'contains', upVotes: 0, downVotes: 0 },     // score = 0
     soy: { aiBase: 'unknown', upVotes: 0, downVotes: 0 },       // score = 50
-    nuts: { aiBase: 'free-from', upVotes: 5, downVotes: 0 },    // score ≈ 100
-    eggs: { aiBase: 'free-from', upVotes: 0, downVotes: 0 },    // score = 100
+    nuts: { aiBase: 'free-from', upVotes: 5, downVotes: 0 },    // score = 88
+    eggs: { aiBase: 'free-from', upVotes: 0, downVotes: 0 },    // score = 67
   }
 
   it('returns min of user avoided allergens', () => {
@@ -83,9 +124,9 @@ describe('computePersonalizedSafety', () => {
   })
 
   it('returns high score if user only avoids safe allergens', () => {
-    // User avoids only gluten → min(~100) = 100
+    // User avoids only gluten → min(~92) = 92
     const score = computePersonalizedSafety(allergenScores, ['gluten'])
-    expect(score).toBe(100)
+    expect(score).toBe(92)
   })
 
   it('returns min of ALL allergens when no profile', () => {
@@ -111,10 +152,10 @@ describe('computePersonalizedSafety', () => {
   })
 
   it('handles mixed known and unknown avoided allergens', () => {
-    // User avoids gluten (in product, score ~100) + sesame (not in product)
-    // Only gluten is relevant → returns ~100
+    // User avoids gluten (in product, score ~92) + sesame (not in product)
+    // Only gluten is relevant → returns ~92
     const score = computePersonalizedSafety(allergenScores, ['gluten', 'sesame'])
-    expect(score).toBe(100)
+    expect(score).toBe(92)
   })
 })
 
@@ -205,17 +246,17 @@ describe('computeUniversalSafety', () => {
 
   it('returns lowest of all allergen scores', () => {
     const scores: AllergenScoresMap = {
-      gluten: { aiBase: 'free-from', upVotes: 0, downVotes: 0 }, // 100
+      gluten: { aiBase: 'free-from', upVotes: 0, downVotes: 0 }, // 67
       milk: { aiBase: 'contains', upVotes: 0, downVotes: 0 },     // 0
     }
     expect(computeUniversalSafety(scores)).toBe(0)
   })
 
-  it('returns 100 when all allergens are free-from with zero community votes', () => {
+  it('returns 67 when all allergens are free-from with zero community votes', () => {
     const scores: AllergenScoresMap = {
       gluten: { aiBase: 'free-from', upVotes: 0, downVotes: 0 },
       milk: { aiBase: 'free-from', upVotes: 0, downVotes: 0 },
     }
-    expect(computeUniversalSafety(scores)).toBe(100)
+    expect(computeUniversalSafety(scores)).toBe(67)
   })
 })
