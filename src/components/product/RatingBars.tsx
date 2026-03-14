@@ -1,5 +1,9 @@
 import { motion } from 'framer-motion'
 import { appConfig } from '@/lib/app-config'
+import {
+  deriveAllergenConfidence,
+  deriveAllergenState,
+} from '@/lib/score-utils'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/use-translation'
 
@@ -7,6 +11,7 @@ interface RatingBarsProps {
   safety: number
   taste: number
   price?: number
+  safetyVoteCount?: number
   /** If true, safety bar shows "(for you)" indicator */
   personalized?: boolean
 }
@@ -23,7 +28,13 @@ interface RatingBarsProps {
  * - Color-coded progress bar
  * - Rating label (Excellent/Good/Fair/Poor)
  */
-export function RatingBars({ safety, taste, price = 0, personalized = false }: RatingBarsProps) {
+export function RatingBars({
+  safety,
+  taste,
+  price = 0,
+  safetyVoteCount = 0,
+  personalized = false,
+}: RatingBarsProps) {
   const { t } = useTranslation()
   /**
    * Get rating label based on score
@@ -51,10 +62,31 @@ export function RatingBars({ safety, taste, price = 0, personalized = false }: R
         ? `${appConfig.dimensions.axis1.label} — ${t('voting.safeForYou')}`
         : appConfig.dimensions.axis1.label,
       value: safety,
+      state: deriveAllergenState(safety, safetyVoteCount),
+      confidence: deriveAllergenConfidence(safetyVoteCount),
+      isSafety: true,
     },
-    { label: appConfig.dimensions.axis2.label, value: taste },
-    { label: appConfig.dimensions.axis3.label, value: price },
+    { label: appConfig.dimensions.axis2.label, value: taste, isSafety: false },
+    { label: appConfig.dimensions.axis3.label, value: price, isSafety: false },
   ]
+
+  const getStateLabel = (state: 'likely-unsafe' | 'uncertain' | 'likely-safe') => {
+    if (state === 'likely-safe') return t('voting.likelySafe')
+    if (state === 'likely-unsafe') return t('voting.likelyUnsafe')
+    return t('voting.uncertain')
+  }
+
+  const getStateBadgeClass = (state: 'likely-unsafe' | 'uncertain' | 'likely-safe') => {
+    if (state === 'likely-safe') return 'border-safety-high/35 bg-safety-high/15 text-foreground'
+    if (state === 'likely-unsafe') return 'border-safety-low/35 bg-safety-low/15 text-foreground'
+    return 'border-safety-mid/35 bg-safety-mid/15 text-foreground'
+  }
+
+  const getConfidenceLabel = (confidence: 'low' | 'medium' | 'high') => {
+    if (confidence === 'high') return t('voting.highConfidence')
+    if (confidence === 'medium') return t('voting.mediumConfidence')
+    return t('voting.lowConfidence')
+  }
 
   return (
     <div className="space-y-6">
@@ -78,8 +110,19 @@ export function RatingBars({ safety, taste, price = 0, personalized = false }: R
             />
           </div>
 
-          {/* Rating Label */}
-          <p className="text-xs text-muted-foreground">{getRatingLabel(item.value)}</p>
+          {/* Rating Label / Safety State */}
+          {item.isSafety && item.state && item.confidence ? (
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className={cn('rounded-full border px-2 py-0.5 font-medium', getStateBadgeClass(item.state))}>
+                {getStateLabel(item.state)}
+              </span>
+              <span className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-muted-foreground">
+                {t('voting.confidence')}: {getConfidenceLabel(item.confidence)}
+              </span>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">{getRatingLabel(item.value)}</p>
+          )}
         </div>
       ))}
     </div>

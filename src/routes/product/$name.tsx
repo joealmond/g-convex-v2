@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
 import { DataSourceBadge } from '@/components/product/DataSourceBadge'
 import { ProductPositionCard } from '@/components/product/ProductPositionCard'
+import { RatingBars } from '@/components/product/RatingBars'
 import { VoteProductDialog } from '@/components/product/VoteProductDialog'
 import { ReportProductDialog } from '@/components/product/ReportProductDialog'
 import { ShareButton } from '@/components/product/ShareButton'
@@ -15,6 +16,10 @@ import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
 import { EditProductDialog } from '@/components/dashboard/EditProductDialog'
 import { type Product } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
+import {
+  computeAllergenScoreFromData,
+  type AllergenScoresMap,
+} from '@/lib/score-utils'
 import { useAnonymousId } from '@/hooks/use-anonymous-id'
 import { useAdmin } from '@/hooks/use-admin'
 import { useImpersonate } from '@/hooks/use-impersonate'
@@ -69,6 +74,39 @@ function ProductDetailPage() {
       <ProductDetailContent />
     </Suspense>
   )
+}
+
+function getDisplayedSafetyMeta(
+  allergenScores: AllergenScoresMap | null | undefined,
+  avoidedAllergens: string[],
+) {
+  if (!allergenScores || Object.keys(allergenScores).length === 0) {
+    return { score: 50, voteCount: 0 }
+  }
+
+  const relevantAllergenIds = avoidedAllergens.length > 0
+    ? avoidedAllergens
+    : Object.keys(allergenScores)
+
+  let limitingScore = Number.POSITIVE_INFINITY
+  let limitingVoteCount = 0
+
+  for (const allergenId of relevantAllergenIds) {
+    const data = allergenScores[allergenId]
+    if (!data) continue
+
+    const score = computeAllergenScoreFromData(data)
+    if (score < limitingScore) {
+      limitingScore = score
+      limitingVoteCount = data.upVotes + data.downVotes
+    }
+  }
+
+  if (!Number.isFinite(limitingScore)) {
+    return { score: 50, voteCount: 0 }
+  }
+
+  return { score: limitingScore, voteCount: limitingVoteCount }
 }
 
 function ProductDetailContent() {
@@ -136,6 +174,13 @@ function ProductDetailContent() {
   const firstStoreWithGeo = product.stores?.find((store) => store.geoPoint)
   const hasStructuredIngredients = Boolean(product.ingredients && product.ingredients.length > 0)
   const hasOcrIngredients = Boolean(product.ingredientsText?.trim())
+  const safetyMeta = getDisplayedSafetyMeta(
+    (product.allergenScores as AllergenScoresMap | undefined) ?? undefined,
+    avoidedAllergens,
+  )
+  const normalizedPrice = product.avgPrice !== undefined && product.avgPrice !== null
+    ? (product.avgPrice / 5) * 100
+    : 0
   const mapSearch = firstStoreWithGeo?.geoPoint
     ? {
         productId: product._id,
@@ -237,6 +282,24 @@ function ProductDetailContent() {
                   />
                 }
               />
+
+              <div className="rounded-3xl border border-border bg-background/70 p-4 sm:p-5">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('product.ratings')}
+                  </h2>
+                  <span className="text-xs text-muted-foreground">
+                    {product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}
+                  </span>
+                </div>
+                <RatingBars
+                  safety={safetyMeta.score}
+                  safetyVoteCount={safetyMeta.voteCount}
+                  taste={product.averageTaste}
+                  price={normalizedPrice}
+                  personalized={avoidedAllergens.length > 0}
+                />
+              </div>
             </CardContent>
           </Card>
         </section>

@@ -332,7 +332,7 @@ export const createProductAndVote = publicMutation({
     }
     const freeFrom = mergedFreeFrom.size > 0 ? [...mergedFreeFrom] : undefined
 
-    // ─── Build initial per-allergen scores from AI data ─────────
+    // ─── Build initial per-allergen scores from initial evidence ─────────
     const allergenScores = buildInitialAllergenScores(
       allergens,
       freeFrom,

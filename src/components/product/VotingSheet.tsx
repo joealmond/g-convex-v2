@@ -5,7 +5,12 @@ import { Button } from '@/components/ui/button'
 import { appConfig } from '@/lib/app-config'
 import { useTranslation } from '@/hooks/use-translation'
 import type { AllergenScoresMap } from '@/lib/score-utils'
-import { computeAllergenScoreFromData, computeTasteScore } from '@/lib/score-utils'
+import {
+  computeAllergenScoreFromData,
+  computeTasteScore,
+  deriveAllergenConfidence,
+  deriveAllergenState,
+} from '@/lib/score-utils'
 import { cn } from '@/lib/utils'
 
 export interface ThumbsVotePayload {
@@ -82,7 +87,28 @@ export function VotingSheet({
   const renderAllergenRow = (allergen: typeof allAllergens[number]) => {
     const scoreData = allergenScores?.[allergen.id]
     const currentScore = scoreData ? computeAllergenScoreFromData(scoreData) : null
+    const currentVoteCount = scoreData ? scoreData.upVotes + scoreData.downVotes : 0
+    const currentState = currentScore !== null ? deriveAllergenState(currentScore, currentVoteCount) : null
+    const currentConfidence = scoreData ? deriveAllergenConfidence(currentVoteCount) : null
     const myVote = allergenVotes[allergen.id]
+
+    const stateLabel = currentState === 'likely-safe'
+      ? t('voting.likelySafe')
+      : currentState === 'likely-unsafe'
+        ? t('voting.likelyUnsafe')
+        : t('voting.uncertain')
+
+    const confidenceLabel = currentConfidence === 'high'
+      ? t('voting.highConfidence')
+      : currentConfidence === 'medium'
+        ? t('voting.mediumConfidence')
+        : t('voting.lowConfidence')
+
+    const stateBadgeClass = currentState === 'likely-safe'
+      ? 'border-safety-high/35 bg-safety-high/15 text-foreground'
+      : currentState === 'likely-unsafe'
+        ? 'border-safety-low/35 bg-safety-low/15 text-foreground'
+        : 'border-safety-mid/35 bg-safety-mid/15 text-foreground'
 
     return (
       <div key={allergen.id} className="flex items-center gap-2 py-2">
@@ -92,7 +118,16 @@ export function VotingSheet({
             <span className="truncate text-sm font-medium">{allergen.label}</span>
           </div>
           {currentScore !== null && (
-            <div className="mt-0.5 flex items-center gap-1.5">
+            <div className="mt-1 space-y-1">
+              <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                <span className={cn('rounded-full border px-2 py-0.5 font-medium', stateBadgeClass)}>
+                  {stateLabel}
+                </span>
+                <span className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-muted-foreground">
+                  {t('voting.confidence')}: {confidenceLabel}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
               <div className="h-1 max-w-16 flex-1 overflow-hidden rounded-full bg-muted">
                 <div
                   className={cn(
@@ -102,12 +137,13 @@ export function VotingSheet({
                   style={{ width: `${currentScore}%` }}
                 />
               </div>
-              <span className="text-[10px] tabular-nums text-muted-foreground">{currentScore}</span>
+              <span className="text-[10px] tabular-nums text-muted-foreground">{t('voting.allergenScore', { score: currentScore })}</span>
               {scoreData && (
                 <span className="text-[10px] text-muted-foreground">
                   ({scoreData.upVotes}👍 {scoreData.downVotes}👎)
                 </span>
               )}
+            </div>
             </div>
           )}
         </div>
