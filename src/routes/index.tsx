@@ -5,7 +5,7 @@ import { Suspense, lazy, useState, useRef, useEffect, useMemo, useCallback } fro
 import { ProductCard } from '@/components/feed/ProductCard'
 import { FeedGrid } from '@/components/feed/FeedGrid'
 import { FilterChips } from '@/components/feed/FilterChips'
-import { QuadrantFilterChips, type QuadrantFilterValue } from '@/components/feed/QuadrantFilterChips'
+import { QuadrantFilterChips } from '@/components/feed/QuadrantFilterChips'
 import type { FilterType } from '@/components/feed/FilterChips'
 import { SensitivityFilterChips } from '@/components/feed/SensitivityFilterChips'
 import { useGeolocation } from '@/hooks/use-geolocation'
@@ -15,7 +15,7 @@ import { useNearbyRangeState } from '@/hooks/use-product-filter'
 import { useSessionSensitivityFilters } from '@/hooks/use-session-sensitivity-filters'
 import { appConfig } from '@/lib/app-config'
 import { isWeb } from '@/lib/platform'
-import { getQuadrant } from '@/lib/types'
+import { getQuadrant, type Quadrant } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Loader2, Trophy, Flame, TrendingUp, Star, BarChart3, Grid3X3, Search, X, ArrowUp, ArrowDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -139,7 +139,7 @@ function HomePageContent() {
   const [filterType, setFilterType] = useState<FilterType>('nearby')
   const [searchQuery, setSearchQuery] = useState('')
   const [nearbyRange, setNearbyRange] = useNearbyRangeState()
-  const [quadrantFilter, setQuadrantFilter] = useState<QuadrantFilterValue>('all')
+  const [quadrantFilter, setQuadrantFilter] = useState<Quadrant | null>(null)
 
   // ── Sensitivity filter state ──
   // Default: the niche's primary allergen (gluten) is always ON.
@@ -209,7 +209,7 @@ function HomePageContent() {
   // ── Derived data ──
   const { displayProducts, displayLoading, displayCanLoadMore, displayLoadMore, displayIsLoadingMore } = useMemo(() => {
     const applyQuadrantFilter = (items: Product[]) => {
-      if (quadrantFilter === 'all') return items
+      if (!quadrantFilter) return items
       return items.filter((product) => getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter)
     }
 
@@ -273,11 +273,16 @@ function HomePageContent() {
 
   const finalProducts = showNearbyFallback
     ? (fallbackFeed.results as Product[]).filter((product) =>
-        quadrantFilter === 'all'
+        !quadrantFilter
           ? true
           : getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter
       )
     : displayProducts
+
+  const toggleQuadrantFilter = useCallback((quadrant: Quadrant) => {
+    setQuadrantFilter((previous) => (previous === quadrant ? null : quadrant))
+  }, [])
+
   const finalLoading = showNearbyFallback ? fallbackFeed.status === 'LoadingFirstPage' : displayLoading
   const finalCanLoadMore = showNearbyFallback ? fallbackFeed.status === 'CanLoadMore' : displayCanLoadMore
   const finalLoadMore = showNearbyFallback ? () => fallbackFeed.loadMore(20) : displayLoadMore
@@ -294,6 +299,8 @@ function HomePageContent() {
   const [savedScrollY, setSavedScrollY] = useState(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const productCardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const scrollYRef = useRef(0)
+  const savedScrollYRef = useRef(0)
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value)
@@ -335,7 +342,9 @@ function HomePageContent() {
     if (typeof window === 'undefined') return
 
     const handleScroll = () => {
-      setScrollY(window.scrollY)
+      const currentScrollY = window.scrollY
+      scrollYRef.current = currentScrollY
+      setScrollY(currentScrollY)
     }
 
     handleScroll()
@@ -350,14 +359,20 @@ function HomePageContent() {
   const handleScrollToggle = () => {
     if (typeof window === 'undefined') return
 
-    if (scrollY > 80) {
-      setSavedScrollY(window.scrollY)
+    const currentScrollY = window.scrollY
+    const currentSavedScrollY = savedScrollYRef.current
+
+    if (currentScrollY > 80) {
+      savedScrollYRef.current = currentScrollY
+      setSavedScrollY(currentScrollY)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
 
-    if (savedScrollY > 0) {
-      window.scrollTo({ top: savedScrollY, behavior: 'smooth' })
+    if (currentSavedScrollY > 0) {
+      window.scrollTo({ top: currentSavedScrollY, behavior: 'smooth' })
+      savedScrollYRef.current = 0
+      setSavedScrollY(0)
     }
   }
 
@@ -451,8 +466,8 @@ function HomePageContent() {
             </div>
             <div className="min-w-0">
               <QuadrantFilterChips
-                value={quadrantFilter}
-                onChange={setQuadrantFilter}
+                selectedQuadrant={quadrantFilter}
+                onToggle={toggleQuadrantFilter}
               />
             </div>
           </div>

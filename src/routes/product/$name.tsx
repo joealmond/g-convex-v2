@@ -371,7 +371,7 @@ function ProductDetailContent() {
           </section>
         )}
 
-        <Card className="shadow-card">
+        <Card className="shadow-card" data-voting-section>
           <CardHeader>
             <CardTitle className="text-lg">{t('product.votesSection')}</CardTitle>
           </CardHeader>

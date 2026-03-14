@@ -3,58 +3,43 @@ import type { Quadrant } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/use-translation'
 
-export type QuadrantFilterValue = 'all' | Quadrant
-
 interface QuadrantFilterChipsProps {
-  value: QuadrantFilterValue
-  onChange: (value: QuadrantFilterValue) => void
+  selectedQuadrant: Quadrant | null
+  onToggle: (value: Quadrant) => void
 }
 
-export function QuadrantFilterChips({ value, onChange }: QuadrantFilterChipsProps) {
+export function QuadrantFilterChips({ selectedQuadrant, onToggle }: QuadrantFilterChipsProps) {
   const { t } = useTranslation()
 
-  const options: Array<{
-    value: QuadrantFilterValue
-    label: string
-    emoji?: string
-    color?: string
-  }> = [
-    { value: 'all', label: t('feed.allQuadrants') },
-    ...Object.entries(appConfig.quadrants).map(([key, quadrant]) => ({
-      value: key as Quadrant,
-      label: quadrant.label,
-      emoji: quadrant.emoji,
-      color: quadrant.color,
-    })),
-  ]
+  const orderedQuadrants: Quadrant[] = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight']
 
   return (
-    <div className="flex flex-wrap gap-1.5" aria-label={t('feed.quadrantFilter')}>
-      {options.map((option) => {
-        const isActive = value === option.value
+    <div
+      className="grid w-[4.5rem] grid-cols-2 gap-0 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+      role="group"
+      aria-label={t('feed.quadrantFilter')}
+    >
+      {orderedQuadrants.map((quadrantKey) => {
+        const quadrant = appConfig.quadrants[quadrantKey]
+        const isActive = selectedQuadrant === quadrantKey
         return (
           <button
-            key={option.value}
+            key={quadrantKey}
             type="button"
-            onClick={() => onChange(option.value)}
+            onClick={() => onToggle(quadrantKey)}
+            aria-pressed={isActive}
             className={cn(
-              'inline-flex min-h-9 items-center gap-1.5 rounded-2xl border px-2.5 py-1.5 text-left text-[12px] font-medium transition-all sm:text-sm',
-              option.color
-                ? isActive
-                  ? 'text-white shadow-sm'
-                  : 'bg-card text-foreground hover:bg-muted/70'
-                : isActive
-                  ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                  : 'bg-card text-foreground hover:bg-muted/70'
+              'flex h-9 w-9 items-center justify-center border-r border-b text-sm leading-none transition-colors',
+              quadrantKey === 'topRight' || quadrantKey === 'bottomRight' ? 'border-r-0' : '',
+              quadrantKey === 'bottomLeft' || quadrantKey === 'bottomRight' ? 'border-b-0' : '',
+              isActive ? 'text-white' : 'text-foreground/85 hover:brightness-95'
             )}
-            style={option.color
-              ? isActive
-                ? { backgroundColor: option.color, borderColor: option.color }
-                : { backgroundColor: `${option.color}10`, borderColor: `${option.color}35` }
-              : undefined}
+            style={isActive
+              ? { backgroundColor: quadrant.color, borderColor: quadrant.color }
+              : { backgroundColor: `${quadrant.color}1f`, borderColor: `${quadrant.color}30` }}
+            title={quadrant.label}
           >
-            {option.emoji && <span className="text-sm">{option.emoji}</span>}
-            <span className="truncate">{option.label}</span>
+            <span className="text-base leading-none">{quadrant.emoji}</span>
           </button>
         )
       })}

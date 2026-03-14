@@ -198,7 +198,15 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
       if (!containerRef.current) return
-      if (containerRef.current.contains(event.target as Node)) return
+      const target = event.target as HTMLElement | null
+      if (!target) return
+
+      const clickedInteractiveDot = target.closest('.recharts-scatter-symbol')
+      if (clickedInteractiveDot) return
+
+      const clickedTooltip = target.closest('.recharts-tooltip-wrapper')
+      if (clickedTooltip) return
+
       dismissTooltip()
     }
 
