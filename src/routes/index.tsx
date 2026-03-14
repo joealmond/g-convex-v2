@@ -391,80 +391,90 @@ function HomePageContent() {
     <main className="flex-1 mx-auto w-full px-2 pb-4 sm:px-4 sm:pb-6 md:px-6 xl:px-8">
       {/* Browser decision: page/body scroll, with the control rail sticky below the top navbar. */}
       <div className={cn(
-        'sticky z-[40] w-full border-b border-border/80 bg-card/95 pb-4 shadow-sm backdrop-blur-sm md:z-[45]',
+        'sticky z-[40] w-full border-b-0 bg-background pb-0 shadow-none backdrop-blur-none md:z-[45] md:border-b md:border-border/80 md:bg-card/95 md:pb-4 md:shadow-sm md:backdrop-blur-sm',
         isBrowser ? 'top-[calc(3.5rem+env(safe-area-inset-top,0px))]' : 'top-0 md:top-[calc(3.5rem+env(safe-area-inset-top,0px))]'
       )} style={stickyRailStyle}>
-        <div className="flex items-center gap-2 pt-1 md:pt-3">
-          {/* Search Input */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder={t('feed.searchProducts')}
-              className="w-full h-10 pl-9 pr-8 rounded-xl border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-            />
-            {searchQuery && (
-              <button
-                onClick={handleClearSearch}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-full"
+        <div className="md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-x-4">
+          <div className="flex items-center gap-2 pt-1 md:pt-3">
+            {/* Search Input */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder={t('feed.searchProducts')}
+                className="w-full h-10 pl-9 pr-8 rounded-xl border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-full"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* View Toggle */}
+            <div className="flex gap-1">
+              <Button
+                onClick={() => setViewMode('feed')}
+                variant={viewMode === 'feed' ? 'default' : 'outline'}
+                size="icon"
+                className="h-10 w-10 rounded-xl"
+                title={t('feed.feedView')}
               >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={() => setViewMode('chart')}
+                variant={viewMode === 'chart' ? 'default' : 'outline'}
+                size="icon"
+                className="h-10 w-10 rounded-xl"
+                title={t('feed.chartView')}
+              >
+                <BarChart3 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
-          {/* View Toggle */}
-          <div className="flex gap-1">
-            <Button
-              onClick={() => setViewMode('feed')}
-              variant={viewMode === 'feed' ? 'default' : 'outline'}
-              size="icon"
-              className="h-10 w-10 rounded-xl"
-              title={t('feed.feedView')}
-            >
-              <Grid3X3 className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={() => setViewMode('chart')}
-              variant={viewMode === 'chart' ? 'default' : 'outline'}
-              size="icon"
-              className="h-10 w-10 rounded-xl"
-              title={t('feed.chartView')}
-            >
-              <BarChart3 className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="hidden md:block shrink-0">
+          <div className="hidden md:flex md:row-span-2 md:shrink-0 md:self-center md:pt-3">
             <QuadrantFilterChips
               selectedQuadrant={quadrantFilter}
               onToggle={toggleQuadrantFilter}
             />
           </div>
-        </div>
 
-        {/* Filters stay in one line when possible and wrap when they don't fit. */}
-        <div className="pt-3 md:pt-4">
-          <div className="space-y-2">
-            <div className="flex items-start justify-between gap-2 md:hidden">
-              <div className="min-w-0 flex-1">
+          {/* Filters stay in one line when possible and wrap when they don't fit. */}
+          <div className="pt-3 md:pt-4">
+            <div className="space-y-2 md:space-y-2">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 md:hidden">
+              <div className="min-w-0">
                 <SensitivityFilterChips
                   activeFilters={activeSensitivities}
                   onToggle={toggleSensitivity}
                 />
               </div>
-              <div className="shrink-0 self-start">
+              <div className="row-span-2 shrink-0 self-start">
                 <QuadrantFilterChips
                   selectedQuadrant={quadrantFilter}
                   onToggle={toggleQuadrantFilter}
                 />
               </div>
+
+              <div className="min-w-0">
+                <FilterChips
+                  value={filterType}
+                  onChange={handleFilterChange}
+                  nearbyRange={nearbyRange}
+                  onRangeChange={setNearbyRange}
+                />
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-start gap-2 md:items-center md:justify-between">
+            <div className="hidden md:flex md:flex-wrap md:items-center md:justify-between md:gap-2">
               <div className="min-w-0 flex-1">
                 <FilterChips
                   value={filterType}
@@ -482,10 +492,11 @@ function HomePageContent() {
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       {showChartPanel ? (
-        <div className="mt-4 mb-4 rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-6 md:mt-6 md:mb-6">
+        <div className="mt-0 mb-4 rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-6 md:mt-6 md:mb-6">
           <div className="mb-2 flex items-center justify-between gap-2 sm:mb-4">
             <h2 className="truncate text-base font-semibold sm:text-xl">{t('chart.gMatrix')}</h2>
             <div className="flex shrink-0 gap-1.5">
@@ -532,7 +543,7 @@ function HomePageContent() {
         </div>
       ) : user && profile ? (
         <Suspense fallback={<HomeWidgetsFallback />}>
-          <div className="mt-4 mb-3 flex gap-2 md:mt-6 md:mb-6 md:grid md:grid-cols-4 md:gap-4">
+          <div className="mt-0 mb-3 flex gap-2 md:mt-6 md:mb-6 md:grid md:grid-cols-4 md:gap-4">
             <StatsCard
               title={t('stats.yourPoints')}
               value={profile.points}
