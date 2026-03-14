@@ -71,7 +71,7 @@ function MapPageContent() {
   const products = useQuery(api.products.listAll)
   const { coords, loading: geoLoading } = useGeolocation()
   const isBrowser = isWeb()
-  const [filterType, setFilterType] = useState<FilterType>('all')
+  const [filterType, setFilterType] = useState<FilterType>('nearby')
 
   const isLoading = products === undefined
   const [nearbyRange, setNearbyRange] = useNearbyRangeState()
@@ -173,9 +173,9 @@ function MapPageContent() {
 
   return (
     <div className="flex flex-1 flex-col bg-background" style={{ minHeight: pageMinHeight }}>
-      <div className="border-b border-border bg-background/95 px-3 py-2 backdrop-blur-sm sm:px-4">
+      <div className="relative z-[30] border-b border-border bg-background/95 px-3 py-2 backdrop-blur-sm sm:px-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="overflow-visible pb-1">
             <FilterChips
               value={filterType}
               onChange={setFilterType}
@@ -207,7 +207,7 @@ function MapPageContent() {
         </div>
       </div>
 
-      <div className="relative flex-1 min-h-[24rem] overflow-hidden">
+      <div className="relative z-0 flex-1 min-h-[24rem] overflow-hidden">
         {isLoading ? (
           <div className="absolute inset-0 bg-background flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

@@ -1,0 +1,194 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "G G-Matrix" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: G
+        - generic [ref=e7]: G-Matrix
+      - navigation [ref=e8]:
+        - link "Home" [active] [ref=e9] [cursor=pointer]:
+          - /url: /
+          - img [ref=e10]
+          - generic [ref=e12]: Home
+        - link "Community" [ref=e13] [cursor=pointer]:
+          - /url: /community
+          - img [ref=e14]
+          - generic [ref=e16]: Community
+        - link "Map" [ref=e17] [cursor=pointer]:
+          - /url: /map
+          - img [ref=e18]
+          - generic [ref=e20]: Map
+        - link "Profile" [ref=e21] [cursor=pointer]:
+          - /url: /profile
+          - img [ref=e22]
+          - generic [ref=e25]: Profile
+        - button "Add Product" [ref=e26]:
+          - img
+          - generic [ref=e27]: Add Product
+      - generic [ref=e28]:
+        - button "Tap to enable location" [ref=e29]:
+          - img [ref=e30]
+        - button "Change language" [ref=e33]:
+          - img
+        - 'button "Theme: System (tap to change)" [ref=e34]':
+          - img [ref=e35]
+        - button "Sign In" [ref=e37]
+  - main [ref=e40]:
+    - generic [ref=e41]:
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - img
+          - textbox "Search products…" [ref=e44]
+        - generic [ref=e45]:
+          - button "Feed view" [ref=e46]:
+            - img
+          - button "Chart view" [ref=e47]:
+            - img
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - generic [ref=e52]:
+            - button "All" [ref=e54]
+            - button "Recent" [ref=e56]
+            - button "Nearby 1km" [ref=e58]:
+              - generic [ref=e59]:
+                - text: Nearby
+                - generic [ref=e60]: 1km
+                - img [ref=e61]
+            - button "Trending" [ref=e64]
+          - group "Sensitivity filters" [ref=e66]:
+            - button "Gluten" [pressed] [ref=e67]:
+              - generic [ref=e68]: 🌾
+            - button "Milk & Dairy" [ref=e69]:
+              - generic [ref=e70]: 🥛
+            - button "Soy" [ref=e71]:
+              - generic [ref=e72]: 🫘
+            - button "Nuts" [ref=e73]:
+              - generic [ref=e74]: 🥜
+            - button "Eggs" [ref=e75]:
+              - generic [ref=e76]: 🥚
+        - generic "Quadrant filter" [ref=e78]:
+          - button "All quadrants" [ref=e79]:
+            - generic [ref=e80]: All quadrants
+          - button "🏆 Holy Grail" [ref=e81]:
+            - generic [ref=e82]: 🏆
+            - generic [ref=e83]: Holy Grail
+          - button "🛡️ Survivor Food" [ref=e84]:
+            - generic [ref=e85]: 🛡️
+            - generic [ref=e86]: Survivor Food
+          - button "🗑️ The Bin" [ref=e87]:
+            - generic [ref=e88]: 🗑️
+            - generic [ref=e89]: The Bin
+          - button "⚠️ Russian Roulette" [ref=e90]:
+            - generic [ref=e91]: ⚠️
+            - generic [ref=e92]: Russian Roulette
+    - generic [ref=e95]:
+      - 'link "Naturland Arnika Krém 🏆 Naturland Arnika Krém Safety: 100 Taste: 50 Price: 0 0 votes Vote" [ref=e98] [cursor=pointer]':
+        - /url: /product/Naturland%20Arnika%20Kr%C3%A9m
+        - generic [ref=e99]:
+          - img "Naturland Arnika Krém" [ref=e100]
+          - generic "Holy Grail" [ref=e101]: 🏆
+          - generic "Has location data" [ref=e102]:
+            - img [ref=e103]
+        - generic [ref=e106]:
+          - heading "Naturland Arnika Krém" [level=3] [ref=e107]
+          - generic [ref=e108]:
+            - 'generic "Safety: 100" [ref=e109]'
+            - 'generic "Taste: 50" [ref=e110]'
+            - 'generic "Price: 0" [ref=e111]'
+          - paragraph [ref=e112]: 0 votes
+          - button "Vote" [ref=e114]
+      - 'link "No image ⚠️ E2E Filter Egg Pasta Safety: 33 Taste: 67 Price: 0 1 vote Vote" [ref=e117] [cursor=pointer]':
+        - /url: /product/E2E%20Filter%20Egg%20Pasta
+        - generic [ref=e118]:
+          - generic [ref=e119]: No image
+          - generic "Russian Roulette" [ref=e120]: ⚠️
+          - generic "Has location data" [ref=e121]:
+            - img [ref=e122]
+        - generic [ref=e125]:
+          - heading "E2E Filter Egg Pasta" [level=3] [ref=e126]
+          - generic [ref=e127]:
+            - 'generic "Safety: 33" [ref=e128]'
+            - 'generic "Taste: 67" [ref=e129]'
+            - 'generic "Price: 0" [ref=e130]'
+          - paragraph [ref=e131]: 1 vote
+          - button "Vote" [ref=e133]
+      - 'link "No image 🏆 E2E Filter Nut Bar Safety: 65 Taste: 72 Price: 60 1 vote Vote" [ref=e136] [cursor=pointer]':
+        - /url: /product/E2E%20Filter%20Nut%20Bar
+        - generic [ref=e137]:
+          - generic [ref=e138]: No image
+          - generic "Holy Grail" [ref=e139]: 🏆
+          - generic "Has location data" [ref=e140]:
+            - img [ref=e141]
+        - generic [ref=e144]:
+          - heading "E2E Filter Nut Bar" [level=3] [ref=e145]
+          - generic [ref=e146]:
+            - 'generic "Safety: 65" [ref=e147]'
+            - 'generic "Taste: 72" [ref=e148]'
+            - 'generic "Price: 60" [ref=e149]'
+          - paragraph [ref=e150]: 1 vote
+          - button "Vote" [ref=e152]
+      - 'link "No image 🏆 E2E Filter Safe Chips Safety: 91 Taste: 79 Price: 60 1 vote Vote" [ref=e155] [cursor=pointer]':
+        - /url: /product/E2E%20Filter%20Safe%20Chips
+        - generic [ref=e156]:
+          - generic [ref=e157]: No image
+          - generic "Holy Grail" [ref=e158]: 🏆
+          - generic "Has location data" [ref=e159]:
+            - img [ref=e160]
+        - generic [ref=e163]:
+          - heading "E2E Filter Safe Chips" [level=3] [ref=e164]
+          - generic [ref=e165]:
+            - 'generic "Safety: 91" [ref=e166]'
+            - 'generic "Taste: 79" [ref=e167]'
+            - 'generic "Price: 60" [ref=e168]'
+          - paragraph [ref=e169]: 1 vote
+          - button "Vote" [ref=e171]
+      - 'link "No image 🏆 E2E Filter Soy Snack Safety: 76 Taste: 67 Price: 60 1 vote Vote" [ref=e174] [cursor=pointer]':
+        - /url: /product/E2E%20Filter%20Soy%20Snack
+        - generic [ref=e175]:
+          - generic [ref=e176]: No image
+          - generic "Holy Grail" [ref=e177]: 🏆
+          - generic "Has location data" [ref=e178]:
+            - img [ref=e179]
+        - generic [ref=e182]:
+          - heading "E2E Filter Soy Snack" [level=3] [ref=e183]
+          - generic [ref=e184]:
+            - 'generic "Safety: 76" [ref=e185]'
+            - 'generic "Taste: 67" [ref=e186]'
+            - 'generic "Price: 60" [ref=e187]'
+          - paragraph [ref=e188]: 1 vote
+          - button "Vote" [ref=e190]
+      - 'link "No image 🏆 E2E Filter Milk Yogurt Safety: 74 Taste: 71 Price: 60 1 vote Vote" [ref=e193] [cursor=pointer]':
+        - /url: /product/E2E%20Filter%20Milk%20Yogurt
+        - generic [ref=e194]:
+          - generic [ref=e195]: No image
+          - generic "Holy Grail" [ref=e196]: 🏆
+          - generic "Has location data" [ref=e197]:
+            - img [ref=e198]
+        - generic [ref=e201]:
+          - heading "E2E Filter Milk Yogurt" [level=3] [ref=e202]
+          - generic [ref=e203]:
+            - 'generic "Safety: 74" [ref=e204]'
+            - 'generic "Taste: 71" [ref=e205]'
+            - 'generic "Price: 60" [ref=e206]'
+          - paragraph [ref=e207]: 1 vote
+          - button "Vote" [ref=e209]
+      - 'link "Gluten free sticks 🏆 Gluten free sticks Safety: 100 Taste: 50 Price: 0 0 votes Vote" [ref=e212] [cursor=pointer]':
+        - /url: /product/Gluten%20free%20sticks
+        - generic [ref=e213]:
+          - img "Gluten free sticks" [ref=e214]
+          - generic "Holy Grail" [ref=e215]: 🏆
+          - generic "Has location data" [ref=e216]:
+            - img [ref=e217]
+        - generic [ref=e220]:
+          - heading "Gluten free sticks" [level=3] [ref=e221]
+          - generic [ref=e222]:
+            - 'generic "Safety: 100" [ref=e223]'
+            - 'generic "Taste: 50" [ref=e224]'
+            - 'generic "Price: 0" [ref=e225]'
+          - paragraph [ref=e226]: 0 votes
+          - button "Vote" [ref=e228]
+  - region "Notifications alt+T"
+```

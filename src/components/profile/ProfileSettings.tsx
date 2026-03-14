@@ -13,7 +13,6 @@ interface ProfileSettingsProps {
   requestLocation: () => void
   permissionStatus: 'prompt' | 'granted' | 'denied' | null
   nearbyRangeKm: number
-  onNearbyRangeChange: (km: number) => void
   locale: string
   setLocale: (locale: Locale) => void
   cycleTheme: () => void
@@ -32,7 +31,6 @@ export function ProfileSettings({
   requestLocation,
   permissionStatus,
   nearbyRangeKm,
-  onNearbyRangeChange,
   locale,
   setLocale,
   cycleTheme,
@@ -79,7 +77,6 @@ export function ProfileSettings({
               key={km}
               onClick={() => {
                 setDefaultNearbyRange(km)
-                onNearbyRangeChange(km)
               }}
               className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                 nearbyRangeKm === km ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted-foreground/10'

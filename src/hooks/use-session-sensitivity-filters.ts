@@ -37,24 +37,16 @@ export function useSessionSensitivityFilters(defaultFilters: Set<string>) {
     [defaultFilters]
   )
   const [activeFilters, setActiveFilters] = useState<Set<string>>(normalizedDefaultFilters)
-  const [hasSessionOverride, setHasSessionOverride] = useState(false)
 
   useEffect(() => {
     const storedFilters = readSessionFilters()
     if (storedFilters) {
       setActiveFilters(storedFilters)
-      setHasSessionOverride(true)
       return
     }
 
     setActiveFilters(normalizedDefaultFilters)
   }, [normalizedDefaultFilters])
-
-  useEffect(() => {
-    if (!hasSessionOverride) {
-      setActiveFilters(normalizedDefaultFilters)
-    }
-  }, [hasSessionOverride, normalizedDefaultFilters])
 
   const toggleFilter = useCallback((id: string) => {
     setActiveFilters((previous) => {
@@ -65,14 +57,12 @@ export function useSessionSensitivityFilters(defaultFilters: Set<string>) {
       writeSessionFilters(next)
       return next
     })
-    setHasSessionOverride(true)
   }, [])
 
   const resetToDefaults = useCallback(() => {
     if (typeof window !== 'undefined') {
       window.sessionStorage.removeItem(SENSITIVITY_FILTERS_SESSION_KEY)
     }
-    setHasSessionOverride(false)
     setActiveFilters(normalizedDefaultFilters)
   }, [normalizedDefaultFilters])
 

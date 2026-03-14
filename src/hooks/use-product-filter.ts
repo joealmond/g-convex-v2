@@ -4,9 +4,32 @@ import type { Product } from '@/lib/types'
 
 /** Default nearby range in km, overridden by localStorage "g-matrix-nearby-range" */
 const DEFAULT_NEARBY_RANGE_KM = 1
+const NEARBY_RANGE_STORAGE_KEY = 'g-matrix-nearby-range'
+const NEARBY_RANGE_SESSION_KEY = 'g-matrix-nearby-range-session'
+const NEARBY_RANGE_CHANGE_EVENT = 'g-matrix-default-nearby-range-change'
+
+function readSessionNearbyRange(): number | null {
+  if (typeof window === 'undefined') return null
+  const stored = window.sessionStorage.getItem(NEARBY_RANGE_SESSION_KEY)
+  if (!stored) return null
+
+  const parsed = parseFloat(stored)
+  return !isNaN(parsed) && parsed > 0 ? parsed : null
+}
+
+function setSessionNearbyRange(km: number) {
+  if (typeof window === 'undefined') return
+  window.sessionStorage.setItem(NEARBY_RANGE_SESSION_KEY, String(km))
+}
 
 export function useNearbyRangeState() {
   const [nearbyRange, setNearbyRange] = useState(DEFAULT_NEARBY_RANGE_KM)
+
+  const updateNearbyRange = useCallback((km: number) => {
+    setSessionNearbyRange(km)
+    setNearbyRange(km)
+    window.dispatchEvent(new CustomEvent(NEARBY_RANGE_CHANGE_EVENT))
+  }, [])
 
   useEffect(() => {
     setNearbyRange(getNearbyRange())
@@ -15,17 +38,20 @@ export function useNearbyRangeState() {
       setNearbyRange(getNearbyRange())
     }
 
-    window.addEventListener('g-matrix-default-nearby-range-change', handleRangeChange)
-    return () => window.removeEventListener('g-matrix-default-nearby-range-change', handleRangeChange)
+    window.addEventListener(NEARBY_RANGE_CHANGE_EVENT, handleRangeChange)
+    return () => window.removeEventListener(NEARBY_RANGE_CHANGE_EVENT, handleRangeChange)
   }, [])
 
-  return [nearbyRange, setNearbyRange] as const
+  return [nearbyRange, updateNearbyRange] as const
 }
 
 /** Read user's preferred nearby range from localStorage (SSR-safe) */
 export function getNearbyRange(): number {
   if (typeof window === 'undefined') return DEFAULT_NEARBY_RANGE_KM
-  const stored = localStorage.getItem('g-matrix-nearby-range')
+  const sessionValue = readSessionNearbyRange()
+  if (sessionValue !== null) return sessionValue
+
+  const stored = localStorage.getItem(NEARBY_RANGE_STORAGE_KEY)
   if (stored) {
     const parsed = parseFloat(stored)
     if (!isNaN(parsed) && parsed > 0) return parsed
@@ -35,9 +61,9 @@ export function getNearbyRange(): number {
 
 /** Persist the user's preferred default nearby range */
 export function setDefaultNearbyRange(km: number) {
-  localStorage.setItem('g-matrix-nearby-range', String(km))
-  // Dispatch event so profile settings re-render
-  window.dispatchEvent(new CustomEvent('g-matrix-default-nearby-range-change'))
+  localStorage.setItem(NEARBY_RANGE_STORAGE_KEY, String(km))
+  setSessionNearbyRange(km)
+  window.dispatchEvent(new CustomEvent(NEARBY_RANGE_CHANGE_EVENT))
 }
 
 /** Available range presets (km) */

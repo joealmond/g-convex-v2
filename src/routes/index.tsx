@@ -102,6 +102,24 @@ function buildExcludeAllergens(activeSensitivities: Set<string>): string[] {
   return Array.from(activeSensitivities)
 }
 
+function getProductDistanceKm(product: Product, latitude?: number, longitude?: number): number | undefined {
+  if (!latitude || !longitude || !product.stores || product.stores.length === 0) {
+    return undefined
+  }
+
+  const distances = product.stores
+    .filter((store) => store.geoPoint)
+    .map((store) => {
+      if (!store.geoPoint) return Infinity
+      const latDiff = (store.geoPoint.lat - latitude) * 111.32
+      const lonDiff =
+        (store.geoPoint.lng - longitude) * 111.32 * Math.cos((latitude * Math.PI) / 180)
+      return Math.sqrt(latDiff ** 2 + lonDiff ** 2)
+    })
+
+  return distances.length > 0 ? Math.min(...distances) : undefined
+}
+
 function HomePageContent() {
   const { t } = useTranslation()
   const user = useQuery(api.users.current)
@@ -185,14 +203,6 @@ function HomePageContent() {
     { initialNumItems: 20 }
   )
 
-  // Nearby (geospatial — already limited, stays as-is)
-  const nearbyProducts = useQuery(
-    api.products.getNearbyProducts,
-    isNearbyMode && latitude && longitude
-      ? { latitude, longitude, radiusInMeters: nearbyRange * 1000, limit: 40 }
-      : 'skip'
-  )
-
   // For chart view, we still need all products
   const allProductsForChart = useQuery(api.products.listAll)
 
@@ -204,8 +214,17 @@ function HomePageContent() {
     }
 
     if (isNearbyMode) {
-      // Nearby: client-side allergen filtering on small set
-      let items = (nearbyProducts ?? []) as Product[]
+      let items = [...(allProductsForChart ?? [])]
+      items = items.filter((product) => {
+        const distance = getProductDistanceKm(product, latitude, longitude)
+        return distance !== undefined && distance <= nearbyRange
+      })
+      items.sort(
+        (a, b) =>
+          (getProductDistanceKm(a, latitude, longitude) || Infinity) -
+          (getProductDistanceKm(b, latitude, longitude) || Infinity)
+      )
+
       if (excludeAllergens.length > 0) {
         items = items.filter((p) => {
           if (!p.allergens || p.allergens.length === 0) return true
@@ -215,7 +234,7 @@ function HomePageContent() {
       items = applyQuadrantFilter(items)
       return {
         displayProducts: items,
-        displayLoading: nearbyProducts === undefined,
+        displayLoading: allProductsForChart === undefined,
         displayCanLoadMore: false,
         displayLoadMore: () => {},
         displayIsLoadingMore: false,
@@ -240,7 +259,7 @@ function HomePageContent() {
       displayLoadMore: () => feedResult.loadMore(20),
       displayIsLoadingMore: feedResult.status === 'LoadingMore',
     }
-  }, [isNearbyMode, isSearchMode, nearbyProducts, searchResult, feedResult, excludeAllergens, quadrantFilter])
+  }, [isNearbyMode, isSearchMode, allProductsForChart, searchResult, feedResult, excludeAllergens, quadrantFilter, latitude, longitude, nearbyRange])
 
   // Fallback: if nearby has no GPS, show recent feed instead
   const showNearbyFallback = isNearbyMode && !latitude && !longitude
@@ -263,14 +282,7 @@ function HomePageContent() {
   const finalCanLoadMore = showNearbyFallback ? fallbackFeed.status === 'CanLoadMore' : displayCanLoadMore
   const finalLoadMore = showNearbyFallback ? () => fallbackFeed.loadMore(20) : displayLoadMore
   const finalIsLoadingMore = showNearbyFallback ? fallbackFeed.status === 'LoadingMore' : displayIsLoadingMore
-  const filteredChartProducts = useMemo(
-    () => (allProductsForChart ?? []).filter((product) =>
-      quadrantFilter === 'all'
-        ? true
-        : getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter
-    ),
-    [allProductsForChart, quadrantFilter]
-  )
+  const filteredChartProducts = finalProducts
 
   const useCardLayout = filterType !== 'all'
 
@@ -300,11 +312,8 @@ function HomePageContent() {
 
   // Distance helper for nearby products
   const getDistance = useCallback(
-    (product: Product) => {
-      const np = nearbyProducts?.find((p) => p._id === product._id)
-      return np?.distance ? np.distance / 1000 : undefined // convert m → km
-    },
-    [nearbyProducts]
+    (product: Product) => getProductDistanceKm(product, latitude, longitude),
+    [latitude, longitude]
   )
 
   useEffect(() => {
@@ -315,6 +324,12 @@ function HomePageContent() {
       }
     }
   }, [selectedProduct])
+
+  useEffect(() => {
+    if (!selectedProduct) return
+    if (filteredChartProducts.some((product) => product._id === selectedProduct._id)) return
+    setSelectedProduct(null)
+  }, [filteredChartProducts, selectedProduct])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -349,13 +364,21 @@ function HomePageContent() {
   const shouldShowScrollToggle = scrollY > 240 || (scrollY <= 80 && savedScrollY > 0)
   const showChartPanel = viewMode === 'chart'
 
+  const stickyRailStyle = !isBrowser
+    ? {
+        top: 0,
+        marginTop: 'calc(-1 * max(env(safe-area-inset-top, 0px), 1rem))',
+        paddingTop: 'max(env(safe-area-inset-top, 0px), 1rem)',
+      }
+    : undefined
+
   return (
     <main className="flex-1 mx-auto w-full px-2 pb-4 sm:px-4 sm:pb-6 md:px-6 xl:px-8">
       {/* Browser decision: page/body scroll, with the control rail sticky below the top navbar. */}
       <div className={cn(
         'sticky z-[40] w-full border-b border-border/80 bg-card/95 pb-4 shadow-sm backdrop-blur-sm md:z-[45]',
         isBrowser ? 'top-[calc(3.5rem+env(safe-area-inset-top,0px))]' : 'top-0 md:top-[calc(3.5rem+env(safe-area-inset-top,0px))]'
-      )}>
+      )} style={stickyRailStyle}>
         <div className="flex items-center gap-2 pt-1 md:pt-3">
           {/* Search Input */}
           <div className="flex-1 relative">
@@ -404,8 +427,14 @@ function HomePageContent() {
         {/* Filters stay in one line when possible and wrap when they don't fit. */}
         <div className="pt-3 md:pt-4">
           <div className="space-y-2">
+            <div className="sm:hidden">
+              <SensitivityFilterChips
+                activeFilters={activeSensitivities}
+                onToggle={toggleSensitivity}
+              />
+            </div>
             <div className="flex flex-wrap items-start gap-2 sm:items-center">
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 w-full sm:flex-1">
                 <FilterChips
                   value={filterType}
                   onChange={handleFilterChange}
@@ -413,7 +442,7 @@ function HomePageContent() {
                   onRangeChange={setNearbyRange}
                 />
               </div>
-              <div className="ml-auto flex justify-end">
+              <div className="ml-auto hidden sm:flex sm:justify-end">
                 <SensitivityFilterChips
                   activeFilters={activeSensitivities}
                   onToggle={toggleSensitivity}

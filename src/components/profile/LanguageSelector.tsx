@@ -25,7 +25,7 @@ export function LanguageSelector({ locale, setLocale }: LanguageSelectorProps) {
         <button
           key={value}
           onClick={() => setLocale(value)}
-          className={`min-h-9 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+          className={`min-h-8 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors sm:min-h-9 sm:px-3 sm:py-1.5 sm:text-xs ${
             locale === value
               ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-muted-foreground hover:bg-muted/80'

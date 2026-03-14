@@ -124,9 +124,9 @@ function GuestProfileContent() {
         {/* Preferences row — always visible at top */}
         <Card className="rounded-2xl shadow-sm">
           <CardContent className="p-0">
-            <div className="flex items-stretch divide-x divide-border">
+            <div className="flex flex-col items-stretch divide-y divide-border sm:flex-row sm:divide-x sm:divide-y-0">
               {/* Language */}
-              <div className="flex min-h-[4rem] flex-1 items-center justify-between px-4 py-3">
+              <div className="flex min-h-[3.5rem] flex-1 items-center justify-between px-4 py-3 sm:min-h-[4rem]">
                 <div className="flex items-center gap-2">
                   <Languages className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span className="text-xs font-medium text-foreground">{t('profile.language')}</span>
@@ -136,7 +136,7 @@ function GuestProfileContent() {
               {/* Theme */}
               <button
                 onClick={cycleTheme}
-                className="flex min-h-[4rem] items-center gap-2 px-4 py-3 hover:bg-muted/50 transition-colors"
+                className="flex min-h-[3.5rem] items-center justify-between gap-2 px-4 py-3 hover:bg-muted/50 transition-colors sm:min-h-[4rem] sm:justify-start"
               >
                 <ThemeIcon className="h-4 w-4 text-muted-foreground shrink-0" />
                 <span className="text-xs text-muted-foreground whitespace-nowrap">{themeLabel}</span>
@@ -231,7 +231,7 @@ function ProfileContent() {
   const { isLoading: isAuthLoading } = useConvexAuth()
 
   const ThemeIcon = theme === 'system' ? Monitor : resolvedTheme === 'dark' ? Moon : Sun
-  const [nearbyRangeKm, setNearbyRangeKm] = useNearbyRangeState()
+  const [nearbyRangeKm] = useNearbyRangeState()
   const themeLabel = theme === 'system' ? t('profile.themeSystem') : theme === 'dark' ? t('profile.themeDark') : t('profile.themeLight')
   const cycleTheme = () => {
     if (theme === 'light') setTheme('dark')
@@ -505,7 +505,6 @@ function ProfileContent() {
               requestLocation={requestLocation}
               permissionStatus={permissionStatus}
               nearbyRangeKm={nearbyRangeKm}
-              onNearbyRangeChange={setNearbyRangeKm}
               locale={locale}
               setLocale={setLocale}
               cycleTheme={cycleTheme}

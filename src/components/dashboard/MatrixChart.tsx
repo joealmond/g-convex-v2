@@ -1,6 +1,6 @@
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceArea, ReferenceLine } from 'recharts'
 import { motion } from 'framer-motion'
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import type { Product } from '@/lib/types'
 import { getQuadrant, getQuadrantColor, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
@@ -151,6 +151,23 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
   // Defer chart rendering until container has non-zero dimensions
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerReady, setContainerReady] = useState(false)
+  const [tooltipResetKey, setTooltipResetKey] = useState(0)
+  const dismissTimeoutRef = useRef<number | null>(null)
+
+  const dismissTooltip = useCallback(() => {
+    setTooltipResetKey((previous) => previous + 1)
+  }, [])
+
+  const scheduleTooltipDismiss = useCallback(() => {
+    if (dismissTimeoutRef.current !== null) {
+      window.clearTimeout(dismissTimeoutRef.current)
+    }
+
+    dismissTimeoutRef.current = window.setTimeout(() => {
+      dismissTooltip()
+      dismissTimeoutRef.current = null
+    }, 2500)
+  }, [dismissTooltip])
 
   useEffect(() => {
     if (!containerRef.current || containerReady) return
@@ -169,6 +186,29 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
 
     return () => observer.disconnect()
   }, [containerReady])
+
+  useEffect(() => {
+    return () => {
+      if (dismissTimeoutRef.current !== null) {
+        window.clearTimeout(dismissTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!containerRef.current) return
+      if (containerRef.current.contains(event.target as Node)) return
+      dismissTooltip()
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown, true)
+    return () => document.removeEventListener('pointerdown', handlePointerDown, true)
+  }, [dismissTooltip])
+
+  useEffect(() => {
+    dismissTooltip()
+  }, [products, mode, dismissTooltip])
 
   return (
     <div className="chart-interaction-reset flex h-full w-full flex-col select-none">
@@ -201,6 +241,7 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
         ) : (
         <ResponsiveContainer width="100%" height="100%" minHeight={250}>
           <ScatterChart
+            key={tooltipResetKey}
             margin={{ top: 8, right: 12, bottom: 24, left: 8 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
@@ -241,7 +282,13 @@ export function MatrixChart({ products, onProductClick, selectedProduct, mode = 
             <ZAxis type="number" dataKey="z" range={[40, 300]} />
             <Tooltip content={tooltipContent} cursor={{ strokeDasharray: '3 3' }} />
 
-            <Scatter data={data} onClick={(data) => onProductClick?.(data.product)}>
+            <Scatter
+              data={data}
+              onClick={(data) => {
+                onProductClick?.(data.product)
+                scheduleTooltipDismiss()
+              }}
+            >
               {data.map((entry, index) => {
                 const productColor = hashStringToColor(entry.product.name)
                 const isSelected = selectedProduct?._id === entry.product._id
