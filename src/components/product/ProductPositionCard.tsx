@@ -152,6 +152,9 @@ export function ProductPositionCard({
           <span>•</span>
           <span>{axisYLabel}: {secondaryValue}</span>
         </div>
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          {t('chart.browseAid')}
+        </p>
       </div>
     </div>
   )

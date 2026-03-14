@@ -200,6 +200,8 @@
     "gMatrix": "G-Matrix",
     "vibe": "Vibe",
     "value": "Value",
+    "browseAid": "Quadrants are a browsing aid. Check allergen details before deciding.",
+    "browseAidShort": "Chart is a browsing aid, not the final safety call.",
     "noProductsYet": "No products yet",
     "addFirstProduct": "Add your first product to get started!",
     "votes": "Votes: ",

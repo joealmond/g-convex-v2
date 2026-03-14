@@ -17,7 +17,7 @@ import { EditProductDialog } from '@/components/dashboard/EditProductDialog'
 import { type Product } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import {
-  computeAllergenScoreFromData,
+  computeSafetyDisplayMeta,
   type AllergenScoresMap,
 } from '@/lib/score-utils'
 import { useAnonymousId } from '@/hooks/use-anonymous-id'
@@ -74,39 +74,6 @@ function ProductDetailPage() {
       <ProductDetailContent />
     </Suspense>
   )
-}
-
-function getDisplayedSafetyMeta(
-  allergenScores: AllergenScoresMap | null | undefined,
-  avoidedAllergens: string[],
-) {
-  if (!allergenScores || Object.keys(allergenScores).length === 0) {
-    return { score: 50, voteCount: 0 }
-  }
-
-  const relevantAllergenIds = avoidedAllergens.length > 0
-    ? avoidedAllergens
-    : Object.keys(allergenScores)
-
-  let limitingScore = Number.POSITIVE_INFINITY
-  let limitingVoteCount = 0
-
-  for (const allergenId of relevantAllergenIds) {
-    const data = allergenScores[allergenId]
-    if (!data) continue
-
-    const score = computeAllergenScoreFromData(data)
-    if (score < limitingScore) {
-      limitingScore = score
-      limitingVoteCount = data.upVotes + data.downVotes
-    }
-  }
-
-  if (!Number.isFinite(limitingScore)) {
-    return { score: 50, voteCount: 0 }
-  }
-
-  return { score: limitingScore, voteCount: limitingVoteCount }
 }
 
 function ProductDetailContent() {
@@ -174,7 +141,7 @@ function ProductDetailContent() {
   const firstStoreWithGeo = product.stores?.find((store) => store.geoPoint)
   const hasStructuredIngredients = Boolean(product.ingredients && product.ingredients.length > 0)
   const hasOcrIngredients = Boolean(product.ingredientsText?.trim())
-  const safetyMeta = getDisplayedSafetyMeta(
+  const safetyMeta = computeSafetyDisplayMeta(
     (product.allergenScores as AllergenScoresMap | undefined) ?? undefined,
     avoidedAllergens,
   )

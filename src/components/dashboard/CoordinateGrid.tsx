@@ -306,6 +306,9 @@ export function CoordinateGrid({
           {QUADRANTS[quadrant]?.name || 'Unknown'}
         </div>
       </div>
+      <p className="text-center text-[11px] text-muted-foreground">
+        {t('chart.browseAidShort')}
+      </p>
     </div>
   )
 }

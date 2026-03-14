@@ -4,6 +4,7 @@ import type { Product } from '@/lib/types'
 import { getQuadrant, getQuadrantColor, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import { hashStringToColor } from '@/lib/utils'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface MatrixChartProps {
   products: Product[]
@@ -72,6 +73,7 @@ function jitterOverlapping(points: ChartDataPoint[], threshold = 3, spread = 3):
  * - Value: price (Y) × taste (X) — value-for-money lens
  */
 export function MatrixChart({ products, onProductClick, selectedProduct, onSelectionClear, mode = 'vibe' }: MatrixChartProps) {
+  const { t } = useTranslation()
   // Build raw data points — memoized to avoid recomputing on every render
   const rawData = useMemo<ChartDataPoint[]>(() => 
     products.map((product) => ({
@@ -171,6 +173,9 @@ export function MatrixChart({ products, onProductClick, selectedProduct, onSelec
           </div>
         ))}
       </div>
+      <p className="mb-2 text-center text-[11px] text-muted-foreground">
+        {t('chart.browseAid')}
+      </p>
 
       {/* Chart */}
       <div ref={containerRef} className="flex-1 min-h-0 relative">
@@ -196,6 +201,7 @@ export function MatrixChart({ products, onProductClick, selectedProduct, onSelec
               <p className="font-medium" style={{ color: getQuadrantColor(selectedQuadrant) }}>
                 {QUADRANTS[selectedQuadrant]?.name || 'Unknown'}
               </p>
+              <p>{t('chart.browseAidShort')}</p>
             </div>
           </div>
         )}

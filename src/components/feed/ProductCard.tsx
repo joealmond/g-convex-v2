@@ -5,10 +5,17 @@ import { appConfig } from '@/lib/app-config'
 import { DeleteProductButton } from '@/components/dashboard/DeleteProductButton'
 import { VoteProductDialog } from '@/components/product/VoteProductDialog'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { MapPin, Trash2, AlertTriangle } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
 import { formatDistance } from '@/lib/format-distance'
 import { findAllergenConflicts } from '@/lib/dietary-profiles'
+import {
+  computeSafetyDisplayMeta,
+  deriveAllergenConfidence,
+  deriveAllergenState,
+  type AllergenScoresMap,
+} from '@/lib/score-utils'
 
 interface ProductCardProps {
   product: Product
@@ -46,6 +53,30 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
   // Get quadrant info
   const quadrant = getQuadrant(product.averageSafety, product.averageTaste)
   const quadrantInfo = QUADRANTS[quadrant]
+  const safetyMeta = computeSafetyDisplayMeta(
+    (product.allergenScores as AllergenScoresMap | undefined) ?? undefined,
+    avoidedAllergens,
+  )
+  const safetyState = deriveAllergenState(safetyMeta.score, safetyMeta.voteCount)
+  const safetyConfidence = deriveAllergenConfidence(safetyMeta.voteCount)
+
+  const safetyStateLabel = safetyState === 'likely-safe'
+    ? t('voting.likelySafe')
+    : safetyState === 'likely-unsafe'
+      ? t('voting.likelyUnsafe')
+      : t('voting.uncertain')
+
+  const safetyConfidenceLabel = safetyConfidence === 'high'
+    ? t('voting.highConfidence')
+    : safetyConfidence === 'medium'
+      ? t('voting.mediumConfidence')
+      : t('voting.lowConfidence')
+
+  const safetyStateClass = safetyState === 'likely-safe'
+    ? 'border-safety-high/35 bg-safety-high/15 text-foreground'
+    : safetyState === 'likely-unsafe'
+      ? 'border-safety-low/35 bg-safety-low/15 text-foreground'
+      : 'border-safety-mid/35 bg-safety-mid/15 text-foreground'
 
   // Check if product has location data
   const hasLocation = product.stores?.some(s => s.geoPoint)
@@ -144,6 +175,18 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
             </p>
           )}
 
+          <div className="mt-2 flex flex-wrap items-center gap-2 md:mt-3">
+            <Badge className={safetyStateClass} variant="outline">
+              {safetyStateLabel}
+            </Badge>
+            <span className="text-[11px] text-muted-foreground md:text-xs">
+              {t('voting.confidence')}: {safetyConfidenceLabel}
+            </span>
+            <span className="text-[11px] text-muted-foreground md:text-xs">
+              {t('voting.allergenScore', { score: Math.round(safetyMeta.score) })}
+            </span>
+          </div>
+
           {/* Scoring Dots Row */}
           <div className="flex gap-2 mt-2 md:mt-3">
             {/* Axis 1 (Safety) Dot */}
@@ -168,6 +211,10 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
           {/* Vote Count */}
           <p className="text-xs text-muted-foreground mt-2 md:mt-3 md:text-sm">
             {product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}
+          </p>
+
+          <p className="mt-1 text-[11px] text-muted-foreground md:text-xs">
+            {t('chart.browseAidShort')}
           </p>
 
           <div

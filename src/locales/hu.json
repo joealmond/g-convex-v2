@@ -200,6 +200,8 @@
     "gMatrix": "G-Mátrix",
     "vibe": "Hangulat",
     "value": "Érték",
+    "browseAid": "A kvadrans csak bongeszeshez segit. Dontes elott nezd meg az allergen reszleteket.",
+    "browseAidShort": "A grafikon tajekoztato, nem a vegso biztonsagi itelet.",
     "noProductsYet": "Még nincs termék",
     "addFirstProduct": "Add hozzá az első terméket a kezdéshez!",
     "votes": "Szavazatok: ",

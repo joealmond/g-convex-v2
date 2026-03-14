@@ -27,6 +27,11 @@ export type AllergenScoresMap = Record<string, AllergenScoreData>
 export type AllergenState = 'likely-unsafe' | 'uncertain' | 'likely-safe'
 export type AllergenConfidence = 'low' | 'medium' | 'high'
 
+export interface SafetyDisplayMeta {
+  score: number
+  voteCount: number
+}
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 /**
@@ -100,6 +105,43 @@ export function deriveAllergenConfidence(
   if (independentVoteCount <= 2) return 'low'
   if (independentVoteCount <= 9) return 'medium'
   return 'high'
+}
+
+/**
+ * Find the limiting allergen score for a given set of relevant allergens.
+ * Falls back to worst-case across all allergens, then to unknown.
+ */
+export function computeSafetyDisplayMeta(
+  allergenScores: AllergenScoresMap | undefined | null,
+  relevantAllergens: string[],
+): SafetyDisplayMeta {
+  if (!allergenScores || Object.keys(allergenScores).length === 0) {
+    return { score: 50, voteCount: 0 }
+  }
+
+  const relevantAllergenIds = relevantAllergens.length > 0
+    ? relevantAllergens
+    : Object.keys(allergenScores)
+
+  let limitingScore = Number.POSITIVE_INFINITY
+  let limitingVoteCount = 0
+
+  for (const allergenId of relevantAllergenIds) {
+    const data = allergenScores[allergenId]
+    if (!data) continue
+
+    const score = computeAllergenScoreFromData(data)
+    if (score < limitingScore) {
+      limitingScore = score
+      limitingVoteCount = data.upVotes + data.downVotes
+    }
+  }
+
+  if (!Number.isFinite(limitingScore)) {
+    return { score: 50, voteCount: 0 }
+  }
+
+  return { score: limitingScore, voteCount: limitingVoteCount }
 }
 
 // ─── Personalized Safety ─────────────────────────────────────────────────────

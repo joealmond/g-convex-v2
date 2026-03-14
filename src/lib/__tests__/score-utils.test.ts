@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   computeAllergenScore,
   computeAllergenScoreFromData,
+  computeSafetyDisplayMeta,
   computePersonalizedSafety,
   computeTasteScore,
   deriveAllergenConfidence,
@@ -156,6 +157,37 @@ describe('computePersonalizedSafety', () => {
     // Only gluten is relevant → returns ~92
     const score = computePersonalizedSafety(allergenScores, ['gluten', 'sesame'])
     expect(score).toBe(92)
+  })
+})
+
+// ─── computeSafetyDisplayMeta ───────────────────────────────────────────────
+
+describe('computeSafetyDisplayMeta', () => {
+  const allergenScores: AllergenScoresMap = {
+    gluten: { aiBase: 'contains', upVotes: 18, downVotes: 2 },
+    milk: { aiBase: 'free-from', upVotes: 12, downVotes: 0 },
+    soy: { aiBase: 'unknown', upVotes: 0, downVotes: 0 },
+  }
+
+  it('returns the limiting score for relevant allergens', () => {
+    expect(computeSafetyDisplayMeta(allergenScores, ['milk', 'soy'])).toEqual({
+      score: 50,
+      voteCount: 0,
+    })
+  })
+
+  it('falls back to the worst-case score across all allergens when no profile exists', () => {
+    expect(computeSafetyDisplayMeta(allergenScores, [])).toEqual({
+      score: 50,
+      voteCount: 0,
+    })
+  })
+
+  it('returns unknown defaults when no relevant allergen data exists', () => {
+    expect(computeSafetyDisplayMeta(allergenScores, ['nuts'])).toEqual({
+      score: 50,
+      voteCount: 0,
+    })
   })
 })
 
