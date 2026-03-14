@@ -1,6 +1,6 @@
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceArea, ReferenceLine } from 'recharts'
 import { motion } from 'framer-motion'
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import type { Product } from '@/lib/types'
 import { getQuadrant, getQuadrantColor, QUADRANTS } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
@@ -153,6 +153,7 @@ export function MatrixChart({ products, onProductClick, selectedProduct, onSelec
   )
 
   // Defer chart rendering until container has non-zero dimensions
+  const chartRootRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerReady, setContainerReady] = useState(false)
 
@@ -181,21 +182,31 @@ export function MatrixChart({ products, onProductClick, selectedProduct, onSelec
       )
     : null
 
-  const handleChartPointerDownCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+  useEffect(() => {
     if (!selectedProduct) return
-    const target = event.target as HTMLElement | null
-    if (!target) return
 
-    if (target.closest('.recharts-scatter-symbol')) return
-    if (target.closest('[data-selected-product-tooltip]')) return
+    const handlePointerDown = (event: PointerEvent) => {
+      const root = chartRootRef.current
+      if (!root) return
 
-    onSelectionClear?.()
+      const target = event.target as HTMLElement | null
+      if (!target || !root.contains(target)) return
+
+      if (target.closest('[data-selected-product-tooltip]')) return
+      if (target.closest('.recharts-scatter-symbol')) return
+      if (target.closest('.recharts-tooltip-wrapper')) return
+
+      onSelectionClear?.()
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown, true)
+    return () => document.removeEventListener('pointerdown', handlePointerDown, true)
   }, [onSelectionClear, selectedProduct])
 
   return (
     <div
+      ref={chartRootRef}
       className="chart-interaction-reset flex h-full w-full flex-col select-none"
-      onPointerDownCapture={handleChartPointerDownCapture}
     >
       {/* Quadrant Legend — compact row above the chart */}
       <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mb-2 px-1">

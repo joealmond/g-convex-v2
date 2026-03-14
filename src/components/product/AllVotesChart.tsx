@@ -1,6 +1,6 @@
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { useCallback, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ScatterChart,
   Scatter,
@@ -26,6 +26,7 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
   const votes = useQuery(api.votes.getByProduct, { productId })
   const user = useQuery(api.users.current)
   const [selectedVoteId, setSelectedVoteId] = useState<Id<'votes'> | null>(null)
+  const chartRootRef = useRef<HTMLDivElement>(null)
 
   if (!votes || votes.length === 0) {
     return (
@@ -71,21 +72,31 @@ export function AllVotesChart({ productId, highlightVoteId }: AllVotesChartProps
     return chartColors.anonymous // Gray for anonymous
   }
 
-  const handleChartPointerDownCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+  useEffect(() => {
     if (!selectedVote) return
-    const target = event.target as HTMLElement | null
-    if (!target) return
 
-    if (target.closest('.recharts-scatter-symbol')) return
-    if (target.closest('[data-selected-vote-tooltip]')) return
+    const handlePointerDown = (event: PointerEvent) => {
+      const root = chartRootRef.current
+      if (!root) return
 
-    setSelectedVoteId(null)
+      const target = event.target as HTMLElement | null
+      if (!target || !root.contains(target)) return
+
+      if (target.closest('[data-selected-vote-tooltip]')) return
+      if (target.closest('.recharts-scatter-symbol')) return
+      if (target.closest('.recharts-tooltip-wrapper')) return
+
+      setSelectedVoteId(null)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown, true)
+    return () => document.removeEventListener('pointerdown', handlePointerDown, true)
   }, [selectedVote])
 
   return (
     <div
+      ref={chartRootRef}
       className="relative h-[18rem] w-full sm:h-[22rem] lg:h-[24rem]"
-      onPointerDownCapture={handleChartPointerDownCapture}
     >
       {selectedVote && (
         <div
