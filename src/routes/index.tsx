@@ -437,40 +437,48 @@ function HomePageContent() {
               <BarChart3 className="h-4 w-4" />
             </Button>
           </div>
+
+          <div className="hidden md:block shrink-0">
+            <QuadrantFilterChips
+              selectedQuadrant={quadrantFilter}
+              onToggle={toggleQuadrantFilter}
+            />
+          </div>
         </div>
 
         {/* Filters stay in one line when possible and wrap when they don't fit. */}
         <div className="pt-3 md:pt-4">
-          <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1 space-y-2">
-              <div className="sm:hidden">
+          <div className="space-y-2">
+            <div className="flex items-start justify-between gap-2 md:hidden">
+              <div className="min-w-0 flex-1">
                 <SensitivityFilterChips
                   activeFilters={activeSensitivities}
                   onToggle={toggleSensitivity}
                 />
               </div>
-              <div className="flex flex-wrap items-start gap-2 sm:items-center">
-                <div className="min-w-0 w-full sm:flex-1">
-                  <FilterChips
-                    value={filterType}
-                    onChange={handleFilterChange}
-                    nearbyRange={nearbyRange}
-                    onRangeChange={setNearbyRange}
-                  />
-                </div>
-                <div className="ml-auto hidden sm:flex sm:justify-end">
-                  <SensitivityFilterChips
-                    activeFilters={activeSensitivities}
-                    onToggle={toggleSensitivity}
-                  />
-                </div>
+              <div className="shrink-0 self-start">
+                <QuadrantFilterChips
+                  selectedQuadrant={quadrantFilter}
+                  onToggle={toggleQuadrantFilter}
+                />
               </div>
             </div>
-            <div className="shrink-0 self-center">
-              <QuadrantFilterChips
-                selectedQuadrant={quadrantFilter}
-                onToggle={toggleQuadrantFilter}
-              />
+
+            <div className="flex flex-wrap items-start gap-2 md:items-center md:justify-between">
+              <div className="min-w-0 flex-1">
+                <FilterChips
+                  value={filterType}
+                  onChange={handleFilterChange}
+                  nearbyRange={nearbyRange}
+                  onRangeChange={setNearbyRange}
+                />
+              </div>
+              <div className="hidden md:flex md:shrink-0 md:justify-end">
+                <SensitivityFilterChips
+                  activeFilters={activeSensitivities}
+                  onToggle={toggleSensitivity}
+                />
+              </div>
             </div>
           </div>
         </div>

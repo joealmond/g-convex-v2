@@ -28,7 +28,7 @@ export function SensitivityFilterChips({ activeFilters, onToggle }: SensitivityF
             onClick={() => onToggle(allergen.id)}
             className={cn(
               'rounded-full font-medium flex items-center justify-center',
-              'min-h-[34px] min-w-[34px] px-2 text-base',
+              'min-h-[32px] min-w-[32px] px-1.5 text-[15px] sm:min-h-[34px] sm:min-w-[34px] sm:px-2 sm:text-base',
               isActive
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'bg-muted text-muted-foreground border border-border hover:bg-card'
