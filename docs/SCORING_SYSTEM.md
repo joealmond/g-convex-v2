@@ -1,6 +1,6 @@
 # Scoring System — Per-Allergen Safety & Thumbs Voting
 
-> This document describes the scoring architecture for G-Matrix: how products are rated, how AI initializes scores, how community votes work, and how personalized safety is computed.
+> This document describes the scoring architecture for G-Matrix: how products are rated, how initial allergen evidence is seeded, how community votes work, and how personalized safety is computed.
 
 ---
 
@@ -19,7 +19,8 @@
 11. [Key Files](#key-files)
 12. [Math Examples](#math-examples)
 13. [Design Rationale](#design-rationale)
-14. [Data Source Labels](#data-source-labels)
+14. [Quadrant Visualization](#quadrant-visualization)
+15. [Data Source Labels](#data-source-labels)
 
 ---
 
@@ -29,11 +30,13 @@ G-Matrix rates products on **three dimensions**:
 
 | Dimension | Method | Stored On Product | Computed Score |
 |-----------|--------|-------------------|----------------|
-| **Safety** | Per-allergen thumbs 👍/👎 | `allergenScores` (map) | 0–100 per allergen |
+| **Safety** | Per-allergen thumbs 👍/👎 | `allergenScores` (map) | Internal 0–100 evidence score + user-facing state |
 | **Taste** | Single thumbs 👍/👎 | `tasteUpVotes`, `tasteDownVotes` | 0–100 ratio |
 | **Price** | 1–5 subjective scale + optional exact price | `avgPrice`, `exactPrices` | 1–5 average |
 
-All scores use **Bayesian updating** — AI analysis seeds a prior (virtual votes), and community thumbs votes shift the score over time. With enough community votes, the AI prior becomes negligible.
+Safety uses **Bayesian updating** — the initial allergen classification seeds a conservative prior, and community thumbs votes shift the score over time. With enough community votes, the prior becomes negligible.
+
+Important: the allergen score is **not a lab measurement** and should not be interpreted as proof that an allergen is absent. It is a structured estimate derived from initial product evidence plus community feedback.
 
 ---
 
@@ -53,8 +56,15 @@ Unlike traditional single-score safety ratings, G-Matrix tracks safety **per all
 | `eggs` | Eggs | 🥚 |
 
 Each allergen has an independent score composed of:
-- **AI base classification**: `contains` / `free-from` / `unknown` (set at product creation from ingredient analysis)
+- **Initial classification**: `contains` / `free-from` / `unknown` (set at product creation from ingredient analysis, barcode data, or community entry)
 - **Community votes**: aggregated thumbs up/down from all users
+
+The internal numeric score is then distilled into a simple user-facing state:
+- **Likely unsafe**
+- **Uncertain**
+- **Likely safe**
+
+This keeps the product understandable for end users while preventing weak evidence from looking more certain than it really is.
 
 ### Taste
 
@@ -78,22 +88,29 @@ For each allergen on a product:
 score = (virtualUp + communityUp) / (virtualUp + virtualDown + communityUp + communityDown) × 100
 ```
 
-### AI Virtual Votes (Prior)
+### Initial Virtual Votes (Prior)
 
-The AI classification sets **virtual votes** that act as a Bayesian prior:
+The initial classification sets **virtual votes** that act as a Bayesian prior:
 
-| AI Classification | Virtual 👍 | Virtual 👎 | Initial Score |
-|-------------------|-----------|-----------|---------------|
-| `free-from` | 2 | 0 | **100** |
+| Initial Classification | Virtual 👍 | Virtual 👎 | Initial Score |
+|------------------------|-----------|-----------|---------------|
+| `free-from` | 2 | 1 | **67** |
 | `contains` | 0 | 2 | **0** |
 | `unknown` | 1 | 1 | **50** |
 
 These virtual votes are **never removed** — they're baked into the formula. As community votes accumulate, the virtual votes become proportionally less significant.
 
-### How AI Classification Works
+This prior is intentionally **asymmetric**:
+- A product classified as `contains` starts strict.
+- A product classified as `free-from` starts positive, but not as certain truth.
+- A product classified as `unknown` stays neutral.
+
+The goal is to reduce false-safe impressions on low-evidence products while keeping the system simple.
+
+### How Initial Classification Works
 
 When a product is created:
-1. **AI analyzes ingredients** (text/image OCR → ingredient list)
+1. **Initial evidence is gathered** (barcode data, ingredient scan, AI estimate, or community entry)
 2. For each known allergen:
    - If allergen appears in `product.allergens` → `contains`
    - If allergen appears in `product.freeFrom` → `free-from`
@@ -104,27 +121,56 @@ When a product is created:
 ```
 {
   "gluten": { aiBase: "contains",  upVotes: 0, downVotes: 0 },  // score = 0
-  "milk":   { aiBase: "free-from", upVotes: 0, downVotes: 0 },  // score = 100
-  "soy":    { aiBase: "free-from", upVotes: 0, downVotes: 0 },  // score = 100
+  "milk":   { aiBase: "free-from", upVotes: 0, downVotes: 0 },  // score = 67
+  "soy":    { aiBase: "free-from", upVotes: 0, downVotes: 0 },  // score = 67
   "nuts":   { aiBase: "unknown",   upVotes: 0, downVotes: 0 },  // score = 50
   "eggs":   { aiBase: "unknown",   upVotes: 0, downVotes: 0 },  // score = 50
 }
 ```
 
-### Community Overrides AI
+### Community Overrides the Initial Classification
 
-The Bayesian model means community votes can **override** the AI classification:
+The Bayesian model means community votes can **override** the initial classification:
 
 | Scenario | Result |
 |----------|--------|
 | AI says `contains` + 15 users vote 👍, 2 vote 👎 | Score ≈ 79 (community overrides) |
-| AI says `free-from` + 0 users vote 👍, 5 vote 👎 | Score ≈ 29 (community flags issue) |
+| AI says `free-from` + 0 users vote 👍, 5 vote 👎 | Score = 25 (community flags issue) |
 | AI says `unknown` + 10 users vote 👍 | Score ≈ 92 (community establishes safety) |
 
 This handles real-world edge cases:
-- AI mistakes a "may contain" warning for actual allergen content
-- Products reformulated after initial AI analysis
+- Initial extraction mistakes a "may contain" warning for actual allergen content
+- Products reformulated after initial analysis
 - AI misses a cross-contamination risk that users notice
+
+### User-Facing Safety States
+
+The internal numeric score is not shown as absolute truth. Instead, each allergen should be presented with a conservative state:
+
+| State | Rule |
+|-------|------|
+| **Likely unsafe** | score `<= 25` |
+| **Likely safe** | score `>= 80` **and** at least 5 independent votes for that allergen |
+| **Uncertain** | everything else |
+
+This means most new products start as **uncertain**, even if the initial evidence is positive.
+
+Why this matters:
+- `Uncertain` covers low evidence, conflicting evidence, and missing evidence.
+- `Likely safe` requires both a high score and some minimum community support.
+- `Likely unsafe` is easier to reach than `Likely safe`, which matches allergy risk asymmetry.
+
+### Confidence
+
+Confidence should stay simple and visible next to the allergen result:
+
+| Confidence | Rule |
+|------------|------|
+| **Low** | 0-2 independent votes |
+| **Medium** | 3-9 independent votes |
+| **High** | 10+ independent votes |
+
+Confidence is not a separate score. It is a compact summary of how much community evidence exists behind the current state.
 
 ---
 
@@ -178,8 +224,8 @@ Users can optionally enter an exact price (e.g., `€4.99`). These are stored in
 ### 1. Product Creation
 
 ```
-AI analysis → buildInitialAllergenScores(allergens, freeFrom, knownIds)
-           → Product created with allergenScores, averageSafety, averageTaste
+Initial evidence → buildInitialAllergenScores(allergens, freeFrom, knownIds)
+                 → Product created with allergenScores, averageSafety, averageTaste
 ```
 
 `averageSafety` = universal worst-case (min of all allergen scores)
@@ -214,14 +260,14 @@ After each vote, `recalculateProduct()` runs:
 
 ### 4. "I Agree" Quick Vote
 
-If a user agrees with the current AI classification, they can tap "I Agree" which:
+If a user agrees with the current classification, they can tap "I Agree" which:
 - For each allergen:
   - `contains` → votes 👎 (agrees the allergen is present)
   - `free-from` → votes 👍 (agrees the product is safe)
   - `unknown` → skipped (no opinion)
 - Taste: 👍
 
-This provides a low-friction way to reinforce AI results.
+This provides a low-friction way to reinforce the existing evidence.
 
 ---
 
@@ -243,11 +289,11 @@ personalizedSafety = MIN(allergenScore for each allergen in user.avoidedAllergen
 
 ### Why Minimum?
 
-If a product is 100% safe for gluten (score=98) but risky for milk (score=15), a user avoiding both should see **15** — the milk contamination is the bottleneck.
+If a product looks likely safe for gluten (score=98) but risky for milk (score=15), a user avoiding both should see **15** — the milk risk is the bottleneck.
 
 ### Display
 
-- **RatingBars** shows personalized safety with label "Safety — Safe for you" when personalized
+- **RatingBars** should show personalized safety as a conservative recommendation, not a guarantee
 - **VotingSheet** shows per-allergen scores with individual score bars
 - **Feed cards** use `averageSafety` (universal) for consistent sorting
 
@@ -262,6 +308,8 @@ universalSafety = MIN(allergenScore for ALL allergens on the product)
 ```
 
 Stored as `product.averageSafety` for backward-compatible indexing and sorting.
+
+Important: universal safety is a coarse ranking field. It should not be presented as more reliable than the underlying per-allergen states and confidence.
 
 ---
 
@@ -340,38 +388,49 @@ taste: v.optional(v.number())     // 0-100, derived from tasteVote (up=75, down=
 
 ## Math Examples
 
-### Example 1: New Product with AI Only
+### Example 1: New Product with Initial Evidence Only
 
 Product has `allergens: ["gluten"]`, `freeFrom: ["milk"]`.
 
-| Allergen | AI Base | Virtual 👍 | Virtual 👎 | Community | Score |
-|----------|---------|-----------|-----------|-----------|-------|
+| Allergen | Initial Base | Virtual 👍 | Virtual 👎 | Community | Score |
+|----------|--------------|-----------|-----------|-----------|-------|
 | gluten | contains | 0 | 2 | — | **0** |
-| milk | free-from | 2 | 0 | — | **100** |
+| milk | free-from | 2 | 1 | — | **67** |
 | soy | unknown | 1 | 1 | — | **50** |
 | nuts | unknown | 1 | 1 | — | **50** |
 | eggs | unknown | 1 | 1 | — | **50** |
 
-- Universal safety = min(0, 100, 50, 50, 50) = **0**
+- Universal safety = min(0, 67, 50, 50, 50) = **0**
 - User avoiding `[gluten]` sees personalized safety = **0**
-- User avoiding `[milk]` sees personalized safety = **100**
+- User avoiding `[milk]` sees personalized safety = **67**
 - User avoiding `[gluten, milk]` sees personalized safety = **0** (gluten is the bottleneck)
+
+User-facing interpretation:
+- gluten: **Likely unsafe**
+- milk: **Uncertain** (positive initial evidence, but not enough community support)
+- soy/nuts/eggs: **Uncertain**
 
 ### Example 2: After Community Voting
 
 Same product, after 20 community votes. Users discovered that despite "contains gluten" label, the product is actually celiac-safe (trace amounts only):
 
-| Allergen | AI Base | Virtual | Community 👍 | Community 👎 | Score |
-|----------|---------|---------|-------------|-------------|-------|
+| Allergen | Initial Base | Virtual | Community 👍 | Community 👎 | Score |
+|----------|--------------|---------|-------------|-------------|-------|
 | gluten | contains | 0↑ 2↓ | 18 | 2 | **(0+18)/(0+2+18+2) = 82** |
-| milk | free-from | 2↑ 0↓ | 12 | 0 | **(2+12)/(2+0+12+0) = 100** |
+| milk | free-from | 2↑ 1↓ | 12 | 0 | **(2+12)/(2+1+12+0) = 93** |
 | soy | unknown | 1↑ 1↓ | 5 | 1 | **(1+5)/(1+1+5+1) = 75** |
 | nuts | unknown | 1↑ 1↓ | 3 | 0 | **(1+3)/(1+1+3+0) = 80** |
 | eggs | unknown | 1↑ 1↓ | 0 | 0 | **50** |
 
-- Universal safety = min(82, 100, 75, 80, 50) = **50** (eggs is the limiting factor)
-- User avoiding `[gluten]` sees: **82** (community overrode AI!)
-- User avoiding `[milk, soy]` sees: min(100, 75) = **75**
+- Universal safety = min(82, 93, 75, 80, 50) = **50** (eggs is the limiting factor)
+- User avoiding `[gluten]` sees: **82** (community overrode the initial classification)
+- User avoiding `[milk, soy]` sees: min(93, 75) = **75**
+
+User-facing interpretation:
+- gluten: **Likely safe** if the independent vote threshold is met
+- milk: **Likely safe**
+- soy: **Uncertain**
+- eggs: **Uncertain**
 
 ### Example 3: Taste Score Progression
 
@@ -394,10 +453,11 @@ A single safety score is meaningless when different users avoid different allerg
 
 ### Why Bayesian Instead of Simple Average?
 
-The Bayesian prior (virtual votes from AI) solves the **cold start problem**:
-- New products with 0 community votes still have a reasonable score based on ingredient analysis
-- The prior is weak enough that 5-10 community votes can shift the score significantly
-- The prior never fully disappears, which means a product AI-classified as "contains" requires strong community evidence to reach "safe" — this is a safety-conscious design choice
+The Bayesian prior (virtual votes from the initial classification) solves the **cold start problem**:
+- New products with 0 community votes still have a structured starting point
+- The prior is weak enough that community votes can shift the score significantly
+- The prior is intentionally conservative for `free-from` claims, so positive early signals do not immediately look proven
+- The prior never fully disappears, which means a product initially classified as `contains` requires strong community evidence to reach `likely safe` — this is a safety-conscious design choice
 
 ### Why Thumbs Instead of Sliders?
 
@@ -410,11 +470,30 @@ The Bayesian prior (virtual votes from AI) solves the **cold start problem**:
 
 Allergic reactions are driven by the **worst-case** allergen, not the average. If a product is 100% safe for 4 of your allergens but 10% safe for 1, you should see 10%.
 
+### Why Not Wait for 50 Votes?
+
+Requiring a high vote threshold before showing any result would leave most products permanently unusable. Instead, G-Matrix shows results from day 1 but keeps low-evidence products in the **uncertain** state until enough votes accumulate.
+
+This preserves usability without pretending that early evidence is settled truth.
+
+## Quadrant Visualization
+
+The quadrant and chart views are a **visualization layer**, not a separate scoring system.
+
+They remain useful because they help users compare products across safety, taste, and price at a glance. They do **not** interfere with the per-allergen model as long as these rules are respected:
+
+- The quadrant should not be treated as a medical or scientific conclusion.
+- The quadrant should never override the detailed allergen-level result.
+- Products with low allergen confidence should still surface as **uncertain**, even if their chart position looks favorable.
+- For allergy-sensitive decisions, the detailed per-allergen state is more important than the product's overall chart position.
+
+Recommendation: **keep the quadrant**. It is useful for discovery and comparison. Just treat it as a browsing aid rather than the final authority on safety.
+
 ---
 
 ## Data Source Labels
 
-Each product tracks where its allergen data originated via a `dataSource` field. This is **informational only** — it does not affect scoring, locking, or editability.
+Each product tracks where its allergen data originated via a `dataSource` field. This is **informational only** — it does not currently affect scoring, locking, or editability.
 
 ### Sources (in order of priority during capture)
 
@@ -435,7 +514,7 @@ During product capture, the tier is set by the **first match** in priority order
 
 ### Key design decisions
 
-- **Same Bayesian priors** regardless of source — community votes always have equal weight
+- **Same Bayesian priors** regardless of source — kept intentionally simple for now
 - **No locking** — all products can be edited and voted on normally
 - **Disclaimer**: "Allergen data is best effort. Always check the product label." shown on the ReviewStep during capture
 - **Schema**: `dataSource` is `v.optional(v.union(...))` — older products without it simply don't show a badge
