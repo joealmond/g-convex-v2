@@ -163,7 +163,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --env ${{ env.ENVIRONMENT }}
+          command: deploy --config dist/server/wrangler.json --name convex-tanstack-cf-${{ env.ENVIRONMENT }}
 
       # ========================================
       # Deploy to Vercel

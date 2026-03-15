@@ -60,7 +60,8 @@ fi
 
 # Step 4: Deploy to Cloudflare
 echo -e "${GREEN}Step 4/4: Deploying to Cloudflare Workers...${NC}"
-npx wrangler deploy --env "$ENVIRONMENT"
+WORKER_NAME="convex-tanstack-cf-$ENVIRONMENT"
+npx wrangler deploy --config dist/server/wrangler.json --name "$WORKER_NAME"
 
 echo ""
 echo -e "${GREEN}✅ Deployment complete!${NC}"

@@ -38,8 +38,8 @@ export function SensitivityFilterChips({
             'rounded-full font-medium flex items-center justify-center',
             'min-h-[32px] min-w-[32px] px-1.5 text-[15px] md:min-h-[34px] md:min-w-[34px] md:px-2 md:text-base',
             showNeedsReviewOnly
-              ? 'border border-safety-mid/45 bg-safety-mid/20 text-safety-mid shadow-sm hover:bg-safety-mid/25'
-              : 'border border-border bg-muted text-muted-foreground hover:bg-card'
+              ? 'border border-safety-mid bg-safety-mid text-white shadow-sm hover:opacity-90'
+              : 'border border-border bg-muted text-safety-mid hover:bg-card'
           )}
           whileTap={{ scale: 0.9 }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}

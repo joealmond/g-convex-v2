@@ -145,7 +145,7 @@ function HomePageContent() {
   const [searchQuery, setSearchQuery] = useState('')
   const [nearbyRange, setNearbyRange] = useNearbyRangeState()
   const [quadrantFilter, setQuadrantFilter] = useState<Quadrant | null>(null)
-  const [showNeedsReviewOnly, setShowNeedsReviewOnly] = useState(false)
+  const [showNeedsReviewOnly, setShowNeedsReviewOnly] = useState(true)
 
   // ── Sensitivity filter state ──
   // Default: the niche's primary allergen (gluten) is always ON.
@@ -215,18 +215,18 @@ function HomePageContent() {
   const matchesNeedsReview = useCallback((product: Product) => {
     const safetyMeta = computeSafetyDisplayMeta(
       (product.allergenScores as AllergenScoresMap | undefined) ?? undefined,
-      [],
+      excludeAllergens,
     )
     if (safetyMeta.allergenId === null) return false
     return deriveSafetyDisplayState(safetyMeta.score, safetyMeta.voteCount) === 'needs-review'
-  }, [])
+  }, [excludeAllergens])
 
   const shouldIncludeWithAllergenFilter = useCallback((product: Product) => {
     if (excludeAllergens.length === 0) return true
-    if (matchesNeedsReview(product)) return true
+    if (matchesNeedsReview(product)) return showNeedsReviewOnly
     if (!product.allergens || product.allergens.length === 0) return false
     return !product.allergens.some((allergen) => excludeAllergens.includes(allergen.toLowerCase()))
-  }, [excludeAllergens, matchesNeedsReview])
+  }, [excludeAllergens, matchesNeedsReview, showNeedsReviewOnly])
 
   const moveNeedsReviewToBottom = useCallback((items: Product[]) => {
     const confirmed: Product[] = []
@@ -243,17 +243,22 @@ function HomePageContent() {
     return [...confirmed, ...review]
   }, [matchesNeedsReview])
 
+  const applyNeedsReviewVisibility = useCallback((items: Product[]) => {
+    if (showNeedsReviewOnly) {
+      return moveNeedsReviewToBottom(items)
+    }
+
+    return items.filter((item) => !matchesNeedsReview(item))
+  }, [showNeedsReviewOnly, moveNeedsReviewToBottom, matchesNeedsReview])
+
   // ── Derived data ──
   const { displayProducts, displayLoading, displayCanLoadMore, displayLoadMore, displayIsLoadingMore } = useMemo(() => {
     const applyDisplayFilters = (items: Product[]) => {
-      let filtered = items
-      if (showNeedsReviewOnly) {
-        filtered = filtered.filter(matchesNeedsReview)
-      }
+      let filtered = applyNeedsReviewVisibility(items)
       if (quadrantFilter) {
         filtered = filtered.filter((product) => getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter)
       }
-      return moveNeedsReviewToBottom(filtered)
+      return filtered
     }
 
     if (isNearbyMode) {
@@ -299,7 +304,7 @@ function HomePageContent() {
       displayLoadMore: () => feedResult.loadMore(20),
       displayIsLoadingMore: feedResult.status === 'LoadingMore',
     }
-  }, [isNearbyMode, isSearchMode, allProductsForChart, searchResult, feedResult, excludeAllergens, quadrantFilter, latitude, longitude, nearbyRange, showNeedsReviewOnly, matchesNeedsReview, shouldIncludeWithAllergenFilter, moveNeedsReviewToBottom])
+  }, [isNearbyMode, isSearchMode, allProductsForChart, searchResult, feedResult, excludeAllergens, quadrantFilter, latitude, longitude, nearbyRange, applyNeedsReviewVisibility, shouldIncludeWithAllergenFilter])
 
   // Fallback: if nearby has no GPS, show recent feed instead
   const showNearbyFallback = isNearbyMode && !latitude && !longitude
@@ -312,9 +317,8 @@ function HomePageContent() {
   )
 
   const finalProducts = showNearbyFallback
-    ? moveNeedsReviewToBottom((fallbackFeed.results as Product[]).filter((product) =>
-        (!showNeedsReviewOnly || matchesNeedsReview(product))
-        && (!quadrantFilter
+    ? applyNeedsReviewVisibility((fallbackFeed.results as Product[]).filter((product) =>
+        (!quadrantFilter
           ? true
           : getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter)
       ))
@@ -493,55 +497,36 @@ function HomePageContent() {
             />
           </div>
 
-          {/* Filters stay in one line when possible and wrap when they don't fit. */}
+          {/* Filters stay unified so the review chip renders exactly once across breakpoints. */}
           <div className="pt-3 md:pt-4">
-            <div className="space-y-2 md:space-y-2">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 md:hidden">
-              <div className="min-w-0">
-                <SensitivityFilterChips
-                  activeFilters={activeSensitivities}
-                  onToggle={toggleSensitivity}
-                  showNeedsReviewOnly={showNeedsReviewOnly}
-                  onToggleNeedsReviewOnly={() => setShowNeedsReviewOnly((previous) => !previous)}
-                />
-              </div>
-              <div className="row-span-2 shrink-0 self-start">
-                <QuadrantFilterChips
-                  selectedQuadrant={quadrantFilter}
-                  onToggle={toggleQuadrantFilter}
-                />
+            <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-between">
+              <div className="flex items-start justify-between gap-2 md:order-2 md:ml-auto md:items-center">
+                <div className="min-w-0 flex-1 md:flex-none">
+                  <SensitivityFilterChips
+                    activeFilters={activeSensitivities}
+                    onToggle={toggleSensitivity}
+                    showNeedsReviewOnly={showNeedsReviewOnly}
+                    onToggleNeedsReviewOnly={() => setShowNeedsReviewOnly((previous) => !previous)}
+                  />
+                </div>
+                <div className="shrink-0 md:hidden">
+                  <QuadrantFilterChips
+                    selectedQuadrant={quadrantFilter}
+                    onToggle={toggleQuadrantFilter}
+                  />
+                </div>
               </div>
 
-              <div className="min-w-0">
+              <div className="min-w-0 md:order-1 md:flex-1">
                 <FilterChips
                   value={filterType}
                   onChange={handleFilterChange}
                   nearbyRange={nearbyRange}
                   onRangeChange={setNearbyRange}
-                />
-              </div>
-            </div>
-
-            <div className="hidden md:flex md:flex-wrap md:items-center md:justify-between md:gap-2">
-              <div className="min-w-0 flex-1">
-                <FilterChips
-                  value={filterType}
-                  onChange={handleFilterChange}
-                  nearbyRange={nearbyRange}
-                  onRangeChange={setNearbyRange}
-                />
-              </div>
-              <div className="hidden md:flex md:shrink-0 md:justify-end">
-                <SensitivityFilterChips
-                  activeFilters={activeSensitivities}
-                  onToggle={toggleSensitivity}
-                  showNeedsReviewOnly={showNeedsReviewOnly}
-                  onToggleNeedsReviewOnly={() => setShowNeedsReviewOnly((previous) => !previous)}
                 />
               </div>
             </div>
           </div>
-        </div>
         </div>
       </div>
 
