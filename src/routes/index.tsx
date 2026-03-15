@@ -215,10 +215,11 @@ function HomePageContent() {
   const matchesNeedsReview = useCallback((product: Product) => {
     const safetyMeta = computeSafetyDisplayMeta(
       (product.allergenScores as AllergenScoresMap | undefined) ?? undefined,
-      excludeAllergens,
+      [],
     )
+    if (safetyMeta.allergenId === null) return false
     return deriveSafetyDisplayState(safetyMeta.score, safetyMeta.voteCount) === 'needs-review'
-  }, [excludeAllergens])
+  }, [])
 
   const shouldIncludeWithAllergenFilter = useCallback((product: Product) => {
     if (excludeAllergens.length === 0) return true
