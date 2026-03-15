@@ -91,6 +91,7 @@
     "likelySafe": "Valoszinuleg biztonsagos",
     "uncertain": "Bizonytalan",
     "needsReview": "Ellenorzes kell",
+    "needsReviewProgress": "Ellenorzes kell {current}/{target}",
     "likelyUnsafe": "Valoszinuleg nem biztonsagos",
     "confidence": "Bizalom",
     "lowConfidence": "Alacsony",

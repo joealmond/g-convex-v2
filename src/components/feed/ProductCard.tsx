@@ -14,6 +14,7 @@ import {
   computeSafetyDisplayMeta,
   deriveAllergenConfidence,
   deriveSafetyDisplayState,
+  SAFETY_REVIEW_VOTE_TARGET,
   type AllergenScoresMap,
 } from '@/lib/score-utils'
 
@@ -61,7 +62,10 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
     ? t('voting.likelySafe')
     : safetyState === 'likely-unsafe'
       ? t('voting.likelyUnsafe')
-      : t('voting.needsReview')
+      : t('voting.needsReviewProgress', {
+          current: Math.min(safetyMeta.voteCount, SAFETY_REVIEW_VOTE_TARGET),
+          target: SAFETY_REVIEW_VOTE_TARGET,
+        })
 
   const safetyConfidenceLabel = safetyConfidence === 'high'
     ? t('voting.highConfidence')

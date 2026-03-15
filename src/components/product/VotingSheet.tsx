@@ -10,6 +10,7 @@ import {
   computeTasteScore,
   deriveAllergenConfidence,
   deriveSafetyDisplayState,
+  SAFETY_REVIEW_VOTE_TARGET,
 } from '@/lib/score-utils'
 import { cn } from '@/lib/utils'
 
@@ -96,7 +97,10 @@ export function VotingSheet({
       ? t('voting.likelySafe')
       : currentState === 'likely-unsafe'
         ? t('voting.likelyUnsafe')
-        : t('voting.needsReview')
+        : t('voting.needsReviewProgress', {
+            current: Math.min(currentVoteCount, SAFETY_REVIEW_VOTE_TARGET),
+            target: SAFETY_REVIEW_VOTE_TARGET,
+          })
 
     const confidenceLabel = currentConfidence === 'high'
       ? t('voting.highConfidence')

@@ -91,6 +91,7 @@
     "likelySafe": "Likely safe",
     "uncertain": "Uncertain",
     "needsReview": "Needs review",
+    "needsReviewProgress": "Needs review {current}/{target}",
     "likelyUnsafe": "Likely unsafe",
     "confidence": "Confidence",
     "lowConfidence": "Low",

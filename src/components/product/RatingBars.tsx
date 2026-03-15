@@ -3,6 +3,7 @@ import { appConfig } from '@/lib/app-config'
 import {
   deriveAllergenConfidence,
   deriveSafetyDisplayState,
+  SAFETY_REVIEW_VOTE_TARGET,
 } from '@/lib/score-utils'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/use-translation'
@@ -70,10 +71,13 @@ export function RatingBars({
     { label: appConfig.dimensions.axis3.label, value: price, isSafety: false },
   ]
 
-  const getStateLabel = (state: 'likely-unsafe' | 'needs-review' | 'likely-safe') => {
+  const getStateLabel = (state: 'likely-unsafe' | 'needs-review' | 'likely-safe', voteCount = 0) => {
     if (state === 'likely-safe') return t('voting.likelySafe')
     if (state === 'likely-unsafe') return t('voting.likelyUnsafe')
-    return t('voting.needsReview')
+    return t('voting.needsReviewProgress', {
+      current: Math.min(voteCount, SAFETY_REVIEW_VOTE_TARGET),
+      target: SAFETY_REVIEW_VOTE_TARGET,
+    })
   }
 
   const getStateBadgeClass = (state: 'likely-unsafe' | 'needs-review' | 'likely-safe') => {
@@ -114,7 +118,7 @@ export function RatingBars({
           {item.isSafety && item.state && item.confidence ? (
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <span className={cn('rounded-full border px-2 py-0.5 font-medium', getStateBadgeClass(item.state))}>
-                {getStateLabel(item.state)}
+                {getStateLabel(item.state, safetyVoteCount)}
               </span>
               <span className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-muted-foreground">
                 {t('voting.confidence')}: {getConfidenceLabel(item.confidence)}

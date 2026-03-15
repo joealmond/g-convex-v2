@@ -35,6 +35,8 @@ export interface SafetyDisplayMeta {
   aiBase: AiBase | null
 }
 
+export const SAFETY_REVIEW_VOTE_TARGET = 5
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 /**
@@ -95,7 +97,7 @@ export function deriveAllergenState(
   independentVoteCount: number,
 ): AllergenState {
   if (score <= 25) return 'likely-unsafe'
-  if (score >= 80 && independentVoteCount >= 5) return 'likely-safe'
+  if (score >= 80 && independentVoteCount >= SAFETY_REVIEW_VOTE_TARGET) return 'likely-safe'
   return 'uncertain'
 }
 
