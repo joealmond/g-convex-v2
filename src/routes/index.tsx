@@ -22,7 +22,7 @@ import {
 } from '@/lib/score-utils'
 import { getQuadrant, type Quadrant } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { Loader2, Trophy, Flame, TrendingUp, Star, BarChart3, Grid3X3, Search, X, ArrowUp, ArrowDown } from 'lucide-react'
+import { Loader2, Trophy, Flame, TrendingUp, Star, BarChart3, Grid3X3, Search, X, ArrowUp, ArrowDown, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/types'
 
@@ -220,6 +220,28 @@ function HomePageContent() {
     return deriveSafetyDisplayState(safetyMeta.score, safetyMeta.voteCount) === 'needs-review'
   }, [excludeAllergens])
 
+  const shouldIncludeWithAllergenFilter = useCallback((product: Product) => {
+    if (excludeAllergens.length === 0) return true
+    if (matchesNeedsReview(product)) return true
+    if (!product.allergens || product.allergens.length === 0) return false
+    return !product.allergens.some((allergen) => excludeAllergens.includes(allergen.toLowerCase()))
+  }, [excludeAllergens, matchesNeedsReview])
+
+  const moveNeedsReviewToBottom = useCallback((items: Product[]) => {
+    const confirmed: Product[] = []
+    const review: Product[] = []
+
+    for (const item of items) {
+      if (matchesNeedsReview(item)) {
+        review.push(item)
+      } else {
+        confirmed.push(item)
+      }
+    }
+
+    return [...confirmed, ...review]
+  }, [matchesNeedsReview])
+
   // ── Derived data ──
   const { displayProducts, displayLoading, displayCanLoadMore, displayLoadMore, displayIsLoadingMore } = useMemo(() => {
     const applyDisplayFilters = (items: Product[]) => {
@@ -227,8 +249,10 @@ function HomePageContent() {
       if (showNeedsReviewOnly) {
         filtered = filtered.filter(matchesNeedsReview)
       }
-      if (!quadrantFilter) return filtered
-      return filtered.filter((product) => getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter)
+      if (quadrantFilter) {
+        filtered = filtered.filter((product) => getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter)
+      }
+      return moveNeedsReviewToBottom(filtered)
     }
 
     if (isNearbyMode) {
@@ -244,10 +268,7 @@ function HomePageContent() {
       )
 
       if (excludeAllergens.length > 0) {
-        items = items.filter((p) => {
-          if (!p.allergens || p.allergens.length === 0) return false
-          return !p.allergens.some((a) => excludeAllergens.includes(a.toLowerCase()))
-        })
+        items = items.filter(shouldIncludeWithAllergenFilter)
       }
       items = applyDisplayFilters(items)
       return {
@@ -277,7 +298,7 @@ function HomePageContent() {
       displayLoadMore: () => feedResult.loadMore(20),
       displayIsLoadingMore: feedResult.status === 'LoadingMore',
     }
-  }, [isNearbyMode, isSearchMode, allProductsForChart, searchResult, feedResult, excludeAllergens, quadrantFilter, latitude, longitude, nearbyRange, showNeedsReviewOnly, matchesNeedsReview])
+  }, [isNearbyMode, isSearchMode, allProductsForChart, searchResult, feedResult, excludeAllergens, quadrantFilter, latitude, longitude, nearbyRange, showNeedsReviewOnly, matchesNeedsReview, shouldIncludeWithAllergenFilter, moveNeedsReviewToBottom])
 
   // Fallback: if nearby has no GPS, show recent feed instead
   const showNearbyFallback = isNearbyMode && !latitude && !longitude
@@ -290,12 +311,12 @@ function HomePageContent() {
   )
 
   const finalProducts = showNearbyFallback
-    ? (fallbackFeed.results as Product[]).filter((product) =>
+    ? moveNeedsReviewToBottom((fallbackFeed.results as Product[]).filter((product) =>
         (!showNeedsReviewOnly || matchesNeedsReview(product))
         && (!quadrantFilter
           ? true
           : getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter)
-      )
+      ))
     : displayProducts
 
   const toggleQuadrantFilter = useCallback((quadrant: Quadrant) => {
@@ -481,9 +502,11 @@ function HomePageContent() {
                     type="button"
                     variant={showNeedsReviewOnly ? 'default' : 'outline'}
                     size="sm"
-                    className="rounded-full px-3"
+                    className="rounded-full px-3 gap-1.5"
                     onClick={() => setShowNeedsReviewOnly((previous) => !previous)}
+                    title={t('feed.needsReview')}
                   >
+                    <AlertTriangle className="h-3.5 w-3.5" />
                     {t('feed.needsReview')}
                   </Button>
                   <SensitivityFilterChips
@@ -524,9 +547,11 @@ function HomePageContent() {
                     type="button"
                     variant={showNeedsReviewOnly ? 'default' : 'outline'}
                     size="sm"
-                    className="rounded-full px-3"
+                    className="rounded-full px-3 gap-1.5"
                     onClick={() => setShowNeedsReviewOnly((previous) => !previous)}
+                    title={t('feed.needsReview')}
                   >
+                    <AlertTriangle className="h-3.5 w-3.5" />
                     {t('feed.needsReview')}
                   </Button>
                   <SensitivityFilterChips

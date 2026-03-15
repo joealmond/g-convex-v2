@@ -7,6 +7,7 @@ import { RateLimiter } from '@convex-dev/rate-limiter'
 import { filter } from 'convex-helpers/server/filter'
 import { authMutation, adminMutation, publicQuery, internalMutation } from './lib/customFunctions'
 import { productsAggregate, votesByProduct } from './aggregates'
+import { productNeedsReviewForAllergens } from './lib/scoreUtils'
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
   productUpdate: { kind: 'token bucket', rate: 10, period: 60000, capacity: 15 },
@@ -189,7 +190,9 @@ export const listFeed = publicQuery({
       queryToPage = filter(
         baseQuery,
         (product) => {
-          // When allergen filters are active, unknown products are treated as unsafe.
+          if (productNeedsReviewForAllergens(product.allergenScores, excludeAllergens!)) {
+            return true
+          }
           if (!product.allergens || product.allergens.length === 0) return false
           // Exclude products that contain ANY of the excluded allergens
           return !product.allergens.some((a: string) =>
@@ -243,6 +246,9 @@ export const searchPaginated = publicQuery({
       queryToPage = filter(
         baseQuery,
         (product) => {
+          if (productNeedsReviewForAllergens(product.allergenScores, excludeAllergens!)) {
+            return true
+          }
           if (!product.allergens || product.allergens.length === 0) return false
           return !product.allergens.some((a: string) =>
             excludeAllergens!.includes(a.toLowerCase())

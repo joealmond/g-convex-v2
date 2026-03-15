@@ -70,6 +70,32 @@ export function deriveAllergenConfidence(
   return 'high'
 }
 
+export function productNeedsReviewForAllergens(
+  allergenScores: AllergenScoresMap | undefined | null,
+  relevantAllergens: string[],
+): boolean {
+  if (!allergenScores || Object.keys(allergenScores).length === 0) {
+    return true
+  }
+
+  const allergenIds = relevantAllergens.length > 0
+    ? relevantAllergens
+    : Object.keys(allergenScores)
+
+  for (const allergenId of allergenIds) {
+    const data = allergenScores[allergenId]
+    if (!data) return true
+
+    const score = computeAllergenScoreFromData(data)
+    const voteCount = data.upVotes + data.downVotes
+    if (deriveAllergenState(score, voteCount) === 'uncertain') {
+      return true
+    }
+  }
+
+  return false
+}
+
 // ─── Taste Score ─────────────────────────────────────────────────────────────
 
 export function computeTasteScore(upVotes: number, downVotes: number): number {
