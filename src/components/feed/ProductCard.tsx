@@ -84,7 +84,7 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
 
   return (
     <motion.div
-      className="bg-card text-card-foreground rounded-2xl overflow-hidden shadow-card h-full flex flex-col border border-border md:rounded-3xl md:bg-card"
+      className="bg-card text-card-foreground rounded-2xl overflow-hidden shadow-card h-full flex flex-col border border-border md:min-h-[29rem] md:rounded-3xl md:bg-card xl:min-h-[33rem]"
       whileHover={{ y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
@@ -96,7 +96,7 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
         preload="intent"
       >
         {/* Product Image */}
-        <div className="relative aspect-square bg-background overflow-hidden lg:aspect-[5/4]">
+        <div className="relative aspect-square bg-background overflow-hidden lg:aspect-[4/3] xl:aspect-[5/4]">
           {product.imageUrl ? (
             <img
               src={product.imageUrl}
@@ -163,9 +163,9 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
         </div>
 
         {/* Info Section */}
-        <div className="p-3 flex-1 flex flex-col justify-between md:p-4 lg:p-5 md:min-w-0">
+        <div className="p-3 flex-1 flex flex-col justify-between md:min-w-0 md:p-5 lg:p-6">
           {/* Product Name */}
-          <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors md:text-base lg:text-lg">
+          <h3 className="font-semibold text-sm leading-tight text-foreground transition-colors group-hover:text-primary md:min-h-[2.5rem] md:text-base lg:min-h-[3rem] lg:text-lg">
             {product.name}
           </h3>
 
@@ -185,7 +185,7 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
             </Badge>
           </div>
 
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground md:text-sm">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground md:text-sm">
             <span>{product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}</span>
             {safetyState === 'needs-review' ? (
               <span>{safetyMeta.voteCount === 0 ? t('voting.noVotesYetAllergen') : t('voting.reviewStillOpen')}</span>
@@ -194,7 +194,7 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
             )}
           </div>
 
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-3 flex items-center gap-2">
             <span
               className={`h-2.5 w-2.5 rounded-full ${getSafetyColor(product.averageSafety)}`}
               title={`${appConfig.dimensions.axis1.label}: ${product.averageSafety.toFixed(0)}`}
@@ -205,7 +205,7 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
           </div>
 
           <div
-            className="mt-4"
+            className="mt-4 md:mt-5"
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
@@ -214,7 +214,7 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
             <VoteProductDialog
               product={product}
               trigger={
-                <Button size="sm" variant="outline" className="w-full rounded-xl border-primary/30 bg-primary/5 font-semibold text-primary hover:bg-primary/10 lg:h-11 lg:text-sm">
+                <Button size="sm" variant="outline" className="w-full rounded-xl border-primary/30 bg-primary/5 font-semibold text-primary hover:bg-primary/10 md:h-11 md:text-sm lg:h-12">
                   {t('product.voteAction')}
                 </Button>
               }

@@ -22,7 +22,7 @@ import {
 } from '@/lib/score-utils'
 import { getQuadrant, type Quadrant } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { Loader2, Trophy, Flame, TrendingUp, Star, BarChart3, Grid3X3, Search, X, ArrowUp, ArrowDown, AlertTriangle } from 'lucide-react'
+import { Loader2, Trophy, Flame, TrendingUp, Star, BarChart3, Grid3X3, Search, X, ArrowUp, ArrowDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/types'
 
@@ -497,27 +497,12 @@ function HomePageContent() {
             <div className="space-y-2 md:space-y-2">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 md:hidden">
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <button
-                    type="button"
-                    className={cn(
-                      'flex min-h-[32px] min-w-[32px] items-center justify-center rounded-full border px-1.5 md:min-h-[34px] md:min-w-[34px] md:px-2',
-                      showNeedsReviewOnly
-                        ? 'border-red-500/60 bg-orange-300 text-red-700 shadow-sm'
-                        : 'border-orange-300 bg-orange-200/90 text-red-600 hover:bg-orange-300/90'
-                    )}
-                    onClick={() => setShowNeedsReviewOnly((previous) => !previous)}
-                    title={t('feed.needsReview')}
-                    aria-label={t('feed.needsReview')}
-                    aria-pressed={showNeedsReviewOnly}
-                  >
-                    <AlertTriangle className="h-4 w-4" />
-                  </button>
-                  <SensitivityFilterChips
-                    activeFilters={activeSensitivities}
-                    onToggle={toggleSensitivity}
-                  />
-                </div>
+                <SensitivityFilterChips
+                  activeFilters={activeSensitivities}
+                  onToggle={toggleSensitivity}
+                  showNeedsReviewOnly={showNeedsReviewOnly}
+                  onToggleNeedsReviewOnly={() => setShowNeedsReviewOnly((previous) => !previous)}
+                />
               </div>
               <div className="row-span-2 shrink-0 self-start">
                 <QuadrantFilterChips
@@ -546,27 +531,12 @@ function HomePageContent() {
                 />
               </div>
               <div className="hidden md:flex md:shrink-0 md:justify-end">
-                <div className="flex flex-wrap items-center justify-end gap-1.5">
-                  <button
-                    type="button"
-                    className={cn(
-                      'flex min-h-[32px] min-w-[32px] items-center justify-center rounded-full border px-1.5 md:min-h-[34px] md:min-w-[34px] md:px-2',
-                      showNeedsReviewOnly
-                        ? 'border-red-500/60 bg-orange-300 text-red-700 shadow-sm'
-                        : 'border-orange-300 bg-orange-200/90 text-red-600 hover:bg-orange-300/90'
-                    )}
-                    onClick={() => setShowNeedsReviewOnly((previous) => !previous)}
-                    title={t('feed.needsReview')}
-                    aria-label={t('feed.needsReview')}
-                    aria-pressed={showNeedsReviewOnly}
-                  >
-                    <AlertTriangle className="h-4 w-4" />
-                  </button>
-                  <SensitivityFilterChips
-                    activeFilters={activeSensitivities}
-                    onToggle={toggleSensitivity}
-                  />
-                </div>
+                <SensitivityFilterChips
+                  activeFilters={activeSensitivities}
+                  onToggle={toggleSensitivity}
+                  showNeedsReviewOnly={showNeedsReviewOnly}
+                  onToggleNeedsReviewOnly={() => setShowNeedsReviewOnly((previous) => !previous)}
+                />
               </div>
             </div>
           </div>

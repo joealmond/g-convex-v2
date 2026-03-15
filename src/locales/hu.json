@@ -257,6 +257,8 @@
     "communityVotes": "Kozossegi szavazatok",
     "reviewFocus": "Felulvizsgalati fokusz",
     "initialEvidence": "Kezdo bizonyitek",
+    "allergenReviewBreakdown": "Allergen felulvizsgalati bontas",
+    "reviewVotes": "Felulvizsgalati szavazatok",
     "allTrackedAllergens": "Osszes kovetett allergen",
     "needsReviewHint": "Ennel a termeknel meg tobb kozossegi visszajelzes kell, hogy a biztonsag stabil legyen.",
     "whereDidYouBuy": "Hol vetted?",

@@ -18,6 +18,8 @@ import { type Product } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import {
   computeSafetyDisplayMeta,
+  computeAllergenScoreFromData,
+  deriveAllergenState,
   deriveAllergenConfidence,
   deriveSafetyDisplayState,
   SAFETY_REVIEW_VOTE_TARGET,
@@ -176,6 +178,53 @@ function ProductDetailContent() {
     : safetyMeta.aiBase === 'free-from'
       ? t('voting.freeFromLabel')
       : t('voting.unknownAllergen')
+  const allergenReviewRows = appConfig.allergens
+    .map((allergen) => {
+      const scoreData = (product.allergenScores as AllergenScoresMap | undefined)?.[allergen.id]
+      if (!scoreData) return null
+
+      const voteCount = scoreData.upVotes + scoreData.downVotes
+      const score = computeAllergenScoreFromData(scoreData)
+
+      const state = deriveAllergenState(score, voteCount)
+      const confidence = deriveAllergenConfidence(voteCount)
+      const stateLabel = state === 'likely-safe'
+        ? t('voting.likelySafe')
+        : state === 'likely-unsafe'
+          ? t('voting.likelyUnsafe')
+          : t('voting.needsReviewProgress', {
+              current: Math.min(voteCount, SAFETY_REVIEW_VOTE_TARGET),
+              target: SAFETY_REVIEW_VOTE_TARGET,
+            })
+      const confidenceLabel = confidence === 'high'
+        ? t('voting.highConfidence')
+        : confidence === 'medium'
+          ? t('voting.mediumConfidence')
+          : t('voting.lowConfidence')
+      const stateClass = state === 'likely-safe'
+        ? 'border-safety-high/35 bg-safety-high/15 text-foreground'
+        : state === 'likely-unsafe'
+          ? 'border-safety-low/35 bg-safety-low/15 text-foreground'
+          : 'border-safety-mid/45 bg-safety-mid/20 text-foreground'
+      const aiBaseLabel = scoreData.aiBase === 'contains'
+        ? t('voting.contains')
+        : scoreData.aiBase === 'free-from'
+          ? t('voting.freeFromLabel')
+          : t('voting.unknownAllergen')
+
+      return {
+        id: allergen.id,
+        emoji: allergen.emoji,
+        label: allergen.label,
+        isConflict: allergenConflicts.includes(allergen.id),
+        voteCount,
+        stateLabel,
+        confidenceLabel,
+        stateClass,
+        aiBaseLabel,
+      }
+    })
+    .filter((row) => row !== null)
   const normalizedPrice = product.avgPrice !== undefined && product.avgPrice !== null
     ? (product.avgPrice / 5) * 100
     : 0
@@ -344,6 +393,49 @@ function ProductDetailContent() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {allergenReviewRows.length > 0 && (
+                <div>
+                  <p className="mb-3 text-sm font-semibold text-foreground">{t('product.allergenReviewBreakdown')}</p>
+                  <div className="grid gap-3 lg:grid-cols-2">
+                    {allergenReviewRows.map((row) => (
+                      <div
+                        key={row.id}
+                        className={row.isConflict
+                          ? 'rounded-2xl border border-safety-low/35 bg-safety-low/10 p-3'
+                          : 'rounded-2xl border border-border bg-background/70 p-3'}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{row.emoji} {row.label}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {t('product.reviewVotes')}: {row.voteCount}
+                            </p>
+                          </div>
+                          {row.isConflict ? (
+                            <Badge variant="destructive" className="text-xs font-medium">
+                              {t('allergens.conflict')}
+                            </Badge>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <Badge variant="outline" className={row.stateClass}>
+                            {row.stateLabel}
+                          </Badge>
+                          <Badge variant="outline" className="border-border bg-muted/40 text-muted-foreground">
+                            {t('voting.confidence')}: {row.confidenceLabel}
+                          </Badge>
+                        </div>
+
+                        <p className="mt-3 text-xs text-muted-foreground">
+                          {t('product.initialEvidence')}: {row.aiBaseLabel}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {product.freeFrom && product.freeFrom.length > 0 && (
                 <div>
                   <p className="mb-2 text-sm font-semibold text-foreground">{t('imageUpload.freeFrom')}</p>
