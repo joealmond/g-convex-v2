@@ -15,6 +15,11 @@ import { useNearbyRangeState } from '@/hooks/use-product-filter'
 import { useSessionSensitivityFilters } from '@/hooks/use-session-sensitivity-filters'
 import { appConfig } from '@/lib/app-config'
 import { isIOS, isWeb } from '@/lib/platform'
+import {
+  computeSafetyDisplayMeta,
+  deriveSafetyDisplayState,
+  type AllergenScoresMap,
+} from '@/lib/score-utils'
 import { getQuadrant, type Quadrant } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Loader2, Trophy, Flame, TrendingUp, Star, BarChart3, Grid3X3, Search, X, ArrowUp, ArrowDown } from 'lucide-react'
@@ -140,6 +145,7 @@ function HomePageContent() {
   const [searchQuery, setSearchQuery] = useState('')
   const [nearbyRange, setNearbyRange] = useNearbyRangeState()
   const [quadrantFilter, setQuadrantFilter] = useState<Quadrant | null>(null)
+  const [showNeedsReviewOnly, setShowNeedsReviewOnly] = useState(false)
 
   // ── Sensitivity filter state ──
   // Default: the niche's primary allergen (gluten) is always ON.
@@ -206,11 +212,23 @@ function HomePageContent() {
   // For chart view, we still need all products
   const allProductsForChart = useQuery(api.products.listAll)
 
+  const matchesNeedsReview = useCallback((product: Product) => {
+    const safetyMeta = computeSafetyDisplayMeta(
+      (product.allergenScores as AllergenScoresMap | undefined) ?? undefined,
+      excludeAllergens,
+    )
+    return deriveSafetyDisplayState(safetyMeta.score, safetyMeta.voteCount) === 'needs-review'
+  }, [excludeAllergens])
+
   // ── Derived data ──
   const { displayProducts, displayLoading, displayCanLoadMore, displayLoadMore, displayIsLoadingMore } = useMemo(() => {
-    const applyQuadrantFilter = (items: Product[]) => {
-      if (!quadrantFilter) return items
-      return items.filter((product) => getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter)
+    const applyDisplayFilters = (items: Product[]) => {
+      let filtered = items
+      if (showNeedsReviewOnly) {
+        filtered = filtered.filter(matchesNeedsReview)
+      }
+      if (!quadrantFilter) return filtered
+      return filtered.filter((product) => getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter)
     }
 
     if (isNearbyMode) {
@@ -231,7 +249,7 @@ function HomePageContent() {
           return !p.allergens.some((a) => excludeAllergens.includes(a.toLowerCase()))
         })
       }
-      items = applyQuadrantFilter(items)
+      items = applyDisplayFilters(items)
       return {
         displayProducts: items,
         displayLoading: allProductsForChart === undefined,
@@ -243,7 +261,7 @@ function HomePageContent() {
 
     if (isSearchMode) {
       return {
-        displayProducts: applyQuadrantFilter(searchResult.results as Product[]),
+        displayProducts: applyDisplayFilters(searchResult.results as Product[]),
         displayLoading: searchResult.status === 'LoadingFirstPage',
         displayCanLoadMore: searchResult.status === 'CanLoadMore',
         displayLoadMore: () => searchResult.loadMore(20),
@@ -253,13 +271,13 @@ function HomePageContent() {
 
     // recent / trending
     return {
-      displayProducts: applyQuadrantFilter(feedResult.results as Product[]),
+      displayProducts: applyDisplayFilters(feedResult.results as Product[]),
       displayLoading: feedResult.status === 'LoadingFirstPage',
       displayCanLoadMore: feedResult.status === 'CanLoadMore',
       displayLoadMore: () => feedResult.loadMore(20),
       displayIsLoadingMore: feedResult.status === 'LoadingMore',
     }
-  }, [isNearbyMode, isSearchMode, allProductsForChart, searchResult, feedResult, excludeAllergens, quadrantFilter, latitude, longitude, nearbyRange])
+  }, [isNearbyMode, isSearchMode, allProductsForChart, searchResult, feedResult, excludeAllergens, quadrantFilter, latitude, longitude, nearbyRange, showNeedsReviewOnly, matchesNeedsReview])
 
   // Fallback: if nearby has no GPS, show recent feed instead
   const showNearbyFallback = isNearbyMode && !latitude && !longitude
@@ -273,9 +291,10 @@ function HomePageContent() {
 
   const finalProducts = showNearbyFallback
     ? (fallbackFeed.results as Product[]).filter((product) =>
-        !quadrantFilter
+        (!showNeedsReviewOnly || matchesNeedsReview(product))
+        && (!quadrantFilter
           ? true
-          : getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter
+          : getQuadrant(product.averageSafety, product.averageTaste) === quadrantFilter)
       )
     : displayProducts
 
@@ -457,10 +476,21 @@ function HomePageContent() {
             <div className="space-y-2 md:space-y-2">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 md:hidden">
               <div className="min-w-0">
-                <SensitivityFilterChips
-                  activeFilters={activeSensitivities}
-                  onToggle={toggleSensitivity}
-                />
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Button
+                    type="button"
+                    variant={showNeedsReviewOnly ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-full px-3"
+                    onClick={() => setShowNeedsReviewOnly((previous) => !previous)}
+                  >
+                    {t('feed.needsReview')}
+                  </Button>
+                  <SensitivityFilterChips
+                    activeFilters={activeSensitivities}
+                    onToggle={toggleSensitivity}
+                  />
+                </div>
               </div>
               <div className="row-span-2 shrink-0 self-start">
                 <QuadrantFilterChips
@@ -489,10 +519,21 @@ function HomePageContent() {
                 />
               </div>
               <div className="hidden md:flex md:shrink-0 md:justify-end">
-                <SensitivityFilterChips
-                  activeFilters={activeSensitivities}
-                  onToggle={toggleSensitivity}
-                />
+                <div className="flex flex-wrap items-center justify-end gap-1.5">
+                  <Button
+                    type="button"
+                    variant={showNeedsReviewOnly ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-full px-3"
+                    onClick={() => setShowNeedsReviewOnly((previous) => !previous)}
+                  >
+                    {t('feed.needsReview')}
+                  </Button>
+                  <SensitivityFilterChips
+                    activeFilters={activeSensitivities}
+                    onToggle={toggleSensitivity}
+                  />
+                </div>
               </div>
             </div>
           </div>

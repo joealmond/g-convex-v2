@@ -7,6 +7,7 @@ import {
   computeTasteScore,
   deriveAllergenConfidence,
   deriveAllergenState,
+  deriveSafetyDisplayState,
   buildInitialAllergenScores,
   computeUniversalSafety,
   type AllergenScoresMap,
@@ -107,6 +108,20 @@ describe('deriveAllergenConfidence', () => {
   })
 })
 
+// ─── deriveSafetyDisplayState ──────────────────────────────────────────────
+
+describe('deriveSafetyDisplayState', () => {
+  it('maps uncertain states to needs-review', () => {
+    expect(deriveSafetyDisplayState(67, 0)).toBe('needs-review')
+    expect(deriveSafetyDisplayState(80, 4)).toBe('needs-review')
+  })
+
+  it('preserves likely-safe and likely-unsafe states', () => {
+    expect(deriveSafetyDisplayState(92, 12)).toBe('likely-safe')
+    expect(deriveSafetyDisplayState(25, 3)).toBe('likely-unsafe')
+  })
+})
+
 // ─── computePersonalizedSafety ───────────────────────────────────────────────
 
 describe('computePersonalizedSafety', () => {
@@ -173,6 +188,8 @@ describe('computeSafetyDisplayMeta', () => {
     expect(computeSafetyDisplayMeta(allergenScores, ['milk', 'soy'])).toEqual({
       score: 50,
       voteCount: 0,
+      allergenId: 'soy',
+      aiBase: 'unknown',
     })
   })
 
@@ -180,6 +197,8 @@ describe('computeSafetyDisplayMeta', () => {
     expect(computeSafetyDisplayMeta(allergenScores, [])).toEqual({
       score: 50,
       voteCount: 0,
+      allergenId: 'soy',
+      aiBase: 'unknown',
     })
   })
 
@@ -187,6 +206,8 @@ describe('computeSafetyDisplayMeta', () => {
     expect(computeSafetyDisplayMeta(allergenScores, ['nuts'])).toEqual({
       score: 50,
       voteCount: 0,
+      allergenId: null,
+      aiBase: null,
     })
   })
 })

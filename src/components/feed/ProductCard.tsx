@@ -13,7 +13,7 @@ import { findAllergenConflicts } from '@/lib/dietary-profiles'
 import {
   computeSafetyDisplayMeta,
   deriveAllergenConfidence,
-  deriveAllergenState,
+  deriveSafetyDisplayState,
   type AllergenScoresMap,
 } from '@/lib/score-utils'
 
@@ -47,9 +47,6 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
     return 'bg-safety-low' // Red
   }
 
-  // Get price score from avgPrice (1-5 scale → 0-100)
-  const priceScore = product.avgPrice ? (product.avgPrice / 5) * 100 : 0
-
   // Get quadrant info
   const quadrant = getQuadrant(product.averageSafety, product.averageTaste)
   const quadrantInfo = QUADRANTS[quadrant]
@@ -57,14 +54,14 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
     (product.allergenScores as AllergenScoresMap | undefined) ?? undefined,
     avoidedAllergens,
   )
-  const safetyState = deriveAllergenState(safetyMeta.score, safetyMeta.voteCount)
+  const safetyState = deriveSafetyDisplayState(safetyMeta.score, safetyMeta.voteCount)
   const safetyConfidence = deriveAllergenConfidence(safetyMeta.voteCount)
 
   const safetyStateLabel = safetyState === 'likely-safe'
     ? t('voting.likelySafe')
     : safetyState === 'likely-unsafe'
       ? t('voting.likelyUnsafe')
-      : t('voting.uncertain')
+      : t('voting.needsReview')
 
   const safetyConfidenceLabel = safetyConfidence === 'high'
     ? t('voting.highConfidence')
@@ -76,14 +73,14 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
     ? 'border-safety-high/35 bg-safety-high/15 text-foreground'
     : safetyState === 'likely-unsafe'
       ? 'border-safety-low/35 bg-safety-low/15 text-foreground'
-      : 'border-safety-mid/35 bg-safety-mid/15 text-foreground'
+      : 'border-safety-mid/45 bg-safety-mid/20 text-foreground'
 
   // Check if product has location data
   const hasLocation = product.stores?.some(s => s.geoPoint)
 
   return (
     <motion.div
-      className="bg-card text-card-foreground rounded-2xl overflow-hidden shadow-card h-full flex flex-col border border-border md:flex-row md:items-stretch md:rounded-3xl md:bg-card"
+      className="bg-card text-card-foreground rounded-2xl overflow-hidden shadow-card h-full flex flex-col border border-border md:rounded-3xl md:bg-card"
       whileHover={{ y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
@@ -91,11 +88,11 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
       <Link
         to={'/product/$name'}
         params={{ name: product.name }}
-        className="group flex h-full flex-1 cursor-pointer flex-col md:flex-row"
+        className="group flex h-full flex-1 cursor-pointer flex-col"
         preload="intent"
       >
         {/* Product Image */}
-        <div className="relative aspect-square bg-background overflow-hidden md:w-[43%] md:min-w-[10.5rem] md:max-w-[13rem] md:aspect-[4/3] lg:w-[40%] xl:w-[42%]">
+        <div className="relative aspect-square bg-background overflow-hidden lg:aspect-[5/4]">
           {product.imageUrl ? (
             <img
               src={product.imageUrl}
@@ -162,9 +159,9 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
         </div>
 
         {/* Info Section */}
-        <div className="p-3 flex-1 flex flex-col justify-between md:p-4 md:min-w-0">
+        <div className="p-3 flex-1 flex flex-col justify-between md:p-4 lg:p-5 md:min-w-0">
           {/* Product Name */}
-          <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors md:text-base">
+          <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors md:text-base lg:text-lg">
             {product.name}
           </h3>
 
@@ -175,50 +172,36 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
             </p>
           )}
 
-          <div className="mt-2 flex flex-wrap items-center gap-2 md:mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2 md:mt-4">
             <Badge className={safetyStateClass} variant="outline">
               {safetyStateLabel}
             </Badge>
-            <span className="text-[11px] text-muted-foreground md:text-xs">
+            <Badge variant="outline" className="border-border bg-muted/40 text-muted-foreground">
               {t('voting.confidence')}: {safetyConfidenceLabel}
-            </span>
-            <span className="text-[11px] text-muted-foreground md:text-xs">
-              {t('voting.allergenScore', { score: Math.round(safetyMeta.score) })}
-            </span>
+            </Badge>
           </div>
 
-          {/* Scoring Dots Row */}
-          <div className="flex gap-2 mt-2 md:mt-3">
-            {/* Axis 1 (Safety) Dot */}
-            <div
-              className={`w-2 h-2 rounded-full md:w-2.5 md:h-2.5 ${getSafetyColor(product.averageSafety)}`}
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground md:text-sm">
+            <span>{product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}</span>
+            {safetyState === 'needs-review' ? (
+              <span>{safetyMeta.voteCount === 0 ? t('voting.noVotesYetAllergen') : t('voting.reviewStillOpen')}</span>
+            ) : (
+              <span>{appConfig.dimensions.axis2.label}: {Math.round(product.averageTaste)}</span>
+            )}
+          </div>
+
+          <div className="mt-2 flex items-center gap-2">
+            <span
+              className={`h-2.5 w-2.5 rounded-full ${getSafetyColor(product.averageSafety)}`}
               title={`${appConfig.dimensions.axis1.label}: ${product.averageSafety.toFixed(0)}`}
             />
-
-            {/* Axis 2 (Taste) Dot */}
-            <div
-              className={`w-2 h-2 rounded-full md:w-2.5 md:h-2.5 ${getSafetyColor(product.averageTaste)}`}
-              title={`${appConfig.dimensions.axis2.label}: ${product.averageTaste.toFixed(0)}`}
-            />
-
-            {/* Axis 3 (Price) Dot */}
-            <div
-              className={`w-2 h-2 rounded-full md:w-2.5 md:h-2.5 ${getSafetyColor(priceScore)}`}
-              title={`${appConfig.dimensions.axis3.label}: ${priceScore.toFixed(0)}`}
-            />
+            <span className="text-[11px] text-muted-foreground md:text-xs">
+              {appConfig.dimensions.axis1.label}
+            </span>
           </div>
 
-          {/* Vote Count */}
-          <p className="text-xs text-muted-foreground mt-2 md:mt-3 md:text-sm">
-            {product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}
-          </p>
-
-          <p className="mt-1 text-[11px] text-muted-foreground md:text-xs">
-            {t('chart.browseAidShort')}
-          </p>
-
           <div
-            className="mt-3"
+            className="mt-4"
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
@@ -227,7 +210,7 @@ export function ProductCard({ product, distanceKm, isAdmin, avoidedAllergens = [
             <VoteProductDialog
               product={product}
               trigger={
-                <Button size="sm" variant="outline" className="w-full rounded-xl border-primary/30 bg-primary/5 font-semibold text-primary hover:bg-primary/10 md:w-auto md:px-4">
+                <Button size="sm" variant="outline" className="w-full rounded-xl border-primary/30 bg-primary/5 font-semibold text-primary hover:bg-primary/10 lg:h-11 lg:text-sm">
                   {t('product.voteAction')}
                 </Button>
               }

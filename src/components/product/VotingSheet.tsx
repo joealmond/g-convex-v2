@@ -9,7 +9,7 @@ import {
   computeAllergenScoreFromData,
   computeTasteScore,
   deriveAllergenConfidence,
-  deriveAllergenState,
+  deriveSafetyDisplayState,
 } from '@/lib/score-utils'
 import { cn } from '@/lib/utils'
 
@@ -88,7 +88,7 @@ export function VotingSheet({
     const scoreData = allergenScores?.[allergen.id]
     const currentScore = scoreData ? computeAllergenScoreFromData(scoreData) : null
     const currentVoteCount = scoreData ? scoreData.upVotes + scoreData.downVotes : 0
-    const currentState = currentScore !== null ? deriveAllergenState(currentScore, currentVoteCount) : null
+    const currentState = currentScore !== null ? deriveSafetyDisplayState(currentScore, currentVoteCount) : null
     const currentConfidence = scoreData ? deriveAllergenConfidence(currentVoteCount) : null
     const myVote = allergenVotes[allergen.id]
 
@@ -96,7 +96,7 @@ export function VotingSheet({
       ? t('voting.likelySafe')
       : currentState === 'likely-unsafe'
         ? t('voting.likelyUnsafe')
-        : t('voting.uncertain')
+        : t('voting.needsReview')
 
     const confidenceLabel = currentConfidence === 'high'
       ? t('voting.highConfidence')
@@ -108,7 +108,7 @@ export function VotingSheet({
       ? 'border-safety-high/35 bg-safety-high/15 text-foreground'
       : currentState === 'likely-unsafe'
         ? 'border-safety-low/35 bg-safety-low/15 text-foreground'
-        : 'border-safety-mid/35 bg-safety-mid/15 text-foreground'
+        : 'border-safety-mid/45 bg-safety-mid/20 text-foreground'
 
     return (
       <div key={allergen.id} className="flex items-center gap-2 py-2">

@@ -26,10 +26,13 @@ export interface AllergenScoreData {
 export type AllergenScoresMap = Record<string, AllergenScoreData>
 export type AllergenState = 'likely-unsafe' | 'uncertain' | 'likely-safe'
 export type AllergenConfidence = 'low' | 'medium' | 'high'
+export type SafetyDisplayState = 'likely-unsafe' | 'needs-review' | 'likely-safe'
 
 export interface SafetyDisplayMeta {
   score: number
   voteCount: number
+  allergenId: string | null
+  aiBase: AiBase | null
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -108,6 +111,19 @@ export function deriveAllergenConfidence(
 }
 
 /**
+ * Derive the browse-facing safety status.
+ * Uncertain items are presented as needing review rather than implying balance.
+ */
+export function deriveSafetyDisplayState(
+  score: number,
+  independentVoteCount: number,
+): SafetyDisplayState {
+  const state = deriveAllergenState(score, independentVoteCount)
+  if (state === 'uncertain') return 'needs-review'
+  return state
+}
+
+/**
  * Find the limiting allergen score for a given set of relevant allergens.
  * Falls back to worst-case across all allergens, then to unknown.
  */
@@ -116,7 +132,7 @@ export function computeSafetyDisplayMeta(
   relevantAllergens: string[],
 ): SafetyDisplayMeta {
   if (!allergenScores || Object.keys(allergenScores).length === 0) {
-    return { score: 50, voteCount: 0 }
+    return { score: 50, voteCount: 0, allergenId: null, aiBase: null }
   }
 
   const relevantAllergenIds = relevantAllergens.length > 0
@@ -125,6 +141,8 @@ export function computeSafetyDisplayMeta(
 
   let limitingScore = Number.POSITIVE_INFINITY
   let limitingVoteCount = 0
+  let limitingAllergenId: string | null = null
+  let limitingAiBase: AiBase | null = null
 
   for (const allergenId of relevantAllergenIds) {
     const data = allergenScores[allergenId]
@@ -134,14 +152,21 @@ export function computeSafetyDisplayMeta(
     if (score < limitingScore) {
       limitingScore = score
       limitingVoteCount = data.upVotes + data.downVotes
+      limitingAllergenId = allergenId
+      limitingAiBase = data.aiBase
     }
   }
 
   if (!Number.isFinite(limitingScore)) {
-    return { score: 50, voteCount: 0 }
+    return { score: 50, voteCount: 0, allergenId: null, aiBase: null }
   }
 
-  return { score: limitingScore, voteCount: limitingVoteCount }
+  return {
+    score: limitingScore,
+    voteCount: limitingVoteCount,
+    allergenId: limitingAllergenId,
+    aiBase: limitingAiBase,
+  }
 }
 
 // ─── Personalized Safety ─────────────────────────────────────────────────────

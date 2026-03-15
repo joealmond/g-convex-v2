@@ -7,8 +7,8 @@ interface FeedGridProps {
 }
 
 /**
- * Responsive grid for product cards
- * 2 columns through tablet widths, 3 on xl screens, 4 on 2xl screens
+ * Responsive grid for product cards.
+ * Keep cards roomier on desktop so metadata fits without collapsing.
  */
 export function FeedGrid({ children, isEmpty }: FeedGridProps) {
   const { t } = useTranslation()
@@ -20,7 +20,7 @@ export function FeedGrid({ children, isEmpty }: FeedGridProps) {
           <p className="text-xs text-muted-foreground">{t('feed.tryAdjustingFilters')}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 md:gap-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 md:gap-4 xl:gap-5">
           {children}
         </div>
       )}

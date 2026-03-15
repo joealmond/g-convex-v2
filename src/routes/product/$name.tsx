@@ -18,6 +18,8 @@ import { type Product } from '@/lib/types'
 import { appConfig } from '@/lib/app-config'
 import {
   computeSafetyDisplayMeta,
+  deriveAllergenConfidence,
+  deriveSafetyDisplayState,
   type AllergenScoresMap,
 } from '@/lib/score-utils'
 import { useAnonymousId } from '@/hooks/use-anonymous-id'
@@ -145,6 +147,31 @@ function ProductDetailContent() {
     (product.allergenScores as AllergenScoresMap | undefined) ?? undefined,
     avoidedAllergens,
   )
+  const safetyDisplayState = deriveSafetyDisplayState(safetyMeta.score, safetyMeta.voteCount)
+  const safetyConfidence = deriveAllergenConfidence(safetyMeta.voteCount)
+  const limitingAllergen = safetyMeta.allergenId
+    ? appConfig.allergens.find((item) => item.id === safetyMeta.allergenId)
+    : null
+  const safetyStateLabel = safetyDisplayState === 'likely-safe'
+    ? t('voting.likelySafe')
+    : safetyDisplayState === 'likely-unsafe'
+      ? t('voting.likelyUnsafe')
+      : t('voting.needsReview')
+  const safetyConfidenceLabel = safetyConfidence === 'high'
+    ? t('voting.highConfidence')
+    : safetyConfidence === 'medium'
+      ? t('voting.mediumConfidence')
+      : t('voting.lowConfidence')
+  const safetyStateClass = safetyDisplayState === 'likely-safe'
+    ? 'border-safety-high/35 bg-safety-high/15 text-foreground'
+    : safetyDisplayState === 'likely-unsafe'
+      ? 'border-safety-low/35 bg-safety-low/15 text-foreground'
+      : 'border-safety-mid/45 bg-safety-mid/20 text-foreground'
+  const initialEvidenceLabel = safetyMeta.aiBase === 'contains'
+    ? t('voting.contains')
+    : safetyMeta.aiBase === 'free-from'
+      ? t('voting.freeFromLabel')
+      : t('voting.unknownAllergen')
   const normalizedPrice = product.avgPrice !== undefined && product.avgPrice !== null
     ? (product.avgPrice / 5) * 100
     : 0
@@ -258,6 +285,37 @@ function ProductDetailContent() {
                   <span className="text-xs text-muted-foreground">
                     {product.voteCount} {product.voteCount === 1 ? t('common.vote') : t('common.votes')}
                   </span>
+                </div>
+                <div className="mb-4 rounded-2xl border border-border bg-card p-3 sm:p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline" className={safetyStateClass}>
+                      {safetyStateLabel}
+                    </Badge>
+                    <Badge variant="outline" className="border-border bg-muted/40 text-muted-foreground">
+                      {t('voting.confidence')}: {safetyConfidenceLabel}
+                    </Badge>
+                  </div>
+                  <div className="mt-3 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide">{t('product.communityVotes')}</p>
+                      <p className="mt-1 text-foreground">{safetyMeta.voteCount}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide">{t('product.reviewFocus')}</p>
+                      <p className="mt-1 text-foreground">
+                        {limitingAllergen ? `${limitingAllergen.emoji} ${limitingAllergen.label}` : t('product.allTrackedAllergens')}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide">{t('product.initialEvidence')}</p>
+                      <p className="mt-1 text-foreground">{initialEvidenceLabel}</p>
+                    </div>
+                  </div>
+                  {safetyDisplayState === 'needs-review' && (
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      {t('product.needsReviewHint')}
+                    </p>
+                  )}
                 </div>
                 <RatingBars
                   safety={safetyMeta.score}

@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { appConfig } from '@/lib/app-config'
 import {
   deriveAllergenConfidence,
-  deriveAllergenState,
+  deriveSafetyDisplayState,
 } from '@/lib/score-utils'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/use-translation'
@@ -62,7 +62,7 @@ export function RatingBars({
         ? `${appConfig.dimensions.axis1.label} — ${t('voting.safeForYou')}`
         : appConfig.dimensions.axis1.label,
       value: safety,
-      state: deriveAllergenState(safety, safetyVoteCount),
+      state: deriveSafetyDisplayState(safety, safetyVoteCount),
       confidence: deriveAllergenConfidence(safetyVoteCount),
       isSafety: true,
     },
@@ -70,16 +70,16 @@ export function RatingBars({
     { label: appConfig.dimensions.axis3.label, value: price, isSafety: false },
   ]
 
-  const getStateLabel = (state: 'likely-unsafe' | 'uncertain' | 'likely-safe') => {
+  const getStateLabel = (state: 'likely-unsafe' | 'needs-review' | 'likely-safe') => {
     if (state === 'likely-safe') return t('voting.likelySafe')
     if (state === 'likely-unsafe') return t('voting.likelyUnsafe')
-    return t('voting.uncertain')
+    return t('voting.needsReview')
   }
 
-  const getStateBadgeClass = (state: 'likely-unsafe' | 'uncertain' | 'likely-safe') => {
+  const getStateBadgeClass = (state: 'likely-unsafe' | 'needs-review' | 'likely-safe') => {
     if (state === 'likely-safe') return 'border-safety-high/35 bg-safety-high/15 text-foreground'
     if (state === 'likely-unsafe') return 'border-safety-low/35 bg-safety-low/15 text-foreground'
-    return 'border-safety-mid/35 bg-safety-mid/15 text-foreground'
+    return 'border-safety-mid/45 bg-safety-mid/20 text-foreground'
   }
 
   const getConfidenceLabel = (confidence: 'low' | 'medium' | 'high') => {
