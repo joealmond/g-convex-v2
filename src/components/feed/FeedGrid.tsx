@@ -20,7 +20,7 @@ export function FeedGrid({ children, isEmpty }: FeedGridProps) {
           <p className="text-xs text-muted-foreground">{t('feed.tryAdjustingFilters')}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-2 xl:gap-6 2xl:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3 xl:grid-cols-4 xl:gap-5 2xl:grid-cols-4">
           {children}
         </div>
       )}
