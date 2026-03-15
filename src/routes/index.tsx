@@ -498,17 +498,21 @@ function HomePageContent() {
             <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 md:hidden">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Button
+                  <button
                     type="button"
-                    variant={showNeedsReviewOnly ? 'default' : 'outline'}
-                    size="sm"
-                    className="rounded-full px-3 gap-1.5"
+                    className={cn(
+                      'flex min-h-[32px] min-w-[32px] items-center justify-center rounded-full border px-1.5 md:min-h-[34px] md:min-w-[34px] md:px-2',
+                      showNeedsReviewOnly
+                        ? 'border-red-500/60 bg-orange-300 text-red-700 shadow-sm'
+                        : 'border-orange-300 bg-orange-200/90 text-red-600 hover:bg-orange-300/90'
+                    )}
                     onClick={() => setShowNeedsReviewOnly((previous) => !previous)}
                     title={t('feed.needsReview')}
+                    aria-label={t('feed.needsReview')}
+                    aria-pressed={showNeedsReviewOnly}
                   >
-                    <AlertTriangle className="h-3.5 w-3.5" />
-                    {t('feed.needsReview')}
-                  </Button>
+                    <AlertTriangle className="h-4 w-4" />
+                  </button>
                   <SensitivityFilterChips
                     activeFilters={activeSensitivities}
                     onToggle={toggleSensitivity}
@@ -543,17 +547,21 @@ function HomePageContent() {
               </div>
               <div className="hidden md:flex md:shrink-0 md:justify-end">
                 <div className="flex flex-wrap items-center justify-end gap-1.5">
-                  <Button
+                  <button
                     type="button"
-                    variant={showNeedsReviewOnly ? 'default' : 'outline'}
-                    size="sm"
-                    className="rounded-full px-3 gap-1.5"
+                    className={cn(
+                      'flex min-h-[32px] min-w-[32px] items-center justify-center rounded-full border px-1.5 md:min-h-[34px] md:min-w-[34px] md:px-2',
+                      showNeedsReviewOnly
+                        ? 'border-red-500/60 bg-orange-300 text-red-700 shadow-sm'
+                        : 'border-orange-300 bg-orange-200/90 text-red-600 hover:bg-orange-300/90'
+                    )}
                     onClick={() => setShowNeedsReviewOnly((previous) => !previous)}
                     title={t('feed.needsReview')}
+                    aria-label={t('feed.needsReview')}
+                    aria-pressed={showNeedsReviewOnly}
                   >
-                    <AlertTriangle className="h-3.5 w-3.5" />
-                    {t('feed.needsReview')}
-                  </Button>
+                    <AlertTriangle className="h-4 w-4" />
+                  </button>
                   <SensitivityFilterChips
                     activeFilters={activeSensitivities}
                     onToggle={toggleSensitivity}
